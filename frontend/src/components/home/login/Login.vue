@@ -6,49 +6,31 @@
           <div class="card shadow-sm">
             <div class="card-body">
               <h4 class="card-title mb-4 text-center">Iniciar sesión</h4>
-              <form @submit.prevent="onSubmit" novalidate>
+              <!-- Usamos handleSubmit para validar -->
+              <form @submit.prevent="submitForm">
                 <div class="mb-3">
-                  <label for="email" class="form-label"
-                    >Correo electrónico</label
-                  >
                   <input
-                    id="email"
-                    v-model="form.email"
                     type="email"
+                    v-model="email"
                     class="form-control"
-                    required
+                    placeholder="Correo"
                   />
+                  <small class="text-danger">{{ emailError }}</small>
                 </div>
+
                 <div class="mb-3">
-                  <label for="password" class="form-label">Contraseña</label>
                   <input
-                    id="password"
-                    v-model="form.password"
                     type="password"
+                    v-model="password"
                     class="form-control"
-                    required
+                    placeholder="Contraseña"
                   />
+                  <small class="text-danger">{{ passError }}</small>
                 </div>
-                <div class="d-grid mb-3">
-                  <button
-                    :disabled="loading"
-                    type="submit"
-                    class="btn btn-primary"
-                  >
-                    <span v-if="!loading">Entrar</span>
-                    <span v-else class="d-inline-flex align-items-center gap-2">
-                      <span
-                        class="spinner-border spinner-border-sm"
-                        role="status"
-                        aria-hidden="true"
-                      ></span>
-                      Cargando...
-                    </span>
-                  </button>
-                </div>
-                <div class="text-center">
-                  <a href="#">¿Olvidaste tu contraseña?</a>
-                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                  Ingresar
+                </button>
               </form>
             </div>
           </div>
@@ -59,29 +41,44 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { useForm, useField } from "vee-validate";
+import * as yup from "yup";
 import api from "@/services/axios";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 
 const router = useRouter();
-const form = ref({ email: "", password: "" });
-const loading = ref(false);
+
+// Esquema de validación con Yup
+const schema = yup.object({
+  email: yup
+    .string()
+    .email("Correo inválido")
+    .required("El correo es obligatorio"),
+  password: yup
+    .string()
+    .min(6, "Mínimo 6 caracteres")
+    .required("La contraseña es obligatoria"),
+});
+
+// Configurar el form con validación
+const { handleSubmit } = useForm({ validationSchema: schema });
+
+// Campos de formulario
+const { value: email, errorMessage: emailError } = useField("email");
+const { value: password, errorMessage: passError } = useField("password");
 
 /**
- * Submit de inicio de sesión
+ * Submit validado con vee-validate
  */
-async function onSubmit() {
-  loading.value = true;
+const submitForm = handleSubmit(async (values) => {
   api
-    .post("/auth/login", form.value)
-    .then((response) => {        
+    .post("/auth/login", values)
+    .then((response) => {
       sessionStorage.setItem("token", response.data);
       router.replace("/admin");
     })
-    .catch((error) => {
-      loading.value = false;
-    });
-}
+    .catch((error) => {});
+});
 </script>
 
 <style scoped></style>
