@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useToast } from "vue-toastification";
+import { showLoader, hideLoader } from "@/assets/scripts/loader";
 
 const toast = useToast();
 const baseURL = `${window.location.origin}/api`;
@@ -15,6 +16,7 @@ const api = axios.create({
 // Interceptor de solicitud
 api.interceptors.request.use(
   (config) => {
+    showLoader();
     const token = sessionStorage.getItem("token");
 
     if (token) config.headers["Authorization"] = `Bearer ${token}`;
@@ -32,12 +34,22 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     const token = sessionStorage.getItem("token");
-    if (token) sessionStorage.setItem("token", response?.data.token);
-
+    if (token && response?.data?.token) {
+      sessionStorage.setItem("token", response.data.token);
+    }
+    hideLoader();
     return response?.data ?? response;
   },
   (error) => {
+    hideLoader();
     toast.error(error.response.data.message);
+    if (error.response) {
+      const status = error.response.status;
+       if ([401, 403, 419].includes(status)) {
+        sessionStorage.removeItem("token");
+        router.replace("/login"); 
+      }
+    }
     return Promise.reject(error);
   }
 );

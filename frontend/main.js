@@ -9,7 +9,11 @@ import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import "@/assets/styles/toast-overrides.css";
 
+import { createLoader } from "@/assets/scripts/loader";
+
 const app = createApp(App);
+
+createLoader();
 
 app.use(router);
 app.use(Toast, {
