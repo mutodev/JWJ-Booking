@@ -58,4 +58,90 @@ class UserRepository
         unset($data['password']);
         return $data;
     }
+
+    /**
+     * Obtener todos los permisos de menú de un usuario
+     * @param string $userId
+     */
+    public function getUserPermissions(string $userId): array
+    {
+        return $this->userModel->select('
+                menus.id as menu_id,
+                menus.name as menu_name,
+                menus.uri as menu_uri,
+                menus.icon as menu_icon,
+                menus.order as menu_order,
+                menus.parent_id as menu_parent_id,
+                role_menu_permissions.can_view,
+                role_menu_permissions.can_create,
+                role_menu_permissions.can_update,
+                role_menu_permissions.can_delete
+            ')
+            ->join('roles', 'roles.id = users.role_id')
+            ->join('role_menu_permissions', 'role_menu_permissions.role_id = roles.id')
+            ->join('menus', 'menus.id = role_menu_permissions.menu_id')
+            ->where('users.id', $userId)
+            ->where('users.is_active', true)
+            ->where('roles.is_active', true)
+            ->where('menus.is_active', true)
+            ->where('role_menu_permissions.can_view', true)
+            ->orderBy('menus.order', 'ASC')
+            ->findAll();
+    }
+
+    /**
+     * Obtener menú completo con estructura jerárquica y permisos
+     */
+    public function getUserMenuTree(string $userId): array
+    {
+        $permissions = $this->getUserPermissions($userId);
+        
+        // Organizar en estructura jerárquica
+        $menuTree = [];
+        foreach ($permissions as $permission) {
+            if ($permission->menu_parent_id === null) {
+                // Es menú principal
+                $menuTree[$permission->menu_id] = [
+                    'id' => $permission->menu_id,
+                    'name' => $permission->menu_name,
+                    'uri' => $permission->menu_uri,
+                    'icon' => $permission->menu_icon,
+                    'order' => $permission->menu_order,
+                    'permissions' => [
+                        'view' => (bool)$permission->can_view,
+                        'create' => (bool)$permission->can_create,
+                        'update' => (bool)$permission->can_update,
+                        'delete' => (bool)$permission->can_delete
+                    ],
+                    'children' => []
+                ];
+            }
+        }
+
+        // Agregar submenús
+        foreach ($permissions as $permission) {
+            if ($permission->menu_parent_id !== null && isset($menuTree[$permission->menu_parent_id])) {
+                $menuTree[$permission->menu_parent_id]['children'][] = [
+                    'id' => $permission->menu_id,
+                    'name' => $permission->menu_name,
+                    'uri' => $permission->menu_uri,
+                    'icon' => $permission->menu_icon,
+                    'order' => $permission->menu_order,
+                    'permissions' => [
+                        'view' => (bool)$permission->can_view,
+                        'create' => (bool)$permission->can_create,
+                        'update' => (bool)$permission->can_update,
+                        'delete' => (bool)$permission->can_delete
+                    ]
+                ];
+            }
+        }
+
+        // Ordenar por order y convertir a array indexado
+        usort($menuTree, function($a, $b) {
+            return $a['order'] <=> $b['order'];
+        });
+
+        return array_values($menuTree);
+    }
 }
