@@ -27,9 +27,7 @@ class LoginController extends ResourceController
             $data = json_decode($json, true);
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON([
-                    'data' => $this->loginService->login($data['email'], $data['password'])
-                ]);
+                ->setJSON(create_response('Inicio de sesión', $this->loginService->login($data['email'], $data['password'])));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

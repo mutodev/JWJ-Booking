@@ -88,5 +88,5 @@ class Autoload extends AutoloadConfig
      *
      * @var list<string>
      */
-    public $helpers = [];
+    public $helpers = ['verify_token_helper', 'generate_token', 'create_response'];
 }
