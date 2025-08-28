@@ -29,7 +29,11 @@ class LoginService
         if (!$data)
             throw new HTTPException(lang('Auth.invalidLogin'), Response::HTTP_UNAUTHORIZED);
 
-        $data['access'] = $this->userRepository->getUserMenuTree($data['id']);
+        if (!$data->is_active)
+            throw new HTTPException(lang('Auth.userInactive'), Response::HTTP_UNAUTHORIZED);
+
+
+        $data['access'] = $this->userRepository->getUserMenuTree($data->id);
 
         unset($data['id']);
         return generate_token((array) $data);
