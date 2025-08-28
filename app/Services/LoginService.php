@@ -44,7 +44,7 @@ class LoginService
      * @param string $userId
      * @return array
      */
-    public function getUserMenuTree(string $userId): array
+    private function getUserMenuTree(string $userId): array
     {
         $permissions = $this->userRepository->getUserPermissions($userId);
 

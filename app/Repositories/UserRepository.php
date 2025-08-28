@@ -126,7 +126,7 @@ class UserRepository
     /**
      * Crear un usuario nuevo
      * @param array $data
-     * @return int|false El ID del usuario creado o false en caso de error
+     * @return string|false El ID del usuario creado o false en caso de error
      */
     public function createUser(array $data)
     {

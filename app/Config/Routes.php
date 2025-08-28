@@ -2,6 +2,8 @@
 
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
+use App\Controllers\RoleController;
+use App\Controllers\UserController;
 use CodeIgniter\Router\RouteCollection;
 
 /**
@@ -12,12 +14,20 @@ $routes->group('api', function ($routes) {
     // Login
     $routes->group('auth', function ($routes) {
         $routes->post('login', [LoginController::class, 'login']);
-        // $routes->post('remember-password', [LoginController::class, 'sendRememberPassword']);
-        // $routes->post(
-        //     'verify-token',
-        //     [LoginController::class, 'verifyTokenEmail'],
-        //     ['filter' => 'verifyToken']
-        // );
+    });
+
+    // Usuarios
+    $routes->group('users', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/(:segment)', [UserController::class, 'getUserById']);
+        $routes->post('', [UserController::class, 'create']);
+        $routes->put('/(:segment)', [UserController::class, 'updateUser']);
+        $routes->delete('/(:segment)', [UserController::class, 'deleteUser']);
+        $routes->get('', [UserController::class, 'getAllUsers']);
+    });
+
+    // Roles
+    $routes->group('roles', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('', [RoleController::class, 'getAllRoles']);
     });
 });
 
