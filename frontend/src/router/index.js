@@ -17,6 +17,7 @@ const routes = [
     path: "/admin",
     name: "admin",
     component: Admin,
+    meta: { requiresAuth: true },
     children: [
       { path: "/", component: Dashboard },
       { path: "/users", component: User },
@@ -27,6 +28,18 @@ const routes = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes,
+});
+
+// Guard global (middleware)
+router.beforeEach((to, from, next) => {
+  const token = sessionStorage.getItem("token");
+
+  if (to.matched.some((record) => record.meta.requiresAuth) && !token) {
+    // 🚨 Si cualquier ruta del "match" necesita auth y no hay token
+    next("/login");
+  } else {
+    next();
+  }
 });
 
 export default router;
