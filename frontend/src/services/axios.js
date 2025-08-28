@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useToast } from "vue-toastification";
 import { showLoader, hideLoader } from "@/assets/scripts/loader";
+import { jwtDecode } from "jwt-decode";
 
 const toast = useToast();
 const baseURL = `${window.location.origin}/api`;
@@ -33,9 +34,19 @@ api.interceptors.request.use(
 // Interceptor de RESPUESTA
 api.interceptors.response.use(
   (response) => {
-    const token = sessionStorage.getItem("token");
-    if (token && response?.data?.token) {
-      sessionStorage.setItem("token", response.data.token);
+    if (response.data?.data) {
+      sessionStorage.setItem("token", response.data.data);
+      const decoded = jwtDecode(response.data.data);
+      console.log(decoded);
+
+      // Decodificar el token y guardar los datos en sessionStorage
+      for (const [key, value] of Object.entries(decoded)) {
+        if (typeof value === "object") {
+          sessionStorage.setItem(key, JSON.stringify(value));
+        } else {
+          sessionStorage.setItem(key, String(value));
+        }
+      }
     }
     hideLoader();
     return response?.data ?? response;
@@ -45,9 +56,9 @@ api.interceptors.response.use(
     toast.error(error.response.data.message);
     if (error.response) {
       const status = error.response.status;
-       if ([401, 403, 419].includes(status)) {
-        sessionStorage.removeItem("token");
-        router.replace("/login"); 
+      if ([401, 403, 419].includes(status)) {
+        sessionStorage.clear();
+        router.replace("/login");
       }
     }
     return Promise.reject(error);

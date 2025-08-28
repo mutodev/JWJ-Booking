@@ -1,2 +1,4 @@
-<template></template>
+<template>
+    Dashboard
+</template>
 <script setup></script>

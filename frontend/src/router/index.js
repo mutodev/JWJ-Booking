@@ -19,7 +19,7 @@ const routes = [
     component: Admin,
     meta: { requiresAuth: true },
     children: [
-      { path: "/", component: Dashboard },
+      { path: "/dashboard", component: Dashboard },
       { path: "/users", component: User },
     ],
   },
