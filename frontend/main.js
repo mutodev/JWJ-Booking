@@ -4,6 +4,7 @@ import router from "./src/router";
 
 import "@/assets/styles/custom-bootstrap.scss";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
