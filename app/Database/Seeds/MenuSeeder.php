@@ -12,7 +12,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'm1a2b3c4-d5e6-7890-fgh1-234567890123',
                 'name' => 'Dashboard',
-                'uri' => 'admin/dashboard',
+                'uri' => '/admin/dashboard',
                 'icon' => 'bi bi-speedometer2',
                 'order' => 1,
                 'is_active' => true,
@@ -23,7 +23,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'm2b3c4d5-e6f7-8901-ghi2-345678901234',
                 'name' => 'Reservas',
-                'uri' => 'admin/reservas',
+                'uri' => '/admin/reservations',
                 'icon' => 'bi bi-calendar-check',
                 'order' => 2,
                 'is_active' => true,
@@ -34,7 +34,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'm3c4d5e6-f7g8-9012-hij3-456789012345',
                 'name' => 'Clientes',
-                'uri' => 'admin/clientes',
+                'uri' => '/admin/clients',
                 'icon' => 'bi bi-people',
                 'order' => 3,
                 'is_active' => true,
@@ -45,7 +45,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'm4d5e6f7-g8h9-0123-ijk4-567890123456',
                 'name' => 'Reportes',
-                'uri' => 'admin/reportes',
+                'uri' => '/admin/reports',
                 'icon' => 'bi bi-bar-chart',
                 'order' => 4,
                 'is_active' => true,
@@ -71,7 +71,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'sm1f7g8h9-i0j1-2345-klm6-789012345678',
                 'name' => 'Servicios',
-                'uri' => 'admin/config/servicios',
+                'uri' => '/admin/config/services',
                 'icon' => 'bi bi-list',
                 'order' => 1,
                 'is_active' => true,
@@ -82,7 +82,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'sm2g8h9i0-j1k2-3456-lmn7-890123456789',
                 'name' => 'Precios',
-                'uri' => 'admin/config/precios',
+                'uri' => '/admin/config/prices',
                 'icon' => 'bi bi-tag',
                 'order' => 2,
                 'is_active' => true,
@@ -93,7 +93,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'sm3h9i0j1-k2l3-4567-mno8-901234567890',
                 'name' => 'Usuarios',
-                'uri' => 'admin/config/usuarios',
+                'uri' => '/admin/config/users',
                 'icon' => 'bi bi-person-gear',
                 'order' => 3,
                 'is_active' => true,
@@ -104,7 +104,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'sm4i0j1k2-l3m4-5678-nop9-012345678901',
                 'name' => 'Roles',
-                'uri' => 'admin/config/roles',
+                'uri' => '/admin/config/roles',
                 'icon' => 'bi bi-shield-lock',
                 'order' => 4,
                 'is_active' => true,
@@ -115,7 +115,7 @@ class MenuSeeder extends Seeder
             [
                 'id' => 'sm5j1k2l3-m4n5-6789-opq0-123456789012',
                 'name' => 'Menús',
-                'uri' => 'admin/config/menus',
+                'uri' => '/admin/config/menus',
                 'icon' => 'bi bi-list-nested',
                 'order' => 5,
                 'is_active' => true,

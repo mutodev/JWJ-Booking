@@ -1,6 +1,6 @@
 <template>
   <nav class="sidebar bg-dark text-white position-fixed h-100 shadow-sm">
-    <ul class="nav flex-column pt-3">
+    <ul class="nav flex-column pt-5 mt-3">
       <li class="nav-item mb-2" v-for="value in access" :key="value.id">
         <!-- Si tiene hijos -->
         <div v-if="value.children && value.children.length > 0">
