@@ -32,4 +32,45 @@ class RoleController extends ResourceController
                 ->setJSON(['message' => $th->getMessage()]);
         }
     }
+
+    /**
+     * Crear un nuevo rol
+     *
+     * @return void
+     */
+    public function createRole()
+    {
+        try {
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
+            return $this->response
+                ->setStatusCode(201)
+                ->setJSON(create_response('Rol creado', $this->roleService->createRole($data)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
+     * Actualizar un rol existente
+     *
+     * @param int $id
+     * @return void
+     */
+    public function updateRole($id)
+    {
+        try {
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Rol actualizado', $this->roleService->updateRole($id, $data)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
 }

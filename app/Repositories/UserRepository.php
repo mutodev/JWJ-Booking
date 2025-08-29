@@ -74,6 +74,7 @@ class UserRepository
             ->join('roles', 'roles.id = users.role_id')
             ->where('email', $email)
             ->where('state', true)
+            ->where('roles.is_active', true)
             ->first();
 
         if (!$data || !password_verify($password, $data->password))

@@ -1,9 +1,7 @@
 <template>
   <div class="row justify-content-end">
     <div class="col-md-1">
-      <button class="btn btn-sm btn-primary">
-        <i class="bi bi-plus-lg"></i> Add Role
-      </button>
+      
     </div>
   </div>
 
@@ -19,19 +17,19 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(item, index) in data" :key="index">
+          <tr v-for="(item, index) in data" :key="item.id || index">
             <th class="text-center" scope="row">{{ index + 1 }}</th>
-            <td>{{ item.name }}</td>
-            <td>
-              <span v-if="item.is_active" class="text-success">Active</span>
-              <span v-if="!item.is_active" class="text-danger">Inactive</span>
+            <td class="text-center">{{ item.name }}</td>
+            <td class="text-center">
+              <span v-if="item.is_active" class="badge bg-success">Active</span>
+              <span v-else class="badge bg-danger">Inactive</span>
             </td>
             <td class="text-center">
-              <button class="btn btn-sm btn-warning me-2">
+              <button
+                class="btn btn-sm btn-warning me-2"
+                @click="editRoleModal(item)"
+              >
                 <i class="bi bi-pencil-square"></i> Edit
-              </button>
-              <button class="btn btn-sm btn-danger">
-                <i class="bi bi-trash"></i> Delete
               </button>
             </td>
           </tr>
@@ -39,25 +37,47 @@
       </table>
     </div>
   </div>
+
+  <RoleEdit
+    :show="modalVisible"
+    :data="selectedRole"
+    @close="modalVisible = false"
+    @saved="handleRoleSaved"
+  />
 </template>
+
 <script setup>
-import { inject, ref } from "vue";
+import { inject, ref, onMounted } from "vue";
 import api from "@/services/axios";
+import RoleEdit from "./RoleEdit.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Roles", icon: "bi bi-shield-lock" });
 
-// Variable reactiva
 const data = ref([]);
+const modalVisible = ref(false);
+const selectedRole = ref(null);
 
 const getData = async () => {
   try {
     const response = await api.get("/roles");
-    data.value = response.data; // <--- actualizar .value
+    data.value = response.data;
   } catch (error) {
     console.error("Error fetching roles:", error);
   }
 };
 
-getData();
+const editRoleModal = (item) => {
+  selectedRole.value = { ...item };
+  modalVisible.value = true;
+};
+
+const handleRoleSaved = () => {
+  modalVisible.value = false;
+  getData();
+};
+
+onMounted(() => {
+  getData();
+});
 </script>

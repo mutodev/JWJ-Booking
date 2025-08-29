@@ -18,16 +18,19 @@ $routes->group('api', function ($routes) {
 
     // Usuarios
     $routes->group('users', ['filter' => 'verifyToken'], function ($routes) {
-        $routes->get('/(:segment)', [UserController::class, 'getUserById']);
+        $routes->get('(:any)', [UserController::class, 'getUserById']);
         $routes->post('', [UserController::class, 'create']);
-        $routes->put('/(:segment)', [UserController::class, 'updateUser']);
-        $routes->delete('/(:segment)', [UserController::class, 'deleteUser']);
+        $routes->put('(:any)', [UserController::class, 'updateUser']);
+        $routes->delete('(:any)', [UserController::class, 'deleteUser']);
         $routes->get('', [UserController::class, 'getAllUsers']);
     });
 
     // Roles
     $routes->group('roles', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [RoleController::class, 'getAllRoles']);
+        $routes->put('(:any)', [RoleController::class, 'updateRole']);
+        $routes->post('', [RoleController::class, 'createRole']);
+        $routes->delete('(:any)', [RoleController::class, 'deleteRole']);
     });
 });
 
