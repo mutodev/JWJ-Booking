@@ -9,4 +9,7 @@
     <router-view />
   </main>
 </template>
-<script setup></script>
+<script setup>
+import NavbarAdmin from './template/NavbarAdmin.vue'
+import SidebarAdmin from './template/SidebarAdmin.vue'
+</script>
