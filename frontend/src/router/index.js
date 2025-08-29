@@ -25,6 +25,7 @@ const routes = [
     name: "admin",
     component: Admin,
     meta: { requiresAuth: true },
+    redirect: "/admin/dashboard",
     children: [
       { path: "dashboard", component: Dashboard },
       { path: "reservations", component: Reservations },
