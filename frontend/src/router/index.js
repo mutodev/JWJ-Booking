@@ -27,10 +27,10 @@ const routes = [
     meta: { requiresAuth: true },
     children: [
       { path: "dashboard", component: Dashboard },
-      { path: "users", component: Users },
       { path: "reservations", component: Reservations },
       { path: "clients", component: Client },
       { path: "reports", component: Reports },
+      { path: "config/users", component: Users },
       { path: "config/services", component: Services },
       { path: "config/prices", component: Prices },
       { path: "config/roles", component: Roles },
