@@ -28,23 +28,29 @@ class ValidateToken implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         try {
-            if (!$request->getHeaderLine('Authorization')) {
-                return response()->setStatusCode(403)->setJSON(['message' => lang('Auth.tokenNotProvided')]);
+            $token = $request->getHeaderLine('Authorization');
+            if (!$token) {
+                return service('response')->setStatusCode(403)->setJSON(['message' => 'Token not provided']);
             }
 
-            $token = substr($request->getHeaderLine('Authorization'), 7);
+            $token = substr($token, 7);
             $this->tokenResponse = verify_token($token, true);
 
             $userModel = new UserRepository();
             $user = $userModel->getUserByEmail($this->tokenResponse['email']);
             service('auth')->setUser($user);
-            
+        } catch (\CodeIgniter\HTTP\Exceptions\HTTPException $ex) {
+            // Atrapa las excepciones HTTP lanzadas por verify_token
+            return service('response')
+                ->setStatusCode($ex->getCode())
+                ->setJSON(['message' => $ex->getMessage()]);
         } catch (\Throwable $th) {
-            return response()
-                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+            return service('response')
+                ->setStatusCode($th->getCode() ?: 500)
                 ->setJSON(['message' => $th->getMessage()]);
         }
     }
+
 
     /**
      * Allows After filters to inspect and modify the response

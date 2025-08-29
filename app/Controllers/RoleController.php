@@ -3,8 +3,9 @@
 namespace App\Controllers;
 
 use App\Services\RoleService;
+use CodeIgniter\RESTful\ResourceController;
 
-class RoleController extends BaseController
+class RoleController extends ResourceController
 {
 
     protected $roleService;

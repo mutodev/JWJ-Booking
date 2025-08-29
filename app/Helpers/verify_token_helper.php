@@ -16,7 +16,7 @@ use Firebase\JWT\SignatureInvalidException;
 function verify_token(string $token)
 {
     try {
-        $decode = (array)JWT::decode($token, new Key(env('JWT_KEY'), 'HS256'));
+        $decode = (array)JWT::decode($token, new Key(env('encryption.key'), 'HS256'));
         if (isset($decode['exp']) && $decode['exp'] < time())
             throw new HTTPException(lang('Auth.tokenExpired'), Response::HTTP_UNAUTHORIZED);
         return $decode;

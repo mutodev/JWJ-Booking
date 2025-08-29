@@ -7,8 +7,6 @@
     <div class="flex-grow-1 d-flex flex-column min-vh-100 bg-light">
       <NavbarAdmin />
       <main class="p-4">
-        <h2 class="mb-3">Bienvenido al Panel</h2>
-        <p>Este es un ejemplo de contenido para tu administración.</p>
         <router-view />
       </main>
     </div>
@@ -18,6 +16,20 @@
 <script setup>
 import SidebarAdmin from "./template/SidebarAdmin.vue";
 import NavbarAdmin from "./template/NavbarAdmin.vue";
+import { provide, ref } from "vue";
+
+
+const headerData = ref({
+  title: "Dashboard",
+  icon: "bi-speedometer2",
+});
+
+const updateHeaderData = (newData) => {
+  headerData.value = { ...headerData.value, ...newData }
+}
+
+provide('headerData', headerData)
+provide('updateHeaderData', updateHeaderData)
 </script>
 
 <style scoped>

@@ -5,6 +5,8 @@
     >
       <!-- Logo o título -->
       <span class="navbar-brand mb-0 h4 text-dark">Admin JWJ</span>
+      <span class="navbar-brand mb-0 h4 text-dark"> <i :class="headerData.icon"></i> {{ headerData.title }}</span>
+
 
       <!-- Información y dropdown del usuario -->
       <div class="d-flex align-items-center">
@@ -43,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { inject, ref } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
@@ -60,6 +62,8 @@ const closeSession = () => {
   sessionStorage.clear();
   router.replace("/login");
 };
+
+const headerData = inject('headerData');
 </script>
 
 <style scoped>

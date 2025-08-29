@@ -34,10 +34,10 @@ api.interceptors.request.use(
 // Interceptor de RESPUESTA
 api.interceptors.response.use(
   (response) => {
-    if (response.data?.data) {
-      sessionStorage.setItem("token", response.data.data);
-      const decoded = jwtDecode(response.data.data);
-      console.log(decoded);
+    if (response.data?.token || response.data?.data) {
+      const token = response.data?.token ?? response.data.data;
+      sessionStorage.setItem("token", token);
+      const decoded = jwtDecode(token);
 
       // Decodificar el token y guardar los datos en sessionStorage
       for (const [key, value] of Object.entries(decoded)) {
