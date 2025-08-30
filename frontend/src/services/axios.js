@@ -45,11 +45,14 @@ api.interceptors.response.use(
           sessionStorage.setItem(key, String(value));
         }
       }
-
-      if (response.config.method?.toLocaleUpperCase() !== "GET")
-        toast.success(response.data.message ?? "Success");
     }
-    hideLoader();
+
+    if (response.config.method?.toLocaleUpperCase() !== "GET")
+      toast.success(response.data.message ?? "Success");
+
+    setTimeout(() => {
+      hideLoader();
+    }, 300);
     return response?.data ?? response;
   },
   (error) => {

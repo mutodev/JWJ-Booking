@@ -18,6 +18,6 @@ createLoader();
 
 app.use(router);
 app.use(Toast, {
-  timeout: 5000,
+  timeout: 3500,
 });
 app.mount("#app");

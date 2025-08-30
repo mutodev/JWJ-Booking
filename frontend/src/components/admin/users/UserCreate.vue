@@ -3,7 +3,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Edit User</h5>
+          <h5 class="modal-title">Create User</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
@@ -61,16 +61,6 @@
               </select>
               <small class="text-danger">{{ role_id_error }}</small>
             </div>
-
-            <div class="mb-3 form-check">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                id="userActive"
-                v-model="is_active"
-              />
-              <label class="form-check-label" for="userActive"> Active </label>
-            </div>
           </form>
         </div>
 
@@ -98,14 +88,13 @@
 
 <script setup>
 import { useForm, useField } from "vee-validate";
-import { watch, ref } from "vue";
+import { watch, ref, onMounted } from "vue";
 import api from "@/services/axios";
 import * as yup from "yup";
 
-const emit = defineEmits(["close", "saved"]);
+const emit = defineEmits(["close", "saved", "data-updated"]);
 const props = defineProps({
   show: Boolean,
-  data: Object,
   roles: {
     type: Array,
     default: () => [],
@@ -124,11 +113,10 @@ const schema = yup.object({
     .min(2, "Minimum 2 characters")
     .max(30, "Maximum 30 characters"),
   email: yup.string().email("Invalid email").required("Email is required"),
-  is_active: yup.boolean(),
   role_id: yup.string().required("Role is required"),
 });
 
-const { handleSubmit, setValues, resetForm } = useForm({
+const { handleSubmit } = useForm({
   validationSchema: schema,
 });
 
@@ -138,24 +126,22 @@ const { value: last_name, errorMessage: last_name_error } =
   useField("last_name");
 const { value: email, errorMessage: email_error } = useField("email");
 const { value: role_id, errorMessage: role_id_error } = useField("role_id");
-const { value: is_active } = useField("is_active");
 
 watch(
-  () => props.data,
-  (newData) => {
-    if (newData) {
-      setValues({
-        first_name: newData.first_name,
-        last_name: newData.last_name,
-        email: newData.email,
-        is_active: newData.is_active,
-        role_id: newData.role_id,
+  () => props.show,
+  (newVal) => {
+    if (newVal) {
+      // Resetear el formulario cuando la modal se abre
+      resetForm({
+        values: {
+          first_name: "",
+          last_name: "",
+          email: "",
+          role_id: "",
+        },
       });
-    } else {
-      resetForm();
     }
-  },
-  { immediate: true }
+  }
 );
 
 const dataRoles = ref([]);
@@ -172,9 +158,22 @@ const closeModal = () => {
 };
 
 const submitForm = handleSubmit(async (values) => {
-  await api.put(`/users/${props.data.id}`, values);
-  emit("saved");
+  await api.post(`/users`, values);
+  emit('data-updated', true);
   closeModal();
+});
+
+onMounted(() => {
+  if (props.show) {
+    resetForm({
+      values: {
+        first_name: '',
+        last_name: '',
+        email: '',
+        role_id: ''
+      }
+    });
+  }
 });
 </script>
 <style scoped>

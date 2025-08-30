@@ -1,7 +1,7 @@
 <template>
   <div class="row justify-content-end">
     <div class="col-md-1">
-      <button class="btn btn-sm btn-primary">
+      <button class="btn btn-sm btn-primary" @click="createUserModal()">
         <i class="bi bi-plus-lg"></i>
         New User
       </button>
@@ -34,17 +34,26 @@
       />
     </div>
   </div>
+
+  <UserCreate
+    :show="modalVisible"
+    :roles="dataRol"
+    @close="modalVisible = false"
+    @data-updated="handleDataUpdate"
+  />
 </template>
 
 <script setup>
 import { inject, onMounted, ref } from "vue";
 import api from "@/services/axios";
 import UsersTable from "./UsersTable.vue";
+import UserCreate from "./UserCreate.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Usurios", icon: "bi bi-person-gear" });
 
 const activeTab = ref("");
+const modalVisible = ref(false);
 const setActiveTab = (roleId) => {
   activeTab.value = roleId;
   getDataByRole(roleId);
@@ -71,12 +80,19 @@ const getDataByRole = async (roleId) => {
 
 /**
  * Actualización de datos por cierre de modal
- * @param updated 
+ * @param updated
  */
-const handleDataUpdate = (updated) => {   
+const handleDataUpdate = (updated) => {
   if (updated) {
     getDataByRole(activeTab.value);
   }
+};
+
+/**
+ * Modal de creación de usuario
+ */
+const createUserModal = () => {
+  modalVisible.value = true;
 };
 
 onMounted(() => {

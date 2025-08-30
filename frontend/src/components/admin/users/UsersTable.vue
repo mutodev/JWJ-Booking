@@ -23,7 +23,7 @@
         <td class="text-center">
           <button
             class="btn btn-sm btn-warning me-2"
-            @click="editRoleModal(item)"
+            @click="editUserModal(item)"
           >
             <i class="bi bi-pencil-square"></i> Edit
           </button>
@@ -82,7 +82,7 @@ watch(
   { deep: true, immediate: true }
 );
 
-const editRoleModal = (item) => {
+const editUserModal = (item) => {
   selectedData.value = { ...item };
   modalVisible.value = true;
 };
