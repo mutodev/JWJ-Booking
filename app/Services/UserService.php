@@ -42,10 +42,10 @@ class UserService
     {
 
         $validateUser = $this->userRepository->getUserByEmail($data['email']);
-        if ($validateUser)    
+        if ($validateUser)
             throw new HTTPException(lang('User.emailInUse'), Response::HTTP_CONFLICT);
 
-        $password = $this->generateRandomPassword(12);
+        $password = generate_password(12);
         $data['password'] = password_hash($password, PASSWORD_BCRYPT);
 
         $user = $this->userRepository->createUser($data);
@@ -149,22 +149,5 @@ class UserService
     public function getByRole(string $role)
     {
         return $this->userRepository->getByRole($role);
-    }
-
-    /**
-     * Generar una contraseña aleatoria
-     *
-     * @param int $length
-     * @return string
-     */
-    private function generateRandomPassword($length = 10)
-    {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=';
-        $charactersLength = strlen($characters);
-        $randomPassword = '';
-        for ($i = 0; $i < $length; $i++) {
-            $randomPassword .= $characters[rand(0, $charactersLength - 1)];
-        }
-        return $randomPassword;
     }
 }

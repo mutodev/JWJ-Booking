@@ -20,7 +20,7 @@
       </button>
       <div class="collapse navbar-collapse" id="mainNav">
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="#inicio"
               >Inicio</a
             >
@@ -30,11 +30,11 @@
           </li>
           <li class="nav-item">
             <a class="nav-link" href="#contacto">Contacto</a>
-          </li>
+          </li> -->
         </ul>
         <div class="d-flex ms-lg-3">
           <RouterLink to="/login" class="btn btn-primary">
-            Iniciar sesión
+            Sign In
           </RouterLink>
         </div>
       </div>

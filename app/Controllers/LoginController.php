@@ -34,4 +34,23 @@ class LoginController extends ResourceController
                 ->setJSON(['message' => $th->getMessage()]);
         }
     }
+
+    /**
+     * Restaurar contraseña de usuario
+     * @return void
+     */
+    public function resetPassword()
+    {
+        try {
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Contraseña restaurada', $this->loginService->resetPassword($data)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
 }

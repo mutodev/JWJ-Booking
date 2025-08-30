@@ -5,14 +5,20 @@ namespace App\Services;
 use App\Repositories\UserRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
+use App\Services\BrevoEmailService as ServicesBrevoEmailService;
+
+use function PHPUnit\Framework\isNull;
 
 class LoginService
 {
     protected $userRepository;
+    protected $emailService;
+
 
     function __construct()
     {
         $this->userRepository = new UserRepository();
+        $this->emailService = new ServicesBrevoEmailService();
     }
 
 
@@ -95,5 +101,34 @@ class LoginService
         });
 
         return array_values($menuTree);
+    }
+
+
+    /**
+     * Restaurar contraseña de usuario
+     *
+     * @return void
+     */
+    public function resetPassword(array $data)
+    {
+        $user = $this->userRepository->getUserByEmail($data['email']);
+        if (isNull($user))
+            return true;
+
+        $newPassword = generate_password(12);
+        $updated = $this->userRepository->updateUser($user->id, ['password' => password_hash($newPassword, PASSWORD_BCRYPT)]);
+        if (!$updated)
+            return true;
+
+        $emailSent = $this->emailService->sendEmail(
+            $data['email'],
+            'Password Reset - JamWithJamie',
+            view('emails/reset_password', ['password' => $newPassword]),
+        );
+
+        if (!$emailSent)
+            throw new HTTPException(lang('User.emailSendFailed'), Response::HTTP_BAD_REQUEST);
+
+        return true;
     }
 }

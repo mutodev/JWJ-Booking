@@ -20,8 +20,10 @@ function showLoader() {
 }
 
 function hideLoader() {
-  const loader = document.getElementById("global-loader");
-  if (loader) loader.classList.add("d-none");
+  setTimeout(() => {
+    const loader = document.getElementById("global-loader");
+    if (loader) loader.classList.add("d-none");
+  }, 350);
 }
 
 export { createLoader, showLoader, hideLoader };

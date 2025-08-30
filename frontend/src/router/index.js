@@ -12,13 +12,17 @@ import Services from "@/components/admin/services/Services.vue";
 import Prices from "@/components/admin/prices/Prices.vue";
 import Roles from "@/components/admin/roles/Roles.vue";
 import Menu from "@/components/admin/menu/Menu.vue";
+import ResetPassword from "@/components/home/login/ResetPassword.vue";
 
 const routes = [
   {
     path: "/",
     name: "home",
     component: Home,
-    children: [{ path: "login", component: Login }],
+    children: [
+      { path: "login", component: Login },
+      { path: "reset-password", component: ResetPassword },
+    ],
   },
   {
     path: "/admin",

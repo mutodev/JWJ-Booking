@@ -14,6 +14,7 @@ $routes->group('api', function ($routes) {
     // Login
     $routes->group('auth', function ($routes) {
         $routes->post('login', [LoginController::class, 'login']);
+        $routes->post('reset-password', [LoginController::class, 'resetPassword']);
     });
 
     // Usuarios

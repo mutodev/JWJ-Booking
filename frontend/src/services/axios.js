@@ -32,28 +32,32 @@ api.interceptors.request.use(
 // Interceptor de RESPUESTA
 api.interceptors.response.use(
   (response) => {
-    if (response.data?.token || response.data?.data) {
-      const token = response.data?.token ?? response.data.data;
-      sessionStorage.setItem("token", token);
-      const decoded = jwtDecode(token);
+    try {
+      if (response.data?.token || response.data?.data) {
+        const token = response.data?.token ?? response.data.data;
+        const decoded = jwtDecode(token);
 
-      // Decodificar el token y guardar los datos en sessionStorage
-      for (const [key, value] of Object.entries(decoded)) {
-        if (typeof value === "object") {
-          sessionStorage.setItem(key, JSON.stringify(value));
-        } else {
-          sessionStorage.setItem(key, String(value));
+        sessionStorage.setItem("token", token);
+        // Decodificar el token y guardar los datos en sessionStorage
+        for (const [key, value] of Object.entries(decoded)) {
+          if (typeof value === "object") {
+            sessionStorage.setItem(key, JSON.stringify(value));
+          } else {
+            sessionStorage.setItem(key, String(value));
+          }
         }
       }
-    }
 
-    if (response.config.method?.toLocaleUpperCase() !== "GET")
-      toast.success(response.data.message ?? "Success");
+      if (response.config.method?.toLocaleUpperCase() !== "GET")
+        toast.success(response.data.message ?? "Success");
 
-    setTimeout(() => {
       hideLoader();
-    }, 300);
-    return response?.data ?? response;
+      return response?.data ?? response;
+    } catch (error) {
+      console.log(error);
+      hideLoader();
+      return response?.data ?? response;
+    }
   },
   (error) => {
     hideLoader();

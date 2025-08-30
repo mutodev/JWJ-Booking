@@ -27,10 +27,6 @@
           >
             <i class="bi bi-pencil-square"></i> Edit
           </button>
-          <button class="btn btn-sm btn-light">
-            <i class="bi bi-arrow-clockwise"></i>
-            Reset Password
-          </button>
         </td>
       </tr>
     </tbody>
