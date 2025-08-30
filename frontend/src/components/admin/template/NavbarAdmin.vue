@@ -5,8 +5,9 @@
     >
       <!-- Logo o título -->
       <span class="navbar-brand mb-0 h4 text-dark">Admin JWJ</span>
-      <span class="navbar-brand mb-0 h4 text-dark"> <i :class="headerData.icon"></i> {{ headerData.title }}</span>
-
+      <span class="navbar-brand mb-0 h4 text-dark">
+        <i :class="headerData.icon"></i> {{ headerData.title }}</span
+      >
 
       <!-- Información y dropdown del usuario -->
       <div class="d-flex align-items-center">
@@ -28,13 +29,18 @@
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow">
             <li>
-              <router-link class="dropdown-item" to="/profile"
-                >Editar perfil</router-link
-              >
+              <router-link class="dropdown-item" to="/admin/profile">
+                <i class="bi bi-person-fill"></i>
+                Profile
+              </router-link>
             </li>
             <li>
-              <button class="dropdown-item text-danger" v-on:click="closeSession()">
-                Cerrar sesión
+              <button
+                class="dropdown-item text-danger"
+                v-on:click="closeSession()"
+              >
+                <i class="bi bi-box-arrow-right"></i>
+                Log out
               </button>
             </li>
           </ul>
@@ -63,7 +69,7 @@ const closeSession = () => {
   router.replace("/login");
 };
 
-const headerData = inject('headerData');
+const headerData = inject("headerData");
 </script>
 
 <style scoped>

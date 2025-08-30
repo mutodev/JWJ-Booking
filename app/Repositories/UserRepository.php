@@ -116,7 +116,6 @@ class UserRepository
     public function updateUser(string $userId, array $data): bool
     {
         $filtered = array_intersect_key($data, array_flip($this->allowedFields));
-
         if (empty($filtered)) {
             return false;
         }

@@ -13,6 +13,7 @@ import Prices from "@/components/admin/prices/Prices.vue";
 import Roles from "@/components/admin/roles/Roles.vue";
 import Menu from "@/components/admin/menu/Menu.vue";
 import ResetPassword from "@/components/home/login/ResetPassword.vue";
+import Profile from "@/components/admin/profile/Profile.vue";
 
 const routes = [
   {
@@ -35,6 +36,7 @@ const routes = [
       { path: "reservations", component: Reservations },
       { path: "clients", component: Client },
       { path: "reports", component: Reports },
+      { path: "profile", component: Profile },
       { path: "config/users", component: Users },
       { path: "config/services", component: Services },
       { path: "config/prices", component: Prices },

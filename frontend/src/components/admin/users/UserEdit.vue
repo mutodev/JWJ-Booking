@@ -83,7 +83,6 @@
             type="button"
             class="btn btn-primary"
             @click="submitForm"
-            :disabled="loading"
           >
             <i class="bi bi-save"></i>
             Save

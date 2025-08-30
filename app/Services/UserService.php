@@ -73,6 +73,13 @@ class UserService
      */
     public function update(string $id, array $data)
     {
+        if (empty($data['password'])){
+            $userTemp = $this->userRepository->getUserById($id);
+            $data['password'] = $userTemp->password;
+        }else{
+            $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+        }
+
         $user = $this->userRepository->updateUser($id, $data);
         if (!$user)
             throw new HTTPException(lang('User.userUpdateFailed'), Response::HTTP_BAD_REQUEST);
