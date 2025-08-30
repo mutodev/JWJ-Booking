@@ -19,11 +19,9 @@ api.interceptors.request.use(
   (config) => {
     showLoader();
     const token = sessionStorage.getItem("token");
-
     if (token) config.headers["Authorization"] = `Bearer ${token}`;
 
     config.headers["X-Language"] = localStorage.getItem("language") ?? "es";
-
     return config;
   },
   (error) => {
@@ -47,6 +45,9 @@ api.interceptors.response.use(
           sessionStorage.setItem(key, String(value));
         }
       }
+
+      if (response.config.method?.toLocaleUpperCase() !== "GET")
+        toast.success(response.data.message ?? "Success");
     }
     hideLoader();
     return response?.data ?? response;

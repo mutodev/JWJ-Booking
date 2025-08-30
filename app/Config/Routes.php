@@ -18,11 +18,11 @@ $routes->group('api', function ($routes) {
 
     // Usuarios
     $routes->group('users', ['filter' => 'verifyToken'], function ($routes) {
-        $routes->get('(:any)', [UserController::class, 'getUserById']);
+        $routes->get('by-id/(:any)', [UserController::class, 'getUserById']);
         $routes->post('', [UserController::class, 'create']);
         $routes->put('(:any)', [UserController::class, 'updateUser']);
         $routes->delete('(:any)', [UserController::class, 'deleteUser']);
-        $routes->get('', [UserController::class, 'getAllUsers']);
+        $routes->get('by-rol/(:any)', [UserController::class, 'getUserByRole']);
     });
 
     // Roles

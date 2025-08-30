@@ -1,10 +1,4 @@
 <template>
-  <div class="row justify-content-end">
-    <div class="col-md-1">
-      
-    </div>
-  </div>
-
   <div class="row mt-3">
     <div class="col-md-12">
       <table class="table table-hover">
