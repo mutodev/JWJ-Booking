@@ -31,7 +31,7 @@ class UserRepository
      * @param string $id
      * @return User
      */
-    public function getUserById(string $id): User
+    public function getUserById(string $id): ?User
     {
         return $this->userModel
             ->where('id', $id)
@@ -44,7 +44,7 @@ class UserRepository
      * @param string $email
      * @return User
      */
-    public function getUserByEmail(string $email): User
+    public function getUserByEmail(string $email): ?User
     {
         return $this->userModel
             ->where('email', $email)

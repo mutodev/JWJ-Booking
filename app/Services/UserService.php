@@ -5,14 +5,17 @@ namespace App\Services;
 use App\Repositories\UserRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
+use App\Services\BrevoEmailService as ServicesBrevoEmailService;
 
 class UserService
 {
     protected $userRepository;
+    protected $emailService;
 
     function __construct()
     {
         $this->userRepository = new UserRepository();
+        $this->emailService = new ServicesBrevoEmailService();
     }
 
     /**
@@ -37,12 +40,26 @@ class UserService
      */
     public function create(array $data)
     {
+
+        $validateUser = $this->userRepository->getUserByEmail($data['email']);
+        if ($validateUser)    
+            throw new HTTPException(lang('User.emailInUse'), Response::HTTP_CONFLICT);
+
         $password = $this->generateRandomPassword(12);
         $data['password'] = password_hash($password, PASSWORD_BCRYPT);
 
         $user = $this->userRepository->createUser($data);
         if (!$user)
             throw new HTTPException(lang('User.userCreationFailed'), Response::HTTP_BAD_REQUEST);
+
+        $email = $this->emailService->sendEmail(
+            $data['email'],
+            'Welcome to JamWithJamie',
+            view('emails/welcome', ['password' => $password]),
+        );
+
+        if (!$email)
+            throw new HTTPException(lang('User.emailSendFailed'), Response::HTTP_BAD_REQUEST);
 
         return $this->userRepository->getUserById($user);
     }
