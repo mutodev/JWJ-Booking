@@ -1,10 +1,10 @@
 <template>
   <div class="row justify-content-end">
     <div class="col-md-1">
-        <button class="btn btn-sm btn-primary">
-            <i class="bi bi-plus-lg"></i>
-            New User
-        </button>
+      <button class="btn btn-sm btn-primary">
+        <i class="bi bi-plus-lg"></i>
+        New User
+      </button>
     </div>
   </div>
 
@@ -27,7 +27,11 @@
       v-for="item in dataRol"
       :class="{ active: activeTab === item.id }"
     >
-      <UsersTable :data="dataUsers" />
+      <UsersTable
+        :data="dataUsers"
+        :roles="dataRol"
+        @data-updated="handleDataUpdate"
+      />
     </div>
   </div>
 </template>
@@ -63,6 +67,16 @@ const dataUsers = ref([]);
 const getDataByRole = async (roleId) => {
   const response = await api.get(`/users/by-rol/${roleId}`);
   dataUsers.value = response.data;
+};
+
+/**
+ * Actualización de datos por cierre de modal
+ * @param updated 
+ */
+const handleDataUpdate = (updated) => {   
+  if (updated) {
+    getDataByRole(activeTab.value);
+  }
 };
 
 onMounted(() => {

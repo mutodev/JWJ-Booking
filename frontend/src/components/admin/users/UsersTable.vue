@@ -11,7 +11,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr v-for="(item, index) in internalData" :key="item.id || index">
+      <tr v-for="(item, index) in dataUsers" :key="item.id || index">
         <th class="text-center" scope="row">{{ index + 1 }}</th>
         <td>{{ item.first_name }}</td>
         <td>{{ item.last_name }}</td>
@@ -36,28 +36,48 @@
     </tbody>
   </table>
 
-  <!-- <UserEdit
+  <UserEdit
     :show="modalVisible"
     :data="selectedData"
+    :roles="dataRoles"
     @close="modalVisible = false"
-  /> -->
+    @saved="handleRoleSaved"
+  />
 </template>
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, defineEmits  } from "vue";
 import UserEdit from "./UserEdit.vue";
 
+const emit = defineEmits(['data-updated']);
+
 const props = defineProps({
-  data: Array,
+  data: {
+    type: Array,
+    default: () => []
+  },
+  roles: {
+    type: Array,
+    default: () => []
+  }
 });
 
-const internalData = ref([]);
+const dataUsers = ref([]);
+const dataRoles = ref([]);
 const modalVisible = ref(false);
 const selectedData = ref(null);
 
 watch(
   () => props.data,
   (newData) => {
-    internalData.value = [...newData];
+    dataUsers.value = [...newData];
+  },
+  { deep: true, immediate: true }
+);
+
+watch(
+  () => props.roles,
+  (newRoles) => {
+    dataRoles.value = [...newRoles];
   },
   { deep: true, immediate: true }
 );
@@ -65,5 +85,9 @@ watch(
 const editRoleModal = (item) => {
   selectedData.value = { ...item };
   modalVisible.value = true;
+};
+
+const handleRoleSaved = () => {
+  emit('data-updated', true);
 };
 </script>
