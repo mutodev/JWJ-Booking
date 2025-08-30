@@ -27,7 +27,7 @@
           >
             <i class="bi bi-pencil-square"></i> Edit
           </button>
-          <button class="btn btn-sm btn-secondary">
+          <button class="btn btn-sm btn-light">
             <i class="bi bi-arrow-clockwise"></i>
             Reset Password
           </button>

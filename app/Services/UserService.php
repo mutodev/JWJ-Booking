@@ -37,6 +37,9 @@ class UserService
      */
     public function create(array $data)
     {
+        $password = $this->generateRandomPassword(12);
+        $data['password'] = password_hash($password, PASSWORD_BCRYPT);
+
         $user = $this->userRepository->createUser($data);
         if (!$user)
             throw new HTTPException(lang('User.userCreationFailed'), Response::HTTP_BAD_REQUEST);
@@ -131,5 +134,20 @@ class UserService
         return $this->userRepository->getByRole($role);
     }
 
-    
+    /**
+     * Generar una contraseña aleatoria
+     *
+     * @param int $length
+     * @return string
+     */
+    private function generateRandomPassword($length = 10)
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=';
+        $charactersLength = strlen($characters);
+        $randomPassword = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomPassword .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomPassword;
+    }
 }
