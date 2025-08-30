@@ -1,19 +1,21 @@
-<?php namespace App\Database\Seeds;
+<?php
+
+namespace App\Database\Seeds;
 
 use CodeIgniter\Database\Seeder;
 use CodeIgniter\I18n\Time;
+use Ramsey\Uuid\Uuid;
 
 class MenuSeeder extends Seeder
 {
     public function run()
     {
-        // Menús principales
         $menus = [
             [
                 'id' => 'm1a2b3c4-d5e6-7890-fgh1-234567890123',
                 'name' => 'Dashboard',
                 'uri' => '/admin/dashboard',
-                'icon' => 'bi bi-speedometer2',
+                'icon' => 'bi bi-house-door',
                 'order' => 1,
                 'is_active' => true,
                 'parent_id' => null,
@@ -22,9 +24,9 @@ class MenuSeeder extends Seeder
             ],
             [
                 'id' => 'm2b3c4d5-e6f7-8901-ghi2-345678901234',
-                'name' => 'Reservas',
+                'name' => 'Reservations',
                 'uri' => '/admin/reservations',
-                'icon' => 'bi bi-calendar-check',
+                'icon' => 'bi bi-calendar-event',
                 'order' => 2,
                 'is_active' => true,
                 'parent_id' => null,
@@ -33,9 +35,9 @@ class MenuSeeder extends Seeder
             ],
             [
                 'id' => 'm3c4d5e6-f7g8-9012-hij3-456789012345',
-                'name' => 'Clientes',
+                'name' => 'Clients',
                 'uri' => '/admin/clients',
-                'icon' => 'bi bi-people',
+                'icon' => 'bi bi-people-fill',
                 'order' => 3,
                 'is_active' => true,
                 'parent_id' => null,
@@ -44,9 +46,9 @@ class MenuSeeder extends Seeder
             ],
             [
                 'id' => 'm4d5e6f7-g8h9-0123-ijk4-567890123456',
-                'name' => 'Reportes',
+                'name' => 'Reports',
                 'uri' => '/admin/reports',
-                'icon' => 'bi bi-bar-chart',
+                'icon' => 'bi bi-graph-up',
                 'order' => 4,
                 'is_active' => true,
                 'parent_id' => null,
@@ -54,11 +56,22 @@ class MenuSeeder extends Seeder
                 'updated_at' => Time::now()
             ],
             [
+                'id' => '5758a89e-08ae-40f7-b98c-aafd0fd68627',
+                'name' => 'Service Areas',
+                'uri' => '#',
+                'icon' => 'bi bi-globe-americas',
+                'order' => 5,
+                'is_active' => true,
+                'parent_id' => null,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now()
+            ],
+            [
                 'id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234567',
-                'name' => 'Configuración',
+                'name' => 'Configuration',
                 'uri' => '#',
                 'icon' => 'bi bi-gear',
-                'order' => 5,
+                'order' => 6,
                 'is_active' => true,
                 'parent_id' => null,
                 'created_at' => Time::now(),
@@ -66,13 +79,13 @@ class MenuSeeder extends Seeder
             ]
         ];
 
-        // Submenús de Configuración
+        // Configuration submenus
         $submenus = [
             [
                 'id' => 'sm1f7g8h9-i0j1-2345-klm6-789012345678',
-                'name' => 'Servicios',
+                'name' => 'Services',
                 'uri' => '/admin/config/services',
-                'icon' => 'bi bi-list',
+                'icon' => 'bi bi-wrench-adjustable',
                 'order' => 1,
                 'is_active' => true,
                 'parent_id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234567',
@@ -81,9 +94,9 @@ class MenuSeeder extends Seeder
             ],
             [
                 'id' => 'sm2g8h9i0-j1k2-3456-lmn7-890123456789',
-                'name' => 'Precios',
+                'name' => 'Prices',
                 'uri' => '/admin/config/prices',
-                'icon' => 'bi bi-tag',
+                'icon' => 'bi bi-currency-dollar',
                 'order' => 2,
                 'is_active' => true,
                 'parent_id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234567',
@@ -92,9 +105,9 @@ class MenuSeeder extends Seeder
             ],
             [
                 'id' => 'sm3h9i0j1-k2l3-4567-mno8-901234567890',
-                'name' => 'Usuarios',
+                'name' => 'Users',
                 'uri' => '/admin/config/users',
-                'icon' => 'bi bi-person-gear',
+                'icon' => 'bi bi-person-circle',
                 'order' => 3,
                 'is_active' => true,
                 'parent_id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234567',
@@ -113,16 +126,49 @@ class MenuSeeder extends Seeder
                 'updated_at' => Time::now()
             ],
             [
-                'id' => 'sm5j1k2l3-m4n5-6789-opq0-123456789012',
-                'name' => 'Menús',
-                'uri' => '/admin/config/menus',
-                'icon' => 'bi bi-list-nested',
-                'order' => 5,
+                'id' => 'u1a2b3c4-d5e6-7890-fgh1-2345678901s1',
+                'name' => 'Metropolitan Areas',
+                'uri' => '/admin/areas/metropolitan-areas',
+                'icon' => 'bi bi-building',
+                'order' => 1,
                 'is_active' => true,
-                'parent_id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234567',
+                'parent_id' => '5758a89e-08ae-40f7-b98c-aafd0fd68627',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
-            ]
+            ],
+            [
+                'id' => 'u1a2b3c4-d5e6-7890-fgh1-2345678901s2',
+                'name' => 'Counties',
+                'uri' => '/admin/areas/counties',
+                'icon' => 'bi bi-pin-map',
+                'order' => 1,
+                'is_active' => true,
+                'parent_id' => '5758a89e-08ae-40f7-b98c-aafd0fd68627',
+                'created_at' => Time::now(),
+                'updated_at' => Time::now()
+            ],
+            [
+                'id' => 'u1a2b3c4-d5e6-7890-fgh1-2345678901s3',
+                'name' => 'Cities',
+                'uri' => '/admin/areas/cities',
+                'icon' => 'bi bi-pin-map',
+                'order' => 1,
+                'is_active' => true,
+                'parent_id' => '5758a89e-08ae-40f7-b98c-aafd0fd68627',
+                'created_at' => Time::now(),
+                'updated_at' => Time::now()
+            ],
+            [
+                'id' => 'u1a2b3c4-d5e6-7890-fgh1-2345678901s4',
+                'name' => 'Postal Codes',
+                'uri' => '/admin/areas/postal-codes',
+                'icon' => 'bi bi-pin',
+                'order' => 1,
+                'is_active' => true,
+                'parent_id' => '5758a89e-08ae-40f7-b98c-aafd0fd68627',
+                'created_at' => Time::now(),
+                'updated_at' => Time::now()
+            ],
         ];
 
         $this->db->table('menus')->insertBatch($menus);
