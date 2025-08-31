@@ -35,7 +35,38 @@ class CountyRepository
      */
     public function getAll()
     {
-        return $this->countyModel->findAll();
+        return $this->countyModel->orderBy('counties.name')->findAll();
+    }
+
+    /**
+     * Obtener toda la data con area metropolitana
+     *
+     * @return array
+     */
+    public function getAllAndMetrpolitan()
+    {
+        return $this->countyModel
+            ->select('
+                counties.id,
+                counties.name,
+                counties.is_active,
+                counties.metropolitan_area_id,
+                metropolitan_areas.name AS metropolitan_area_name
+            ')
+            ->join('metropolitan_areas', 'metropolitan_areas.id = counties.metropolitan_area_id')
+            ->orderBy('counties.name')
+            ->orderBy('metropolitan_areas.name')
+            ->findAll();
+    }
+    
+    /**
+     * Obtener toda la data activos
+     *
+     * @return array
+     */
+    public function getAllActive()
+    {
+        return $this->countyModel->orderBy('name')->where('is_active', true)->findAll();
     }
 
     /**

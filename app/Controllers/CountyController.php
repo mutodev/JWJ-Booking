@@ -27,6 +27,19 @@ class CountyController extends ResourceController
         }
     }
 
+    public function getAllAndMetrpolitan()
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Lista de condados con areas', $this->service->getAllAndMetrpolitan()));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function getById($id)
     {
         try {

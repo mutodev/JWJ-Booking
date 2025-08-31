@@ -38,6 +38,14 @@ class CountyService
     }
 
     /**
+     * Obtener todos los condados con areas
+     */
+    public function getAllAndMetrpolitan(): array
+    {
+        return $this->countyRepository->getAllAndMetrpolitan();
+    }
+
+    /**
      * Obtener condados por área metropolitana
      */
     public function getByMetropolitan(string $metropolitanId): array

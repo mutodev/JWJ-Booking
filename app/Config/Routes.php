@@ -51,6 +51,7 @@ $routes->group('api', function ($routes) {
     // Counties
     $routes->group('counties', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [CountyController::class, 'getAll']);
+        $routes->get('get-all-and-metropolitan', [CountyController::class, 'getAllAndMetrpolitan']);
         $routes->get('(:any)', [CountyController::class, 'getById']);
         $routes->post('', [CountyController::class, 'create']);
         $routes->put('(:any)', [CountyController::class, 'updateData']);

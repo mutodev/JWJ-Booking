@@ -35,7 +35,7 @@ class MetropolitanAreaRepository
      */
     public function getAll()
     {
-        return $this->metropolitanAreaModel->findAll();
+        return $this->metropolitanAreaModel->orderBy('name')->findAll();
     }
 
     /**
@@ -45,7 +45,7 @@ class MetropolitanAreaRepository
      */
     public function getAllActive()
     {
-        return $this->metropolitanAreaModel->where('is_active', true)->findAll();
+        return $this->metropolitanAreaModel->orderBy('name')->where('is_active', true)->findAll();
     }
 
     /**
