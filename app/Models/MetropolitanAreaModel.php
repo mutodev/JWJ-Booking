@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use App\Entities\MetropolitanArea;
 use CodeIgniter\Model;
 
 class MetropolitanAreaModel extends Model
 {
-    protected $table            = 'metropolitanareas';
+    protected $table            = 'metropolitan_areas';
     protected $primaryKey       = 'id';
-    protected $useAutoIncrement = true;
-    protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
+    protected $useAutoIncrement = false;
+    protected $returnType       = MetropolitanArea::class;
+    protected $useSoftDeletes   = true;
     protected $protectFields    = true;
-    protected $allowedFields    = [];
+    protected $allowedFields    = [
+        'name',
+        'is_active'
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -21,7 +25,7 @@ class MetropolitanAreaModel extends Model
     protected array $castHandlers = [];
 
     // Dates
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
@@ -35,7 +39,7 @@ class MetropolitanAreaModel extends Model
 
     // Callbacks
     protected $allowCallbacks = true;
-    protected $beforeInsert   = [];
+    protected $beforeInsert   = ['generateUUID'];
     protected $afterInsert    = [];
     protected $beforeUpdate   = [];
     protected $afterUpdate    = [];
@@ -43,4 +47,9 @@ class MetropolitanAreaModel extends Model
     protected $afterFind      = [];
     protected $beforeDelete   = [];
     protected $afterDelete    = [];
+
+    protected function generateUUID(array $data)
+    {
+        return generate_uuid_data($data);
+    }
 }

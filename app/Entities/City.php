@@ -8,5 +8,10 @@ class City extends Entity
 {
     protected $datamap = [];
     protected $dates   = ['created_at', 'updated_at', 'deleted_at'];
-    protected $casts   = [];
+    protected $casts   = [
+        'id' => 'string',
+        'county_id' => 'string',
+        'name' => 'string',
+        'is_active' => 'boolean'
+    ];
 }
