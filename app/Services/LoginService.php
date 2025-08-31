@@ -110,9 +110,8 @@ class LoginService
     public function resetPassword(array $data)
     {
         $user = $this->userRepository->getUserByEmail($data['email']);
-        if (isNull($user))
-            return true;
-
+        if ($user === null) return true;
+        
         $newPassword = generate_password(12);
         $updated = $this->userRepository->updateUser($user->id, ['password' => password_hash($newPassword, PASSWORD_BCRYPT)]);
         if (!$updated)

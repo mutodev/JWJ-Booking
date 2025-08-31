@@ -61,7 +61,7 @@ class CreateLocations extends Migration
             'deleted_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
         $this->forge->addKey('id', true);
-        $this->forge->addUniqueKey('zipcode');
+        $this->forge->addUniqueKey(['city_id', 'zipcode']);
         $this->forge->addForeignKey('city_id', 'cities', 'id', 'CASCADE', 'CASCADE');
         $this->forge->createTable('zipcodes');
     }

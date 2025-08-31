@@ -41,7 +41,7 @@ class MetropolitanAreaService
     /**
      * Crear nueva área metropolitana
      */
-    public function create(array $data): string
+    public function create(array $data)
     {
         $id = $this->repository->create($data);
 
@@ -49,7 +49,7 @@ class MetropolitanAreaService
             throw new HTTPException(lang('MetropolitanArea.createFailed'), Response::HTTP_BAD_REQUEST);
         }
 
-        return $id;
+        return $this->repository->getById($id);
     }
 
     /**

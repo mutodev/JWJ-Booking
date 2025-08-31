@@ -55,6 +55,9 @@ api.interceptors.response.use(
       return response?.data ?? response;
     } catch (error) {
       console.log(error);
+      if ([200, 201].includes(response.status))
+        toast.success(response.data.message ?? "Success");
+
       hideLoader();
       return response?.data ?? response;
     }
