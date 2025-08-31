@@ -1,9 +1,13 @@
 <?php
 
+use App\Controllers\CityController;
+use App\Controllers\CountyController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
+use App\Controllers\MetropolitanAreaController;
 use App\Controllers\RoleController;
 use App\Controllers\UserController;
+use App\Controllers\ZipCodeController;
 use CodeIgniter\Router\RouteCollection;
 
 /**
@@ -32,6 +36,42 @@ $routes->group('api', function ($routes) {
         $routes->put('(:any)', [RoleController::class, 'updateRole']);
         $routes->post('', [RoleController::class, 'createRole']);
         $routes->delete('(:any)', [RoleController::class, 'deleteRole']);
+    });
+
+    // Metropolitan Areas
+    $routes->group('metropolitan-areas', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('', [MetropolitanAreaController::class, 'getAll']);
+        $routes->get('(:any)', [MetropolitanAreaController::class, 'getById']);
+        $routes->post('', [MetropolitanAreaController::class, 'create']);
+        $routes->put('(:any)', [MetropolitanAreaController::class, 'updateData']);
+        $routes->delete('(:any)', [MetropolitanAreaController::class, 'deleteData']);
+    });
+
+    // Counties
+    $routes->group('counties', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('', [CountyController::class, 'getAll']);
+        $routes->get('(:any)', [CountyController::class, 'getById']);
+        $routes->post('', [CountyController::class, 'create']);
+        $routes->put('(:any)', [CountyController::class, 'updateData']);
+        $routes->delete('(:any)', [CountyController::class, 'deleteData']);
+    });
+
+    // Cities
+    $routes->group('cities', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('', [CityController::class, 'getAll']);
+        $routes->get('(:any)', [CityController::class, 'getById']);
+        $routes->post('', [CityController::class, 'create']);
+        $routes->put('(:any)', [CityController::class, 'updateData']);
+        $routes->delete('(:any)', [CityController::class, 'deleteData']);
+    });
+
+    // Zipcodes
+    $routes->group('zipcodes', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('', [ZipCodeController::class, 'getAll']);
+        $routes->get('(:any)', [ZipCodeController::class, 'getById']);
+        $routes->post('', [ZipCodeController::class, 'create']);
+        $routes->put('(:any)', [ZipCodeController::class, 'updateData']);
+        $routes->delete('(:any)', [ZipCodeController::class, 'deleteData']);
     });
 });
 
