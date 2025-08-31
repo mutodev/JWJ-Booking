@@ -3,7 +3,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Create Metropolitan Areaa</h5>
+          <h5 class="modal-title">Delete Metropolitan Areaa</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
@@ -19,6 +19,11 @@
                 required
                 placeholder="Enter name"
               />
+              <span class="text-ligth"
+                >Write the name of the metropolitan area <b>{{ data.name }}</b
+                >.</span
+              >
+              <br />
               <small class="text-danger">{{ name_error }}</small>
             </div>
           </form>
@@ -31,12 +36,12 @@
           </button>
           <button
             type="button"
-            class="btn btn-primary"
+            class="btn btn-danger"
             @click="submitForm"
             :disabled="loading"
           >
-            <i class="bi bi-save"></i>
-            Save
+            <i class="bi bi-trash"></i>
+            Delete
           </button>
         </div>
       </div>
@@ -48,51 +53,56 @@
 
 <script setup>
 import { useForm, useField } from "vee-validate";
-import { watch, ref, onMounted } from "vue";
+import { watch, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import * as yup from "yup";
 
+const data = ref({});
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
   show: Boolean,
+  data: {
+    type: Object,
+    default: () => ({}),
+  },
 });
-
-const schema = yup.object({
-  name: yup
-    .string()
-    .required("First name is required")
-    .min(2, "Minimum 2 characters")
-    .max(30, "Maximum 30 characters"),
-});
-
-const { handleSubmit, resetForm  } = useForm({
-  validationSchema: schema,
-});
-
-const { value: name, errorMessage: name_error } =
-  useField("name");
 
 watch(
-  () => props.show,
-  (newVal) => {
-    if (newVal) {
-      // Resetear el formulario cuando la modal se abre
-      resetForm({
-        values: {
-          name: "",
-        },
-      });
-    }
-  }
+  () => props.data,
+  (newData) => {
+    data.value = { ...newData };
+  },
+  { deep: true, immediate: true }
 );
+
+// Schema reactivo que usa el valor actualizado de data
+const schema = computed(() =>
+  yup.object({
+    name: yup
+      .string()
+      .required("Name is required")
+      .oneOf([data.value?.name], `The name must be ${data.value?.name || ""}`),
+  })
+);
+
+const { handleSubmit, resetForm } = useForm({
+  validationSchema: schema,
+});
+const { value: name, errorMessage: name_error } = useField("name");
 
 const closeModal = () => {
   emit("close");
 };
 
-const submitForm = handleSubmit(async (values) => {
-  await api.post(`/metropolitan-areas`, values);
-  emit('saved', true);
+const submitForm = handleSubmit(async () => {
+  await api.delete(`/metropolitan-areas/${props.data.id}`);
+  resetForm({
+    values: {
+      name: "",
+    },
+  });
+
+  emit("saved", true);
   closeModal();
 });
 
@@ -100,12 +110,13 @@ onMounted(() => {
   if (props.show) {
     resetForm({
       values: {
-        name: '',
-      }
+        name: "",
+      },
     });
   }
 });
 </script>
+
 <style scoped>
 .modal {
   background-color: rgba(0, 0, 0, 0.5);

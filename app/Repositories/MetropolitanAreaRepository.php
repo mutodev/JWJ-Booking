@@ -39,6 +39,16 @@ class MetropolitanAreaRepository
     }
 
     /**
+     * Obtener toda la data activos
+     *
+     * @return array
+     */
+    public function getAllActive()
+    {
+        return $this->metropolitanAreaModel->where('is_active', true)->findAll();
+    }
+
+    /**
      * Creación de area
      * @param array $data
      * @return string|false El ID del usuario creado o false en caso de error

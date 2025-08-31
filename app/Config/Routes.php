@@ -41,6 +41,7 @@ $routes->group('api', function ($routes) {
     // Metropolitan Areas
     $routes->group('metropolitan-areas', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [MetropolitanAreaController::class, 'getAll']);
+        $routes->get('list-active', [MetropolitanAreaController::class, 'getAllActive']);
         $routes->get('(:any)', [MetropolitanAreaController::class, 'getById']);
         $routes->post('', [MetropolitanAreaController::class, 'create']);
         $routes->put('(:any)', [MetropolitanAreaController::class, 'updateData']);

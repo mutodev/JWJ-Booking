@@ -116,7 +116,7 @@ const schema = yup.object({
   role_id: yup.string().required("Role is required"),
 });
 
-const { handleSubmit } = useForm({
+const { handleSubmit, resetForm } = useForm({
   validationSchema: schema,
 });
 

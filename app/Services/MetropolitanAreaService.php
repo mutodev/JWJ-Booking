@@ -39,6 +39,14 @@ class MetropolitanAreaService
     }
 
     /**
+     * Obtener todas las áreas metropolitanas activas
+     */
+    public function getAllActive(): array
+    {
+        return $this->repository->getAllActive();
+    }
+
+    /**
      * Crear nueva área metropolitana
      */
     public function create(array $data)
