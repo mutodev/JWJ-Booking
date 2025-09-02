@@ -35,7 +35,38 @@ class CityRepository
      */
     public function getAll()
     {
-        return $this->cityModel->findAll();
+        return $this->cityModel->orderBy('name')->findAll();
+    }
+
+    /**
+     * Obtener toda la data con condado
+     *
+     * @return array
+     */
+    public function getAllAndCounty()
+    {
+        return $this->cityModel
+            ->select('
+                cities.id,
+                cities.name,
+                cities.is_active,
+                cities.county_id,
+                counties.name AS county_name
+            ')
+            ->join('counties', 'counties.id = cities.county_id')
+            ->orderBy('cities.name')
+            ->orderBy('counties.name')
+            ->findAll();
+    }
+
+    /**
+     * Obtener toda la data activos
+     *
+     * @return array
+     */
+    public function getAllActive()
+    {
+        return $this->cityModel->orderBy('name')->where('is_active', true)->findAll();
     }
 
     /**

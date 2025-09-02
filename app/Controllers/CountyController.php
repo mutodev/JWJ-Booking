@@ -40,6 +40,32 @@ class CountyController extends ResourceController
         }
     }
 
+    public function getAllActive()
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Lista de condados activos', $this->service->getAllActive()));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    public function getByMetropolitan($id)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Lista de condados por area', $this->service->getByMetropolitan($id)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function getById($id)
     {
         try {

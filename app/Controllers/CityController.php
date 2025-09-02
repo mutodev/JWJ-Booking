@@ -27,6 +27,32 @@ class CityController extends ResourceController
         }
     }
 
+    public function getAllAndCounty()
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Lista de ciudades con condados', $this->service->getAllAndCounty()));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    public function getAllActive()
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Lista de ciudades activas', $this->service->getAllActive()));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function getById($id)
     {
         try {

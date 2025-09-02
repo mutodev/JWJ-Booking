@@ -35,7 +35,7 @@ class CountyRepository
      */
     public function getAll()
     {
-        return $this->countyModel->orderBy('counties.name')->findAll();
+        return $this->countyModel->orderBy('name')->findAll();
     }
 
     /**

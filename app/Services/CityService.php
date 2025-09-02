@@ -38,6 +38,22 @@ class CityService
     }
 
     /**
+     * Obtener todas las ciudades con condados
+     */
+    public function getAllAndCounty(): array
+    {
+        return $this->repository->getAllAndCounty();
+    }
+
+    /**
+     * Obtener todos las ciudades activas
+     */
+    public function getAllActive(): array
+    {
+        return $this->repository->getAllActive();
+    }
+
+    /**
      * Obtener ciudades por condado
      */
     public function getByCounty(string $countyId): array

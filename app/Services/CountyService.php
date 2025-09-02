@@ -54,6 +54,14 @@ class CountyService
     }
 
     /**
+     * Obtener todos los condados activos
+     */
+    public function getAllActive(): array
+    {
+        return $this->countyRepository->getAllActive();
+    }
+
+    /**
      * Crear un nuevo condado
      */
     public function create(array $data): string

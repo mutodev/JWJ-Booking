@@ -52,6 +52,8 @@ $routes->group('api', function ($routes) {
     $routes->group('counties', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [CountyController::class, 'getAll']);
         $routes->get('get-all-and-metropolitan', [CountyController::class, 'getAllAndMetrpolitan']);
+        $routes->get('get-all-active', [CountyController::class, 'getAllActive']);
+        $routes->get('get-by-metropolitan/(:any)', [CountyController::class, 'getByMetropolitan']);
         $routes->get('(:any)', [CountyController::class, 'getById']);
         $routes->post('', [CountyController::class, 'create']);
         $routes->put('(:any)', [CountyController::class, 'updateData']);
@@ -61,6 +63,8 @@ $routes->group('api', function ($routes) {
     // Cities
     $routes->group('cities', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [CityController::class, 'getAll']);
+        $routes->get('get-all-and-county', [CityController::class, 'getAllAndCounty']);
+        $routes->get('get-all-active', [CityController::class, 'getAllActive']);
         $routes->get('(:any)', [CityController::class, 'getById']);
         $routes->post('', [CityController::class, 'create']);
         $routes->put('(:any)', [CityController::class, 'updateData']);

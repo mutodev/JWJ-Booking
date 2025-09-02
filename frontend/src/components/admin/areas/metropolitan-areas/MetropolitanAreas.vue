@@ -127,7 +127,7 @@ const getData = async () => {
     const response = await api.get("/metropolitan-areas");
     data.value = response.data;
   } catch (error) {
-    console.error("Error fetching roles:", error);
+    console.log(error);
   }
 };
 
