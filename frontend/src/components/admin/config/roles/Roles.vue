@@ -1,19 +1,17 @@
 <template>
   <div class="row mt-3">
-    <div class="col-md-12">
-      <!-- Buscador en la parte superior -->
-      <div class="col-3 mb-3">
-        <div class="input-group">
-          <input
-            v-model="searchValue"
-            type="text"
-            class="form-control"
-            placeholder="Search..."
-          />
-        </div>
+    <div class="col-10 mb-3">
+      <div class="input-group">
+        <input
+          v-model="searchValue"
+          type="text"
+          class="form-control"
+          placeholder="Search..."
+        />
       </div>
+    </div>
 
-      <!-- EasyDataTable -->
+    <div class="col-md-12">
       <EasyDataTable
         :headers="headers"
         :items="data"

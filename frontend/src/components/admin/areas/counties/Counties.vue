@@ -1,6 +1,19 @@
 <template>
   <div class="row justify-content-end">
-    <div class="col-md-2">
+    <div class="col-10">
+      <div class="input-group">
+        <span class="input-group-text">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          v-model="searchValue"
+          type="text"
+          class="form-control"
+          placeholder="Search..."
+        />
+      </div>
+    </div>
+    <div class="col-md-2 pt-1">
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New County
@@ -10,22 +23,6 @@
 
   <div class="row mt-3">
     <div class="col-md-12">
-      <!-- Buscador en la parte superior -->
-      <div class="mb-3">
-        <div class="input-group">
-          <span class="input-group-text">
-            <i class="bi bi-search"></i>
-          </span>
-          <input
-            v-model="searchValue"
-            type="text"
-            class="form-control"
-            placeholder="Search counties..."
-          />
-        </div>
-      </div>
-
-      <!-- EasyDataTable -->
       <EasyDataTable
         :headers="headers"
         :items="data"
@@ -165,12 +162,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Estilos para integración con Bootstrap */
-.input-group-text {
-  background-color: var(--bs-light);
-  border-color: var(--bs-border-color);
-}
-
 :deep(.vue3-easy-data-table__main) {
   border-radius: 0.375rem;
   overflow: hidden;
