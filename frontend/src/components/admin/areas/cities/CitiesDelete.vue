@@ -3,7 +3,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Delete Metropolitan Areaa</h5>
+          <h5 class="modal-title">Delete City</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
@@ -19,7 +19,7 @@
                 required
                 placeholder="Enter name"
               />
-              <span class="text-ligth ">
+              <span class="text-ligth">
                 Write the name <b>{{ data.name }}</b> to perform the deletion.
               </span>
               <br />
@@ -94,7 +94,7 @@ const closeModal = () => {
 };
 
 const submitForm = handleSubmit(async () => {
-  await api.delete(`/metropolitan-areas/${props.data.id}`);
+  await api.delete(`/cities/${props.data.id}`);
   resetForm({
     values: {
       name: "",

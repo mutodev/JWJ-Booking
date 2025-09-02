@@ -19,9 +19,9 @@
                 required
                 placeholder="Enter name"
               />
-              <span class="text-ligth"
-                >Write the name of the metropolitan area <b>{{ data.name }}</b
-                >.</span
+              <span class="text-ligth">
+                Write the name <b>{{ data.name }}</b> to perform the deletion.
+              </span>
               >
               <br />
               <small class="text-danger">{{ name_error }}</small>

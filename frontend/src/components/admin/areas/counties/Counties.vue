@@ -65,7 +65,6 @@
 
   <CountiesCreate
     :show="modalCreateVisible"
-    :roles="dataRol"
     :areas="areas"
     @close="modalCreateVisible = false"
     @saved="handle"

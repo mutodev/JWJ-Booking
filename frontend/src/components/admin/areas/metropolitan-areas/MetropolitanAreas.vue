@@ -64,7 +64,6 @@
 
   <MetropolitanAreaCreate
     :show="modalCreateVisible"
-    :roles="dataRol"
     @close="modalCreateVisible = false"
     @saved="handle"
   />
