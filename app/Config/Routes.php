@@ -74,6 +74,7 @@ $routes->group('api', function ($routes) {
     // Zipcodes
     $routes->group('zipcodes', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [ZipCodeController::class, 'getAll']);
+        $routes->get('get-all-and-city', [ZipCodeController::class, 'getAllAndCity']);
         $routes->get('(:any)', [ZipCodeController::class, 'getById']);
         $routes->post('', [ZipCodeController::class, 'create']);
         $routes->put('(:any)', [ZipCodeController::class, 'updateData']);

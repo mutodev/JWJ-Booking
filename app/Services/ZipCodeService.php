@@ -38,6 +38,14 @@ class ZipCodeService
     }
 
     /**
+     * Obtener todos los códigos postales
+     */
+    public function getAllAndCity(): array
+    {
+        return $this->repository->getAllAndCity();
+    }
+
+    /**
      * Obtener códigos postales por ciudad
      */
     public function getByCity(string $cityId): array

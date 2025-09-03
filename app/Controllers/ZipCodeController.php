@@ -27,6 +27,21 @@ class ZipCodeController extends ResourceController
         }
     }
 
+    public function getAllAndCity()
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Lista de códigos postales con ciudad', $this->service->getAllAndCity()));
+        } catch (\Throwable $th) {
+            print_r($th);
+            die();
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function getById($id)
     {
         try {

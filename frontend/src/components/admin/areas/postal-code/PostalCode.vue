@@ -68,21 +68,21 @@
     :counties="counties"
     @close="modalCreateVisible = false"
     @saved="handle"
-  />
+  /> -->
 
-  <CitiesDelete
+  <PostalCodeDelete
     :show="modalDeleteVisible"
     :data="selectedData"
     @close="modalDeleteVisible = false"
     @saved="handle"
-  /> -->
+  /> 
 </template>
 <script setup>
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 // import CitiesEdit from "./CitiesEdit.vue";
 // import CitiesCreate from "./CitiesCreate.vue";
-// import CitiesDelete from "./CitiesDelete.vue";
+import PostalCodeDelete from "./PostalCodeDelete.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Postal codes", icon: "bi-pin" });
@@ -126,7 +126,7 @@ const deleteModal = (item) => {
 
 const getData = async () => {
   try {
-    const response = await api.get("/zipcodes");
+    const response = await api.get("/zipcodes/get-all-and-city");
     data.value = response.data;
   } catch (error) {
     console.log(error);
@@ -135,7 +135,7 @@ const getData = async () => {
 
 const getCounties = async () => {
   try {
-    const response = await api.get("counties/get-all-active");
+    const response = await api.get("cities/get-all-active");
     counties.value = response.data;
   } catch (error) {
     console.error(error);
@@ -146,11 +146,11 @@ const handle = () => {
   modalCreateVisible.value = false;
   modalEditVisible.value = false;
   getData();
-//   getCounties();
+  getCounties();
 };
 
 onMounted(() => {
   getData();
-//   getCounties();
+  getCounties();
 });
 </script>

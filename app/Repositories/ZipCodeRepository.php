@@ -47,6 +47,27 @@ class ZipCodeRepository
             ->findAll();
     }
 
+     /**
+     * Obtener toda la data con ciudad
+     *
+     * @return array
+     */
+    public function getAllAndCity()
+    {
+        return $this->zipCodeModel
+            ->select('
+                zipcodes.id,
+                zipcodes.zipcode,
+                zipcodes.is_active,
+                zipcodes.city_id,
+                cities.name AS city_name
+            ')
+            ->join('cities', 'cities.id = zipcodes.city_id')
+            ->orderBy('cities.name')
+            ->orderBy('zipcodes.zipcode')
+            ->findAll();
+    }
+
     /**
      * Creación
      * @param array $data
