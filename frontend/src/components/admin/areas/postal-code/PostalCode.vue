@@ -37,16 +37,27 @@
         index-column-text="#"
       >
         <!-- Slot para el estado -->
-        <template #item-is_active="{ is_active }">
-          <span v-if="is_active" class="badge bg-success">Active</span>
-          <span v-else class="badge bg-danger">Inactive</span>
+        <template #item-is_active="{ id, is_active }">
+          <div class="d-flex justify-content-center">
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input switch-lg"
+                type="checkbox"
+                role="switch"
+                :checked="is_active"
+                :class="
+                  is_active
+                    ? 'bg-success border-success'
+                    : 'bg-danger border-danger'
+                "
+                @change="toggleActive(id)"
+              />
+            </div>
+          </div>
         </template>
 
         <!-- Slot para las acciones -->
         <template #item-actions="item">
-          <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
-            <i class="bi bi-pencil-square"></i> Edit
-          </button>
           <button class="btn btn-sm btn-danger me-2" @click="deleteModal(item)">
             <i class="bi bi-trash"></i> Delete
           </button>
@@ -55,33 +66,17 @@
     </div>
   </div>
 
-  <!-- <CitiesEdit
-    :show="modalEditVisible"
-    :data="selectedData"
-    :counties="counties"
-    @close="modalEditVisible = false"
-    @saved="handle"
-  />
-
-  <CitiesCreate
-    :show="modalCreateVisible"
-    :counties="counties"
-    @close="modalCreateVisible = false"
-    @saved="handle"
-  /> -->
-
   <PostalCodeDelete
     :show="modalDeleteVisible"
     :data="selectedData"
     @close="modalDeleteVisible = false"
     @saved="handle"
-  /> 
+  />
 </template>
+
 <script setup>
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
-// import CitiesEdit from "./CitiesEdit.vue";
-// import CitiesCreate from "./CitiesCreate.vue";
 import PostalCodeDelete from "./PostalCodeDelete.vue";
 
 const updateHeaderData = inject("updateHeaderData");
@@ -110,11 +105,6 @@ const searchField = computed(() => {
   return tableHelpers.generateSearchFields(headers.value);
 });
 
-const editModal = (item) => {
-  selectedData.value = { ...item };
-  modalEditVisible.value = true;
-};
-
 const createModal = () => {
   modalCreateVisible.value = true;
 };
@@ -129,7 +119,7 @@ const getData = async () => {
     const response = await api.get("/zipcodes/get-all-and-city");
     data.value = response.data;
   } catch (error) {
-    console.log(error);
+    console.error(error);
   }
 };
 
@@ -149,8 +139,29 @@ const handle = () => {
   getCounties();
 };
 
+// 🔹 Activar/Desactivar estado
+const toggleActive = async (id) => {
+  try {
+    const index = data.value.findIndex((item) => item.id === id);
+    data.value[index].is_active = !data.value[index].is_active;    
+    await api.put(`/zipcodes/${data.value[index].id}`, data.value[index]);
+    getData();
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 onMounted(() => {
   getData();
   getCounties();
 });
 </script>
+
+<style scoped>
+.switch-lg {
+  width: 2rem !important;
+  height: 0.8rem !important;
+  transform: scale(1.3); /* aumenta el tamaño */
+  cursor: pointer;
+}
+</style>
