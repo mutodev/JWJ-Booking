@@ -66,6 +66,13 @@
     </div>
   </div>
 
+  <PostalCodeCreate
+    :show="modalCreateVisible"
+    :cities="cities"
+    @close="modalCreateVisible = false"
+    @saved="handle"
+  />
+
   <PostalCodeDelete
     :show="modalDeleteVisible"
     :data="selectedData"
@@ -78,6 +85,7 @@
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import PostalCodeDelete from "./PostalCodeDelete.vue";
+import PostalCodeCreate from "./PostalCodeCreate.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Postal codes", icon: "bi-pin" });
@@ -85,7 +93,7 @@ updateHeaderData({ title: "Postal codes", icon: "bi-pin" });
 const tableHelpers = inject("tableHelpers");
 const data = ref([]);
 const searchValue = ref("");
-const counties = ref([]);
+const cities = ref([]);
 
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
@@ -123,10 +131,10 @@ const getData = async () => {
   }
 };
 
-const getCounties = async () => {
+const getCities = async () => {
   try {
     const response = await api.get("cities/get-all-active");
-    counties.value = response.data;
+    cities.value = response.data;
   } catch (error) {
     console.error(error);
   }
@@ -136,7 +144,7 @@ const handle = () => {
   modalCreateVisible.value = false;
   modalEditVisible.value = false;
   getData();
-  getCounties();
+  getCities();
 };
 
 // 🔹 Activar/Desactivar estado
@@ -153,7 +161,7 @@ const toggleActive = async (id) => {
 
 onMounted(() => {
   getData();
-  getCounties();
+  getCities();
 });
 </script>
 
