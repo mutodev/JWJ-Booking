@@ -6,6 +6,7 @@ use App\Controllers\HomeController;
 use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
 use App\Controllers\RoleController;
+use App\Controllers\ServiceController;
 use App\Controllers\UserController;
 use App\Controllers\ZipCodeController;
 use CodeIgniter\Router\RouteCollection;
@@ -79,6 +80,14 @@ $routes->group('api', function ($routes) {
         $routes->post('', [ZipCodeController::class, 'create']);
         $routes->put('(:any)', [ZipCodeController::class, 'updateData']);
         $routes->delete('(:any)', [ZipCodeController::class, 'deleteData']);
+    });
+
+    $routes->group('services', static function ($routes) {
+        $routes->get('/', [ServiceController::class, 'getAll']);
+        $routes->get('(:num)', [ServiceController::class, 'getById']);
+        $routes->post('/', [ServiceController::class, 'create']);
+        $routes->put('(:num)', [ServiceController::class, 'update']);
+        $routes->delete('(:num)', [ServiceController::class, 'delete']);
     });
 });
 
