@@ -8,7 +8,6 @@ import Users from "@/components/admin/config/users/Users.vue";
 import Client from "@/components/admin/client/Client.vue";
 import Reservations from "@/components/admin/reservations/Reservations.vue";
 import Reports from "@/components/admin/reports/Reports.vue";
-import Services from "@/components/admin/services/Services.vue";
 import Prices from "@/components/admin/prices/Prices.vue";
 import Roles from "@/components/admin/config/roles/Roles.vue";
 import Menu from "@/components/admin/config/menu/Menu.vue";
@@ -18,6 +17,7 @@ import MetropolitanAreas from "@/components/admin/areas/metropolitan-areas/Metro
 import Counties from "@/components/admin/areas/counties/Counties.vue";
 import Cities from "@/components/admin/areas/cities/Cities.vue";
 import PostalCode from "@/components/admin/areas/postal-code/PostalCode.vue";
+import JamTypes from "@/components/admin/services/jam-types/JamTypes.vue";
 
 const routes = [
   {
@@ -48,7 +48,7 @@ const routes = [
           { path: "counties", component: Counties },
           { path: "cities", component: Cities },
           { path: "postal-codes", component: PostalCode },
-        ]
+        ],
       },
       {
         path: "config",
@@ -56,7 +56,12 @@ const routes = [
           { path: "users", component: Users },
           { path: "roles", component: Roles },
           { path: "menus", component: Menu },
-          { path: "services", component: Services },
+        ],
+      },
+      {
+        path: "services",
+        children: [
+          { path: "jam-types", component: JamTypes },
           { path: "prices", component: Prices },
         ],
       },

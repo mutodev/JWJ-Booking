@@ -4,8 +4,9 @@ namespace App\Controllers;
 
 use App\Services\ServiceService;
 use CodeIgniter\HTTP\Response;
+use CodeIgniter\RESTful\ResourceController;
 
-class ServiceController extends BaseController
+class ServiceController extends ResourceController
 {
     protected $service;
 
@@ -62,7 +63,8 @@ class ServiceController extends BaseController
     public function create()
     {
         try {
-            $data = $this->request->getJSON(true);
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
 
             return $this->response
                 ->setStatusCode(Response::HTTP_CREATED)
@@ -82,10 +84,11 @@ class ServiceController extends BaseController
     /**
      * Actualizar un servicio existente
      */
-    public function update($id)
+    public function updateData($id)
     {
         try {
-            $data = $this->request->getJSON(true);
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
 
             return $this->response
                 ->setStatusCode(Response::HTTP_OK)
@@ -105,7 +108,7 @@ class ServiceController extends BaseController
     /**
      * Eliminar un servicio (soft delete)
      */
-    public function delete($id)
+    public function deleteData($id)
     {
         try {
             return $this->response

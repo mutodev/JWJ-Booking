@@ -82,12 +82,12 @@ $routes->group('api', function ($routes) {
         $routes->delete('(:any)', [ZipCodeController::class, 'deleteData']);
     });
 
-    $routes->group('services', static function ($routes) {
+    $routes->group('services', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [ServiceController::class, 'getAll']);
         $routes->get('(:num)', [ServiceController::class, 'getById']);
         $routes->post('/', [ServiceController::class, 'create']);
-        $routes->put('(:num)', [ServiceController::class, 'update']);
-        $routes->delete('(:num)', [ServiceController::class, 'delete']);
+        $routes->put('(:num)', [ServiceController::class, 'updateData']);
+        $routes->delete('(:num)', [ServiceController::class, 'deleteData']);
     });
 });
 
