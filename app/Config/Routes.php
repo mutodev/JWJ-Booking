@@ -84,10 +84,10 @@ $routes->group('api', function ($routes) {
 
     $routes->group('services', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [ServiceController::class, 'getAll']);
-        $routes->get('(:num)', [ServiceController::class, 'getById']);
+        $routes->get('(:any)', [ServiceController::class, 'getById']);
         $routes->post('/', [ServiceController::class, 'create']);
-        $routes->put('(:num)', [ServiceController::class, 'updateData']);
-        $routes->delete('(:num)', [ServiceController::class, 'deleteData']);
+        $routes->put('(:any)', [ServiceController::class, 'updateData']);
+        $routes->delete('(:any)', [ServiceController::class, 'deleteData']);
     });
 });
 
