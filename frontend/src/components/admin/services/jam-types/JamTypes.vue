@@ -74,26 +74,26 @@
     @saved="handle"
   />
 
-  <!-- <ServicesCreate
+  <JamTypesCreate
     :show="modalCreateVisible"
     @close="modalCreateVisible = false"
     @saved="handle"
   />
 
-  <ServicesDelete
+  <JamTypesDelete
     :show="modalDeleteVisible"
     :data="selectedData"
     @close="modalDeleteVisible = false"
     @saved="handle"
-  /> -->
+  />
 </template>
 
 <script setup>
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import JamTypesEdit from "./JamTypesEdit.vue";
-// import ServicesCreate from "./ServicesCreate.vue";
-// import ServicesDelete from "./ServicesDelete.vue";
+import JamTypesCreate from "./JamTypesCreate.vue";
+import JamTypesDelete from "./JamTypesDelete.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Jam Types", icon: "bi-music-note-beamed" });

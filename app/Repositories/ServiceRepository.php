@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Entities\Service;
 use App\Models\ServiceModel;
 
 class ServiceRepository
@@ -29,9 +30,10 @@ class ServiceRepository
      * @param int $id
      * @return array|null
      */
-    public function getById(int $id)
+    public function getById($id): ?Service
     {
-        return $this->model->find($id);
+        return $this->model->where('id', $id)
+            ->first();
     }
 
     /**
@@ -69,7 +71,7 @@ class ServiceRepository
      * @param array $data
      * @return bool
      */
-    public function update(int $id, array $data)
+    public function update($id, array $data)
     {
         return $this->model->update($id, $data);
     }
@@ -80,9 +82,9 @@ class ServiceRepository
      * @param int $id
      * @return bool
      */
-    public function softDelete(int $id)
+    public function softDelete($id)
     {
-        return $this->model->delete($id);
+        return $this->model->where('id', $id)->delete();
     }
 
     /**
@@ -91,7 +93,7 @@ class ServiceRepository
      * @param int $id
      * @return bool
      */
-    public function restore(int $id)
+    public function restore($id)
     {
         return $this->model->update($id, ['deleted_at' => null]);
     }

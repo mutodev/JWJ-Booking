@@ -84,18 +84,17 @@ class ServiceController extends ResourceController
     /**
      * Actualizar un servicio existente
      */
-    public function updateData($id)
+    public function updateData(string $id)
     {
         try {
             $json = $this->request->getBody();
             $data = json_decode($json, true);
-
             return $this->response
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
                         "Servicio actualizado correctamente",
-                        $this->service->update((int) $id, $data)
+                        $this->service->update($id, $data)
                     )
                 );
         } catch (\Throwable $th) {
@@ -115,7 +114,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        "Servicio {$id} eliminado correctamente",
+                        "Servicio eliminado correctamente",
                         $this->service->delete((int) $id)
                     )
                 );

@@ -83,7 +83,7 @@ class ServiceService
      * @return bool
      * @throws HTTPException
      */
-    public function update(int $id, array $data)
+    public function update($id, array $data)
     {
         $service = $this->repo->getById($id);
         if (!$service) {
@@ -92,19 +92,9 @@ class ServiceService
                 Response::HTTP_NOT_FOUND
             );
         }
-
-        if (isset($data['name'])) {
-            $duplicate = $this->repo->getByName($data['name']);
-            if ($duplicate && $duplicate['id'] !== $id) {
-                throw new HTTPException(
-                    lang('Service.alreadyExists', [$data['name']]),
-                    Response::HTTP_CONFLICT
-                );
-            }
-        }
-
         return $this->repo->update($id, $data);
     }
+
 
     /**
      * Elimina un servicio usando soft delete.
