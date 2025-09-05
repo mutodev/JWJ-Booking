@@ -42,6 +42,17 @@
           <span v-else class="badge bg-danger">Inactive</span>
         </template>
 
+        <!-- Descripción -->
+        <template #item-description="{ description }">
+          <span>
+            {{
+              description && description.length > 50
+                ? description.substring(0, 50) + "..."
+                : description
+            }}
+          </span>
+        </template>
+
         <!-- Acciones -->
         <template #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
