@@ -43,6 +43,9 @@ class DatabaseSeeder extends Seeder
         $this->call('RoleMenuPermissionSeeder');
         echo "✅ Permisos de roles creados\n";
 
+        
+        $this->call('ServicePriceSeeder');
+
         echo "🎉 Proceso de seeding completado exitosamente!\n";
     }
 }
