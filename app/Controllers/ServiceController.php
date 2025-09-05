@@ -94,7 +94,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        "Servicio {$id} actualizado correctamente",
+                        "Servicio actualizado correctamente",
                         $this->service->update((int) $id, $data)
                     )
                 );

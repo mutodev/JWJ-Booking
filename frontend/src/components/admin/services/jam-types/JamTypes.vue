@@ -67,14 +67,14 @@
   </div>
 
   <!-- Modales -->
-  <!-- <ServicesEdit
+  <JamTypesEdit
     :show="modalEditVisible"
     :data="selectedData"
     @close="modalEditVisible = false"
     @saved="handle"
   />
 
-  <ServicesCreate
+  <!-- <ServicesCreate
     :show="modalCreateVisible"
     @close="modalCreateVisible = false"
     @saved="handle"
@@ -91,7 +91,7 @@
 <script setup>
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
-// import ServicesEdit from "./ServicesEdit.vue";
+import JamTypesEdit from "./JamTypesEdit.vue";
 // import ServicesCreate from "./ServicesCreate.vue";
 // import ServicesDelete from "./ServicesDelete.vue";
 
