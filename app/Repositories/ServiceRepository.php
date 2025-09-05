@@ -7,7 +7,9 @@ use App\Models\ServiceModel;
 
 class ServiceRepository
 {
-    protected $model;
+    protected ServiceModel $model;
+    protected $useSoftDeletes = true;
+    protected $deletedField = 'deleted_at';
 
     public function __construct()
     {
@@ -17,61 +19,62 @@ class ServiceRepository
     /**
      * Obtiene todos los servicios (sin incluir soft-deleted).
      *
-     * @return array
+     * @return Service[]
      */
-    public function getAll()
+    public function getAll(): array
     {
         return $this->model->findAll();
     }
 
     /**
-     * Obtiene un servicio por ID.
+     * Obtiene un servicio por UUID.
      *
-     * @param int $id
-     * @return array|null
+     * @param string $id
+     * @return Service|null
      */
-    public function getById($id): ?Service
+    public function getById(string $id): ?Service
     {
-        return $this->model->where('id', $id)
-            ->first();
+        return $this->model->where('id', $id)->first();
     }
 
     /**
      * Obtiene un servicio por nombre.
-     * Permite incluir registros eliminados suavemente.
+     * Permite incluir registros soft-deleted.
      *
      * @param string $name
      * @param bool $withDeleted
-     * @return array|null
+     * @return Service|null
      */
-    public function getByName(string $name, bool $withDeleted = false)
+    public function getByName(string $name, bool $withDeleted = false): ?Service
     {
-        $builder = $this->model;
+        $builder = $this->model->where('name', $name);
+
         if ($withDeleted) {
-            $builder = $builder->withDeleted();
+            $builder->withDeleted();
         }
-        return $builder->where('name', $name)->first();
+
+        return $builder->first();
     }
 
     /**
      * Crea un nuevo servicio.
      *
      * @param array $data
-     * @return int|string|false Retorna el ID insertado o false si falla
+     * @return string|false Retorna el UUID insertado o false si falla
      */
     public function create(array $data)
     {
-        return $this->model->insert($data, true); // true → retorna ID
+        return $this->model->insert($data, true); // retorna UUID si está configurado
     }
 
     /**
-     * Actualiza un servicio existente por ID.
+     * Actualiza un servicio existente por UUID.
      *
-     * @param int $id
+     * @param string $id
      * @param array $data
      * @return bool
      */
-    public function update($id, array $data)
+    public function update(string $id, array $data): bool
     {
         return $this->model->update($id, $data);
     }
@@ -79,22 +82,28 @@ class ServiceRepository
     /**
      * Realiza soft delete en un servicio (marca deleted_at).
      *
-     * @param int $id
+     * @param string $id
      * @return bool
      */
-    public function softDelete($id)
+    public function softDelete(string $id): bool
     {
         return $this->model->where('id', $id)->delete();
     }
 
     /**
-     * Restaura un servicio previamente eliminado (borra deleted_at).
+     * Restaura un servicio previamente eliminado.
+     * Opcionalmente actualiza datos.
      *
-     * @param int $id
+     * @param string $id
+     * @param array $data
      * @return bool
      */
-    public function restore($id)
+    public function restore(string $id): bool
     {
-        return $this->model->update($id, ['deleted_at' => null]);
+        // Usar query builder directo para evitar filtros del modelo
+        $db = \Config\Database::connect();
+        return $db->table('services') // Cambia 'services' por el nombre real de tu tabla
+            ->where('id', $id)
+            ->update(['deleted_at' => null]);
     }
 }

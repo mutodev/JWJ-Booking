@@ -46,8 +46,8 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        "Detalle del servicio {$id}",
-                        $this->service->getById((int) $id)
+                        "Detalle del servicio",
+                        $this->service->getById( $id)
                     )
                 );
         } catch (\Throwable $th) {
@@ -115,7 +115,7 @@ class ServiceController extends ResourceController
                 ->setJSON(
                     create_response(
                         "Servicio eliminado correctamente",
-                        $this->service->delete((int) $id)
+                        $this->service->delete($id)
                     )
                 );
         } catch (\Throwable $th) {

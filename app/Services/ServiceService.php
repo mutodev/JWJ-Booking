@@ -28,11 +28,11 @@ class ServiceService
     /**
      * Obtiene un servicio por ID.
      *
-     * @param int $id
-     * @return array
+     * @param string $id
+     * @return object
      * @throws HTTPException
      */
-    public function getById(int $id)
+    public function getById(string $id)
     {
         $service = $this->repo->getById($id);
         if (!$service) {
@@ -50,7 +50,7 @@ class ServiceService
      * Si existe y está activo → lanza conflicto.
      *
      * @param array $data
-     * @return int|string|bool
+     * @return string|bool
      * @throws HTTPException
      */
     public function create(array $data)
@@ -58,7 +58,7 @@ class ServiceService
         $existing = $this->repo->getByName($data['name'], true);
 
         // Caso 1: existe y está activo → conflicto
-        if ($existing && $existing['deleted_at'] === null) {
+        if ($existing && $existing->deleted_at === null) {
             throw new HTTPException(
                 lang('Service.alreadyExists', [$data['name']]),
                 Response::HTTP_CONFLICT
@@ -66,9 +66,12 @@ class ServiceService
         }
 
         // Caso 2: existe pero soft-deleted → restaurar y actualizar datos
-        if ($existing && $existing['deleted_at'] !== null) {
-            $this->repo->restore($existing['id']);
-            return $this->repo->update($existing['id'], $data);
+        if ($existing && $existing->deleted_at !== null) {
+            $this->repo->restore($existing->id);
+            // Combinar datos actuales con los nuevos para evitar array vacío
+            $mergedData = array_merge($existing->toRawArray(), $data);
+
+            return $this->repo->update($existing->id, $mergedData);
         }
 
         // Caso 3: no existe → crear nuevo
@@ -78,12 +81,12 @@ class ServiceService
     /**
      * Actualiza un servicio existente.
      *
-     * @param int $id
+     * @param string $id
      * @param array $data
      * @return bool
      * @throws HTTPException
      */
-    public function update($id, array $data)
+    public function update(string $id, array $data)
     {
         $service = $this->repo->getById($id);
         if (!$service) {
@@ -92,18 +95,18 @@ class ServiceService
                 Response::HTTP_NOT_FOUND
             );
         }
+
         return $this->repo->update($id, $data);
     }
-
 
     /**
      * Elimina un servicio usando soft delete.
      *
-     * @param int $id
+     * @param string $id
      * @return bool
      * @throws HTTPException
      */
-    public function delete(int $id)
+    public function delete(string $id)
     {
         $service = $this->repo->getById($id);
         if (!$service) {
