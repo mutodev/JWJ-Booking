@@ -96,7 +96,7 @@ import api from "@/services/axios";
 // import ServicesDelete from "./ServicesDelete.vue";
 
 const updateHeaderData = inject("updateHeaderData");
-updateHeaderData({ title: "Services", icon: "bi-gear" });
+updateHeaderData({ title: "Jam Types", icon: "bi-music-note-beamed" });
 
 const tableHelpers = inject("tableHelpers");
 const data = ref([]);
