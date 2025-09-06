@@ -46,6 +46,7 @@ class DatabaseSeeder extends Seeder
         
         $this->call('ServicePriceSeeder');
         $this->call('AddonSeeder');
+        $this->call('CustomerSeeder');
 
         echo "🎉 Proceso de seeding completado exitosamente!\n";
     }

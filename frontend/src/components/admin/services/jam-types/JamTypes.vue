@@ -58,9 +58,9 @@
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
-          <button class="btn btn-sm btn-danger me-2" @click="deleteModal(item)">
+          <!-- <button class="btn btn-sm btn-danger me-2" @click="deleteModal(item)">
             <i class="bi bi-trash"></i> Delete
-          </button>
+          </button> -->
         </template>
       </EasyDataTable>
     </div>
