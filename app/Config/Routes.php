@@ -7,6 +7,7 @@ use App\Controllers\CustomerController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
+use App\Controllers\ReservationAddonController;
 use App\Controllers\ReservationController;
 use App\Controllers\RoleController;
 use App\Controllers\ServiceController;
@@ -128,6 +129,15 @@ $routes->group('api', function ($routes) {
         $routes->post('/', [ReservationController::class, 'create']);
         $routes->put('(:segment)', [ReservationController::class, 'update']);
         $routes->delete('(:segment)', [ReservationController::class, 'delete']);
+    });
+
+    $routes->group('reservation-addons', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [ReservationAddonController::class, 'getAll']);
+        $routes->get('by-reservation/(:uuid)', [ReservationAddonController::class, 'getByReservation/$1']);
+        $routes->get('(:uuid)', [ReservationAddonController::class, 'getById/$1']);
+        $routes->post('/', [ReservationAddonController::class, 'create']);
+        $routes->put('(:uuid)', [ReservationAddonController::class, 'updateData/$1']);
+        $routes->delete('(:uuid)', [ReservationAddonController::class, 'deleteData/$1']);
     });
 });
 
