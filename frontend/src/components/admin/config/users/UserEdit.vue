@@ -35,7 +35,7 @@
               <small class="text-danger">{{ last_name_error }}</small>
             </div>
 
-            <div class="mb-3">
+            <!-- <div class="mb-3">
               <label for="email" class="form-label">Email</label>
               <input
                 type="email"
@@ -46,7 +46,7 @@
                 placeholder="Enter email"
               />
               <small class="text-danger">{{ email_error }}</small>
-            </div>
+            </div> -->
             <div class="mb-3">
               <label for="role" class="form-label">Role</label>
               <select class="form-select" id="role" v-model="role_id" required>
@@ -122,7 +122,7 @@ const schema = yup.object({
     .required("Last name is required")
     .min(2, "Minimum 2 characters")
     .max(30, "Maximum 30 characters"),
-  email: yup.string().email("Invalid email").required("Email is required"),
+  // email: yup.string().email("Invalid email").required("Email is required"),
   is_active: yup.boolean(),
   role_id: yup.string().required("Role is required"),
 });
@@ -135,7 +135,7 @@ const { value: first_name, errorMessage: first_name_error } =
   useField("first_name");
 const { value: last_name, errorMessage: last_name_error } =
   useField("last_name");
-const { value: email, errorMessage: email_error } = useField("email");
+// const { value: email, errorMessage: email_error } = useField("email");
 const { value: role_id, errorMessage: role_id_error } = useField("role_id");
 const { value: is_active } = useField("is_active");
 
