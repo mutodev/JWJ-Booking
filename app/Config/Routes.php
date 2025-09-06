@@ -3,6 +3,7 @@
 use App\Controllers\AddonController;
 use App\Controllers\CityController;
 use App\Controllers\CountyController;
+use App\Controllers\CustomerController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
@@ -101,7 +102,7 @@ $routes->group('api', function ($routes) {
         $routes->delete('(:segment)', [ServicePriceController::class, 'delete']);
     });
 
-    $routes->group('addons', ['namespace' => 'App\Controllers'], function ($routes) {
+    $routes->group('addons', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [AddonController::class, 'getAll']);
         $routes->get('active', [AddonController::class, 'getAllActive']);
         $routes->get('search/(:any)', [AddonController::class, 'search']);
@@ -109,6 +110,15 @@ $routes->group('api', function ($routes) {
         $routes->post('/', [AddonController::class, 'create']);
         $routes->put('(:segment)', [AddonController::class, 'updateData']);
         $routes->delete('(:segment)', [AddonController::class, 'deleteData']);
+    });
+
+    $routes->group('customers', function ($routes) {
+        $routes->get('/', [CustomerController::class, 'getAll']);
+        $routes->get('(:segment)', [CustomerController::class, 'getById']);
+        $routes->get('search/(:segment)', [CustomerController::class, 'searchByName']);
+        $routes->post('/', [CustomerController::class, 'create']);
+        $routes->put('(:segment)', [CustomerController::class, 'updateData']);
+        $routes->delete('(:segment)', [CustomerController::class, 'deleteData']);
     });
 });
 
