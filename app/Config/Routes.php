@@ -95,8 +95,8 @@ $routes->group('api', function ($routes) {
     $routes->group('service-prices', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [ServicePriceController::class, 'getAll']);
         $routes->get('(:segment)', [ServicePriceController::class, 'getById']);
-        $routes->post('', [ServicePriceController::class, 'create']);
-        $routes->put('(:segment)', [ServicePriceController::class, 'update']);
+        $routes->post('', [ServicePriceController::class, 'createData']);
+        $routes->put('(:segment)', [ServicePriceController::class, 'updateData']);
         $routes->delete('(:segment)', [ServicePriceController::class, 'delete']);
     });
 });

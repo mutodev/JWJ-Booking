@@ -62,9 +62,6 @@
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
-          <button class="btn btn-sm btn-danger me-2" @click="deleteModal(item)">
-            <i class="bi bi-trash"></i> Delete
-          </button>
         </template>
       </EasyDataTable>
     </div>
@@ -78,19 +75,14 @@
     @close="modalCreateVisible = false"
     @saved="handle"
   />
-  <!-- <ServicePriceEdit
+  <PricesEdit
     :show="modalEditVisible"
     :data="selectedData"
+    :services="services"
+    :counties="counties"
     @close="modalEditVisible = false"
     @saved="handle"
   />
-
-  <ServicePriceDelete
-    :show="modalDeleteVisible"
-    :data="selectedData"
-    @close="modalDeleteVisible = false"
-    @saved="handle"
-  /> -->
 </template>
 
 <script setup>
@@ -99,6 +91,7 @@ import api from "@/services/axios";
 
 // 🟢 Importar modal de creación
 import PricesCreate from "./PricesCreate.vue";
+import PricesEdit from "./PricesEdit.vue";
 
 // 🏷️ Header dinámico
 const updateHeaderData = inject("updateHeaderData");

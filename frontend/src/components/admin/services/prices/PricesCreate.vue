@@ -62,14 +62,16 @@
             <!-- 🔹 Price Type -->
             <div class="mb-3">
               <label for="price_type" class="form-label">Price Type</label>
-              <input
-                type="text"
-                class="form-control"
+              <select
                 id="price_type"
+                class="form-select"
                 v-model="form.price_type"
                 required
-                placeholder="e.g. Hourly, Fixed"
-              />
+              >
+                <option value="">-- Select Price Type --</option>
+                <option value="standard">Standard</option>
+                <option value="jukebox">Jukebox</option>
+              </select>
               <small class="text-danger">{{ errors.price_type }}</small>
             </div>
 
