@@ -18,6 +18,7 @@ import Cities from "@/components/admin/areas/cities/Cities.vue";
 import PostalCode from "@/components/admin/areas/postal-code/PostalCode.vue";
 import JamTypes from "@/components/admin/services/jam-types/JamTypes.vue";
 import Prices from "@/components/admin/services/prices/Prices.vue";
+import AddOns from "@/components/admin/services/add-ons/AddOns.vue";
 
 const routes = [
   {
@@ -63,6 +64,7 @@ const routes = [
         children: [
           { path: "jam-types", component: JamTypes },
           { path: "prices", component: Prices },
+          { path: "addons", component: AddOns },
         ],
       },
     ],
