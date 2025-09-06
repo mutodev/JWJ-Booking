@@ -40,13 +40,21 @@
       >
         <!-- Estado disponible -->
         <template #item-is_available="{ is_available }">
-          <span v-if="is_available" class="badge bg-success">Available</span>
-          <span v-else class="badge bg-danger">Unavailable</span>
+          <span v-if="is_available" class="badge bg-success">Active</span>
+          <span v-else class="badge bg-danger">Inactive</span>
         </template>
 
         <!-- 💵 Mostrar currency en amount -->
         <template #item-amount="{ amount }">
           {{ formatCurrency(amount) }}
+        </template>
+
+        <!-- 📝 Limitar notas a 40 caracteres con tooltip -->
+        <template #item-notes="{ notes }">
+          <span v-if="notes" :title="notes">
+            {{ truncate(notes, 40) }}
+          </span>
+          <span v-else>-</span>
         </template>
 
         <!-- Acciones -->
@@ -89,14 +97,12 @@
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 
-// // 🟢 Importar modales
-// import ServicePriceEdit from "@/components/service-prices/ServicePriceEdit.vue";
+// 🟢 Importar modal de creación
 import PricesCreate from "./PricesCreate.vue";
-// import ServicePriceDelete from "@/components/service-prices/ServicePriceDelete.vue";
 
 // 🏷️ Header dinámico
 const updateHeaderData = inject("updateHeaderData");
-updateHeaderData({ title: "Service Prices", icon: "bi-cash" });
+updateHeaderData({ title: "Prices", icon: "bi bi-currency-dollar" });
 
 // 📊 Helpers de tabla
 const tableHelpers = inject("tableHelpers");
@@ -135,10 +141,10 @@ const headers = computed(() => {
       service_id: "Service",
       county_id: "County",
       performers_count: "Performers",
-      amount: "Amount (USD)",
+      amount: "Amount",
       price_type: "Price Type",
       min_duration_hours: "Min Hours",
-      is_available: "Availability",
+      is_available: "State",
       notes: "Notes",
       actions: "Actions",
     },
@@ -187,6 +193,12 @@ const formatCurrency = (value) => {
     style: "currency",
     currency: "USD",
   }).format(value);
+};
+
+// ✂️ Función para truncar texto
+const truncate = (text, maxLength) => {
+  if (!text) return "";
+  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
 };
 
 // 🔄 Recargar tabla tras guardar/editar/eliminar

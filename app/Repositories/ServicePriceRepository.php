@@ -21,7 +21,15 @@ class ServicePriceRepository
      */
     public function getAll()
     {
-        return $this->model->findAll();
+        return $this->model
+            ->select("
+                service_prices.*,
+                services.name as service_name,
+                counties.name as county_name
+            ")
+            ->join("services", "services.id = service_prices.service_id", "left")
+            ->join("counties", "counties.id = service_prices.county_id", "left")
+            ->findAll();
     }
 
     /**

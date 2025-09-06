@@ -160,8 +160,8 @@ class MenuSeeder extends Seeder
             ],
             [
                 'id' => 'sm2g8h9i0-j1k2-3456-lmn7-890123456789',
-                'name' => 'Price Table', // ← 🎯 TABLA DE PRECIOS
-                'uri' => '/admin/services/price-table',
+                'name' => 'Prices',
+                'uri' => '/admin/services/prices',
                 'icon' => 'bi bi-currency-dollar',
                 'order' => 2,
                 'is_active' => true,
