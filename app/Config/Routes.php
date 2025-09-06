@@ -1,5 +1,6 @@
 <?php
 
+use App\Controllers\AddonController;
 use App\Controllers\CityController;
 use App\Controllers\CountyController;
 use App\Controllers\HomeController;
@@ -98,6 +99,16 @@ $routes->group('api', function ($routes) {
         $routes->post('', [ServicePriceController::class, 'createData']);
         $routes->put('(:segment)', [ServicePriceController::class, 'updateData']);
         $routes->delete('(:segment)', [ServicePriceController::class, 'delete']);
+    });
+
+    $routes->group('addons', ['namespace' => 'App\Controllers'], function ($routes) {
+        $routes->get('/', [AddonController::class, 'getAll']);
+        $routes->get('active', [AddonController::class, 'getAllActive']);
+        $routes->get('search/(:any)', [AddonController::class, 'search']);
+        $routes->get('(:segment)', [AddonController::class, 'getById']);
+        $routes->post('/', [AddonController::class, 'create']);
+        $routes->put('(:segment)', [AddonController::class, 'updateData']);
+        $routes->delete('(:segment)', [AddonController::class, 'deleteData']);
     });
 });
 
