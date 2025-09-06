@@ -7,6 +7,7 @@ use App\Controllers\CustomerController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
+use App\Controllers\ReservationController;
 use App\Controllers\RoleController;
 use App\Controllers\ServiceController;
 use App\Controllers\ServicePriceController;
@@ -119,6 +120,14 @@ $routes->group('api', function ($routes) {
         $routes->post('/', [CustomerController::class, 'create']);
         $routes->put('(:segment)', [CustomerController::class, 'updateData']);
         $routes->delete('(:segment)', [CustomerController::class, 'deleteData']);
+    });
+
+    $routes->group('reservations', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [ReservationController::class, 'index']);
+        $routes->get('(:segment)', [ReservationController::class, 'show']);
+        $routes->post('/', [ReservationController::class, 'create']);
+        $routes->put('(:segment)', [ReservationController::class, 'update']);
+        $routes->delete('(:segment)', [ReservationController::class, 'delete']);
     });
 });
 
