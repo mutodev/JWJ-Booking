@@ -42,8 +42,15 @@
       >
         <!-- Estado -->
         <template #item-segment="{ segment }">
-          <span v-if="segment" class="badge bg-info">{{ segment }}</span>
-          <span v-else class="badge bg-secondary">N/A</span>
+          <span v-if="segment == 'new'">
+            <i :title="segment" class="bi bi-stars text-warning h6"></i>
+          </span>
+          <span v-if="segment == 'frequent'">
+            <i :title="segment" class="bi bi-award text-danger h6"></i>
+          </span>
+          <span v-if="segment == 'vip'">
+            <i :title="segment" class="bi bi-gem text-secondary h6"></i>
+          </span>
         </template>
 
         <!-- Acciones -->
