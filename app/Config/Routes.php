@@ -112,7 +112,7 @@ $routes->group('api', function ($routes) {
         $routes->delete('(:segment)', [AddonController::class, 'deleteData']);
     });
 
-    $routes->group('customers', function ($routes) {
+    $routes->group('customers', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [CustomerController::class, 'getAll']);
         $routes->get('(:segment)', [CustomerController::class, 'getById']);
         $routes->get('search/(:segment)', [CustomerController::class, 'searchByName']);
