@@ -37,6 +37,27 @@ class ServiceController extends ResourceController
     }
 
     /**
+     * Listar todos los servicios activos
+     */
+    public function getAllActive()
+    {
+        try {
+            return $this->response
+                ->setStatusCode(Response::HTTP_OK)
+                ->setJSON(
+                    create_response(
+                        'Lista de servicios',
+                        $this->service->getAllActive()
+                    )
+                );
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Obtener un servicio por ID
      */
     public function getById($id)

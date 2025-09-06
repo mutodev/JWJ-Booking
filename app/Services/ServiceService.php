@@ -26,6 +26,16 @@ class ServiceService
     }
 
     /**
+     * Obtiene todos los servicios activos.
+     *
+     * @return array
+     */
+    public function getAllActive()
+    {
+        return $this->repo->getAllActive();
+    }
+
+    /**
      * Obtiene un servicio por ID.
      *
      * @param string $id

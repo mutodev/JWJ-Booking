@@ -7,7 +7,7 @@ use CodeIgniter\Model;
 
 class ServicePriceModel extends Model
 {
-    protected $table            = 'serviceprices';
+    protected $table            = 'service_prices';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = ServicePrice::class;

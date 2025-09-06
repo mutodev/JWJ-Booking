@@ -27,6 +27,16 @@ class ServiceRepository
     }
 
     /**
+     * Obtiene todos los servicios (sin incluir soft-deleted).
+     *
+     * @return Service[]
+     */
+    public function getAllActive(): array
+    {
+        return $this->model->orderBy('name')->where('is_active', true)->findAll();
+    }
+
+    /**
      * Obtiene un servicio por UUID.
      *
      * @param string $id

@@ -7,6 +7,7 @@ use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
 use App\Controllers\RoleController;
 use App\Controllers\ServiceController;
+use App\Controllers\ServicePriceController;
 use App\Controllers\UserController;
 use App\Controllers\ZipCodeController;
 use CodeIgniter\Router\RouteCollection;
@@ -84,10 +85,19 @@ $routes->group('api', function ($routes) {
 
     $routes->group('services', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [ServiceController::class, 'getAll']);
+        $routes->get('get-all-active', [ServiceController::class, 'getAllActive']);
         $routes->get('(:any)', [ServiceController::class, 'getById']);
         $routes->post('/', [ServiceController::class, 'create']);
         $routes->put('(:any)', [ServiceController::class, 'updateData']);
         $routes->delete('(:any)', [ServiceController::class, 'deleteData']);
+    });
+
+    $routes->group('service-prices', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('', [ServicePriceController::class, 'getAll']);
+        $routes->get('(:segment)', [ServicePriceController::class, 'getById']);
+        $routes->post('', [ServicePriceController::class, 'create']);
+        $routes->put('(:segment)', [ServicePriceController::class, 'update']);
+        $routes->delete('(:segment)', [ServicePriceController::class, 'delete']);
     });
 });
 
