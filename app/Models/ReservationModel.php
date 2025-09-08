@@ -17,7 +17,7 @@ class ReservationModel extends Model
         'id', // Añadido: necesario para inserción manual con UUID
         'customer_id',
         'service_id',
-        'county_id',
+        'zipcode_id',
         'service_price_id',
         'event_address',
         'event_date',

@@ -16,29 +16,25 @@ class CreateReservationsTable extends Migration
                 'null' => false
             ],
             'customer_id' => [
-                'type' => 'CHAR', // CORRECCIÓN: VARCHAR -> CHAR para consistencia
+                'type' => 'CHAR',
                 'constraint' => 36,
                 'null' => false,
                 'comment' => 'Relación con tabla customers'
             ],
             'service_id' => [
-                'type' => 'CHAR', // CORRECCIÓN: VARCHAR -> CHAR para consistencia
+                'type' => 'CHAR',
                 'constraint' => 36,
                 'null' => false,
                 'comment' => 'Relación con tabla services (Jam Type)'
             ],
-            'county_id' => [
-                'type' => 'CHAR', // CORRECCIÓN: VARCHAR -> CHAR para consistencia
-                'constraint' => 36,
+            // CAMBIO: county_id por zipcode
+            'zipcode_id' => [
+                'type' => 'VARCHAR',
+                'constraint' => 10,
                 'null' => false,
-                'comment' => 'Relación con tabla counties'
+                'comment' => 'ZIP code del evento (relación con tabla zipcodes)'
             ],
-            'service_price_id' => [
-                'type' => 'CHAR', // CORRECCIÓN: VARCHAR -> CHAR para consistencia
-                'constraint' => 36,
-                'null' => false,
-                'comment' => 'Relación con tabla service_prices (precio aplicado)'
-            ],
+            // CAMBIO: service_price_id eliminado (no necesitamos esta FK)
             'event_address' => [
                 'type' => 'TEXT',
                 'null' => false
@@ -51,22 +47,21 @@ class CreateReservationsTable extends Migration
                 'type' => 'TIME',
                 'null' => false
             ],
-            // CAMPO NUEVO: Número de niños asistentes
             'children_count' => [
                 'type' => 'INT',
-                'constraint' => 4, // Hasta 9999 niños
+                'constraint' => 4,
                 'null' => false,
                 'default' => 0
             ],
             'performers_count' => [
                 'type' => 'INT',
-                'constraint' => 1, // 1-9 performers
+                'constraint' => 1,
                 'null' => false,
                 'default' => 1
             ],
             'duration_hours' => [
                 'type' => 'INT',
-                'constraint' => 2, // Hasta 99 horas
+                'constraint' => 2,
                 'null' => false,
                 'default' => 1
             ],
@@ -88,14 +83,12 @@ class CreateReservationsTable extends Migration
                 'null' => false,
                 'default' => 0.00
             ],
-            // CAMPO NUEVO: Cargo por reserva de última hora
             'expedition_fee' => [
                 'type' => 'DECIMAL',
                 'constraint' => '10,2',
                 'null' => false,
                 'default' => 0.00
             ],
-            // CAMPO NUEVO: Cargo extra por cantidad de niños
             'extra_children_fee' => [
                 'type' => 'DECIMAL',
                 'constraint' => '10,2',
@@ -126,7 +119,6 @@ class CreateReservationsTable extends Migration
                 'default' => 0,
                 'null' => false
             ],
-            // CAMPOS NUEVOS: Información detallada del evento
             'arrival_parking_instructions' => [
                 'type' => 'TEXT',
                 'null' => true
@@ -142,7 +134,7 @@ class CreateReservationsTable extends Migration
             ],
             'birthday_child_age' => [
                 'type' => 'INT',
-                'constraint' => 3, // Hasta 999 años
+                'constraint' => 3,
                 'null' => true
             ],
             'children_age_range' => [
@@ -162,13 +154,11 @@ class CreateReservationsTable extends Migration
             ],
             'customer_notes' => [
                 'type' => 'TEXT',
-                'null' => true,
-                'comment' => 'Comentarios del cliente en el formulario'
+                'null' => true
             ],
             'internal_notes' => [
                 'type' => 'TEXT',
-                'null' => true,
-                'comment' => 'Notas internas del equipo administrativo'
+                'null' => true
             ],
             'created_at' => [
                 'type' => 'TIMESTAMP',
@@ -187,8 +177,9 @@ class CreateReservationsTable extends Migration
         $this->forge->addPrimaryKey('id');
         $this->forge->addForeignKey('customer_id', 'customers', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('service_id', 'services', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('county_id', 'counties', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('service_price_id', 'service_prices', 'id', 'CASCADE', 'CASCADE');
+        // CAMBIO: FK a counties por FK a zipcodes
+        $this->forge->addForeignKey('zipcode_id', 'zipcodes', 'id', 'CASCADE', 'CASCADE');
+        // CAMBIO: Eliminada FK a service_prices (ya no se necesita)
         $this->forge->createTable('reservations');
     }
 

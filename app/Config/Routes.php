@@ -124,11 +124,11 @@ $routes->group('api', function ($routes) {
     });
 
     $routes->group('reservations', ['filter' => 'verifyToken'], function ($routes) {
-        $routes->get('/', [ReservationController::class, 'index']);
-        $routes->get('(:segment)', [ReservationController::class, 'show']);
+        $routes->get('/', [ReservationController::class, 'getAll']);
+        $routes->get('(:segment)', [ReservationController::class, 'getById']);
         $routes->post('/', [ReservationController::class, 'create']);
-        $routes->put('(:segment)', [ReservationController::class, 'update']);
-        $routes->delete('(:segment)', [ReservationController::class, 'delete']);
+        $routes->put('(:segment)', [ReservationController::class, 'updateData']);
+        $routes->delete('(:segment)', [ReservationController::class, 'deleteData']);
     });
 
     $routes->group('reservation-addons', ['filter' => 'verifyToken'], function ($routes) {

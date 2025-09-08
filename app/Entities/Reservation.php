@@ -12,7 +12,7 @@ class Reservation extends Entity
         'id' => 'string',
         'customer_id' => 'string',
         'service_id' => 'string',
-        'county_id' => 'string',
+        'zipcode_id' => 'string',
         'service_price_id' => 'string',
         'children_count' => 'integer',
         'performers_count' => 'integer',
