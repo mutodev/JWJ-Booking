@@ -22,7 +22,7 @@
                 required
                 placeholder="Enter full name"
               />
-              <small class="text-danger">{{ full_name_error }}</small>
+              <small class="text-danger small">{{ full_name_error }}</small>
             </div>
 
             <!-- Email -->
@@ -36,7 +36,7 @@
                 required
                 placeholder="Enter email"
               />
-              <small class="text-danger">{{ email_error }}</small>
+              <small class="text-danger small">{{ email_error }}</small>
             </div>
 
             <!-- Phone -->
@@ -50,7 +50,7 @@
                 required
                 placeholder="Enter phone number"
               />
-              <small class="text-danger">{{ phone_error }}</small>
+              <small class="text-danger small">{{ phone_error }}</small>
             </div>
 
             <!-- Billing Address -->
@@ -63,7 +63,7 @@
                 v-model="billing_address"
                 placeholder="Enter billing address"
               />
-              <small class="text-danger">{{ billing_address_error }}</small>
+              <small class="text-danger small">{{ billing_address_error }}</small>
             </div>
 
             <!-- Segment -->
@@ -75,7 +75,7 @@
                 <option value="frequent">Frequent</option>
                 <option value="vip">VIP</option>
               </select>
-              <small class="text-danger">{{ segment_error }}</small>
+              <small class="text-danger small">{{ segment_error }}</small>
             </div>
           </form>
         </div>

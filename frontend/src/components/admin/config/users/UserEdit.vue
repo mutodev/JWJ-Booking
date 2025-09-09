@@ -19,7 +19,7 @@
                 required
                 placeholder="Enter first name"
               />
-              <small class="text-danger">{{ first_name_error }}</small>
+              <small class="text-danger small">{{ first_name_error }}</small>
             </div>
 
             <div class="mb-3">
@@ -32,7 +32,7 @@
                 required
                 placeholder="Enter last name"
               />
-              <small class="text-danger">{{ last_name_error }}</small>
+              <small class="text-danger small">{{ last_name_error }}</small>
             </div>
 
             <!-- <div class="mb-3">
@@ -45,7 +45,7 @@
                 required
                 placeholder="Enter email"
               />
-              <small class="text-danger">{{ email_error }}</small>
+              <small class="text-danger small">{{ email_error }}</small>
             </div> -->
             <div class="mb-3">
               <label for="role" class="form-label">Role</label>
@@ -59,7 +59,7 @@
                   {{ role.name }}
                 </option>
               </select>
-              <small class="text-danger">{{ role_id_error }}</small>
+              <small class="text-danger small">{{ role_id_error }}</small>
             </div>
 
             <div class="mb-3 form-check">

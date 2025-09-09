@@ -23,7 +23,7 @@
                   {{ srv.name }}
                 </option>
               </select>
-              <small class="text-danger">{{ errors.service_id }}</small>
+              <small class="text-danger small">{{ errors.service_id }}</small>
             </div>
 
             <!-- 🔹 County -->
@@ -40,7 +40,7 @@
                   {{ c.name }}
                 </option>
               </select>
-              <small class="text-danger">{{ errors.county_id }}</small>
+              <small class="text-danger small">{{ errors.county_id }}</small>
             </div>
 
             <!-- 🔹 Performers Count -->
@@ -56,7 +56,7 @@
                 min="1"
                 required
               />
-              <small class="text-danger">{{ errors.performers_count }}</small>
+              <small class="text-danger small">{{ errors.performers_count }}</small>
             </div>
 
             <!-- 🔹 Price Type -->
@@ -72,7 +72,7 @@
                 <option value="standard">Standard</option>
                 <option value="jukebox">Jukebox</option>
               </select>
-              <small class="text-danger">{{ errors.price_type }}</small>
+              <small class="text-danger small">{{ errors.price_type }}</small>
             </div>
 
             <!-- 🔹 Amount -->
@@ -87,7 +87,7 @@
                 step="0.01"
                 required
               />
-              <small class="text-danger">{{ errors.amount }}</small>
+              <small class="text-danger small">{{ errors.amount }}</small>
             </div>
 
             <!-- 🔹 Min Duration -->
@@ -103,7 +103,7 @@
                 min="1"
                 required
               />
-              <small class="text-danger">{{ errors.min_duration_hours }}</small>
+              <small class="text-danger small">{{ errors.min_duration_hours }}</small>
             </div>
 
             <!-- 🔹 Notes -->
@@ -115,7 +115,7 @@
                 v-model="form.notes"
                 placeholder="Optional notes"
               ></textarea>
-              <small class="text-danger">{{ errors.notes }}</small>
+              <small class="text-danger small">{{ errors.notes }}</small>
             </div>
           </form>
         </div>

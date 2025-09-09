@@ -19,7 +19,7 @@
                 required
                 placeholder="Enter name"
               />
-              <small class="text-danger">{{ name_error }}</small>
+              <small class="text-danger small">{{ name_error }}</small>
             </div>
 
             <div class="mb-3">
@@ -39,7 +39,7 @@
                   {{ area.name }}
                 </option>
               </select>
-              <small class="text-danger">{{
+              <small class="text-danger small">{{
                 county_id_error
               }}</small>
             </div>

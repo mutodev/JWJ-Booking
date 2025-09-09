@@ -18,7 +18,7 @@
                     class="form-control"
                     placeholder="Email"
                   />
-                  <small class="text-danger">{{ emailError }}</small>
+                  <small class="text-danger small">{{ emailError }}</small>
                 </div>
 
                 <div class="mb-3">
@@ -28,7 +28,7 @@
                     class="form-control"
                     placeholder="Password"
                   />
-                  <small class="text-danger">{{ passError }}</small>
+                  <small class="text-danger small">{{ passError }}</small>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">

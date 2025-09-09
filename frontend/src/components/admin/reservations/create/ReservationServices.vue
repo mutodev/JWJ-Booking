@@ -58,13 +58,13 @@
 
           <!-- Performers -->
           <div class="d-flex align-items-center gap-1 small mt-1">
-            <i class="bi bi-people text-primary"></i>
+            <i class="bi bi-people-fill text-danger small"></i>
             {{ price.performers_count }}
           </div>
 
           <!-- Notas -->
           <div v-if="price.notes" class="mt-1 text-muted fst-italic small">
-            <i class="bi bi-info-circle"></i> {{ price.notes }}
+            <i class="bi bi-info-circle text-info"></i> {{ price.notes }}
           </div>
         </div>
       </div>

@@ -36,7 +36,7 @@
             </li>
             <li>
               <button
-                class="dropdown-item text-danger"
+                class="dropdown-item text-danger small"
                 v-on:click="closeSession()"
               >
                 <i class="bi bi-box-arrow-right"></i>

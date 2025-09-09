@@ -20,7 +20,7 @@
                 required
                 placeholder="Enter service name"
               />
-              <small class="text-danger">{{ nameError }}</small>
+              <small class="text-danger small">{{ nameError }}</small>
             </div>
 
             <!-- Description -->
@@ -35,7 +35,7 @@
                 placeholder="Enter service description"
                 rows="3"
               ></textarea>
-              <small class="text-danger">{{ descriptionError }}</small>
+              <small class="text-danger small">{{ descriptionError }}</small>
             </div>
           </form>
         </div>

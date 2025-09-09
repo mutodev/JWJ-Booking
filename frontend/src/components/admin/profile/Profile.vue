@@ -17,7 +17,7 @@
                 v-model="first_name"
                 placeholder="Enter first name"
               />
-              <small class="text-danger">{{ first_name_error }}</small>
+              <small class="text-danger small">{{ first_name_error }}</small>
             </div>
 
             <div class="mb-3">
@@ -28,7 +28,7 @@
                 v-model="last_name"
                 placeholder="Enter last name"
               />
-              <small class="text-danger">{{ last_name_error }}</small>
+              <small class="text-danger small">{{ last_name_error }}</small>
             </div>
 
             <div class="mb-3 form-check">
@@ -56,7 +56,7 @@
                 v-model="password"
                 placeholder="Enter password"
               />
-              <small class="text-danger">{{ password_error }}</small>
+              <small class="text-danger small">{{ password_error }}</small>
             </div>
 
             <div v-if="change_password" class="mb-3">
@@ -70,7 +70,7 @@
                 v-model="confirm_password"
                 placeholder="Confirm password"
               />
-              <small class="text-danger">{{ confirm_password_error }}</small>
+              <small class="text-danger small">{{ confirm_password_error }}</small>
             </div>
 
             <div class="col-12 d-flex justify-content-end">

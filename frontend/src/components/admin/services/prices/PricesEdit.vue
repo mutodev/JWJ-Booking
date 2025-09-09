@@ -25,7 +25,7 @@
                   {{ srv.name }}
                 </option>
               </select>
-              <small class="text-danger">{{ service_id_error }}</small>
+              <small class="text-danger small">{{ service_id_error }}</small>
             </div>
 
             <!-- County -->
@@ -42,7 +42,7 @@
                   {{ c.name }}
                 </option>
               </select>
-              <small class="text-danger">{{ county_id_error }}</small>
+              <small class="text-danger small">{{ county_id_error }}</small>
             </div>
 
             <!-- Performers Count -->
@@ -57,7 +57,7 @@
                 v-model="performers_count"
                 min="1"
               />
-              <small class="text-danger">{{ performers_count_error }}</small>
+              <small class="text-danger small">{{ performers_count_error }}</small>
             </div>
 
             <!-- Price Type -->
@@ -68,7 +68,7 @@
                 <option value="standard">Standard</option>
                 <option value="jukebox">Jukebox</option>
               </select>
-              <small class="text-danger">{{ price_type_error }}</small>
+              <small class="text-danger small">{{ price_type_error }}</small>
             </div>
 
             <!-- Amount -->
@@ -82,7 +82,7 @@
                 min="0"
                 step="0.01"
               />
-              <small class="text-danger">{{ amount_error }}</small>
+              <small class="text-danger small">{{ amount_error }}</small>
             </div>
 
             <!-- Min Duration -->
@@ -97,7 +97,7 @@
                 v-model="min_duration_hours"
                 min="1"
               />
-              <small class="text-danger">{{ min_duration_hours_error }}</small>
+              <small class="text-danger small">{{ min_duration_hours_error }}</small>
             </div>
 
             <!-- Notes -->
@@ -109,7 +109,7 @@
                 v-model="notes"
                 placeholder="Optional notes"
               ></textarea>
-              <small class="text-danger">{{ notes_error }}</small>
+              <small class="text-danger small">{{ notes_error }}</small>
             </div>
 
             <!-- Availability -->

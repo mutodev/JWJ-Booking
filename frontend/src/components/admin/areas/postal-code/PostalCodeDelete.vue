@@ -23,7 +23,7 @@
                 Write the zipcode <b>{{ data.zipcode }}</b> to perform the deletion.
               </span>
               <br />
-              <small class="text-danger">{{ zipcode_error }}</small>
+              <small class="text-danger small">{{ zipcode_error }}</small>
             </div>
           </form>
         </div>

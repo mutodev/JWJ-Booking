@@ -23,7 +23,7 @@
                 Write the name <b>{{ data.name }}</b> to perform the deletion.
               </span>
               <br />
-              <small class="text-danger">{{ name_error }}</small>
+              <small class="text-danger small">{{ name_error }}</small>
             </div>
           </form>
         </div>

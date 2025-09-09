@@ -18,7 +18,7 @@
                 v-model="name"
                 placeholder="Enter Addon Name"
               />
-              <small class="text-danger">{{ nameError }}</small>
+              <small class="text-danger small">{{ nameError }}</small>
             </div>
 
             <!-- Descripción -->
@@ -30,7 +30,7 @@
                 placeholder="Enter Addon Description"
                 rows="3"
               ></textarea>
-              <small class="text-danger">{{ descriptionError }}</small>
+              <small class="text-danger small">{{ descriptionError }}</small>
             </div>
 
             <div class="row">
@@ -44,7 +44,7 @@
                   v-model="base_price"
                   placeholder="Enter Base Price"
                 />
-                <small class="text-danger">{{ basePriceError }}</small>
+                <small class="text-danger small">{{ basePriceError }}</small>
               </div>
 
               <!-- Duración -->
@@ -56,7 +56,7 @@
                   v-model="estimated_duration_minutes"
                   placeholder="Enter Duration"
                 />
-                <small class="text-danger">{{ durationError }}</small>
+                <small class="text-danger small">{{ durationError }}</small>
               </div>
             </div>
 

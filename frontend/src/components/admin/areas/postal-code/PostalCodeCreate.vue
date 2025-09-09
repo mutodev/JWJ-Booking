@@ -19,7 +19,7 @@
                 required
                 placeholder="Enter zipcode"
               />
-              <small class="text-danger">{{ zipcode_error }}</small>
+              <small class="text-danger small">{{ zipcode_error }}</small>
             </div>
 
             <div class="mb-3">
@@ -39,7 +39,7 @@
                   {{ item.name }}
                 </option>
               </select>
-              <small class="text-danger">{{
+              <small class="text-danger small">{{
                 city_id_error
               }}</small>
             </div>

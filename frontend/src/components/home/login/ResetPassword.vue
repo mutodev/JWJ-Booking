@@ -18,7 +18,7 @@
                     class="form-control"
                     placeholder="Email"
                   />
-                  <small class="text-danger">{{ emailError }}</small>
+                  <small class="text-danger small">{{ emailError }}</small>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">

@@ -19,7 +19,7 @@
                 required
                 placeholder="Enter role name"
               />
-              <small class="text-danger">{{ nameError }}</small>
+              <small class="text-danger small">{{ nameError }}</small>
             </div>
             <div class="mb-3 form-check">
               <input
