@@ -41,6 +41,18 @@ class ServicePriceRepository
     }
 
     /**
+     * Obtener un precio por servicio y condado
+     */
+    public function getByServiceAndCounty(string $serviceId, string $countyId)
+    {
+        return $this->model
+            ->where('service_id', $serviceId)
+            ->where('county_id', $countyId)
+            ->orderBy('amount')
+            ->findAll();
+    }
+
+    /**
      * Obtener por combinación única (service_id + county_id + price_type).
      */
     public function getByUnique(string $serviceId, string $countyId, string $priceType, bool $withDeleted = false): ?ServicePrice

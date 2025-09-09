@@ -29,6 +29,11 @@ class ServicePriceService
         return $price;
     }
 
+    public function getByServiceAndCounty(string $serviceId, string $countyId)
+    {
+        return $this->repo->getByServiceAndCounty($serviceId, $countyId);
+    }
+
     public function create(array $data)
     {
         $existing = $this->repo->getByUnique($data['service_id'], $data['county_id'], $data['price_type'], true);
@@ -40,7 +45,7 @@ class ServicePriceService
                 Response::HTTP_CONFLICT
             );
         }
-        
+
         // Existe pero soft-deleted → restaurar y actualizar
         if ($existing && $existing->deleted_at !== null) {
             $this->repo->restore($existing->id);

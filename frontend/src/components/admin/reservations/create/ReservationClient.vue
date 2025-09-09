@@ -1,6 +1,6 @@
 <template>
   <div class="row justify-content-center">
-    <div class="col-10">
+    <div class="col-5">
       <div class="form-group">
         <label for="client">Client</label>
         <Multiselect

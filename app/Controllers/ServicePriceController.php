@@ -57,6 +57,27 @@ class ServicePriceController extends ResourceController
     }
 
     /**
+     * Obtener un precio por ID.
+     */
+    public function getByServiceAndCounty($serviceId, $countyId)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(
+                    create_response(
+                        'Detalle del precio de servicio por servicio y condado',
+                        $this->service->getByServiceAndCounty($serviceId, $countyId)
+                    )
+                );
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Crear un nuevo precio de servicio.
      */
     public function create()
