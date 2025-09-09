@@ -5,7 +5,7 @@
         <label for="client">Client</label>
         <Multiselect
           id="client"
-          v-model="selected"
+          v-model="client"
           :options="options"
           label="full_name"
           track-by="id"
@@ -24,6 +24,7 @@ const props = defineProps({
   customers: { type: Array, default: () => [] },
 });
 
+const client = ref(null);
 const options = ref([]);
 watch(
   () => props.customers,
@@ -32,8 +33,6 @@ watch(
   },
   { immediate: true }
 );
-
-const selected = ref(null);
 
 // Evento al seleccionar
 const onSelect = (option) => {

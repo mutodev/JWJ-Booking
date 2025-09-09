@@ -12,6 +12,8 @@
           <hr />
           <ReservationAreas :areas="areas" />
           <hr />
+          <ReservationServices :services="services" />
+          <hr />
         </div>
 
         <div class="modal-footer">
@@ -30,6 +32,7 @@
 import { ref, watch } from "vue";
 import ReservationClient from "./create/ReservationClient.vue";
 import ReservationAreas from "./create/ReservationAreas.vue";
+import ReservationServices from "./create/ReservationServices.vue";
 
 const emit = defineEmits(["close", "saved"]);
 
@@ -37,6 +40,7 @@ const props = defineProps({
   show: Boolean,
   customers: { type: Array, default: () => [] },
   areas: { type: Array, default: () => [] },
+  services: { type: Array, default: () => [] },
 });
 
 const customers = ref([]);
@@ -53,6 +57,15 @@ watch(
   () => props.areas,
   (val) => {
     areas.value = [...val];
+  },
+  { immediate: true }
+);
+
+const services = ref([]);
+watch(
+  () => props.services,
+  (val) => {
+    services.value = [...val];
   },
   { immediate: true }
 );
