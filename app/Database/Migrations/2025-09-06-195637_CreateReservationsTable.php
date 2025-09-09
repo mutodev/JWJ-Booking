@@ -21,7 +21,7 @@ class CreateReservationsTable extends Migration
                 'null' => false,
                 'comment' => 'Relación con tabla customers'
             ],
-            'service_id' => [
+            'service_price_id' => [
                 'type' => 'CHAR',
                 'constraint' => 36,
                 'null' => false,
@@ -176,7 +176,7 @@ class CreateReservationsTable extends Migration
 
         $this->forge->addPrimaryKey('id');
         $this->forge->addForeignKey('customer_id', 'customers', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addForeignKey('service_id', 'services', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->addForeignKey('service_price_id', 'service_prices', 'id', 'CASCADE', 'CASCADE');
         // CAMBIO: FK a counties por FK a zipcodes
         $this->forge->addForeignKey('zipcode_id', 'zipcodes', 'id', 'CASCADE', 'CASCADE');
         // CAMBIO: Eliminada FK a service_prices (ya no se necesita)
