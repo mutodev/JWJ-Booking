@@ -77,6 +77,7 @@
   <ReservationCreate
     :show="modalCreateVisible"
     :customers="customers"
+    :areas="areas"
     @close="modalCreateVisible = false"
     @saved="handle"
   />
@@ -99,6 +100,7 @@ const searchValue = ref("");
 
 // Listas de selects
 const customers = ref([]);
+const areas = ref([]);
 
 // Modales
 const modalEditVisible = ref(false);
@@ -153,12 +155,14 @@ const getData = async () => {
 // Cargar customers, services, counties y zipcodes activos
 const getSelectData = async () => {
   try {
-    const [resCustomers] =
+    const [resCustomers, resAreas] =
       await Promise.all([
         api.get("/customers"),
+        api.get("/metropolitan-areas/list-active"),
       ]);
 
     customers.value = resCustomers.data;
+    areas.value = resAreas.data;
   } catch (error) {
     console.error(error);
   }

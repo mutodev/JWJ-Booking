@@ -71,6 +71,7 @@ $routes->group('api', function ($routes) {
         $routes->get('', [CityController::class, 'getAll']);
         $routes->get('get-all-and-county', [CityController::class, 'getAllAndCounty']);
         $routes->get('get-all-active', [CityController::class, 'getAllActive']);
+        $routes->get('get-by-county/(:any)', [CityController::class, 'getByCounty']);
         $routes->get('(:any)', [CityController::class, 'getById']);
         $routes->post('', [CityController::class, 'create']);
         $routes->put('(:any)', [CityController::class, 'updateData']);
@@ -81,6 +82,7 @@ $routes->group('api', function ($routes) {
     $routes->group('zipcodes', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [ZipCodeController::class, 'getAll']);
         $routes->get('get-all-and-city', [ZipCodeController::class, 'getAllAndCity']);
+        $routes->get('get-by-city/(:any)', [ZipCodeController::class, 'getByCity']);
         $routes->get('(:any)', [ZipCodeController::class, 'getById']);
         $routes->post('', [ZipCodeController::class, 'create']);
         $routes->put('(:any)', [ZipCodeController::class, 'updateData']);

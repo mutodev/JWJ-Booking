@@ -58,7 +58,7 @@ class CountyRepository
             ->orderBy('metropolitan_areas.name')
             ->findAll();
     }
-    
+
     /**
      * Obtener toda la data activos
      *
@@ -74,7 +74,7 @@ class CountyRepository
      */
     public function getByMetropilitan(string $metroplitanId): array
     {
-        return $this->countyModel->where('metropolitan_area_id', $metroplitanId)
+        return $this->countyModel->orderBy('name')->where('is_active', true)->where('metropolitan_area_id', $metroplitanId)
             ->findAll();
     }
 

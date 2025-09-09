@@ -66,6 +66,19 @@ class CityController extends ResourceController
         }
     }
 
+    public function getByCounty($id)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Lista de ciudades por condados', $this->service->getByCounty($id)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function create()
     {
         try {

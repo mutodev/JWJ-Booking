@@ -74,7 +74,7 @@ class CityRepository
      */
     public function getByCounty(string $countyId): array
     {
-        return $this->cityModel->where('county_id', $countyId)
+        return $this->cityModel->orderBy('name')->where('is_active', true)->where('county_id', $countyId)
             ->findAll();
     }
 

@@ -43,11 +43,14 @@ class ZipCodeRepository
      */
     public function getByCity(string $cityId): array
     {
-        return $this->zipCodeModel->where('city_id', $cityId)
+        return $this->zipCodeModel
+            ->orderBy('zipcode')
+            ->where('is_active', true)
+            ->where('city_id', $cityId)
             ->findAll();
     }
 
-     /**
+    /**
      * Obtener toda la data con ciudad
      *
      * @return array

@@ -15,6 +15,9 @@ import "vue3-easy-data-table/dist/style.css";
 import { createLoader } from "@/assets/scripts/loader";
 import EasyDataTable from "vue3-easy-data-table";
 
+import Multiselect from "vue-multiselect";
+import "vue-multiselect/dist/vue-multiselect.css";
+
 // Importar el helper de tablas
 import { generateTableHeaders, generateSearchFields, commonLabels } from "@/assets/scripts/easy-table.js";
 
@@ -23,6 +26,7 @@ const app = createApp(App);
 createLoader();
 
 app.component("EasyDataTable", EasyDataTable);
+app.component("Multiselect", Multiselect);
 
 // Registrar el helper globalmente usando provide
 app.provide('tableHelpers', {

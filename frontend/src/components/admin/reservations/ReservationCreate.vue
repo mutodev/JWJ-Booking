@@ -1,13 +1,18 @@
 <template>
   <div v-if="show" class="modal fade show d-block" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
+    <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Create Reservation</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
-        <div class="modal-body"></div>
+        <div class="modal-body">
+          <ReservationClient :customers="customers" />
+          <hr />
+          <ReservationAreas :areas="areas" />
+          <hr />
+        </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-light" @click="closeModal">
@@ -23,21 +28,33 @@
 
 <script setup>
 import { ref, watch } from "vue";
+import ReservationClient from "./create/ReservationClient.vue";
+import ReservationAreas from "./create/ReservationAreas.vue";
 
 const emit = defineEmits(["close", "saved"]);
 
 const props = defineProps({
   show: Boolean,
   customers: { type: Array, default: () => [] },
+  areas: { type: Array, default: () => [] },
 });
 
+const customers = ref([]);
 watch(
-  () => props.show,
+  () => props.customers,
   (val) => {
-    if (val) {
-      
-    }
-  }
+    customers.value = [...val];
+  },
+  { immediate: true }
+);
+
+const areas = ref([]);
+watch(
+  () => props.areas,
+  (val) => {
+    areas.value = [...val];
+  },
+  { immediate: true }
 );
 
 const closeModal = () => {

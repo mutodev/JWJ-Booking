@@ -55,6 +55,19 @@ class ZipCodeController extends ResourceController
         }
     }
 
+    public function getByCity($id)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Código postal por ciudad', $this->service->getByCity($id)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function create()
     {
         try {
