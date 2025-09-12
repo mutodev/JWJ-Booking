@@ -14,6 +14,8 @@
           <hr />
           <ReservationServices :services="services" />
           <hr />
+          <ReservationAddons :addons="addons" />
+          <hr />
         </div>
 
         <div class="modal-footer">
@@ -33,6 +35,7 @@ import { ref, watch } from "vue";
 import ReservationClient from "./create/ReservationClient.vue";
 import ReservationAreas from "./create/ReservationAreas.vue";
 import ReservationServices from "./create/ReservationServices.vue";
+import ReservationAddons from "./create/ReservationAddons.vue";
 
 const emit = defineEmits(["close", "saved"]);
 
@@ -41,32 +44,34 @@ const props = defineProps({
   customers: { type: Array, default: () => [] },
   areas: { type: Array, default: () => [] },
   services: { type: Array, default: () => [] },
+  addons: { type: Array, default: () => [] },
 });
 
 const customers = ref([]);
 watch(
   () => props.customers,
-  (val) => {
-    customers.value = [...val];
-  },
+  (val) => (customers.value = [...val]),
   { immediate: true }
 );
 
 const areas = ref([]);
 watch(
   () => props.areas,
-  (val) => {
-    areas.value = [...val];
-  },
+  (val) => (areas.value = [...val]),
   { immediate: true }
 );
 
 const services = ref([]);
 watch(
   () => props.services,
-  (val) => {
-    services.value = [...val];
-  },
+  (val) => (services.value = [...val]),
+  { immediate: true }
+);
+
+const addons = ref([]);
+watch(
+  () => props.addons,
+  (val) => (addons.value = [...val]),
   { immediate: true }
 );
 

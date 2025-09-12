@@ -15,6 +15,8 @@ class ServicePrice extends Entity
         'performers_count' => 'integer',
         'amount' => 'float',
         'min_duration_hours' => 'integer',
-        'is_available' => 'boolean'
+        'is_available' => 'boolean',
+        'max_children' => 'integer',
+        'extra_child_fee' => 'float'
     ];
 }

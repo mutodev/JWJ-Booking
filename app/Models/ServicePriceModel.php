@@ -21,7 +21,9 @@ class ServicePriceModel extends Model
         'amount',
         'min_duration_hours',
         'is_available',
-        'notes'
+        'notes',
+        'max_children',
+        'extra_child_fee',
     ];
 
     protected bool $allowEmptyInserts = false;

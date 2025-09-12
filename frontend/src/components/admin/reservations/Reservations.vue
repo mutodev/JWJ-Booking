@@ -79,6 +79,7 @@
     :customers="customers"
     :areas="areas"
     :services="services"
+    :addons="addons"
     @close="modalCreateVisible = false"
     @saved="handle"
   />
@@ -103,6 +104,7 @@ const searchValue = ref("");
 const customers = ref([]);
 const areas = ref([]);
 const services = ref([]);
+const addons = ref([]);
 
 // Modales
 const modalEditVisible = ref(false);
@@ -157,16 +159,18 @@ const getData = async () => {
 // Cargar customers, services, counties y zipcodes activos
 const getSelectData = async () => {
   try {
-    const [resCustomers, resAreas, resServices] =
+    const [resCustomers, resAreas, resServices, resAddons] =
       await Promise.all([
         api.get("/customers"),
         api.get("/metropolitan-areas/list-active"),
         api.get("/services/get-all-active"),
+        api.get("/addons/active"),
       ]);
 
     customers.value = resCustomers.data;
     areas.value = resAreas.data;
     services.value = resServices.data;
+    addons.value = resAddons.data;
   } catch (error) {
     console.error(error);
   }
