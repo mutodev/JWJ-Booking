@@ -141,7 +141,8 @@ const onSelectService = async (selected) => {
     const response = await api.get(
       `/service-prices/get-by-service-and-county/${selected.id}/${county.value?.id}`
     );
-    servicePriceList.value = response.data;
+    servicePriceList.value = response.data;    
+    emit("setData", {service: service.value, price: null});
   } catch (err) {
     console.error(err);
     servicePriceList.value = [];
@@ -150,7 +151,7 @@ const onSelectService = async (selected) => {
 
 const selectPrice = (price) => {
   selectedPrice.value = price;
-  emit("setData", {service: price});
+  emit("setData", {service: service.value, price: price});
 };
 
 // Formato moneda

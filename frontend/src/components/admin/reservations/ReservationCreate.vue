@@ -21,17 +21,17 @@
             @setData="setData"
           />
           <ReservationAddons
-            v-if="dataForm?.service"
+            v-if="dataForm?.price"
             :addons="addons"
             @setData="setData"
           />
           <ReservationForm
-            v-if="dataForm?.service"
+            v-if="dataForm?.price"
             :addons="addons"
             @setData="setData"
           />
 
-          <ReservationTotal v-if="dataForm?.service" :data="dataForm" />
+          <ReservationTotal v-if="dataForm?.price" :data="dataForm" />
         </div>
 
         <div class="modal-footer">

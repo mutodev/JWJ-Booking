@@ -71,7 +71,7 @@ const schema = yup.object({
   extraChildren: yup
     .number()
     .min(0, "Extra children must be 0 or more")
-    .required("Extra children is required"),
+    .required("Extra children is required or value 0"),
 });
 
 const errors = ref({});
@@ -82,7 +82,7 @@ const validateAndEmit = async () => {
     const values = {
       date: date.value,
       startTime: startTime.value,
-      extraChildren: extraChildren.value,
+      extraChildren: extraChildren.value ?? 0,
     };
 
     await schema.validate(values, { abortEarly: false });
