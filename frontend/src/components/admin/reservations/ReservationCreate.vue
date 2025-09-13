@@ -31,12 +31,21 @@
             @setData="setData"
           />
 
-          <ReservationTotal v-if="dataForm?.price" :data="dataForm" />
+          <ReservationTotal v-if="dataForm?.form" :data="dataForm" />
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-light" @click="closeModal">
             <i class="bi bi-arrow-90deg-down"></i> Back
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="saveReservation"
+            :disabled="!dataForm?.form"
+          >
+            <i class="bi bi-save"></i>
+            Save
           </button>
         </div>
       </div>
@@ -48,6 +57,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
+import api from "@/services/axios";
 import ReservationClient from "./create/ReservationClient.vue";
 import ReservationAreas from "./create/ReservationAreas.vue";
 import ReservationServices from "./create/ReservationServices.vue";
@@ -105,8 +115,16 @@ const setData = (data) => {
       dataForm.value[key] = data[key];
     }
   }
-  console.log(dataForm.value);
 };
+
+const saveReservation = async() => {
+  try {
+      await api.post('/reservations', dataForm.value)
+      emit("saved");
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 const closeModal = () => {
   emit("close");

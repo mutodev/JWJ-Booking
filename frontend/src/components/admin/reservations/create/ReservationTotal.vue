@@ -47,6 +47,16 @@
               }}
             </td>
           </tr>
+
+          <!-- Surcharge -->
+          <tr v-if="surcharge.amount > 0">
+            <td class="text-start text-danger fw-medium">
+              Surcharge ({{ surcharge.percent }}%)
+            </td>
+            <td>-</td>
+            <td>-</td>
+            <td class="text-danger">{{ formatCurrency(surcharge.amount) }}</td>
+          </tr>
         </tbody>
 
         <tfoot class="border-top">
@@ -86,20 +96,38 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-// Total reactivo incluyendo addons y extra children
-const total = computed(() => {
+// Calcula recargo basado en fecha
+const surcharge = computed(() => {
+  if (!data.value?.form?.date) return { amount: 0, percent: 0 };
+
+  const today = new Date();
+  const bookingDate = new Date(data.value.form.date);
+  const diffTime = bookingDate - today;
+  const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+  if (diffDays < 2) return { amount: totalBase.value * 0.2, percent: 20 };
+  if (diffDays <= 7) return { amount: totalBase.value * 0.1, percent: 10 };
+  return { amount: 0, percent: 0 };
+});
+
+// Total base sin recargo
+const totalBase = computed(() => {
   let sum = data.value.price?.amount || 0;
 
   if (data.value.addons?.length) {
     sum += data.value.addons.reduce((acc, a) => acc + (a.base_price || 0), 0);
   }
 
-  // Extra children correctamente sumados
   const extraChildrenQty = data.value.form?.extraChildren || 0;
   const extraChildFee = data.value.price?.extra_child_fee || 0;
   sum += extraChildrenQty * extraChildFee;
 
-  return formatCurrency(sum);
+  return sum;
+});
+
+// Total final incluyendo recargo
+const total = computed(() => {
+  return formatCurrency(totalBase.value + surcharge.value.amount);
 });
 </script>
 
@@ -117,5 +145,9 @@ const total = computed(() => {
 
 .text-muted {
   font-size: 0.7rem;
+}
+
+.text-danger {
+  font-weight: 500;
 }
 </style>
