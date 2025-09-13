@@ -61,6 +61,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
+import "../../../assets/styles/sidebar-admin.css";
 
 const access = ref(JSON.parse(sessionStorage.getItem("access") || "[]"));
 
@@ -118,100 +119,3 @@ onMounted(() => {
 
 watch(isCollapsed, updateTooltips);
 </script>
-
-<style scoped>
-.sidebar {
-  width: 250px;
-  background: #343a40;
-  font-family: "Segoe UI", sans-serif;
-  transition: width 0.3s ease;
-  overflow-y: auto; /* 👈 habilita scroll si el contenido es largo */
-}
-
-/* Sidebar links */
-.sidebar-link {
-  padding: 12px 18px;
-  border-radius: 8px;
-  transition: background 0.2s ease, color 0.2s ease;
-  border: none;
-  background: transparent;
-}
-
-.sidebar-link:hover {
-  background: #495057;
-  color: #fff;
-}
-
-/* Submenu styling */
-.collapse .nav-link {
-  padding-left: 30px;
-}
-
-/* 👇 Alineación submenús igual que los padres cuando está colapsado */
-.sidebar.collapsed .collapse .nav-link {
-  padding-left: 0;
-}
-
-/* Icon rotate */
-.rotate-180 {
-  transform: rotate(180deg);
-  transition: transform 0.3s;
-}
-
-/* Responsive: cuando se colapsa */
-.sidebar.collapsed {
-  width: 70px;
-}
-
-.sidebar.collapsed .link-text {
-  display: none;
-}
-
-.sidebar.collapsed .bi-caret-down {
-  display: none;
-}
-
-.sidebar.collapsed .nav-link {
-  justify-content: center;
-  padding: 12px 0;
-}
-
-.sidebar.collapsed .me-2 {
-  margin-right: 0 !important;
-}
-
-/* 👇 ajuste: no ocultar los submenus abiertos */
-.sidebar.collapsed .collapse:not(.show) {
-  display: none;
-}
-
-/* Mobile: solo íconos */
-@media (max-width: 991px) {
-  .sidebar {
-    width: 70px;
-  }
-
-  .link-text {
-    display: none;
-  }
-
-  .bi-caret-down {
-    display: none;
-  }
-
-  .nav-link {
-    justify-content: center;
-    padding: 12px 0;
-  }
-}
-
-/* Active states */
-.router-link-active {
-  background: #007bff !important;
-  color: #fff !important;
-}
-
-.router-link-active:hover {
-  background: #0056b3 !important;
-}
-</style>
