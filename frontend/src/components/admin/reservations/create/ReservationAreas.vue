@@ -1,6 +1,6 @@
 <template>
   <div class="row justify-content-center">
-    <div class="col-5">
+    <div class="col-3">
       <div class="form-group">
         <label for="metropolitan-area">Metropolitan Area</label>
         <Multiselect
@@ -14,7 +14,7 @@
         />
       </div>
     </div>
-    <div class="col-5">
+    <div class="col-3">
       <div class="form-group">
         <label for="county">County</label>
         <Multiselect
@@ -28,7 +28,7 @@
         />
       </div>
     </div>
-    <div class="col-5">
+    <div class="col-3">
       <div class="form-group">
         <label for="city">City</label>
         <Multiselect
@@ -42,7 +42,7 @@
         />
       </div>
     </div>
-    <div class="col-5">
+    <div class="col-3">
       <div class="form-group">
         <label for="zipcode">Zip Code</label>
         <Multiselect
@@ -63,6 +63,7 @@
 import { ref, watch } from "vue";
 import api from "@/services/axios";
 
+const emit = defineEmits(["setData"]);
 const props = defineProps({
   areas: { type: Array, default: () => [] },
 });
@@ -117,6 +118,13 @@ const onSelectCity = async (selected) => {
 };
 
 const onSelectZipCode = async (selected) => {
-  console.log(selected);
+  const areas = {
+    area: selectedArea,
+    county: selectedCounty,
+    city: selectedCity,
+    zipcode: selectedZipCode,
+  };
+
+  emit("setData", { areas });
 };
 </script>

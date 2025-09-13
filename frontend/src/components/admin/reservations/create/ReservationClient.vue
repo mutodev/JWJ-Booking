@@ -10,7 +10,6 @@
           label="full_name"
           track-by="id"
           placeholder="Select a client"
-          @select="onSelect"
         />
       </div>
     </div>
@@ -20,12 +19,14 @@
 <script setup>
 import { ref, watch } from "vue";
 
+const emit = defineEmits(["setData"]);
 const props = defineProps({
   customers: { type: Array, default: () => [] },
 });
 
 const client = ref(null);
 const options = ref([]);
+
 watch(
   () => props.customers,
   (newData) => {
@@ -34,9 +35,11 @@ watch(
   { immediate: true }
 );
 
-// Evento al seleccionar
-const onSelect = (option) => {
-  console.log("Seleccionado:", option);
-  // Aquí puedes disparar lo que necesites
-};
+watch(client, (newVal) => {
+  if (newVal) {
+    emit("setData", { customer: newVal });
+  } else {
+    emit("setData", { customer: null });
+  }
+});
 </script>

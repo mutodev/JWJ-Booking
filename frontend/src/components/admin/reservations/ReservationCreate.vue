@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="modal fade show d-block" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Create Reservation</h5>
@@ -8,14 +8,27 @@
         </div>
 
         <div class="modal-body">
-          <ReservationClient :customers="customers" />
-          <hr />
-          <ReservationAreas :areas="areas" />
-          <hr />
-          <ReservationServices :services="services" />
-          <hr />
-          <ReservationAddons :addons="addons" />
-          <hr />
+          <ReservationClient :customers="customers" @setData="setData" />
+          <!-- <hr /> -->
+          <ReservationAreas
+            v-if="dataForm?.customer"
+            :areas="areas"
+            @setData="setData"
+          />
+          <!-- <hr /> -->
+          <ReservationServices
+            v-if="dataForm?.areas?.zipcode"
+            :services="services"
+            :county="dataForm?.areas?.county ?? null"
+            @setData="setData"
+          />
+          <!-- <hr /> -->
+          <ReservationAddons
+            v-if="dataForm?.service"
+            :addons="addons"
+            @setData="setData"
+          />
+          <!-- <hr /> -->
         </div>
 
         <div class="modal-footer">
@@ -38,6 +51,7 @@ import ReservationServices from "./create/ReservationServices.vue";
 import ReservationAddons from "./create/ReservationAddons.vue";
 
 const emit = defineEmits(["close", "saved"]);
+const dataForm = ref({});
 
 const props = defineProps({
   show: Boolean,
@@ -74,6 +88,20 @@ watch(
   (val) => (addons.value = [...val]),
   { immediate: true }
 );
+
+/**
+ * arma datos del formulario
+ */
+const setData = (data) => {
+  for (const key in data) {
+    if (data[key] === null) {
+      delete dataForm.value[key];
+    } else {
+      dataForm.value[key] = data[key];
+    }
+  }
+  console.log(dataForm.value);
+};
 
 const closeModal = () => {
   emit("close");
