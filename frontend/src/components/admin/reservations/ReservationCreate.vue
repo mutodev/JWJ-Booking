@@ -28,6 +28,12 @@
             :addons="addons"
             @setData="setData"
           />
+
+          <ReservationForm
+            v-if="dataForm?.service"
+            :addons="addons"
+            @setData="setData"
+          />
           <!-- <hr /> -->
         </div>
 
@@ -49,6 +55,7 @@ import ReservationClient from "./create/ReservationClient.vue";
 import ReservationAreas from "./create/ReservationAreas.vue";
 import ReservationServices from "./create/ReservationServices.vue";
 import ReservationAddons from "./create/ReservationAddons.vue";
+import ReservationForm from "./create/ReservationForm.vue";
 
 const emit = defineEmits(["close", "saved"]);
 const dataForm = ref({});

@@ -1,6 +1,6 @@
 <template>
   <div class="row justify-content-center">
-    <div class="col-3">
+    <div class="col-5">
       <div class="form-group">
         <label for="metropolitan-area">Metropolitan Area</label>
         <Multiselect
@@ -14,7 +14,7 @@
         />
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-5">
       <div class="form-group">
         <label for="county">County</label>
         <Multiselect
@@ -28,7 +28,7 @@
         />
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-5">
       <div class="form-group">
         <label for="city">City</label>
         <Multiselect
@@ -42,7 +42,7 @@
         />
       </div>
     </div>
-    <div class="col-3">
+    <div class="col-5">
       <div class="form-group">
         <label for="zipcode">Zip Code</label>
         <Multiselect
@@ -95,10 +95,15 @@ const onSelectArea = async (selected) => {
   listCities.value = [];
   listZipCodes.value = [];
 
+  selectedCounty.value = null;
+  selectedCity.value = null;
+  selectedZipCode.value = null;
+
   const response = await api.get(
     `/counties/get-by-metropolitan/${selected.id}`
   );
   listCounties.value = response.data;
+  emit("setData", { areas: null });
 };
 
 // Evento al seleccionar un county
@@ -106,15 +111,21 @@ const onSelectCounty = async (selected) => {
   listCities.value = [];
   listZipCodes.value = [];
 
+  selectedCity.value = null;
+  selectedZipCode.value = null;
+
   const response = await api.get(`/cities/get-by-county/${selected.id}`);
   listCities.value = response.data;
+  emit("setData", { areas: null });
 };
 
 const onSelectCity = async (selected) => {
   listZipCodes.value = [];
+  selectedZipCode.value = null;
 
   const response = await api.get(`/zipcodes/get-by-city/${selected.id}`);
   listZipCodes.value = response.data;
+  emit("setData", { areas: null });
 };
 
 const onSelectZipCode = async (selected) => {

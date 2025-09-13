@@ -50,7 +50,7 @@
           <div class="text-center small mb-2">
             <span class="text-danger d-inline-flex align-items-center gap-1">
               <i class="bi bi-coin" aria-hidden="true"></i>
-              {{ formatCurrency(price.extra_child_fee) }} / child
+              {{ formatCurrency(price.extra_child_fee) }} extra children
             </span>
           </div>
 
@@ -110,7 +110,7 @@ const props = defineProps({
   county: Object,
 });
 
-const emit = defineEmits(["priceSelected"]);
+const emit = defineEmits(["setData"]);
 
 const service = ref(null);
 const serviceList = ref([]);
@@ -136,7 +136,7 @@ watch(
 const onSelectService = async (selected) => {
   servicePriceList.value = [];
   selectedPrice.value = null;
-  
+
   try {
     const response = await api.get(
       `/service-prices/get-by-service-and-county/${selected.id}/${county.value?.id}`
@@ -150,7 +150,7 @@ const onSelectService = async (selected) => {
 
 const selectPrice = (price) => {
   selectedPrice.value = price;
-  emit("priceSelected", price);
+  emit("setData", {service: price});
 };
 
 // Formato moneda

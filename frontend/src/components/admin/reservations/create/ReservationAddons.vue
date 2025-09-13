@@ -1,9 +1,7 @@
 <template>
-    <div class="row justify-content-center">
-        <div class="col-10">
-            Addons
-        </div>
-    </div>
+  <div class="row justify-content-center">
+    <div class="col-10">Addons</div>
+  </div>
   <div class="d-flex flex-row gap-2 flex-wrap justify-content-center mt-3">
     <div
       v-for="addon in listAddons"
@@ -51,7 +49,7 @@ const props = defineProps({
   multiple: { type: Boolean, default: true },
 });
 
-const emit = defineEmits(["selectionChanged"]);
+const emit = defineEmits(["setData"]);
 
 const listAddons = ref([]);
 const selectedAddons = ref([]);
@@ -77,9 +75,7 @@ const toggleSelect = (addon) => {
       : [addon];
   }
 
-  console.log([...selectedAddons.value]);
-
-  emit("selectionChanged", [...selectedAddons.value]);
+  emit("setData", { addons: [...selectedAddons.value] });
 };
 </script>
 
