@@ -43,6 +43,62 @@
         {{ errors.extraChildren }}
       </span>
     </div>
+
+    <!-- Children Age Range -->
+    <div class="col-5">
+      <label for="children_age_range" class="form-label"
+        >Children Age Range</label
+      >
+      <input
+        id="children_age_range"
+        type="text"
+        class="form-control"
+        v-model="childrenAgeRange"
+        placeholder="Optional"
+      />
+    </div>
+
+    <!-- Event Address -->
+    <div class="col-5">
+      <label for="event_address" class="form-label">Event Address</label>
+      <input
+        id="event_address"
+        type="text"
+        class="form-control"
+        v-model="eventAddress"
+        minlength="6"
+        placeholder="Enter event address"
+      />
+      <span v-if="errors.eventAddress" class="text-danger small">
+        {{ errors.eventAddress }}
+      </span>
+    </div>
+
+    <!-- Arrival Parking Instructions -->
+    <div class="col-5">
+      <label for="arrival_parking_instructions" class="form-label">
+        Arrival / Parking Instructions
+      </label>
+      <input
+        id="arrival_parking_instructions"
+        type="text"
+        class="form-control"
+        v-model="arrivalParkingInstructions"
+        placeholder="Optional"
+      />
+    </div>
+
+    <!-- Song Requests -->
+    <div class="col-10">
+      <label for="song_requests" class="form-label">Song Requests</label>
+      <textarea
+        id="song_requests"
+        class="form-control"
+        v-model="songRequests"
+        rows="2"
+        placeholder="Optional"
+      ></textarea>
+    </div>
   </div>
 </template>
 
@@ -57,6 +113,10 @@ const today = new Date().toISOString().split("T")[0];
 const date = ref(today);
 const startTime = ref("");
 const extraChildren = ref(0);
+const eventAddress = ref("");
+const arrivalParkingInstructions = ref("");
+const childrenAgeRange = ref("");
+const songRequests = ref("");
 
 // Validation schema
 const schema = yup.object({
@@ -72,6 +132,10 @@ const schema = yup.object({
     .number()
     .min(0, "Extra children must be 0 or more")
     .required("Extra children is required or value 0"),
+  eventAddress: yup
+    .string()
+    .min(6, "Event address must be at least 6 characters")
+    .required("Event address is required"),
 });
 
 const errors = ref({});
@@ -83,6 +147,10 @@ const validateAndEmit = async () => {
       date: date.value,
       startTime: startTime.value,
       extraChildren: extraChildren.value ?? 0,
+      eventAddress: eventAddress.value,
+      arrivalParkingInstructions: arrivalParkingInstructions.value,
+      childrenAgeRange: childrenAgeRange.value,
+      songRequests: songRequests.value,
     };
 
     await schema.validate(values, { abortEarly: false });
@@ -99,7 +167,18 @@ const validateAndEmit = async () => {
 };
 
 // Dispara el evento cada vez que cambie un valor
-watch([date, startTime, extraChildren], () => {
-  validateAndEmit();
-});
+watch(
+  [
+    date,
+    startTime,
+    extraChildren,
+    eventAddress,
+    arrivalParkingInstructions,
+    childrenAgeRange,
+    songRequests,
+  ],
+  () => {
+    validateAndEmit();
+  }
+);
 </script>

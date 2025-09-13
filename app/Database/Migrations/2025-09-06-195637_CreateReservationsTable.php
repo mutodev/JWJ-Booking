@@ -29,8 +29,8 @@ class CreateReservationsTable extends Migration
             ],
             // CAMBIO: county_id por zipcode
             'zipcode_id' => [
-                'type' => 'VARCHAR',
-                'constraint' => 10,
+                'type' => 'CHAR',
+                'constraint' => 36,
                 'null' => false,
                 'comment' => 'ZIP code del evento (relación con tabla zipcodes)'
             ],
