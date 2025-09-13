@@ -74,10 +74,10 @@
               <i class="bi bi-pencil-square"></i> Edit
             </button>
             <button
-              class="btn btn-sm btn-danger me-2"
-              @click="deleteModal(item)"
+              class="btn btn-sm btn-secondary me-2"
+              @click="viewModal(item)"
             >
-              <i class="bi bi-trash"></i> Delete
+              <i class="bi bi-eye"></i> View
             </button>
           </template>
         </EasyDataTable>
@@ -93,6 +93,12 @@
       @close="modalCreateVisible = false"
       @saved="handle"
     />
+
+    <ReservationView
+      :show="modalViewVisible"
+      :data="selectedData"
+      @close="modalViewVisible = false"
+    />
   </div>
 </template>
 
@@ -100,6 +106,7 @@
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import ReservationCreate from "./ReservationCreate.vue";
+import ReservationView from "./ReservationView.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Reservations", icon: "bi-calendar-event" });
@@ -114,7 +121,7 @@ const addons = ref([]);
 
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
-const modalDeleteVisible = ref(false);
+const modalViewVisible = ref(false);
 const selectedData = ref(null);
 
 const editModal = (item) => {
@@ -124,9 +131,9 @@ const editModal = (item) => {
 const createModal = () => {
   modalCreateVisible.value = true;
 };
-const deleteModal = (item) => {
+const viewModal = (item) => {
   selectedData.value = { ...item };
-  modalDeleteVisible.value = true;
+  modalViewVisible.value = true;
 };
 
 // Encabezados principales

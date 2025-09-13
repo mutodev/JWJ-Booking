@@ -18,6 +18,9 @@ import SidebarAdmin from "./template/SidebarAdmin.vue";
 import NavbarAdmin from "./template/NavbarAdmin.vue";
 import { provide, ref } from "vue";
 
+import '@/assets/styles/style-admin.css';
+import '@/assets/styles/modal-admin.css';
+
 
 const headerData = ref({
   title: "Dashboard",

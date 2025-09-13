@@ -1,9 +1,13 @@
+/* ===== SIDEBAR MEJORADO - COMPATIBLE CON MODALES ===== */
+
 .sidebar {
   width: 250px;
-  background: #343a40;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   font-family: "Segoe UI", sans-serif;
   transition: width 0.3s ease;
-  overflow-y: auto; /* 👈 habilita scroll si el contenido es largo */
+  overflow-y: auto;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-radius: 0 12px 12px 0;
 }
 
 /* Sidebar links */
@@ -13,27 +17,83 @@
   transition: background 0.2s ease, color 0.2s ease;
   border: none;
   background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
 }
 
 .sidebar-link:hover {
-  background: #495057;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-link i {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sidebar-link:hover i {
+  color: #fff;
+}
+
+/* Link text */
+.link-text {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.85rem;
+}
+
+.sidebar-link:hover .link-text {
   color: #fff;
 }
 
 /* Submenu styling */
 .collapse .nav-link {
-  padding-left: 30px;
+  padding-left: 35px;
+  background: rgba(255, 255, 255, 0.05);
+  margin: 2px 12px;
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
 }
 
-/* 👇 Alineación submenús igual que los padres cuando está colapsado */
+.collapse .nav-link:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.collapse .nav-link i {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Alineación submenús igual que los padres cuando está colapsado */
 .sidebar.collapsed .collapse .nav-link {
   padding-left: 0;
+  margin: 2px 8px;
 }
 
 /* Icon rotate */
 .rotate-180 {
   transform: rotate(180deg);
   transition: transform 0.3s;
+}
+
+.bi-caret-down {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+  margin-left: auto;
+  transition: transform 0.3s ease;
 }
 
 /* Responsive: cuando se colapsa */
@@ -49,16 +109,18 @@
   display: none;
 }
 
-.sidebar.collapsed .nav-link {
+.sidebar.collapsed .nav-link,
+.sidebar.collapsed .sidebar-link {
   justify-content: center;
-  padding: 12px 0;
+  padding: 12px 8px;
+  margin: 4px 8px;
 }
 
 .sidebar.collapsed .me-2 {
   margin-right: 0 !important;
 }
 
-/* 👇 ajuste: no ocultar los submenus abiertos */
+/* No ocultar los submenus abiertos */
 .sidebar.collapsed .collapse:not(.show) {
   display: none;
 }
@@ -77,18 +139,134 @@
     display: none;
   }
 
-  .nav-link {
+  .nav-link,
+  .sidebar-link {
     justify-content: center;
-    padding: 12px 0;
+    padding: 12px 8px;
   }
 }
 
-/* Active states */
+/* Active states - Mejorados */
 .router-link-active {
-  background: #007bff !important;
+  background: rgba(255, 255, 255, 0.25) !important;
   color: #fff !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .router-link-active:hover {
-  background: #0056b3 !important;
+  background: rgba(255, 255, 255, 0.35) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.router-link-active i {
+  color: #fff !important;
+}
+
+.router-link-active .link-text {
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* Submenu active state */
+.collapse .router-link-active {
+  background: rgba(255, 255, 255, 0.3) !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* Separadores visuales */
+.sidebar-separator {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 8px 16px;
+}
+
+/* Título de sección (opcional) */
+.sidebar-section-title {
+  padding: 16px 18px 8px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.sidebar.collapsed .sidebar-section-title {
+  display: none;
+}
+
+/* Efectos adicionales para consistencia */
+.sidebar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(10px);
+  border-radius: inherit;
+  z-index: -1;
+}
+
+/* Scrollbar personalizada */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* Estados de hover mejorados */
+.sidebar-link:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 2px;
+}
+
+/* Animación suave para los íconos */
+.sidebar-link i {
+  transition: all 0.2s ease;
+}
+
+.sidebar-link:hover i {
+  transform: scale(1.1);
+}
+
+/* Badge o contador (opcional) */
+.sidebar-badge {
+  background: #fff;
+  color: #667eea;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-left: auto;
+  min-width: 18px;
+  text-align: center;
+}
+
+.sidebar.collapsed .sidebar-badge {
+  display: none;
+}
+
+/* Ajustes para mejorar la accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .sidebar-link,
+  .rotate-180,
+  .bi-caret-down {
+    transition: none;
+  }
 }
