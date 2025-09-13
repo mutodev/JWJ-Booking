@@ -10,9 +10,9 @@
         v-model="date"
         :min="today"
       />
-      <span v-if="errors.date" class="text-danger small">{{
-        errors.date
-      }}</span>
+      <span v-if="errors.date" class="text-danger small">
+        {{ errors.date }}
+      </span>
     </div>
 
     <!-- Start Time -->
@@ -24,18 +24,9 @@
         class="form-control"
         v-model="startTime"
       />
-      <span v-if="errors.startTime" class="text-danger small">{{
-        errors.startTime
-      }}</span>
-    </div>
-
-    <!-- End Time -->
-    <div class="col-5">
-      <label for="end_time" class="form-label">End Time</label>
-      <input id="end_time" type="time" class="form-control" v-model="endTime" />
-      <span v-if="errors.endTime" class="text-danger small">{{
-        errors.endTime
-      }}</span>
+      <span v-if="errors.startTime" class="text-danger small">
+        {{ errors.startTime }}
+      </span>
     </div>
 
     <!-- Extra Children -->
@@ -48,9 +39,9 @@
         v-model="extraChildren"
         min="0"
       />
-      <span v-if="errors.extraChildren" class="text-danger small">{{
-        errors.extraChildren
-      }}</span>
+      <span v-if="errors.extraChildren" class="text-danger small">
+        {{ errors.extraChildren }}
+      </span>
     </div>
   </div>
 </template>
@@ -65,7 +56,6 @@ const emit = defineEmits(["setData"]);
 const today = new Date().toISOString().split("T")[0];
 const date = ref(today);
 const startTime = ref("");
-const endTime = ref("");
 const extraChildren = ref(0);
 
 // Validation schema
@@ -78,13 +68,6 @@ const schema = yup.object({
     )
     .required("Date is required"),
   startTime: yup.string().required("Start time is required"),
-  endTime: yup
-    .string()
-    .required("End time is required")
-    .test("is-after", "End time must be after start time", function (value) {
-      if (!this.parent.startTime || !value) return true;
-      return value > this.parent.startTime;
-    }),
   extraChildren: yup
     .number()
     .min(0, "Extra children must be 0 or more")
@@ -99,7 +82,6 @@ const validateAndEmit = async () => {
     const values = {
       date: date.value,
       startTime: startTime.value,
-      endTime: endTime.value,
       extraChildren: extraChildren.value,
     };
 
@@ -117,7 +99,7 @@ const validateAndEmit = async () => {
 };
 
 // Dispara el evento cada vez que cambie un valor
-watch([date, startTime, endTime, extraChildren], () => {
+watch([date, startTime, extraChildren], () => {
   validateAndEmit();
 });
 </script>

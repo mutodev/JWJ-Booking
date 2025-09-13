@@ -31,7 +31,7 @@
             @setData="setData"
           />
 
-          <ReservationTotal :data="dataForm" />
+          <ReservationTotal v-if="dataForm?.service" :data="dataForm" />
         </div>
 
         <div class="modal-footer">
