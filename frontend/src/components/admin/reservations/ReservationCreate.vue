@@ -9,32 +9,29 @@
 
         <div class="modal-body">
           <ReservationClient :customers="customers" @setData="setData" />
-          <!-- <hr /> -->
           <ReservationAreas
             v-if="dataForm?.customer"
             :areas="areas"
             @setData="setData"
           />
-          <!-- <hr /> -->
           <ReservationServices
             v-if="dataForm?.areas?.zipcode"
             :services="services"
             :county="dataForm?.areas?.county ?? {}"
             @setData="setData"
           />
-          <!-- <hr /> -->
           <ReservationAddons
             v-if="dataForm?.service"
             :addons="addons"
             @setData="setData"
           />
-
           <ReservationForm
             v-if="dataForm?.service"
             :addons="addons"
             @setData="setData"
           />
-          <!-- <hr /> -->
+
+          <ReservationTotal :data="dataForm" />
         </div>
 
         <div class="modal-footer">
@@ -56,6 +53,7 @@ import ReservationAreas from "./create/ReservationAreas.vue";
 import ReservationServices from "./create/ReservationServices.vue";
 import ReservationAddons from "./create/ReservationAddons.vue";
 import ReservationForm from "./create/ReservationForm.vue";
+import ReservationTotal from "./create/ReservationTotal.vue";
 
 const emit = defineEmits(["close", "saved"]);
 const dataForm = ref({});

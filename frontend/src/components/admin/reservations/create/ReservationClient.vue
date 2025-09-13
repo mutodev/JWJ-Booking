@@ -39,7 +39,7 @@ watch(client, (newVal) => {
   if (newVal) {
     emit("setData", { customer: newVal });
   } else {
-    emit("setData", { customer: null });
+    emit("setData", { customer: null, areas: null, service: null, addons: null,  form: null});
   }
 });
 </script>

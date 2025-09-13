@@ -103,7 +103,7 @@ const onSelectArea = async (selected) => {
     `/counties/get-by-metropolitan/${selected.id}`
   );
   listCounties.value = response.data;
-  emit("setData", { areas: null });
+  emit("setData", { areas: null, service: null, addons: null,  form: null });
 };
 
 // Evento al seleccionar un county
@@ -116,7 +116,7 @@ const onSelectCounty = async (selected) => {
 
   const response = await api.get(`/cities/get-by-county/${selected.id}`);
   listCities.value = response.data;
-  emit("setData", { areas: null });
+  emit("setData", { areas: null, service: null, addons: null,  form: null });
 };
 
 const onSelectCity = async (selected) => {
@@ -125,7 +125,7 @@ const onSelectCity = async (selected) => {
 
   const response = await api.get(`/zipcodes/get-by-city/${selected.id}`);
   listZipCodes.value = response.data;
-  emit("setData", { areas: null });
+  emit("setData", { areas: null, service: null, addons: null,  form: null });
 };
 
 const onSelectZipCode = async (selected) => {
