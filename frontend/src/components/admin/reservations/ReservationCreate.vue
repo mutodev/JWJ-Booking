@@ -19,7 +19,7 @@
           <ReservationServices
             v-if="dataForm?.areas?.zipcode"
             :services="services"
-            :county="dataForm?.areas?.county ?? null"
+            :county="dataForm?.areas?.county ?? {}"
             @setData="setData"
           />
           <!-- <hr /> -->

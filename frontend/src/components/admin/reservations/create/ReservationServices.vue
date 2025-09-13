@@ -107,6 +107,7 @@ import api from "@/services/axios";
 
 const props = defineProps({
   services: { type: Array, default: () => [] },
+  county: Object,
 });
 
 const emit = defineEmits(["priceSelected"]);
@@ -115,6 +116,7 @@ const service = ref(null);
 const serviceList = ref([]);
 const servicePriceList = ref([]);
 const selectedPrice = ref(null);
+const county = ref({});
 
 watch(
   () => props.services,
@@ -123,14 +125,21 @@ watch(
   },
   { immediate: true }
 );
+watch(
+  () => props.county,
+  (newData) => {
+    county.value = newData;
+  },
+  { immediate: true }
+);
 
 const onSelectService = async (selected) => {
   servicePriceList.value = [];
   selectedPrice.value = null;
-
+  
   try {
     const response = await api.get(
-      `/service-prices/get-by-service-and-county/${selected.id}/33c3d4e5-f6a7-48b9-0123-456789abcdef`
+      `/service-prices/get-by-service-and-county/${selected.id}/${county.value?.id}`
     );
     servicePriceList.value = response.data;
   } catch (err) {
