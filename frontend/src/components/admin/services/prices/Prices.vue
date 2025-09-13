@@ -49,6 +49,11 @@
           {{ formatCurrency(amount) }}
         </template>
 
+        <!-- 💵 Mostrar currency en extra_child_fee -->
+        <template #item-extra_child_fee="{ extra_child_fee }">
+          {{ formatCurrency(extra_child_fee) }}
+        </template>
+
         <!-- 📝 Limitar notas a 40 caracteres con tooltip -->
         <template #item-notes="{ notes }">
           <span v-if="notes" :title="notes">
@@ -135,6 +140,7 @@ const headers = computed(() => {
       county_id: "County",
       performers_count: "Performers",
       amount: "Amount",
+      extra_child_fee: "Extra Child Fee", // 👈 etiqueta legible
       price_type: "Price Type",
       min_duration_hours: "Min Hours",
       is_available: "State",

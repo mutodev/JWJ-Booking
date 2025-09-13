@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="modal fade show d-block" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">Create Service Price</h5>
@@ -9,113 +9,154 @@
 
         <div class="modal-body">
           <form @submit.prevent="submitForm">
-            <!-- 🔹 Service -->
-            <div class="mb-3">
-              <label for="service_id" class="form-label">Service</label>
-              <select
-                id="service_id"
-                class="form-select"
-                v-model="form.service_id"
-                required
-              >
-                <option value="">-- Select Service --</option>
-                <option v-for="srv in services" :key="srv.id" :value="srv.id">
-                  {{ srv.name }}
-                </option>
-              </select>
-              <small class="text-danger small">{{ errors.service_id }}</small>
-            </div>
+            <div class="row">
+              <!-- 🔹 Service -->
+              <div class="mb-3 col-md-6">
+                <label for="service_id" class="form-label">Service</label>
+                <select
+                  id="service_id"
+                  class="form-select"
+                  v-model="form.service_id"
+                  required
+                >
+                  <option value="">-- Select Service --</option>
+                  <option v-for="srv in services" :key="srv.id" :value="srv.id">
+                    {{ srv.name }}
+                  </option>
+                </select>
+                <small class="text-danger small">{{ errors.service_id }}</small>
+              </div>
 
-            <!-- 🔹 County -->
-            <div class="mb-3">
-              <label for="county_id" class="form-label">County</label>
-              <select
-                id="county_id"
-                class="form-select"
-                v-model="form.county_id"
-                required
-              >
-                <option value="">-- Select County --</option>
-                <option v-for="c in counties" :key="c.id" :value="c.id">
-                  {{ c.name }}
-                </option>
-              </select>
-              <small class="text-danger small">{{ errors.county_id }}</small>
-            </div>
+              <!-- 🔹 County -->
+              <div class="mb-3 col-md-6">
+                <label for="county_id" class="form-label">County</label>
+                <select
+                  id="county_id"
+                  class="form-select"
+                  v-model="form.county_id"
+                  required
+                >
+                  <option value="">-- Select County --</option>
+                  <option v-for="c in counties" :key="c.id" :value="c.id">
+                    {{ c.name }}
+                  </option>
+                </select>
+                <small class="text-danger small">{{ errors.county_id }}</small>
+              </div>
 
-            <!-- 🔹 Performers Count -->
-            <div class="mb-3">
-              <label for="performers_count" class="form-label"
-                >Performers Count</label
-              >
-              <input
-                type="number"
-                class="form-control"
-                id="performers_count"
-                v-model="form.performers_count"
-                min="1"
-                required
-              />
-              <small class="text-danger small">{{ errors.performers_count }}</small>
-            </div>
+              <!-- 🔹 Performers Count -->
+              <div class="mb-3 col-md-6">
+                <label for="performers_count" class="form-label"
+                  >Performers Count</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="performers_count"
+                  v-model="form.performers_count"
+                  min="1"
+                  required
+                />
+                <small class="text-danger small">{{
+                  errors.performers_count
+                }}</small>
+              </div>
 
-            <!-- 🔹 Price Type -->
-            <div class="mb-3">
-              <label for="price_type" class="form-label">Price Type</label>
-              <select
-                id="price_type"
-                class="form-select"
-                v-model="form.price_type"
-                required
-              >
-                <option value="">-- Select Price Type --</option>
-                <option value="standard">Standard</option>
-                <option value="jukebox">Jukebox</option>
-              </select>
-              <small class="text-danger small">{{ errors.price_type }}</small>
-            </div>
+              <!-- 🔹 Price Type -->
+              <div class="mb-3 col-md-6">
+                <label for="price_type" class="form-label">Price Type</label>
+                <select
+                  id="price_type"
+                  class="form-select"
+                  v-model="form.price_type"
+                  required
+                >
+                  <option value="">-- Select Price Type --</option>
+                  <option value="standard">Standard</option>
+                  <option value="jukebox">Jukebox</option>
+                </select>
+                <small class="text-danger small">{{ errors.price_type }}</small>
+              </div>
 
-            <!-- 🔹 Amount -->
-            <div class="mb-3">
-              <label for="amount" class="form-label">Amount (USD)</label>
-              <input
-                type="number"
-                class="form-control"
-                id="amount"
-                v-model="form.amount"
-                min="0"
-                step="0.01"
-                required
-              />
-              <small class="text-danger small">{{ errors.amount }}</small>
-            </div>
+              <!-- 🔹 Amount -->
+              <div class="mb-3 col-md-6">
+                <label for="amount" class="form-label">Amount (USD)</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  id="amount"
+                  v-model="form.amount"
+                  min="0"
+                  step="0.01"
+                  required
+                />
+                <small class="text-danger small">{{ errors.amount }}</small>
+              </div>
 
-            <!-- 🔹 Min Duration -->
-            <div class="mb-3">
-              <label for="min_duration_hours" class="form-label"
-                >Min Duration (Hours)</label
-              >
-              <input
-                type="number"
-                class="form-control"
-                id="min_duration_hours"
-                v-model="form.min_duration_hours"
-                min="1"
-                required
-              />
-              <small class="text-danger small">{{ errors.min_duration_hours }}</small>
-            </div>
+              <!-- 🔹 Min Duration -->
+              <div class="mb-3 col-md-6">
+                <label for="min_duration_hours" class="form-label"
+                  >Min Duration (Hours)</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="min_duration_hours"
+                  v-model="form.min_duration_hours"
+                  min="1"
+                  required
+                />
+                <small class="text-danger small">{{
+                  errors.min_duration_hours
+                }}</small>
+              </div>
 
-            <!-- 🔹 Notes -->
-            <div class="mb-3">
-              <label for="notes" class="form-label">Notes</label>
-              <textarea
-                class="form-control"
-                id="notes"
-                v-model="form.notes"
-                placeholder="Optional notes"
-              ></textarea>
-              <small class="text-danger small">{{ errors.notes }}</small>
+              <!-- 🔹 Max Children -->
+              <div class="mb-3 col-md-6">
+                <label for="max_children" class="form-label"
+                  >Max Children</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="max_children"
+                  v-model="form.max_children"
+                  min="0"
+                />
+                <small class="text-danger small">{{
+                  errors.max_children
+                }}</small>
+              </div>
+
+              <!-- 🔹 Extra Child Fee -->
+              <div class="mb-3 col-md-6">
+                <label for="extra_child_fee" class="form-label"
+                  >Extra Child Fee (USD)</label
+                >
+                <input
+                  type="number"
+                  class="form-control"
+                  id="extra_child_fee"
+                  v-model="form.extra_child_fee"
+                  min="0"
+                  step="0.01"
+                />
+                <small class="text-danger small">{{
+                  errors.extra_child_fee
+                }}</small>
+              </div>
+
+              <!-- 🔹 Notes (ocupa toda la fila) -->
+              <div class="mb-3 col-md-12">
+                <label for="notes" class="form-label">Notes</label>
+                <textarea
+                  class="form-control"
+                  id="notes"
+                  v-model="form.notes"
+                  placeholder="Optional notes"
+                ></textarea>
+                <small class="text-danger small">{{ errors.notes }}</small>
+              </div>
             </div>
           </form>
         </div>
@@ -147,14 +188,8 @@ import api from "@/services/axios";
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
   show: Boolean,
-  services: {
-    type: Array,
-    default: () => [],
-  },
-  counties: {
-    type: Array,
-    default: () => [],
-  },
+  services: { type: Array, default: () => [] },
+  counties: { type: Array, default: () => [] },
 });
 
 const form = ref({
@@ -164,8 +199,10 @@ const form = ref({
   price_type: "",
   amount: 0,
   min_duration_hours: 1,
+  max_children: 0,
+  extra_child_fee: 0,
   notes: "",
-  is_available: true, // 👈 siempre en true
+  is_available: true,
 });
 
 const errors = ref({});
@@ -174,9 +211,7 @@ const loading = ref(false);
 watch(
   () => props.show,
   (newVal) => {
-    if (newVal) {
-      resetForm();
-    }
+    if (newVal) resetForm();
   }
 );
 
@@ -188,15 +223,15 @@ const resetForm = () => {
     price_type: "",
     amount: 0,
     min_duration_hours: 1,
+    max_children: 0,
+    extra_child_fee: 0,
     notes: "",
     is_available: true,
   };
   errors.value = {};
 };
 
-const closeModal = () => {
-  emit("close");
-};
+const closeModal = () => emit("close");
 
 const submitForm = async () => {
   try {

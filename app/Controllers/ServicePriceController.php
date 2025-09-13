@@ -80,7 +80,7 @@ class ServicePriceController extends ResourceController
     /**
      * Crear un nuevo precio de servicio.
      */
-    public function create()
+    public function createData()
     {
         try {
             $json = $this->request->getBody();
