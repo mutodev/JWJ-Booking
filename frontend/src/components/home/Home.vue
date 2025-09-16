@@ -15,16 +15,36 @@
         class="full-height-wizard"
         @on-change="onTabChange"
       >
-        <tab-content title="Step 1"><h3>1</h3></tab-content>
-        <tab-content title="Step 2"><h3>2</h3></tab-content>
-        <tab-content title="Step 3"><h3>3</h3></tab-content>
-        <tab-content title="Step 4"><h3>4</h3></tab-content>
-        <tab-content title="Step 5"><h3>5</h3></tab-content>
-        <tab-content title="Step 6"><h3>6</h3></tab-content>
-        <tab-content title="Step 7"><h3>7</h3></tab-content>
-        <tab-content title="Step 8"><h3>8</h3></tab-content>
-        <tab-content title="Step 9"><h3>9</h3></tab-content>
-        <tab-content title="Step 10"><h3>10</h3></tab-content>
+        <tab-content title="Step 1">
+          <Step1 />
+        </tab-content>
+        <tab-content title="Step 2">
+          <Step2 />
+        </tab-content>
+        <tab-content title="Step 3">
+          <Step3 />
+        </tab-content>
+        <tab-content title="Step 4">
+          <Step4 />
+        </tab-content>
+        <tab-content title="Step 5">
+          <Step5 />
+        </tab-content>
+        <tab-content title="Step 6">
+          <Step6 />
+        </tab-content>
+        <tab-content title="Step 7">
+          <Step7 />
+        </tab-content>
+        <tab-content title="Step 8">
+          <Step8 />
+        </tab-content>
+        <tab-content title="Step 9">
+          <Step9 />
+        </tab-content>
+        <tab-content title="Step 10">
+          <Step10 />
+        </tab-content>
       </form-wizard>
     </div>
   </div>
@@ -34,6 +54,16 @@
 import { ref } from "vue";
 import { FormWizard, TabContent } from "vue3-form-wizard";
 import "vue3-form-wizard/dist/style.css";
+import Step1 from "./form/Step1.vue";
+import Step2 from "./form/Step2.vue";
+import Step3 from "./form/Step3.vue";
+import Step4 from "./form/Step4.vue";
+import Step5 from "./form/Step5.vue";
+import Step6 from "./form/Step6.vue";
+import Step7 from "./form/Step7.vue";
+import Step8 from "./form/Step8.vue";
+import Step9 from "./form/Step9.vue";
+import Step10 from "./form/Step10.vue";
 
 const totalSteps = 10;
 const activeStep = ref(1);
@@ -64,8 +94,8 @@ function onTabChange(prevIndex, nextIndex) {
 /* === Línea vertical gris (base) === */
 .vertical-progress-line {
   position: absolute;
-  top: calc(clamp(24px, 4vh, 40px) / 2);   /* inicia en el centro de la primera esfera */
-  bottom: calc(clamp(96px, 16vh, 160px) / 2);                             /* baja completo (se recorta después) */
+  top: calc(clamp(24px, 4vh, 40px) / 2);
+  bottom: calc(clamp(96px, 16vh, 160px) / 2);
   left: calc(clamp(24px, 4vh, 40px) / 2 + 10px);
   transform: translateX(-50%);
   width: 4px;
@@ -101,7 +131,7 @@ function onTabChange(prevIndex, nextIndex) {
 .full-height-wizard {
   flex: 1;
   display: flex;
-  flex-direction: row;
+  flex-direction: column !important;
   min-height: 0;
   position: relative;
   z-index: 2;
@@ -213,5 +243,27 @@ function onTabChange(prevIndex, nextIndex) {
   height: 100% !important;
   overflow: auto !important;
   box-sizing: border-box !important;
+}
+
+/* Tab content ocupa todo el espacio */
+::v-deep(.wizard-tab-content) {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  height: 100vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: auto !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+}
+
+::v-deep(.wizard-card-footer) {
+  position: fixed !important;
+  bottom: 2vh;
+  right: 2vw;
+  padding: 1.5rem 2rem;
+  max-width: 90%;
+  border-radius: 8px;
+  z-index: 1000;
 }
 </style>

@@ -26,11 +26,9 @@ const routes = [
     path: "/",
     name: "home",
     component: Home,
-    children: [
-      { path: "login", component: Login },
-      { path: "reset-password", component: ResetPassword },
-    ],
   },
+  { path: "/login", name: "login", component: Login },
+  { path: "/reset-password", name: "reset-password", component: ResetPassword },
   {
     path: "/admin",
     name: "admin",
