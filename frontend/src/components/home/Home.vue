@@ -61,21 +61,32 @@ function onTabChange(prevIndex, nextIndex) {
   position: relative;
 }
 
-/* === Línea vertical === */
+/* === Línea vertical gris (base) === */
 .vertical-progress-line {
   position: absolute;
-  /* Ajustamos inicio y fin para que coincidan con el centro de la primera y última esfera */
-  top: calc(clamp(24px, 4vh, 40px) / 2);
-  bottom: calc(clamp(24px, 4vh, 40px) / 2);
-  left: calc(
-    clamp(24px, 4vh, 40px) / 2 + 10px
-  ); /* 10px = padding/gap del <a> */
+  top: calc(clamp(24px, 4vh, 40px) / 2);   /* inicia en el centro de la primera esfera */
+  bottom: calc(clamp(96px, 16vh, 160px) / 2);                             /* baja completo (se recorta después) */
+  left: calc(clamp(24px, 4vh, 40px) / 2 + 10px);
   transform: translateX(-50%);
   width: 4px;
   background: #e0e0e0;
   z-index: 0;
 }
 
+/* Recorta la línea para que termine en el centro de la última esfera */
+.wizard-steps.vertical li:last-child::after {
+  content: "";
+  position: absolute;
+  left: calc(clamp(24px, 4vh, 40px) / 2 + 10px);
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 50%; /* tapa desde el centro hacia abajo */
+  background: white; /* mismo color que el fondo */
+  z-index: 2;
+}
+
+/* === Línea roja de progreso === */
 .vertical-progress-fill {
   position: absolute;
   top: 0;
