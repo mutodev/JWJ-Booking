@@ -64,9 +64,9 @@ function onTabChange(prevIndex, nextIndex) {
 /* === Línea vertical === */
 .vertical-progress-line {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  /* centramos en el medio del círculo */
+  /* Ajustamos inicio y fin para que coincidan con el centro de la primera y última esfera */
+  top: calc(clamp(24px, 4vh, 40px) / 2);
+  bottom: calc(clamp(24px, 4vh, 40px) / 2);
   left: calc(
     clamp(24px, 4vh, 40px) / 2 + 10px
   ); /* 10px = padding/gap del <a> */
@@ -93,7 +93,7 @@ function onTabChange(prevIndex, nextIndex) {
   flex-direction: row;
   min-height: 0;
   position: relative;
-  z-index: 2; /* encima de la barra gris */
+  z-index: 2;
 }
 
 /* === Columna de pasos (vertical) === */
@@ -149,7 +149,7 @@ function onTabChange(prevIndex, nextIndex) {
   margin: 0 !important;
   font-size: clamp(12px, 1.5vh, 16px) !important;
   position: relative;
-  z-index: 3; /* encima de la barra */
+  z-index: 3;
   background: #fff;
 }
 
