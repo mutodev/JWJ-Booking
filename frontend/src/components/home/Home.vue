@@ -63,10 +63,17 @@ function onTabChange(prevIndex, nextIndex) {
 
 /* === Línea vertical === */
 .vertical-progress-line {
-  position: relative;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* centramos en el medio del círculo */
+  left: calc(
+    clamp(24px, 4vh, 40px) / 2 + 10px
+  ); /* 10px = padding/gap del <a> */
+  transform: translateX(-50%);
   width: 4px;
   background: #e0e0e0;
-  margin-right: 12px; /* separa la barra del wizard */
+  z-index: 0;
 }
 
 .vertical-progress-fill {
@@ -76,6 +83,7 @@ function onTabChange(prevIndex, nextIndex) {
   width: 100%;
   background: #e74c3c;
   transition: height 0.3s ease;
+  z-index: 1;
 }
 
 /* === Wizard === */
@@ -84,6 +92,8 @@ function onTabChange(prevIndex, nextIndex) {
   display: flex;
   flex-direction: row;
   min-height: 0;
+  position: relative;
+  z-index: 2; /* encima de la barra gris */
 }
 
 /* === Columna de pasos (vertical) === */
@@ -95,6 +105,8 @@ function onTabChange(prevIndex, nextIndex) {
   padding: 0 !important;
   margin: 0 !important;
   box-sizing: border-box !important;
+  position: relative;
+  z-index: 2;
 }
 
 /* Cada item (li) */
@@ -102,6 +114,8 @@ function onTabChange(prevIndex, nextIndex) {
   min-height: clamp(32px, 5vh, 56px) !important;
   padding: 0 !important;
   box-sizing: border-box !important;
+  position: relative;
+  z-index: 2;
 }
 
 /* === Link de cada paso === */
@@ -117,6 +131,9 @@ function onTabChange(prevIndex, nextIndex) {
   color: #0003 !important;
   box-sizing: border-box !important;
   text-decoration: none !important;
+  position: relative;
+  z-index: 2;
+  background: transparent;
 }
 
 /* === Círculo indicador dinámico === */
@@ -131,6 +148,9 @@ function onTabChange(prevIndex, nextIndex) {
   flex-shrink: 0 !important;
   margin: 0 !important;
   font-size: clamp(12px, 1.5vh, 16px) !important;
+  position: relative;
+  z-index: 3; /* encima de la barra */
+  background: #fff;
 }
 
 /* Contenedor interno del círculo */
@@ -161,6 +181,8 @@ function onTabChange(prevIndex, nextIndex) {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+  position: relative;
+  z-index: 2;
 }
 
 /* === Columna de contenido === */
