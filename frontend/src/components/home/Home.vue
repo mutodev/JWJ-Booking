@@ -128,6 +128,7 @@ function onTabChange(prevIndex, nextIndex) {
   background: #e74c3c;
   transition: height 0.3s ease;
   z-index: 1;
+  height: 100%;
 }
 
 /* === Wizard === */
@@ -252,7 +253,7 @@ function onTabChange(prevIndex, nextIndex) {
 ::v-deep(.wizard-tab-content) {
   flex: 1 1 auto !important;
   width: 100% !important;
-  height: 100vh !important;
+  height: 100% !important;
   display: flex !important;
   flex-direction: column !important;
   overflow: auto !important;
