@@ -80,6 +80,7 @@ function onTabChange(prevIndex, nextIndex) {
   box-sizing: border-box;
   display: flex;
   min-height: 0;
+  padding: 2%;
 }
 
 /* === Wrapper para wizard + progreso === */
@@ -89,6 +90,7 @@ function onTabChange(prevIndex, nextIndex) {
   height: 100%;
   width: 100%;
   position: relative;
+  box-sizing: border-box;
 }
 
 /* === Línea vertical gris (base) === */
@@ -101,6 +103,7 @@ function onTabChange(prevIndex, nextIndex) {
   width: 4px;
   background: #e0e0e0;
   z-index: 0;
+  height: 100%;
 }
 
 /* Recorta la línea para que termine en el centro de la última esfera */
