@@ -131,6 +131,12 @@ function onTabChange(prevIndex, nextIndex) {
   height: 100%;
 }
 
+::v-deep(.wizard-navigation) {
+  display: flex;
+  flex-direction: row;
+  height: 100% !important;
+}
+
 /* === Wizard === */
 .full-height-wizard {
   flex: 1;
