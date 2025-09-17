@@ -1,6 +1,6 @@
 <template>
   <div class="full-height-container">
-    <div class="wizard-with-progress">
+    <div class="wizard-with-progress" ref="wizardRoot">
       <!-- Barra de progreso vertical -->
       <div class="vertical-progress-line">
         <div
@@ -13,45 +13,26 @@
       <form-wizard
         layout="vertical"
         class="full-height-wizard"
+        :navigable-tabs="false"
         @on-change="onTabChange"
       >
-        <tab-content title="Step 1">
-          <Step1 />
-        </tab-content>
-        <tab-content title="Step 2">
-          <Step2 />
-        </tab-content>
-        <tab-content title="Step 3">
-          <Step3 />
-        </tab-content>
-        <tab-content title="Step 4">
-          <Step4 />
-        </tab-content>
-        <tab-content title="Step 5">
-          <Step5 />
-        </tab-content>
-        <tab-content title="Step 6">
-          <Step6 />
-        </tab-content>
-        <tab-content title="Step 7">
-          <Step7 />
-        </tab-content>
-        <tab-content title="Step 8">
-          <Step8 />
-        </tab-content>
-        <tab-content title="Step 9">
-          <Step9 />
-        </tab-content>
-        <tab-content title="Step 10">
-          <Step10 />
-        </tab-content>
+        <tab-content title="Step 1"><Step1 /></tab-content>
+        <tab-content title="Step 2"><Step2 /></tab-content>
+        <tab-content title="Step 3"><Step3 /></tab-content>
+        <tab-content title="Step 4"><Step4 /></tab-content>
+        <tab-content title="Step 5"><Step5 /></tab-content>
+        <tab-content title="Step 6"><Step6 /></tab-content>
+        <tab-content title="Step 7"><Step7 /></tab-content>
+        <tab-content title="Step 8"><Step8 /></tab-content>
+        <tab-content title="Step 9"><Step9 /></tab-content>
+        <tab-content title="Step 10"><Step10 /></tab-content>
       </form-wizard>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { FormWizard, TabContent } from "vue3-form-wizard";
 import "vue3-form-wizard/dist/style.css";
 import Step1 from "./form/Step1.vue";
@@ -71,6 +52,44 @@ const activeStep = ref(1);
 function onTabChange(prevIndex, nextIndex) {
   activeStep.value = nextIndex + 1;
 }
+
+/* ======= Prevención de navegación por tabs ======= */
+const wizardRoot = ref(null);
+
+function handleClick(e) {
+  const anchor = e.target.closest(".vue-form-wizard .wizard-nav-pills > li > a");
+  if (anchor) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    e.stopPropagation();
+  }
+}
+
+function handleKeydown(e) {
+  const anchor = e.target.closest(".vue-form-wizard .wizard-nav-pills > li > a");
+  if (
+    anchor &&
+    (e.key === "Enter" || e.key === " " || e.key === "Spacebar")
+  ) {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    e.stopPropagation();
+  }
+}
+
+onMounted(() => {
+  if (wizardRoot.value) {
+    wizardRoot.value.addEventListener("click", handleClick, true);
+    wizardRoot.value.addEventListener("keydown", handleKeydown, true);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (wizardRoot.value) {
+    wizardRoot.value.removeEventListener("click", handleClick, true);
+    wizardRoot.value.removeEventListener("keydown", handleKeydown, true);
+  }
+});
 </script>
 
 <style scoped>
@@ -97,7 +116,6 @@ function onTabChange(prevIndex, nextIndex) {
 .vertical-progress-line {
   position: absolute;
   top: calc(clamp(24px, 4vh, 40px) / 2);
-  bottom: calc(clamp(96px, 16vh, 160px) / 2);
   left: calc(clamp(24px, 4vh, 40px) / 2 + 10px);
   transform: translateX(-50%);
   width: 4px;
@@ -114,8 +132,8 @@ function onTabChange(prevIndex, nextIndex) {
   bottom: 0;
   transform: translateX(-50%);
   width: 4px;
-  height: 50%; /* tapa desde el centro hacia abajo */
-  background: white; /* mismo color que el fondo */
+  height: 50%;
+  background: white;
   z-index: 2;
 }
 
@@ -131,6 +149,7 @@ function onTabChange(prevIndex, nextIndex) {
   height: 100%;
 }
 
+/* Navigation ajustes */
 ::v-deep(.wizard-navigation) {
   display: flex;
   flex-direction: row;
@@ -185,6 +204,7 @@ function onTabChange(prevIndex, nextIndex) {
   position: relative;
   z-index: 2;
   background: transparent;
+  cursor: default !important;
 }
 
 /* === Círculo indicador dinámico === */
