@@ -5,7 +5,7 @@
       <div class="vertical-progress-line">
         <div
           class="vertical-progress-fill"
-          :style="{ height: (activeStep / totalSteps) * 100 + '%' }"
+          :style="{ height: (activeStep / totalSteps) * 0 + '%' }"
         ></div>
       </div>
 
@@ -50,7 +50,7 @@ const totalSteps = 10;
 const activeStep = ref(1);
 
 function onTabChange(prevIndex, nextIndex) {
-  activeStep.value = nextIndex + 1;
+  // activeStep.value = nextIndex + 1;
 }
 
 /* ======= Prevención de navegación por tabs ======= */
@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
   align-items: center !important;
   justify-content: flex-start !important;
   gap: 4px !important;
-  width: 100% !important;
+  width: 106% !important;
   padding: 4px 10px !important;
   margin: 0 !important;
   color: #0003 !important;
@@ -248,7 +248,7 @@ onBeforeUnmount(() => {
   text-align: left !important;
   margin: 0 !important;
   padding: 0 !important;
-  font-size: clamp(12px, 1.5vh, 16px) !important;
+  font-size: clamp(12px, 1vh, 16px) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
