@@ -25,6 +25,8 @@ $routes->group('api', function ($routes) {
     //home
     $routes->group('home', function ($routes) {
         $routes->get('metropolitan-areas', [MetropolitanAreaController::class, 'getAllActive']);
+        $routes->get('counties/(:any)', [CountyController::class, 'getByMetropolitan']);
+        $routes->get('cities/(:any)', [CityController::class, 'getByCounty']);
     });
 
 

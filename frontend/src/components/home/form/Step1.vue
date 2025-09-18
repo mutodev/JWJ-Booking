@@ -77,28 +77,56 @@
           </div>
         </div>
 
-        <!-- Location -->
+        <!-- Metropolitan Area -->
         <div class="mb-3">
-          <label for="location" class="form-label">
-            Choose your location <span class="text-danger">*</span>
-          </label>
-          <select
-            v-model="form.location"
-            id="location"
-            class="form-select"
-            @blur="validateField('location')"
-          >
-            <option value="">-- Select a location --</option>
-            <option
-              v-for="area in metropolitanList"
-              :key="area.id"
-              :value="area.id"
-            >
-              {{ area.name }}
-            </option>
-          </select>
-          <div v-if="errors.location" class="text-danger small">
-            {{ errors.location }}
+          <div class="form-group">
+            <label for="metropolitan-area" class="form-label">
+              Metropolitan Area <span class="text-danger">*</span>
+            </label>
+            <Multiselect
+              id="metropolitan-area"
+              v-model="selectedArea"
+              :options="listAreas"
+              label="name"
+              track-by="id"
+              placeholder="Select a metropolitan area"
+              @select="onSelectArea"
+            />
+            <div v-if="errors.location" class="text-danger small">
+              {{ errors.location }}
+            </div>
+          </div>
+        </div>
+
+        <!-- County -->
+        <div class="mb-3">
+          <div class="form-group">
+            <label for="county" class="form-label">County</label>
+            <Multiselect
+              id="county"
+              v-model="selectedCounty"
+              :options="listCounties"
+              label="name"
+              track-by="id"
+              placeholder="Select a county"
+              @select="onSelectCounty"
+            />
+          </div>
+        </div>
+
+        <!-- City -->
+        <div class="mb-3">
+          <div class="form-group">
+            <label for="city" class="form-label">City</label>
+            <Multiselect
+              id="city"
+              v-model="selectedCity"
+              :options="listCities"
+              label="name"
+              track-by="id"
+              placeholder="Select a city"
+              @select="onSelectCity"
+            />
           </div>
         </div>
       </div>
@@ -110,9 +138,20 @@
 import { reactive, watch, getCurrentInstance, ref, onMounted } from "vue";
 import * as yup from "yup";
 import api from "@/services/axios";
+import Multiselect from "vue-multiselect";
+import "vue-multiselect/dist/vue-multiselect.css";
 
 const { emit } = getCurrentInstance();
-const metropolitanList = ref([]);
+
+// listas
+const listAreas = ref([]);
+const listCounties = ref([]);
+const listCities = ref([]);
+
+// valores seleccionados
+const selectedArea = ref(null);
+const selectedCounty = ref(null);
+const selectedCity = ref(null);
 
 // Estado del formulario
 const form = reactive({
@@ -150,8 +189,37 @@ async function validateField(field) {
 
 const getDataMtrolitan = async () => {
   const response = await api.get("/home/metropolitan-areas");
-  metropolitanList.value = response.data;
+  listAreas.value = response.data;
 };
+
+function onSelectArea(area) {
+  form.location = area?.id || "";
+  listCounties.value = []; // limpiar antes de cargar
+  selectedCounty.value = null;
+  selectedCity.value = null;
+  listCities.value = [];
+  // petición counties
+  if (area?.id) {
+    api.get(`/home/counties/${area.id}`).then((res) => {
+      listCounties.value = res.data;
+    });
+  }
+}
+
+function onSelectCounty(county) {
+  selectedCity.value = null;
+  listCities.value = [];
+  if (county?.id) {
+    api.get(`/home/cities/${county.id}`).then((res) => {
+      listCities.value = res.data;
+    });
+  }
+}
+
+function onSelectCity(city) {
+  // concatenamos la ubicación final
+  form.location = city?.id || form.location;
+}
 
 // Observar cambios en el formulario
 watch(
@@ -177,8 +245,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.form-control,
-.form-select {
+.form-control {
   border-radius: 8px;
   font-size: 0.95rem;
   padding: 0.6rem 0.75rem;
@@ -188,5 +255,11 @@ onMounted(() => {
   font-size: 0.9rem;
   font-weight: 500;
   color: #444;
+}
+
+/* Ajustes multiselect */
+.multiselect {
+  border-radius: 8px;
+  min-height: 42px;
 }
 </style>
