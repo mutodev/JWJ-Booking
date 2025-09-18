@@ -33,22 +33,27 @@
 </template>
 
 <script setup>
-import { reactive } from "vue";
+import { reactive, watch } from "vue";
 import * as yup from "yup";
+import api from "@/services/axios";
 
-// Estado del formulario
+const props = defineProps({
+  area: {
+    type: String,
+    required: true,
+  },
+});
+
+const emit = defineEmits(["setData"]);
 const form = reactive({
   zipcode: "",
 });
 
-// Errores
 const errors = reactive({});
-
-// Esquema Yup para zipcode
 const schema = yup.object({
   zipcode: yup
     .string()
-    .matches(/^[0-9]{4,10}$/, "Invalid zipcode (4-10 digits)")
+    .matches(/^[0-9]{6,10}$/, "Invalid zipcode (6-10 digits)")
     .required("Zipcode is required"),
 });
 
@@ -61,6 +66,28 @@ async function validateField(field) {
     errors[field] = e.message;
   }
 }
+
+let debounceTimer = null;
+watch(
+  () => form.zipcode,
+  async (newZip) => {
+    clearTimeout(debounceTimer);
+    try {
+      await schema.validateAt("zipcode", form);
+      errors.zipcode = "";
+    } catch (e) {
+      errors.zipcode = e.message;
+      return; 
+    }
+
+    if (newZip && newZip.length >= 6 && newZip.length <= 10) {
+      debounceTimer = setTimeout(async () => {
+        // const response = await api.get(`/home/zipcode/${props.area}/${newZip}`);
+        emit("setData", { zipcode: newZip });
+      }, 1000); 
+    }
+  }
+);
 </script>
 
 <style scoped>

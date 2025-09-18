@@ -20,7 +20,7 @@
           <Step1 @setData="setData" />
         </tab-content>
         <tab-content title="Step 2" :before-change="validateNext">
-          <Step2 @setData="setData" />
+          <Step2 @setData="setData" :area="form?.customer?.location" />
         </tab-content>
         <tab-content title="Step 3" :before-change="validateNext">
           <Step3 @setData="setData" />
@@ -72,8 +72,14 @@ const totalSteps = 10;
 const activeStep = ref(1);
 const form = ref({});
 
-function onTabChange(prevIndex, nextIndex) {
-  activeStep.value = nextIndex + 1;
+// refs para saber de dónde a dónde vamos
+const prevIndex = ref(null);
+const nextIndex = ref(null);
+
+function onTabChange(prev, next) {
+  prevIndex.value = prev;
+  nextIndex.value = next;
+  activeStep.value = next + 1;
 }
 
 /* ======= Prevención de navegación por tabs ======= */
@@ -126,15 +132,17 @@ const setData = (data) => {
       form.value[key] = data[key];
     }
   }
+  console.log(form.value);
 };
 
 /**
  * Validación antes de cambiar de tab
  */
 function validateNext() {
-  console.log(form.value);
+  console.log(nextIndex.value);
 
-  if (!form.value.customer) return false;
+  if (nextIndex.value === 0 && !form.value.customer) return false;
+  if (nextIndex.value === 1 && !form.value.zipcode) return false;
 
   return true;
 }
