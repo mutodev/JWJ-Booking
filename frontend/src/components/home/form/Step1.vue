@@ -15,7 +15,7 @@
             type="text"
             class="form-control"
             id="firstName"
-            placeholder="Elena"
+            placeholder="Enter your first name"
             @blur="validateField('firstName')"
           />
           <div v-if="errors.firstName" class="text-danger small">
@@ -33,7 +33,7 @@
             type="text"
             class="form-control"
             id="lastName"
-            placeholder="Guzmán"
+            placeholder="Enter your last name"
             @blur="validateField('lastName')"
           />
           <div v-if="errors.lastName" class="text-danger small">
@@ -51,7 +51,7 @@
             type="email"
             class="form-control"
             id="email"
-            placeholder="mail@example.com"
+            placeholder="Enter your email (e.g. name@example.com)"
             @blur="validateField('email')"
           />
           <div v-if="errors.email" class="text-danger small">
@@ -69,7 +69,7 @@
             type="tel"
             class="form-control"
             id="phone"
-            placeholder="+1 000 0000"
+            placeholder="Enter your phone number (e.g. +1 555 123 4567)"
             @blur="validateField('phone')"
           />
           <div v-if="errors.phone" class="text-danger small">
@@ -79,17 +79,23 @@
 
         <!-- Location -->
         <div class="mb-3">
-          <label for="location" class="form-label">Choose your location</label>
+          <label for="location" class="form-label">
+            Choose your location <span class="text-danger">*</span>
+          </label>
           <select
             v-model="form.location"
             id="location"
             class="form-select"
             @blur="validateField('location')"
           >
-            <option value="">Please select</option>
-            <option value="location1">Location 1</option>
-            <option value="location2">Location 2</option>
-            <option value="location3">Location 3</option>
+            <option value="">-- Select a location --</option>
+            <option
+              v-for="area in metropolitanList"
+              :key="area.id"
+              :value="area.id"
+            >
+              {{ area.name }}
+            </option>
           </select>
           <div v-if="errors.location" class="text-danger small">
             {{ errors.location }}
@@ -101,8 +107,12 @@
 </template>
 
 <script setup>
-import { reactive } from "vue";
+import { reactive, watch, getCurrentInstance, ref, onMounted } from "vue";
 import * as yup from "yup";
+import api from "@/services/axios";
+
+const { emit } = getCurrentInstance();
+const metropolitanList = ref([]);
 
 // Estado del formulario
 const form = reactive({
@@ -125,7 +135,7 @@ const schema = yup.object({
     .string()
     .matches(/^[0-9+\s-]{7,15}$/, "Invalid phone number")
     .required("Phone number is required"),
-  location: yup.string().nullable(),
+  location: yup.string().required("Location is required"),
 });
 
 // Validar campo individual al salir de foco
@@ -137,6 +147,32 @@ async function validateField(field) {
     errors[field] = e.message;
   }
 }
+
+const getDataMtrolitan = async () => {
+  const response = await api.get("/home/metropolitan-areas");
+  metropolitanList.value = response.data;
+};
+
+// Observar cambios en el formulario
+watch(
+  form,
+  async (newVal) => {
+    try {
+      await schema.validate(newVal, { abortEarly: false });
+      emit("setData", { customer: newVal });
+    } catch (validationErrors) {
+      Object.keys(errors).forEach((key) => (errors[key] = ""));
+      validationErrors.inner.forEach((err) => {
+        errors[err.path] = err.message;
+      });
+    }
+  },
+  { deep: true }
+);
+
+onMounted(() => {
+  getDataMtrolitan();
+});
 </script>
 
 <style scoped>

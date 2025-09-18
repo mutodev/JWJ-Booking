@@ -16,16 +16,36 @@
         :navigable-tabs="false"
         @on-change="onTabChange"
       >
-        <tab-content title="Step 1"><Step1 /></tab-content>
-        <tab-content title="Step 2"><Step2 /></tab-content>
-        <tab-content title="Step 3"><Step3 /></tab-content>
-        <tab-content title="Step 4"><Step4 /></tab-content>
-        <tab-content title="Step 5"><Step5 /></tab-content>
-        <tab-content title="Step 6"><Step6 /></tab-content>
-        <tab-content title="Step 7"><Step7 /></tab-content>
-        <tab-content title="Step 8"><Step8 /></tab-content>
-        <tab-content title="Step 9"><Step9 /></tab-content>
-        <tab-content title="Step 10"><Step10 /></tab-content>
+        <tab-content title="Step 1" :before-change="validateNext">
+          <Step1 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 2" :before-change="validateNext">
+          <Step2 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 3" :before-change="validateNext">
+          <Step3 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 4" :before-change="validateNext">
+          <Step4 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 5" :before-change="validateNext">
+          <Step5 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 6" :before-change="validateNext">
+          <Step6 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 7" :before-change="validateNext">
+          <Step7 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 8" :before-change="validateNext">
+          <Step8 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 9" :before-change="validateNext">
+          <Step9 @setData="setData" />
+        </tab-content>
+        <tab-content title="Step 10" :before-change="validateNext">
+          <Step10 @setData="setData" />
+        </tab-content>
       </form-wizard>
     </div>
   </div>
@@ -50,16 +70,19 @@ import Step10 from "./form/Step10.vue";
 
 const totalSteps = 10;
 const activeStep = ref(1);
+const form = ref({});
 
 function onTabChange(prevIndex, nextIndex) {
-  // activeStep.value = nextIndex + 1;
+  activeStep.value = nextIndex + 1;
 }
 
 /* ======= Prevención de navegación por tabs ======= */
 const wizardRoot = ref(null);
 
 function handleClick(e) {
-  const anchor = e.target.closest(".vue-form-wizard .wizard-nav-pills > li > a");
+  const anchor = e.target.closest(
+    ".vue-form-wizard .wizard-nav-pills > li > a"
+  );
   if (anchor) {
     e.preventDefault();
     e.stopImmediatePropagation();
@@ -68,11 +91,10 @@ function handleClick(e) {
 }
 
 function handleKeydown(e) {
-  const anchor = e.target.closest(".vue-form-wizard .wizard-nav-pills > li > a");
-  if (
-    anchor &&
-    (e.key === "Enter" || e.key === " " || e.key === "Spacebar")
-  ) {
+  const anchor = e.target.closest(
+    ".vue-form-wizard .wizard-nav-pills > li > a"
+  );
+  if (anchor && (e.key === "Enter" || e.key === " " || e.key === "Spacebar")) {
     e.preventDefault();
     e.stopImmediatePropagation();
     e.stopPropagation();
@@ -92,5 +114,28 @@ onBeforeUnmount(() => {
     wizardRoot.value.removeEventListener("keydown", handleKeydown, true);
   }
 });
-</script>
 
+/**
+ * Arma datos del formulario
+ */
+const setData = (data) => {
+  for (const key in data) {
+    if (data[key] === null) {
+      delete form.value[key];
+    } else {
+      form.value[key] = data[key];
+    }
+  }
+};
+
+/**
+ * Validación antes de cambiar de tab
+ */
+function validateNext() {
+  console.log(form.value);
+
+  if (!form.value.customer) return false;
+
+  return true;
+}
+</script>

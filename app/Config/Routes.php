@@ -21,6 +21,13 @@ use CodeIgniter\Router\RouteCollection;
  * @var RouteCollection $routes
  */
 $routes->group('api', function ($routes) {
+
+    //home
+    $routes->group('home', function ($routes) {
+        $routes->get('metropolitan-areas', [MetropolitanAreaController::class, 'getAllActive']);
+    });
+
+
     // Login
     $routes->group('auth', function ($routes) {
         $routes->post('login', [LoginController::class, 'login']);

@@ -21,12 +21,12 @@
 .vertical-progress-line {
   position: absolute;
   top: calc(clamp(24px, 4vh, 40px) / 2);
+  bottom: calc(clamp(24px, 4vh, 40px) / 2);
   left: calc(clamp(24px, 4vh, 40px) / 2 + 10px);
   transform: translateX(-50%);
   width: 4px;
   background: #e0e0e0;
   z-index: 0;
-  height: 100%;
 }
 
 /* Recorta la línea para que termine en el centro de la última esfera */
