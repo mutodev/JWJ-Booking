@@ -20,7 +20,7 @@
           <Step1 @setData="setData" />
         </tab-content>
         <tab-content title="Step 2" :before-change="validateNext">
-          <Step2 @setData="setData" :area="form?.customer?.location" />
+          <Step2 @setData="setData" :city="form?.customer?.cityId" />
         </tab-content>
         <tab-content title="Step 3" :before-change="validateNext">
           <Step3 @setData="setData" />

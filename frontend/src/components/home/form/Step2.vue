@@ -4,14 +4,7 @@
       <div class="col-12 col-md-6">
         <!-- Título con ícono -->
         <div class="d-flex align-items-center mb-3">
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/616/616408.png"
-            alt="cat-icon"
-            class="me-2"
-            width="28"
-            height="28"
-          />
-          <h2 class="m-0">Enter your zipcode</h2>
+          <h2 class="m-0"><i class="bi bi-pin"></i> Enter your zipcode</h2>
         </div>
 
         <!-- Campo Zipcode -->
@@ -36,9 +29,8 @@
 import { reactive, watch } from "vue";
 import * as yup from "yup";
 import api from "@/services/axios";
-
 const props = defineProps({
-  area: {
+  city: {
     type: String,
     required: true,
   },
@@ -53,11 +45,9 @@ const errors = reactive({});
 const schema = yup.object({
   zipcode: yup
     .string()
-    .matches(/^[0-9]{6,10}$/, "Invalid zipcode (6-10 digits)")
+    .matches(/^[0-9]{4,10}$/, "Invalid zipcode (4-10 digits)")
     .required("Zipcode is required"),
 });
-
-// Validación al perder foco
 async function validateField(field) {
   try {
     await schema.validateAt(field, form);
@@ -77,14 +67,14 @@ watch(
       errors.zipcode = "";
     } catch (e) {
       errors.zipcode = e.message;
-      return; 
+      return;
     }
 
-    if (newZip && newZip.length >= 6 && newZip.length <= 10) {
+    if (newZip && newZip.length >= 4 && newZip.length <= 10) {
       debounceTimer = setTimeout(async () => {
-        // const response = await api.get(`/home/zipcode/${props.area}/${newZip}`);
-        emit("setData", { zipcode: newZip });
-      }, 1000); 
+        const response = await api.get(`/home/zipcode/${props.city}/${newZip}`);
+        emit("setData", { zipcode: response.data });
+      }, 1000);
     }
   }
 );

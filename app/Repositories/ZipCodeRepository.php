@@ -29,6 +29,21 @@ class ZipCodeRepository
     }
 
     /**
+     * Consulta por código
+     * 
+     * @param string $code
+     * @return User
+     */
+    public function getByCityAndCode($cityId, $code): ?Zipcode
+    {
+        return $this->zipCodeModel
+            ->where('zipcode', $code)
+            ->where('city_id', $cityId)
+            ->where('is_active', true)
+            ->first();
+    }
+
+    /**
      * Obtener toda la data
      *
      * @return array

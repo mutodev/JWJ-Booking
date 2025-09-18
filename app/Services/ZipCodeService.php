@@ -30,6 +30,20 @@ class ZipCodeService
     }
 
     /**
+     * Obtener código postal por código
+     */
+    public function getByCityAndCode($cityId, $code)
+    {
+        $zipcode = $this->repository->getByCityAndCode($cityId, $code);
+
+        if (!$zipcode) {
+            throw new HTTPException(lang('Zipcode.notFound'), Response::HTTP_NOT_FOUND);
+        }
+
+        return $zipcode;
+    }
+
+    /**
      * Obtener todos los códigos postales
      */
     public function getAll(): array
