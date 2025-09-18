@@ -165,6 +165,7 @@ watch(
       validationErrors.inner.forEach((err) => {
         errors[err.path] = err.message;
       });
+      emit("setData", { customer: null });
     }
   },
   { deep: true }
