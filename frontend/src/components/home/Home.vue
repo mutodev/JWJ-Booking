@@ -74,7 +74,7 @@ const form = ref({});
 
 // refs para saber de dónde a dónde vamos
 const prevIndex = ref(null);
-const nextIndex = ref(null);
+const nextIndex = ref(0);
 
 function onTabChange(prev, next) {
   prevIndex.value = prev;

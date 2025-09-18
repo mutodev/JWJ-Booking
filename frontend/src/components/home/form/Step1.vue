@@ -92,8 +92,8 @@
               placeholder="Select a metropolitan area"
               @select="onSelectArea"
             />
-            <div v-if="errors.location" class="text-danger small">
-              {{ errors.location }}
+            <div v-if="errors.areaId" class="text-danger small">
+              {{ errors.areaId }}
             </div>
           </div>
         </div>
@@ -101,7 +101,9 @@
         <!-- County -->
         <div class="mb-3">
           <div class="form-group">
-            <label for="county" class="form-label">County</label>
+            <label for="county" class="form-label">
+              County <span class="text-danger">*</span>
+            </label>
             <Multiselect
               id="county"
               v-model="selectedCounty"
@@ -111,13 +113,18 @@
               placeholder="Select a county"
               @select="onSelectCounty"
             />
+            <div v-if="errors.countyId" class="text-danger small">
+              {{ errors.countyId }}
+            </div>
           </div>
         </div>
 
         <!-- City -->
         <div class="mb-3">
           <div class="form-group">
-            <label for="city" class="form-label">City</label>
+            <label for="city" class="form-label">
+              City <span class="text-danger">*</span>
+            </label>
             <Multiselect
               id="city"
               v-model="selectedCity"
@@ -127,6 +134,9 @@
               placeholder="Select a city"
               @select="onSelectCity"
             />
+            <div v-if="errors.cityId" class="text-danger small">
+              {{ errors.cityId }}
+            </div>
           </div>
         </div>
       </div>
@@ -142,30 +152,22 @@ import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.css";
 
 const { emit } = getCurrentInstance();
-
-// listas
 const listAreas = ref([]);
 const listCounties = ref([]);
 const listCities = ref([]);
-
-// valores seleccionados
 const selectedArea = ref(null);
 const selectedCounty = ref(null);
 const selectedCity = ref(null);
-
-// Estado del formulario
 const form = reactive({
   firstName: "",
   lastName: "",
   email: "",
   phone: "",
-  location: "",
+  areaId: "",
+  countyId: "",
+  cityId: "",
 });
-
-// Errores
 const errors = reactive({});
-
-// Esquema Yup
 const schema = yup.object({
   firstName: yup.string().required("First name is required"),
   lastName: yup.string().required("Last name is required"),
@@ -174,10 +176,10 @@ const schema = yup.object({
     .string()
     .matches(/^[0-9+\s-]{7,15}$/, "Invalid phone number")
     .required("Phone number is required"),
-  location: yup.string().required("Location is required"),
+  areaId: yup.string().required("Metropolitan area is required"),
+  countyId: yup.string().required("County is required"),
+  cityId: yup.string().required("City is required"),
 });
-
-// Validar campo individual al salir de foco
 async function validateField(field) {
   try {
     await schema.validateAt(field, form);
@@ -186,19 +188,33 @@ async function validateField(field) {
     errors[field] = e.message;
   }
 }
+function areAllFieldsFilled() {
+  return (
+    form.firstName.trim() !== "" &&
+    form.lastName.trim() !== "" &&
+    form.email.trim() !== "" &&
+    form.phone.trim() !== "" &&
+    form.areaId !== "" &&
+    form.countyId !== "" &&
+    form.cityId !== ""
+  );
+}
 
-const getDataMtrolitan = async () => {
+const getDataMetropolitan = async () => {
   const response = await api.get("/home/metropolitan-areas");
   listAreas.value = response.data;
 };
 
 function onSelectArea(area) {
-  form.location = area?.id || "";
-  listCounties.value = []; // limpiar antes de cargar
+  form.areaId = area?.id || "";
+  form.countyId = "";
+  form.cityId = "";
+
+  listCounties.value = [];
+  listCities.value = [];
   selectedCounty.value = null;
   selectedCity.value = null;
-  listCities.value = [];
-  // petición counties
+
   if (area?.id) {
     api.get(`/home/counties/${area.id}`).then((res) => {
       listCounties.value = res.data;
@@ -207,8 +223,12 @@ function onSelectArea(area) {
 }
 
 function onSelectCounty(county) {
-  selectedCity.value = null;
+  form.countyId = county?.id || "";
+  form.cityId = "";
+
   listCities.value = [];
+  selectedCity.value = null;
+
   if (county?.id) {
     api.get(`/home/cities/${county.id}`).then((res) => {
       listCities.value = res.data;
@@ -217,22 +237,27 @@ function onSelectCounty(county) {
 }
 
 function onSelectCity(city) {
-  // concatenamos la ubicación final
-  form.location = city?.id || form.location;
+  form.cityId = city?.id || "";
 }
-
-// Observar cambios en el formulario
 watch(
   form,
   async (newVal) => {
     try {
       await schema.validate(newVal, { abortEarly: false });
-      emit("setData", { customer: newVal });
+      Object.keys(errors).forEach((key) => (errors[key] = ""));
+
+      if (areAllFieldsFilled()) {
+        emit("setData", { customer: newVal });
+      } else {
+        emit("setData", { customer: null });
+      }
     } catch (validationErrors) {
       Object.keys(errors).forEach((key) => (errors[key] = ""));
-      validationErrors.inner.forEach((err) => {
-        errors[err.path] = err.message;
-      });
+      if (validationErrors?.inner) {
+        validationErrors.inner.forEach((err) => {
+          errors[err.path] = err.message;
+        });
+      }
       emit("setData", { customer: null });
     }
   },
@@ -240,7 +265,7 @@ watch(
 );
 
 onMounted(() => {
-  getDataMtrolitan();
+  getDataMetropolitan();
 });
 </script>
 
