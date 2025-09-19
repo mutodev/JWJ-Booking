@@ -48,14 +48,14 @@ api.interceptors.response.use(
         }
       }
 
-      if (response.config.method?.toLocaleUpperCase() !== "GET")
+      if (response.config.method?.toUpperCase() !== "GET")
         toast.success(response.data.message ?? "Success");
 
       hideLoader();
       return response?.data ?? response;
     } catch (error) {
       console.log(error);
-      if ([200, 201].includes(response.status))
+      if ([200, 201].includes(response.status) && response.config.method?.toUpperCase() !== "GET")
         toast.success(response.data.message ?? "Success");
 
       hideLoader();
