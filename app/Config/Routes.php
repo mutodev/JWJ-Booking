@@ -28,6 +28,7 @@ $routes->group('api', function ($routes) {
         $routes->get('counties/(:any)', [CountyController::class, 'getByMetropolitan']);
         $routes->get('cities/(:any)', [CityController::class, 'getByCounty']);
         $routes->get('zipcode/(:any)/(:any)', [ZipCodeController::class, 'getByCityAndCode']);
+        $routes->get('services/(:any)', [ServicePriceController::class, 'getAllByCounty']);
     });
 
 

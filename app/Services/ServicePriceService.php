@@ -20,6 +20,15 @@ class ServicePriceService
         return $this->repo->getAll();
     }
 
+    /**
+     * Obtener los precios del servicio por condado 
+     * @param $countyId
+    */
+    public function getAllByCounty($countyId)
+    {
+        return $this->repo->getAllByCounty($countyId);
+    }
+
     public function getById(string $id)
     {
         $price = $this->repo->getById($id);

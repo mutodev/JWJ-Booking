@@ -23,7 +23,11 @@
           <Step2 @setData="setData" :city="form?.customer?.cityId" />
         </tab-content>
         <tab-content title="Step 3" :before-change="validateNext">
-          <Step3 @setData="setData" />
+          <Step3
+            @setData="setData"
+            :county="form?.customer?.countyId"
+            :active="nextIndex === 2"
+          />
         </tab-content>
         <tab-content title="Step 4" :before-change="validateNext">
           <Step4 @setData="setData" />
@@ -143,6 +147,7 @@ function validateNext() {
 
   if (nextIndex.value === 0 && !form.value.customer) return false;
   if (nextIndex.value === 1 && !form.value.zipcode) return false;
+  if (nextIndex.value === 2 && !form.value.service) return false;
 
   return true;
 }

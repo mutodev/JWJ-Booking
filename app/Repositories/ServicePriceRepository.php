@@ -104,4 +104,33 @@ class ServicePriceRepository
             ->set(['deleted_at' => null])
             ->update();
     }
+
+    /**
+     * Obtener los precios del servicio por condado 
+     *
+     * @return ServicePrice[]
+     */
+    public function getAllByCounty($countyId)
+    {
+        return $this->model
+            ->select("
+                service_prices.id,
+                service_prices.service_id,
+                service_prices.county_id,
+                service_prices.performers_count,
+                service_prices.img,
+                service_prices.price_type,
+                service_prices.amount,
+                service_prices.max_children,
+                service_prices.extra_child_fee,
+                service_prices.range_age,
+                service_prices.notes,
+                services.name
+            ")
+            ->join("services", "services.id = service_prices.service_id", "left")
+            ->where('service_prices.county_id', $countyId)
+            ->where('service_prices.is_available', true)
+            ->where('services.is_active', true)
+            ->findAll();
+    }
 }
