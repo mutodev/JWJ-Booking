@@ -29,6 +29,11 @@ class CreateServicePricesTable extends Migration
                 'constraint' => 1,
                 'null' => false
             ],
+            'img' => [
+                'type' => 'VARCHAR',
+                'constraint' => 100,
+                'null' => true
+            ],
             'price_type' => [
                 'type' => 'ENUM',
                 'constraint' => ['standard', 'jukebox'],
@@ -40,11 +45,10 @@ class CreateServicePricesTable extends Migration
                 'constraint' => '10,2',
                 'null' => false
             ],
-            'min_duration_hours' => [
-                'type' => 'INT',
-                'constraint' => 2,
-                'default' => 1,
-                'null' => false
+            'range_age' => [
+                'type' => 'VARCHAR',
+                'constraint' => 20,
+                'null' => true
             ],
             'is_available' => [
                 'type' => 'TINYINT',

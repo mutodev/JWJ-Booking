@@ -2,29 +2,23 @@
 
 namespace App\Models;
 
-use App\Entities\ServicePrice;
+use App\Entities\ChildrenAgeRange;
 use CodeIgniter\Model;
 
-class ServicePriceModel extends Model
+class ChildrenAgeRangeModel extends Model
 {
-    protected $table            = 'service_prices';
+    protected $table            = 'childrenageranges';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
-    protected $returnType       = ServicePrice::class;
-    protected $useSoftDeletes   = true;
+    protected $returnType       = ChildrenAgeRange::class;
+    protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'service_id',
-        'county_id',
-        'img',
-        'performers_count',
-        'price_type',
-        'amount',
-        'min_duration_hours',
-        'is_available',
-        'notes',
-        'max_children',
-        'extra_child_fee',
+        'id',
+        'service_price_id',
+        'min_age',
+        'max_age',
+        'is_active',
     ];
 
     protected bool $allowEmptyInserts = false;

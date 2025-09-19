@@ -2,29 +2,22 @@
 
 namespace App\Models;
 
-use App\Entities\ServicePrice;
+use App\Entities\Duration;
 use CodeIgniter\Model;
 
-class ServicePriceModel extends Model
+class DurationModel extends Model
 {
-    protected $table            = 'service_prices';
+    protected $table            = 'durations';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
-    protected $returnType       = ServicePrice::class;
-    protected $useSoftDeletes   = true;
+    protected $returnType       = Duration::class;
+    protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'service_id',
-        'county_id',
-        'img',
-        'performers_count',
-        'price_type',
-        'amount',
-        'min_duration_hours',
-        'is_available',
-        'notes',
-        'max_children',
-        'extra_child_fee',
+        'id',
+        'service_price_id',
+        'minutes',
+        'is_active'
     ];
 
     protected bool $allowEmptyInserts = false;

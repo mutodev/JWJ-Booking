@@ -10,15 +10,25 @@ class ServicePriceSeeder extends Seeder
 {
     public function run()
     {
-        // Obtener IDs reales de condados y servicios
+        // Verificar que existan los condados y servicios primero
         $miamiDadeCounty = $this->db->table('counties')->where('name', 'Miami-Dade County')->get()->getRow();
         $browardCounty = $this->db->table('counties')->where('name', 'Broward County')->get()->getRow();
-        
+
         $classicJam = $this->db->table('services')->where('name', 'Classic Jam')->get()->getRow();
-        $erasJam = $this->db->table('services')->where('name', 'Eras Jam')->get()->getRow(); // Para el ejemplo
+        $erasJam = $this->db->table('services')->where('name', 'Eras Jam')->get()->getRow();
+
+        // Verificar que todos los registros necesarios existen
+        if (!$miamiDadeCounty || !$browardCounty) {
+            echo "❌ Error: No se encontraron los condados necesarios. Ejecuta primero CountiesSeeder.\n";
+            return;
+        }
+
+        if (!$classicJam || !$erasJam) {
+            echo "❌ Error: No se encontraron los servicios necesarios. Ejecuta primero ServicesSeeder.\n";
+            return;
+        }
 
         $servicePrices = [
-            // Miami-Dade County - Classic Jam
             [
                 'id' => Uuid::uuid4()->toString(),
                 'service_id' => $classicJam->id,
@@ -26,10 +36,9 @@ class ServicePriceSeeder extends Seeder
                 'performers_count' => 1,
                 'price_type' => 'standard',
                 'amount' => 350.00,
-                'max_children' => 10, // 👈 NUEVO CAMPO
-                'extra_child_fee' => 75.00, // 👈 NUEVO CAMPO
-                'min_duration_hours' => 1,
+                'range_age' => '1 - 10',
                 'is_available' => true,
+                'notes' => 'Máximo 10 niños, fee extra por niño adicional: $75.00',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
@@ -40,10 +49,9 @@ class ServicePriceSeeder extends Seeder
                 'performers_count' => 1,
                 'price_type' => 'jukebox',
                 'amount' => 325.00,
-                'max_children' => 10, // 👈 NUEVO CAMPO
-                'extra_child_fee' => 75.00, // 👈 NUEVO CAMPO
-                'min_duration_hours' => 1,
+                'range_age' => '1 - 10',
                 'is_available' => true,
+                'notes' => 'Máximo 10 niños, fee extra por niño adicional: $75.00',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
@@ -54,10 +62,9 @@ class ServicePriceSeeder extends Seeder
                 'performers_count' => 2,
                 'price_type' => 'standard',
                 'amount' => 475.00,
-                'max_children' => 10, // 👈 NUEVO CAMPO
-                'extra_child_fee' => 75.00, // 👈 NUEVO CAMPO
-                'min_duration_hours' => 1,
+                'range_age' => '1 - 10',
                 'is_available' => true,
+                'notes' => 'Máximo 10 niños, fee extra por niño adicional: $75.00',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
@@ -68,15 +75,12 @@ class ServicePriceSeeder extends Seeder
                 'performers_count' => 2,
                 'price_type' => 'jukebox',
                 'amount' => 450.00,
-                'max_children' => 10, // 👈 NUEVO CAMPO
-                'extra_child_fee' => null, // 👈 NUEVO CAMPO
-                'min_duration_hours' => 1,
+                'range_age' => '1 - 10',
                 'is_available' => true,
+                'notes' => 'Máximo 10 niños, sin fee extra por niño adicional',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
-
-            // Broward County - Classic Jam
             [
                 'id' => Uuid::uuid4()->toString(),
                 'service_id' => $classicJam->id,
@@ -84,10 +88,9 @@ class ServicePriceSeeder extends Seeder
                 'performers_count' => 1,
                 'price_type' => 'standard',
                 'amount' => 350.00,
-                'max_children' => 10, // 👈 NUEVO CAMPO
-                'extra_child_fee' => null, // 👈 NUEVO CAMPO
-                'min_duration_hours' => 1,
+                'range_age' => '1 - 10',
                 'is_available' => true,
+                'notes' => 'Máximo 10 niños, sin fee extra por niño adicional',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
@@ -98,35 +101,32 @@ class ServicePriceSeeder extends Seeder
                 'performers_count' => 2,
                 'price_type' => 'standard',
                 'amount' => 475.00,
-                'max_children' => 10, // 👈 NUEVO CAMPO
-                'extra_child_fee' => null, // 👈 NUEVO CAMPO
-                'min_duration_hours' => 1,
+                'range_age' => '1 - 10',
                 'is_available' => true,
+                'notes' => 'Máximo 10 niños, sin fee extra por niño adicional',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
-
-            // 👇 EJEMPLO PARA ERAS JAM (con el cargo de $75)
             [
                 'id' => Uuid::uuid4()->toString(),
-                'service_id' => $erasJam->id, // Asegúrate de tener este servicio creado
+                'service_id' => $erasJam->id,
                 'county_id' => $miamiDadeCounty->id,
                 'performers_count' => 1,
                 'price_type' => 'standard',
-                'amount' => 400.00, // Precio base diferente
-                'max_children' => 24, // 👈 Límite para Eras Jam
-                'extra_child_fee' => 75.00, // 👈 Cargo de $75 por niño extra
-                'min_duration_hours' => 1,
+                'amount' => 400.00,
+                'range_age' => '1 - 10',
                 'is_available' => true,
+                'notes' => 'Máximo 24 niños, fee extra por niño adicional: $75.00',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ]
         ];
 
+        // Insertar los datos
         $this->db->table('service_prices')->insertBatch($servicePrices);
-        
+
         echo "✅ Precios de servicios insertados: " . count($servicePrices) . " registros\n";
         echo "   - Relacionados con condados: Miami-Dade County, Broward County\n";
-        echo "   - Incluye nuevos campos: max_children y extra_child_fee\n";
+        echo "   - Información de máximo de niños y fees extras incluida en el campo 'notes'\n";
     }
 }
