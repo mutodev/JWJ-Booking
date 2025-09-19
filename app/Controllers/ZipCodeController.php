@@ -19,7 +19,7 @@ class ZipCodeController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de códigos postales', $this->service->getAll()));
+                ->setJSON(create_response(lang('App.zipcode_list'), $this->service->getAll()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -32,7 +32,7 @@ class ZipCodeController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de códigos postales con ciudad', $this->service->getAllAndCity()));
+                ->setJSON(create_response(lang('App.zipcode_list_with_city'), $this->service->getAllAndCity()));
         } catch (\Throwable $th) {
             print_r($th);
             die();
@@ -47,7 +47,7 @@ class ZipCodeController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Código postal encontrado', $this->service->getById($id)));
+                ->setJSON(create_response(lang('App.zipcode_found'), $this->service->getById($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -60,7 +60,7 @@ class ZipCodeController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Código postal encontrado', $this->service->getByCityAndCode($cityId, $code)));
+                ->setJSON(create_response(lang('App.zipcode_found'), $this->service->getByCityAndCode($cityId, $code)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -73,7 +73,7 @@ class ZipCodeController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Código postal por ciudad', $this->service->getByCity($id)));
+                ->setJSON(create_response(lang('App.zipcode_by_city'), $this->service->getByCity($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -89,7 +89,7 @@ class ZipCodeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(create_response('Código postal creado', $this->service->create($data)));
+                ->setJSON(create_response(lang('App.zipcode_created'), $this->service->create($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -106,7 +106,7 @@ class ZipCodeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Código postal actualizado', $this->service->update($id, $data)));
+                ->setJSON(create_response(lang('App.zipcode_updated'), $this->service->update($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -119,7 +119,7 @@ class ZipCodeController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Código postal eliminado', $this->service->delete($id)));
+                ->setJSON(create_response(lang('App.zipcode_deleted'), $this->service->delete($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

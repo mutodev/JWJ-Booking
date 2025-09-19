@@ -25,7 +25,7 @@ class RoleController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de roles', $this->roleService->getAllRoles()));
+                ->setJSON(create_response(lang('App.role_list'), $this->roleService->getAllRoles()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -45,7 +45,7 @@ class RoleController extends ResourceController
             $data = json_decode($json, true);
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(create_response('Rol creado', $this->roleService->createRole($data)));
+                ->setJSON(create_response(lang('App.role_created'), $this->roleService->createRole($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -66,7 +66,7 @@ class RoleController extends ResourceController
             $data = json_decode($json, true);
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Rol actualizado', $this->roleService->updateRole($id, $data)));
+                ->setJSON(create_response(lang('App.role_updated'), $this->roleService->updateRole($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

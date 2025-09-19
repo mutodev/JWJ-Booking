@@ -24,7 +24,7 @@ class ChildrenAgeRangeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de rangos de edad', $ranges));
+                ->setJSON(create_response(lang('App.age_range_list'), $ranges));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -42,7 +42,7 @@ class ChildrenAgeRangeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Rango de edad encontrado', $range));
+                ->setJSON(create_response(lang('App.age_range_found'), $range));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -58,7 +58,7 @@ class ChildrenAgeRangeController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Rangos de edad del servicio', $this->service->getRangesByServicePrice($servicePriceId, true)));
+                ->setJSON(create_response(lang('App.service_age_ranges'), $this->service->getRangesByServicePrice($servicePriceId, true)));
         } catch (\Throwable $th) {
             print_r($th);
             die();
@@ -79,7 +79,7 @@ class ChildrenAgeRangeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('', $this->service->createRange($data)));
+                ->setJSON(create_response(lang('App.age_range_created'), $this->service->createRange($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -98,7 +98,7 @@ class ChildrenAgeRangeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('', $this->service->updateRange($id, $data)));
+                ->setJSON(create_response(lang('App.age_range_updated'), $this->service->updateRange($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

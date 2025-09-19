@@ -25,7 +25,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        'Lista de servicios',
+                        lang('App.service_list'),
                         $this->service->getAll()
                     )
                 );
@@ -46,7 +46,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        'Lista de servicios',
+                        lang('App.service_list'),
                         $this->service->getAllActive()
                     )
                 );
@@ -67,7 +67,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        "Detalle del servicio",
+                        lang('App.service_detail'),
                         $this->service->getById( $id)
                     )
                 );
@@ -91,7 +91,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_CREATED)
                 ->setJSON(
                     create_response(
-                        'Servicio creado correctamente',
+                        lang('App.service_created_successfully'),
                         $this->service->create($data)
                     )
                 );
@@ -114,7 +114,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        "Servicio actualizado correctamente",
+                        lang('App.service_updated_successfully'),
                         $this->service->update($id, $data)
                     )
                 );
@@ -135,7 +135,7 @@ class ServiceController extends ResourceController
                 ->setStatusCode(Response::HTTP_OK)
                 ->setJSON(
                     create_response(
-                        "Servicio eliminado correctamente",
+                        lang('App.service_deleted_successfully'),
                         $this->service->delete($id)
                     )
                 );

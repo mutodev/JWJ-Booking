@@ -19,7 +19,7 @@ class CustomerController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de clientes', $this->service->getAll()));
+                ->setJSON(create_response(lang('App.customer_list'), $this->service->getAll()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -32,7 +32,7 @@ class CustomerController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Cliente encontrado', $this->service->getById($id)));
+                ->setJSON(create_response(lang('App.customer_found'), $this->service->getById($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -45,7 +45,7 @@ class CustomerController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response("Resultados de búsqueda", $this->service->searchByName($name)));
+                ->setJSON(create_response(lang('App.customer_search_results'), $this->service->searchByName($name)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -61,7 +61,7 @@ class CustomerController extends ResourceController
 
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(create_response('Cliente creado', $this->service->create($data)));
+                ->setJSON(create_response(lang('App.customer_created'), $this->service->create($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -77,7 +77,7 @@ class CustomerController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Cliente actualizado', $this->service->update($id, $data)));
+                ->setJSON(create_response(lang('App.customer_updated'), $this->service->update($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -90,7 +90,7 @@ class CustomerController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Cliente eliminado', $this->service->delete($id)));
+                ->setJSON(create_response(lang('App.customer_deleted'), $this->service->delete($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

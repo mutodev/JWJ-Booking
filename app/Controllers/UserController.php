@@ -24,7 +24,7 @@ class UserController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Usuario obtenido', $this->userService->getUserById($id)));
+                ->setJSON(create_response(lang('App.user_obtained'), $this->userService->getUserById($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -44,7 +44,7 @@ class UserController extends ResourceController
             $data = json_decode($json, true);
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(create_response('Usuario creado', $this->userService->create($data)));
+                ->setJSON(create_response(lang('App.user_created'), $this->userService->create($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -64,7 +64,7 @@ class UserController extends ResourceController
             $data = json_decode($json, true);
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Usuario actualizado', $this->userService->update($id, $data)));
+                ->setJSON(create_response(lang('App.user_updated'), $this->userService->update($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -82,7 +82,7 @@ class UserController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Usuario eliminado', $this->userService->delete($id)));
+                ->setJSON(create_response(lang('App.user_deleted'), $this->userService->delete($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -102,7 +102,7 @@ class UserController extends ResourceController
             $data = json_decode($json, true);
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Contraseña cambiada', $this->userService->changePassword($data)));
+                ->setJSON(create_response(lang('App.password_changed'), $this->userService->changePassword($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -119,7 +119,7 @@ class UserController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de usuarios', $this->userService->getByRole($role)));
+                ->setJSON(create_response(lang('App.user_list'), $this->userService->getByRole($role)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

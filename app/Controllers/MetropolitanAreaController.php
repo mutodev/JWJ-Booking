@@ -19,7 +19,7 @@ class MetropolitanAreaController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de áreas metropolitanas', $this->service->getAll()));
+                ->setJSON(create_response(lang('App.metropolitan_area_list'), $this->service->getAll()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -32,7 +32,7 @@ class MetropolitanAreaController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de áreas metropolitanas activas', $this->service->getAllActive()));
+                ->setJSON(create_response(lang('App.metropolitan_area_list_active'), $this->service->getAllActive()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -45,7 +45,7 @@ class MetropolitanAreaController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Área metropolitana encontrada', $this->service->getById($id)));
+                ->setJSON(create_response(lang('App.metropolitan_area_found'), $this->service->getById($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -61,7 +61,7 @@ class MetropolitanAreaController extends ResourceController
 
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(create_response('Área metropolitana creada', $this->service->create($data)));
+                ->setJSON(create_response(lang('App.metropolitan_area_created'), $this->service->create($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -77,7 +77,7 @@ class MetropolitanAreaController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Área metropolitana actualizada', $this->service->update($id, $data)));
+                ->setJSON(create_response(lang('App.metropolitan_area_updated'), $this->service->update($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -90,7 +90,7 @@ class MetropolitanAreaController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Área metropolitana eliminada', $this->service->delete($id)));
+                ->setJSON(create_response(lang('App.metropolitan_area_deleted'), $this->service->delete($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

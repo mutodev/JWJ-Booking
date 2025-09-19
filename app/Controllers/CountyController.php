@@ -19,7 +19,7 @@ class CountyController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de condados', $this->service->getAll()));
+                ->setJSON(create_response(lang('App.county_list'), $this->service->getAll()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -32,7 +32,7 @@ class CountyController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de condados con areas', $this->service->getAllAndMetrpolitan()));
+                ->setJSON(create_response(lang('App.county_list_with_areas'), $this->service->getAllAndMetrpolitan()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -45,7 +45,7 @@ class CountyController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de condados activos', $this->service->getAllActive()));
+                ->setJSON(create_response(lang('App.county_list_active'), $this->service->getAllActive()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -58,7 +58,7 @@ class CountyController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de condados por area', $this->service->getByMetropolitan($id)));
+                ->setJSON(create_response(lang('App.county_list_by_area'), $this->service->getByMetropolitan($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -71,7 +71,7 @@ class CountyController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Condado encontrado', $this->service->getById($id)));
+                ->setJSON(create_response(lang('App.county_found'), $this->service->getById($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -87,7 +87,7 @@ class CountyController extends ResourceController
 
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(create_response('Condado creado', $this->service->create($data)));
+                ->setJSON(create_response(lang('App.county_created'), $this->service->create($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -103,7 +103,7 @@ class CountyController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Condado actualizado', $this->service->update($id, $data)));
+                ->setJSON(create_response(lang('App.county_updated'), $this->service->update($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -116,7 +116,7 @@ class CountyController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Condado eliminado', $this->service->delete($id)));
+                ->setJSON(create_response(lang('App.county_deleted'), $this->service->delete($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

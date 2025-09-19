@@ -22,7 +22,7 @@ class AddonController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de addons', $this->service->getAll()));
+                ->setJSON(create_response(lang('App.addon_list'), $this->service->getAll()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -38,7 +38,7 @@ class AddonController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Lista de addons activos', $this->service->getAllActive()));
+                ->setJSON(create_response(lang('App.addon_list_active'), $this->service->getAllActive()));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -54,7 +54,7 @@ class AddonController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response("Resultados de búsqueda para '{$name}'", $this->service->search($name)));
+                ->setJSON(create_response(lang('App.addon_search_results', ['name' => $name]), $this->service->search($name)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -70,7 +70,7 @@ class AddonController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Addon encontrado', $this->service->getById($id)));
+                ->setJSON(create_response(lang('App.addon_found'), $this->service->getById($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -89,7 +89,7 @@ class AddonController extends ResourceController
 
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(create_response('Addon creado', $this->service->create($data)));
+                ->setJSON(create_response(lang('App.addon_created'), $this->service->create($data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -108,7 +108,7 @@ class AddonController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Addon actualizado', $this->service->update($id, $data)));
+                ->setJSON(create_response(lang('App.addon_updated'), $this->service->update($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
@@ -124,7 +124,7 @@ class AddonController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Addon eliminado', $this->service->delete($id)));
+                ->setJSON(create_response(lang('App.addon_deleted'), $this->service->delete($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

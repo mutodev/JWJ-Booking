@@ -24,7 +24,7 @@ class ServicePriceController extends ResourceController
                 ->setStatusCode(200)
                 ->setJSON(
                     create_response(
-                        'Lista de precios de servicio',
+                        lang('App.service_price_list'),
                         $this->service->getAll()
                     )
                 );
@@ -45,7 +45,7 @@ class ServicePriceController extends ResourceController
                 ->setStatusCode(200)
                 ->setJSON(
                     create_response(
-                        'Lista de precios de servicio',
+                        lang('App.service_price_list'),
                         $this->service->getAllByCounty($countyId)
                     )
                 );
@@ -66,7 +66,7 @@ class ServicePriceController extends ResourceController
                 ->setStatusCode(200)
                 ->setJSON(
                     create_response(
-                        'Detalle del precio de servicio',
+                        lang('App.service_price_detail'),
                         $this->service->getById($id)
                     )
                 );
@@ -87,7 +87,7 @@ class ServicePriceController extends ResourceController
                 ->setStatusCode(200)
                 ->setJSON(
                     create_response(
-                        'Detalle del precio de servicio por servicio y condado',
+                        lang('App.service_price_detail_by_service_county'),
                         $this->service->getByServiceAndCounty($serviceId, $countyId)
                     )
                 );
@@ -110,7 +110,7 @@ class ServicePriceController extends ResourceController
                 ->setStatusCode(201)
                 ->setJSON(
                     create_response(
-                        'Precio de servicio creado exitosamente',
+                        lang('App.service_price_created'),
                         $this->service->create($data)
                     )
                 );
@@ -131,7 +131,7 @@ class ServicePriceController extends ResourceController
             $data = json_decode($json, true);
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Precio de servicio actualizado', $this->service->update($id, $data)));
+                ->setJSON(create_response(lang('App.service_price_updated'), $this->service->update($id, $data)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() ?: 500)
@@ -147,7 +147,7 @@ class ServicePriceController extends ResourceController
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response('Precio de servicio eliminado', $this->service->delete($id)));
+                ->setJSON(create_response(lang('App.service_price_deleted'), $this->service->delete($id)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() ?: 500)
