@@ -41,7 +41,7 @@
             </p>
 
             <span class="badge bg-light text-dark mb-2">
-              Ages {{ service.range_age }}
+              For Ages {{ service.range_age }}
             </span>
           </div>
         </div>
@@ -116,8 +116,8 @@ watch(
   box-shadow: 0 5px 10px rgba(78, 245, 167, 0.45) !important;
 }
 .card-img-top {
-  height: 180px; /* fija la altura */
-  object-fit: cover; /* recorta manteniendo proporción */
+  height: 180px;
+  object-fit: cover;
   border-top-left-radius: 14px;
   border-top-right-radius: 14px;
 }
