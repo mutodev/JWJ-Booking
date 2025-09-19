@@ -5,7 +5,7 @@
       <div class="vertical-progress-line">
         <div
           class="vertical-progress-fill"
-          :style="{ height: (activeStep / totalSteps) * 0 + '%' }"
+          :style="{ height: (activeStep / totalSteps) * 100 + '%' }"
         ></div>
       </div>
 
