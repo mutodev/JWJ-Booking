@@ -18,6 +18,9 @@ import EasyDataTable from "vue3-easy-data-table";
 import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.css";
 
+import ElementPlus from 'element-plus';
+import 'element-plus/dist/index.css';
+
 // Importar el helper de tablas
 import { generateTableHeaders, generateSearchFields, commonLabels } from "@/assets/scripts/easy-table.js";
 
@@ -36,6 +39,7 @@ app.provide('tableHelpers', {
 });
 
 app.use(router);
+app.use(ElementPlus);
 app.use(Toast, {
   timeout: 3500,
 });

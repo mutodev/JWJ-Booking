@@ -7,38 +7,60 @@
     </div>
 
     <!-- Botones dinámicos -->
-    <div v-if="kidsOptions.length" class="btn-group flex-wrap" role="group">
+    <div v-if="kidsOptions.length" class="d-flex flex-wrap gap-3">
       <template v-for="option in kidsOptions" :key="option.id">
-        <input
-          type="radio"
-          class="btn-check"
-          :id="option.id"
-          :value="option"
-          v-model="selected"
-        />
-        <label class="btn btn-outline-secondary" :for="option.id">
-          {{ option.label }}
-        </label>
+        <div class="form-check-container">
+          <input
+            type="radio"
+            class="btn-check"
+            :id="option.id"
+            :value="option"
+            v-model="selected"
+          />
+          <label class="btn custom-age-btn" :for="option.id">
+            {{ option.label }}
+          </label>
+        </div>
       </template>
 
       <!-- Botón fijo 40+ kids -->
-      <input
-        type="radio"
-        class="btn-check"
-        id="kids40plus"
-        :value="{ id: '40plus', label: '40+ kids' }"
-        v-model="selected"
-      />
-      <label class="btn btn-outline-secondary" for="kids40plus">
-        40+ kids
-      </label>
+      <div class="form-check-container">
+        <input
+          type="radio"
+          class="btn-check"
+          id="kids40plus"
+          :value="{ id: '40plus', label: '40+ kids' }"
+          v-model="selected"
+        />
+        <label class="btn custom-age-btn" for="kids40plus">
+          40+ kids
+        </label>
+      </div>
+    </div>
+
+    <!-- Input para cantidad específica cuando es 40+ -->
+    <div v-if="selected?.id === '40plus'" class="mt-4">
+      <div class="input-group" style="max-width: 300px;">
+        <span class="input-group-text">
+          <i class="bi bi-123"></i>
+        </span>
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Enter number of kids"
+          v-model.number="customKidsCount"
+          min="1"
+        />
+      </div>
+      <small class="text-muted mt-1 d-block">Please enter the exact number of children</small>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import api from "@/services/axios";
+import * as yup from "yup";
 
 const props = defineProps({
   service: {
@@ -49,17 +71,41 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  kids: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["setData"]);
 
 const kidsOptions = ref([]);
 const selected = ref(null);
+const customKidsCount = ref(null);
+
+// Yup schema for validation
+const customCountSchema = yup.number()
+  .integer("Must be a whole number")
+  .min(1, "Minimum 1 child required")
+  .required("Please enter the number of children");
+
+// Computed property to check if form is valid
+const isValidSelection = computed(() => {
+  if (!selected.value) return false;
+
+  if (selected.value.id === '40plus') {
+    try {
+      customCountSchema.validateSync(customKidsCount.value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  return true;
+});
 
 async function loadKidsOptions() {
-  selected.value = null;
-  emit("setData", { kids: null });
-  
   if (!props.active || !props.service) return;
   const { data } = await api.get(`/home/range-kids/${props.service}`);
 
@@ -67,6 +113,44 @@ async function loadKidsOptions() {
     ...opt,
     label: `Ages ${opt.min_age}–${opt.max_age}`,
   }));
+
+  // Restore selected kids if it exists
+  if (props.kids) {
+    if (props.kids.type === 'custom') {
+      selected.value = { id: '40plus', label: '40+ kids' };
+      customKidsCount.value = props.kids.count || null;
+    } else if (props.kids.type === 'range') {
+      const foundOption = kidsOptions.value.find(opt => opt.id === props.kids.id);
+      if (foundOption) {
+        selected.value = foundOption;
+      }
+    }
+  }
+}
+
+function emitKidsData() {
+  if (!selected.value) {
+    emit("setData", { kids: null });
+    return;
+  }
+
+  let kidsData;
+  if (selected.value.id === '40plus') {
+    kidsData = {
+      ...selected.value,
+      type: 'custom',
+      count: customKidsCount.value,
+      isValid: isValidSelection.value
+    };
+  } else {
+    kidsData = {
+      ...selected.value,
+      type: 'range',
+      isValid: true
+    };
+  }
+
+  emit("setData", { kids: kidsData });
 }
 
 watch(
@@ -79,33 +163,72 @@ watch(
   { immediate: true }
 );
 
-watch(selected, (val) => {
-  if (val) {
-    emit("setData", { kids: val });
+watch(selected, (newVal) => {
+  if (newVal?.id !== '40plus') {
+    customKidsCount.value = null;
+  }
+  emitKidsData();
+});
+
+watch(customKidsCount, () => {
+  if (selected.value?.id === '40plus') {
+    emitKidsData();
   }
 });
 </script>
 
 <style scoped>
-.btn-outline-secondary {
-  background-color: #6c757d;
-  color: #fff;
-  border: none;
-  transition: all 0.2s ease;
+.form-check-container {
+  position: relative;
 }
-.btn-outline-secondary:hover {
-  background-color: #5a6268;
-  color: #fff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
+
+.custom-age-btn {
+  background-color: #f8f9fa !important;
+  border: 2px solid #d1d5db !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  min-width: 120px !important;
+  text-align: center !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
-.btn-check:checked + .btn-outline-secondary {
-  transform: translateY(-8px);
-  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
+
+.custom-age-btn:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+  color: #4b5563 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
 }
-.btn-group .btn {
-  border-radius: 6px !important;
-  margin-right: 8px;
-  margin-bottom: 8px;
+
+.btn-check:checked + .custom-age-btn {
+  background-color: #6b7280 !important;
+  border-color: #6b7280 !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4) !important;
+}
+
+.btn-check:checked + .custom-age-btn:hover {
+  background-color: #4b5563 !important;
+  border-color: #4b5563 !important;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.form-control {
+  border-color: #d1d5db;
+}
+
+.form-control:focus {
+  border-color: #6b7280;
+  box-shadow: 0 0 0 0.2rem rgba(107, 114, 128, 0.25);
 }
 </style>

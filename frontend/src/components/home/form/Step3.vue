@@ -66,6 +66,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  service: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["setData"]);
@@ -74,12 +78,17 @@ const services = ref([]);
 const selectedService = ref(null);
 
 async function loadServices() {
-  selectedService.value = null;
-  emit("setData", { service: null });
-
   if (!props.county) return;
   const { data } = await api.get(`/home/services/${props.county}`);
   services.value = data;
+
+  // Restore selected service if it exists in the loaded services
+  if (props.service) {
+    const foundService = data.find(s => s.id === props.service.id);
+    if (foundService) {
+      selectedService.value = foundService;
+    }
+  }
 }
 
 function selectService(service) {
@@ -90,11 +99,29 @@ function selectService(service) {
 watch(
   () => [props.county, props.active],
   ([county, active]) => {
+    console.log('Step 3 watcher triggered:', { county, active });
     if (active && county) {
+      console.log('Loading services for county:', county);
       loadServices();
     }
   },
-  { immediate: false }
+  { immediate: true }
+);
+
+// Watch for service prop changes to maintain selection
+watch(
+  () => props.service,
+  (service) => {
+    if (service && services.value.length > 0) {
+      const foundService = services.value.find(s => s.id === service.id);
+      if (foundService) {
+        selectedService.value = foundService;
+      }
+    } else if (!service) {
+      selectedService.value = null;
+    }
+  },
+  { immediate: true }
 );
 </script>
 
