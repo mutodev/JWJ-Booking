@@ -74,14 +74,12 @@ const services = ref([]);
 const selectedService = ref(null);
 
 async function loadServices() {
+  selectedService.value = null;
+  emit("setData", { service: null });
+
   if (!props.county) return;
-  try {
-    const { data } = await api.get(`/home/services/${props.county}`);
-    services.value = data;
-    selectedService.value = null;
-  } catch (error) {
-    console.error("Error loading services:", error);
-  }
+  const { data } = await api.get(`/home/services/${props.county}`);
+  services.value = data;
 }
 
 function selectService(service) {

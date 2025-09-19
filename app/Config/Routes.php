@@ -1,6 +1,7 @@
 <?php
 
 use App\Controllers\AddonController;
+use App\Controllers\ChildrenAgeRangeController;
 use App\Controllers\CityController;
 use App\Controllers\CountyController;
 use App\Controllers\CustomerController;
@@ -29,6 +30,7 @@ $routes->group('api', function ($routes) {
         $routes->get('cities/(:any)', [CityController::class, 'getByCounty']);
         $routes->get('zipcode/(:any)/(:any)', [ZipCodeController::class, 'getByCityAndCode']);
         $routes->get('services/(:any)', [ServicePriceController::class, 'getAllByCounty']);
+        $routes->get('range-kids/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
     });
 
 

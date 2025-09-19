@@ -115,7 +115,6 @@ class ServicePriceRepository
         return $this->model
             ->select("
                 service_prices.id,
-                service_prices.service_id,
                 service_prices.county_id,
                 service_prices.performers_count,
                 service_prices.img,

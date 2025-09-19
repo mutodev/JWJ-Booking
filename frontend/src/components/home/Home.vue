@@ -30,10 +30,18 @@
           />
         </tab-content>
         <tab-content title="Step 4" :before-change="validateNext">
-          <Step4 @setData="setData" />
+          <Step4
+            @setData="setData"
+            :service="form?.service?.id"
+            :active="nextIndex === 3"
+          />
         </tab-content>
         <tab-content title="Step 5" :before-change="validateNext">
-          <Step5 @setData="setData" />
+          <Step5
+            @setData="setData"
+            :service="form?.service?.id"
+            :active="nextIndex === 4"
+          />
         </tab-content>
         <tab-content title="Step 6" :before-change="validateNext">
           <Step6 @setData="setData" />
@@ -148,6 +156,7 @@ function validateNext() {
   if (nextIndex.value === 0 && !form.value.customer) return false;
   if (nextIndex.value === 1 && !form.value.zipcode) return false;
   if (nextIndex.value === 2 && !form.value.service) return false;
+  if (nextIndex.value === 3 && !form.value.kids) return false;
 
   return true;
 }

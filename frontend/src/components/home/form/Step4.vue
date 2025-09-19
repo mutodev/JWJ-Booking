@@ -2,71 +2,110 @@
   <div class="container py-4">
     <!-- Título con ícono -->
     <div class="d-flex align-items-center mb-3">
-      <img
-        src="https://via.placeholder.com/24x24?text=🎉"
-        alt="Icon"
-        class="me-2"
-      />
+      <i class="bi bi-people-fill fs-4 me-2 text-success"></i>
       <h4 class="mb-0">Number of children attending</h4>
     </div>
 
-    <!-- Botones select -->
-    <div class="btn-group" role="group" aria-label="Children attending">
-      <input
-        type="radio"
-        class="btn-check"
-        name="childrenOptions"
-        id="kids1"
-        value="up-to-24"
-        v-model="selected"
-      />
-      <label class="btn btn-outline-secondary" for="kids1">Up to 24 kids</label>
+    <!-- Botones dinámicos -->
+    <div v-if="kidsOptions.length" class="btn-group flex-wrap" role="group">
+      <template v-for="option in kidsOptions" :key="option.id">
+        <input
+          type="radio"
+          class="btn-check"
+          :id="option.id"
+          :value="option"
+          v-model="selected"
+        />
+        <label class="btn btn-outline-secondary" :for="option.id">
+          {{ option.label }}
+        </label>
+      </template>
 
+      <!-- Botón fijo 40+ kids -->
       <input
         type="radio"
         class="btn-check"
-        name="childrenOptions"
-        id="kids2"
-        value="25-40"
+        id="kids40plus"
+        :value="{ id: '40plus', label: '40+ kids' }"
         v-model="selected"
       />
-      <label class="btn btn-outline-secondary" for="kids2">25–40 kids</label>
-
-      <input
-        type="radio"
-        class="btn-check"
-        name="childrenOptions"
-        id="kids3"
-        value="40-plus"
-        v-model="selected"
-      />
-      <label class="btn btn-outline-secondary" for="kids3">40+ kids</label>
+      <label class="btn btn-outline-secondary" for="kids40plus">
+        40+ kids
+      </label>
     </div>
-
-    <!-- Resultado (debug) -->
-    <p class="mt-3 text-muted">Selected: {{ selected }}</p>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import api from "@/services/axios";
 
-const selected = ref("");
+const props = defineProps({
+  service: {
+    type: String,
+    required: true,
+  },
+  active: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const emit = defineEmits(["setData"]);
+
+const kidsOptions = ref([]);
+const selected = ref(null);
+
+async function loadKidsOptions() {
+  selected.value = null;
+  emit("setData", { kids: null });
+  
+  if (!props.active || !props.service) return;
+  const { data } = await api.get(`/home/range-kids/${props.service}`);
+
+  kidsOptions.value = data.map((opt) => ({
+    ...opt,
+    label: `Ages ${opt.min_age}–${opt.max_age}`,
+  }));
+}
+
+watch(
+  () => props.active,
+  (active) => {
+    if (active) {
+      loadKidsOptions();
+    }
+  },
+  { immediate: true }
+);
+
+watch(selected, (val) => {
+  if (val) {
+    emit("setData", { kids: val });
+  }
+});
 </script>
 
 <style scoped>
 .btn-outline-secondary {
-  background-color: #6c757d; /* gris oscuro como en la imagen */
+  background-color: #6c757d;
   color: #fff;
   border: none;
+  transition: all 0.2s ease;
 }
-.btn-outline-secondary:hover,
-.btn-check:checked + .btn-outline-secondary {
-  background-color: #495057; /* un gris más oscuro al seleccionar */
+.btn-outline-secondary:hover {
+  background-color: #5a6268;
   color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+.btn-check:checked + .btn-outline-secondary {
+  transform: translateY(-8px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.4);
 }
 .btn-group .btn {
   border-radius: 6px !important;
   margin-right: 8px;
+  margin-bottom: 8px;
 }
 </style>

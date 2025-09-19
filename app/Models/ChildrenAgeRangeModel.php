@@ -7,7 +7,7 @@ use CodeIgniter\Model;
 
 class ChildrenAgeRangeModel extends Model
 {
-    protected $table            = 'childrenageranges';
+    protected $table            = 'children_age_ranges';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = ChildrenAgeRange::class;
