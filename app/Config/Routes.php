@@ -5,6 +5,7 @@ use App\Controllers\ChildrenAgeRangeController;
 use App\Controllers\CityController;
 use App\Controllers\CountyController;
 use App\Controllers\CustomerController;
+use App\Controllers\DurationController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
@@ -31,6 +32,7 @@ $routes->group('api', function ($routes) {
         $routes->get('zipcode/(:any)/(:any)', [ZipCodeController::class, 'getByCityAndCode']);
         $routes->get('services/(:any)', [ServicePriceController::class, 'getAllByCounty']);
         $routes->get('range-kids/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
+        $routes->get('hours/(:any)', [DurationController::class, 'getByServicePriceId']);
     });
 
 
@@ -154,6 +156,18 @@ $routes->group('api', function ($routes) {
         $routes->post('/', [ReservationAddonController::class, 'create']);
         $routes->put('(:uuid)', [ReservationAddonController::class, 'updateData/$1']);
         $routes->delete('(:uuid)', [ReservationAddonController::class, 'deleteData/$1']);
+    });
+
+    $routes->group('durations', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [DurationController::class, 'getAll']);
+        $routes->get('by-service-price/(:any)', [DurationController::class, 'getByServicePriceId']);
+        $routes->get('(:any)', [DurationController::class, 'getById']);
+        $routes->post('/', [DurationController::class, 'create']);
+        $routes->put('(:any)', [DurationController::class, 'update']);
+        $routes->put('activate/(:any)', [DurationController::class, 'activate']);
+        $routes->put('deactivate/(:any)', [DurationController::class, 'deactivate']);
+        $routes->put('deactivate-all/(:any)', [DurationController::class, 'deactivateAllByServicePrice']);
+        $routes->delete('(:any)', [DurationController::class, 'delete']);
     });
 });
 

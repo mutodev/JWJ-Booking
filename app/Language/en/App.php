@@ -93,4 +93,13 @@ return [
     'service_age_ranges' => 'Service age ranges',
     'age_range_created' => 'Age range created',
     'age_range_updated' => 'Age range updated',
+
+    // Duration messages
+    'duration_list' => 'Duration list',
+    'duration_found' => 'Duration found',
+    'duration_created' => 'Duration created',
+    'duration_updated' => 'Duration updated',
+    'duration_deleted' => 'Duration deleted',
+    'duration_activated' => 'Duration activated',
+    'duration_deactivated' => 'Duration deactivated',
 ];

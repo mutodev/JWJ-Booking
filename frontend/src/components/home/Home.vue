@@ -207,7 +207,7 @@ function getCurrentStepProps() {
     case 5:
       props.service = form.value?.service?.id;
       props.active = activeStep.value === 5;
-      props.kids = form.value?.kids;
+      props.hours = form.value?.hours;
       break;
   }
 
@@ -271,6 +271,9 @@ function validateCurrentStep() {
       break;
     case 4:
       isValid = !!form.value.kids && form.value.kids.isValid;
+      break;
+    case 5:
+      isValid = !!form.value.hours;
       break;
     default:
       isValid = true; // Assume valid for other steps

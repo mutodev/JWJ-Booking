@@ -54,4 +54,5 @@ class DurationModel extends Model
     {
         return generate_uuid_data($data);
     }
+
 }
