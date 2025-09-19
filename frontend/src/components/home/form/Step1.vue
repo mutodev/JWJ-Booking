@@ -3,7 +3,7 @@
     <div class="row justify-content-center">
       <div class="col-12 col-md-6">
         <!-- Título -->
-        <h2 class="mb-4 text-center">Formulario de registro</h2>
+        <h2 class="mb-4 text-center">Contact Information</h2>
 
         <!-- First name -->
         <div class="mb-3">
