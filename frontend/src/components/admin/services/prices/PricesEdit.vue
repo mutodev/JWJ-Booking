@@ -434,7 +434,10 @@ watch(
   { immediate: true }
 );
 
-// Cargar duraciones existentes
+/**
+ * Carga las duraciones existentes asociadas al service price
+ * @param {string} servicePriceId - ID del service price
+ */
 const loadExistingDurations = async (servicePriceId) => {
   try {
     const response = await api.get(`/durations/by-service-price/${servicePriceId}`);
@@ -445,7 +448,11 @@ const loadExistingDurations = async (servicePriceId) => {
   }
 };
 
-// Cargar rangos de niños existentes
+/**
+ * Carga los rangos de cantidad de niños existentes asociados al service price
+ * Mapea los campos del backend (min_age/max_age) al frontend (min_children/max_children)
+ * @param {string} servicePriceId - ID del service price
+ */
 const loadExistingChildrenRanges = async (servicePriceId) => {
   try {
     const response = await api.get(`/children-ranges/by-service-price/${servicePriceId}`);
@@ -587,10 +594,15 @@ const validateForm = async () => {
   }
 };
 
+/**
+ * Actualiza las duraciones asociadas al service price
+ * Desactiva las existentes y crea las nuevas seleccionadas
+ * @param {string} servicePriceId - ID del service price
+ */
 const updateDurations = async (servicePriceId) => {
   try {
-    // Eliminar duraciones existentes
-    await api.delete(`/durations/by-service-price/${servicePriceId}`);
+    // Desactivar duraciones existentes
+    await api.put(`/durations/deactivate-all/${servicePriceId}`);
 
     // Crear nuevas duraciones
     const durationPromises = selectedDurations.value.map(duration => {

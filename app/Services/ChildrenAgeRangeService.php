@@ -6,6 +6,10 @@ use App\Repositories\ChildrenAgeRangeRepository;
 use App\Entities\ChildrenAgeRange;
 use Ramsey\Uuid\Uuid;
 
+/**
+ * Servicio para gestión de rangos de cantidad de niños
+ * NOTA: Aunque se llama "ChildrenAgeRange", maneja cantidad de niños (min_age/max_age = cantidad)
+ */
 class ChildrenAgeRangeService
 {
     protected $repository;
@@ -16,7 +20,9 @@ class ChildrenAgeRangeService
     }
 
     /**
-     * Obtener todos los rangos de edad
+     * Obtiene todos los rangos de cantidad de niños
+     * @param bool $onlyActive Si solo incluir rangos activos
+     * @return array Lista de rangos
      */
     public function getAllRanges(bool $onlyActive = true): array
     {
@@ -24,7 +30,9 @@ class ChildrenAgeRangeService
     }
 
     /**
-     * Obtener rango por ID
+     * Obtiene un rango por ID
+     * @param string $id ID del rango
+     * @return ChildrenAgeRange|null Rango encontrado o null
      */
     public function getRangeById(string $id): ?ChildrenAgeRange
     {
@@ -32,7 +40,10 @@ class ChildrenAgeRangeService
     }
 
     /**
-     * Obtener rangos por service_price_id
+     * Obtiene rangos asociados a un service price
+     * @param string $servicePriceId ID del service price
+     * @param bool $onlyActive Si solo incluir rangos activos
+     * @return array Lista de rangos del service price
      */
     public function getRangesByServicePrice(string $servicePriceId, bool $onlyActive = true): array
     {
@@ -48,7 +59,10 @@ class ChildrenAgeRangeService
     }
 
     /**
-     * Crear nuevo rango de edad
+     * Crea un nuevo rango de cantidad de niños
+     * NOTA: Los parámetros min_age/max_age representan cantidad de niños, no edad
+     * @param array $data Datos del rango (service_price_id, min_age, max_age, is_active)
+     * @return array Resultado de la operación con success, message y data
      */
     public function createRange(array $data): array
     {
@@ -61,11 +75,11 @@ class ChildrenAgeRangeService
             ];
         }
 
-        // Validar que min_age <= max_age
+        // Validar que min_age <= max_age (cantidad mínima <= cantidad máxima)
         if ($data['min_age'] > $data['max_age']) {
             return [
                 'success' => false,
-                'message' => 'La edad mínima no puede ser mayor que la edad máxima.',
+                'message' => 'La cantidad mínima no puede ser mayor que la cantidad máxima.',
                 'data' => null
             ];
         }
@@ -80,7 +94,7 @@ class ChildrenAgeRangeService
         if ($this->repository->exists($criteria)) {
             return [
                 'success' => false,
-                'message' => 'Ya existe un rango de edad con estos parámetros.',
+                'message' => 'Ya existe un rango con estos parámetros.',
                 'data' => null
             ];
         }
@@ -89,8 +103,8 @@ class ChildrenAgeRangeService
         $rangeData = [
             'id' => Uuid::uuid4()->toString(),
             'service_price_id' => $data['service_price_id'],
-            'min_age' => (int) $data['min_age'],
-            'max_age' => (int) $data['max_age'],
+            'min_age' => (int) $data['min_age'],    // Cantidad mínima de niños
+            'max_age' => (int) $data['max_age'],    // Cantidad máxima de niños
             'is_active' => $data['is_active'] ?? true,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s')
@@ -102,14 +116,14 @@ class ChildrenAgeRangeService
         if (!$range) {
             return [
                 'success' => false,
-                'message' => 'Error al crear el rango de edad.',
+                'message' => 'Error al crear el rango.',
                 'data' => null
             ];
         }
 
         return [
             'success' => true,
-            'message' => 'Rango de edad creado exitosamente.',
+            'message' => 'Rango creado exitosamente.',
             'data' => $range
         ];
     }

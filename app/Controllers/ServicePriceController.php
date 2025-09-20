@@ -5,6 +5,10 @@ namespace App\Controllers;
 use App\Services\ServicePriceService;
 use CodeIgniter\RESTful\ResourceController;
 
+/**
+ * Controlador REST para gestión de precios de servicios
+ * Maneja endpoints para CRUD de service prices con soporte de imágenes
+ */
 class ServicePriceController extends ResourceController
 {
     protected $service;

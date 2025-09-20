@@ -6,6 +6,10 @@ use App\Repositories\ServicePriceRepository;
 use CodeIgniter\HTTP\Response;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 
+/**
+ * Servicio para gestión de precios de servicios
+ * Maneja la lógica de negocio para CRUD de service prices
+ */
 class ServicePriceService
 {
     protected $repo;
@@ -15,20 +19,31 @@ class ServicePriceService
         $this->repo = new ServicePriceRepository();
     }
 
+    /**
+     * Obtiene todos los precios de servicios
+     * @return array Lista de precios de servicios
+     */
     public function getAll()
     {
         return $this->repo->getAll();
     }
 
     /**
-     * Obtener los precios del servicio por condado 
-     * @param $countyId
-    */
+     * Obtiene los precios del servicio por condado
+     * @param string $countyId ID del condado
+     * @return array Lista de precios filtrados por condado
+     */
     public function getAllByCounty($countyId)
     {
         return $this->repo->getAllByCounty($countyId);
     }
 
+    /**
+     * Obtiene un precio de servicio por ID
+     * @param string $id ID del precio de servicio
+     * @return object Precio de servicio encontrado
+     * @throws HTTPException Si no se encuentra el precio
+     */
     public function getById(string $id)
     {
         $price = $this->repo->getById($id);
@@ -38,11 +53,24 @@ class ServicePriceService
         return $price;
     }
 
+    /**
+     * Obtiene precios por servicio y condado específicos
+     * @param string $serviceId ID del servicio
+     * @param string $countyId ID del condado
+     * @return array Lista de precios que coinciden
+     */
     public function getByServiceAndCounty(string $serviceId, string $countyId)
     {
         return $this->repo->getByServiceAndCounty($serviceId, $countyId);
     }
 
+    /**
+     * Crea un nuevo precio de servicio
+     * Maneja duplicados y soft deletes automáticamente
+     * @param array $data Datos del precio de servicio
+     * @return string ID del precio creado o restaurado
+     * @throws HTTPException Si ya existe un precio activo con los mismos parámetros
+     */
     public function create(array $data)
     {
         $existing = $this->repo->getByUnique($data['service_id'], $data['county_id'], $data['performers_count'], true);
@@ -68,6 +96,13 @@ class ServicePriceService
         return $this->repo->create($data);
     }
 
+    /**
+     * Actualiza un precio de servicio existente
+     * @param string $id ID del precio de servicio
+     * @param array $data Datos a actualizar
+     * @return bool Resultado de la actualización
+     * @throws HTTPException Si no se encuentra el precio
+     */
     public function update(string $id, array $data)
     {
         $price = $this->repo->getById($id);
@@ -78,6 +113,12 @@ class ServicePriceService
         return $this->repo->update($id, $data);
     }
 
+    /**
+     * Elimina un precio de servicio (soft delete)
+     * @param string $id ID del precio de servicio
+     * @return bool Resultado de la eliminación
+     * @throws HTTPException Si no se encuentra el precio
+     */
     public function delete(string $id)
     {
         $price = $this->repo->getById($id);
@@ -89,43 +130,17 @@ class ServicePriceService
     }
 
     /**
-     * Crear un nuevo precio de servicio con manejo de imagen
+     * Crear un nuevo precio de servicio con manejo de imagen y FormData
+     * Soporta tanto JSON como multipart/form-data
      *
-     * @param \CodeIgniter\HTTP\IncomingRequest $request
-     * @return mixed
-     * @throws HTTPException
+     * @param \CodeIgniter\HTTP\IncomingRequest $request Petición HTTP
+     * @return string ID del precio de servicio creado
+     * @throws HTTPException Si hay errores en validación o creación
      */
     public function createWithImage($request)
     {
-        $data = [];
-
-        // Verificar Content-Type para determinar cómo obtener datos
-        $contentType = $request->getHeaderLine('Content-Type');
-
-        if (strpos($contentType, 'application/json') !== false) {
-            // Si es JSON, intentar parsearlo de forma segura
-            try {
-                $json = $request->getJSON(true);
-                if ($json) {
-                    $data = $json;
-                }
-            } catch (\Exception $e) {
-                // Si falla el JSON, continuar sin datos JSON
-                log_message('debug', 'JSON parse failed: ' . $e->getMessage());
-            }
-        }
-
-        // Si no hay datos JSON o es multipart, usar POST
-        if (empty($data)) {
-            $data = $request->getPost() ?: [];
-
-            // Convertir arrays a strings (problema común con multiselect)
-            foreach ($data as $key => $value) {
-                if (is_array($value) && !empty($value)) {
-                    $data[$key] = $value[0]; // Tomar primer elemento
-                }
-            }
-        }
+        // Extraer datos del request
+        $data = $this->extractRequestData($request);
 
         // Limpiar y validar campos
         $data = $this->sanitizeFormData($data);
@@ -146,10 +161,48 @@ class ServicePriceService
     }
 
     /**
+     * Extrae datos del request, soportando JSON y FormData
+     * @param \CodeIgniter\HTTP\IncomingRequest $request
+     * @return array Datos extraídos y normalizados
+     */
+    private function extractRequestData($request): array
+    {
+        $data = [];
+        $contentType = $request->getHeaderLine('Content-Type');
+
+        // Intentar extraer JSON primero
+        if (strpos($contentType, 'application/json') !== false) {
+            try {
+                $json = $request->getJSON(true);
+                if ($json) {
+                    $data = $json;
+                }
+            } catch (\Exception $e) {
+                log_message('debug', 'JSON parse failed: ' . $e->getMessage());
+            }
+        }
+
+        // Si no hay datos JSON o es multipart, usar POST
+        if (empty($data)) {
+            $data = $request->getPost() ?: [];
+
+            // Convertir arrays a strings (problema común con multiselect)
+            foreach ($data as $key => $value) {
+                if (is_array($value) && !empty($value)) {
+                    $data[$key] = $value[0]; // Tomar primer elemento
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
      * Sanitiza y valida los datos del formulario
+     * Filtra campos permitidos y convierte tipos de datos
      *
-     * @param array $data
-     * @return array
+     * @param array $data Datos sin procesar del formulario
+     * @return array Datos sanitizados y tipados correctamente
      */
     private function sanitizeFormData(array $data): array
     {
@@ -191,15 +244,16 @@ class ServicePriceService
     }
 
     /**
-     * Maneja la carga y validación de la imagen según documentación oficial CI4
+     * Maneja la carga y validación de imagen
+     * Valida tipo, tamaño y guarda el archivo de forma segura
      *
-     * @param \CodeIgniter\HTTP\Files\UploadedFile $image
-     * @return string Ruta de la imagen
-     * @throws HTTPException
+     * @param \CodeIgniter\HTTP\Files\UploadedFile $image Archivo de imagen
+     * @return string Ruta web de la imagen guardada
+     * @throws HTTPException Si hay errores de validación o carga
      */
     private function handleImageUpload($image): string
     {
-        // Validar que es una imagen válida usando métodos CI4
+        // Validar que es una imagen válida
         if (!$image->isValid()) {
             throw new HTTPException(
                 'Invalid image file: ' . $image->getErrorString(),
@@ -224,7 +278,7 @@ class ServicePriceService
             );
         }
 
-        // Crear directorio si no existe
+        // Crear directorio de destino si no existe
         $uploadPath = FCPATH . 'img';
         if (!is_dir($uploadPath)) {
             if (!mkdir($uploadPath, 0755, true)) {
@@ -235,10 +289,8 @@ class ServicePriceService
             }
         }
 
-        // Generar nombre aleatorio usando CI4
+        // Generar nombre único y mover archivo
         $newName = $image->getRandomName();
-
-        // Mover imagen usando CI4
         try {
             $image->move($uploadPath, $newName);
         } catch (\Exception $e) {
@@ -301,12 +353,13 @@ class ServicePriceService
     }
 
     /**
-     * Actualizar un precio de servicio con manejo de imagen
+     * Actualiza un precio de servicio existente con manejo de imagen
+     * Soporta tanto JSON como multipart/form-data
      *
-     * @param string $id
-     * @param \CodeIgniter\HTTP\IncomingRequest $request
-     * @return mixed
-     * @throws HTTPException
+     * @param string $id ID del precio de servicio a actualizar
+     * @param \CodeIgniter\HTTP\IncomingRequest $request Petición HTTP
+     * @return mixed Resultado de la actualización
+     * @throws HTTPException Si no se encuentra el precio o hay errores
      */
     public function updateWithImage(string $id, $request)
     {
@@ -316,35 +369,8 @@ class ServicePriceService
             throw new HTTPException(lang('ServicePrice.notFound'), Response::HTTP_NOT_FOUND);
         }
 
-        $data = [];
-
-        // Verificar Content-Type para determinar cómo obtener datos
-        $contentType = $request->getHeaderLine('Content-Type');
-
-        if (strpos($contentType, 'application/json') !== false) {
-            // Si es JSON, intentar parsearlo de forma segura
-            try {
-                $json = $request->getJSON(true);
-                if ($json) {
-                    $data = $json;
-                }
-            } catch (\Exception $e) {
-                // Si falla el JSON, continuar sin datos JSON
-                log_message('debug', 'JSON parse failed: ' . $e->getMessage());
-            }
-        }
-
-        // Si no hay datos JSON o es multipart, usar POST
-        if (empty($data)) {
-            $data = $request->getPost() ?: [];
-
-            // Convertir arrays a strings (problema común con multiselect)
-            foreach ($data as $key => $value) {
-                if (is_array($value) && !empty($value)) {
-                    $data[$key] = $value[0]; // Tomar primer elemento
-                }
-            }
-        }
+        // Extraer datos del request
+        $data = $this->extractRequestData($request);
 
         // Limpiar y validar campos
         $data = $this->sanitizeFormData($data);

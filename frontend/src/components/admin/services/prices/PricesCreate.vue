@@ -455,10 +455,18 @@ const addDuration = () => {
   errors.value.durations = "";
 };
 
+/**
+ * Elimina una duración de la lista
+ * @param {number} index - Índice de la duración a eliminar
+ */
 const removeDuration = (index) => {
   selectedDurations.value.splice(index, 1);
 };
 
+/**
+ * Agrega un nuevo rango de cantidad de niños a la lista
+ * Valida que no exista duplicado antes de agregar
+ */
 const addChildrenRange = () => {
   if (!isValidChildrenRange.value) return;
 
@@ -484,10 +492,19 @@ const addChildrenRange = () => {
   errors.value.childrenRanges = "";
 };
 
+/**
+ * Elimina un rango de cantidad de niños de la lista
+ * @param {number} index - Índice del rango a eliminar
+ */
 const removeChildrenRange = (index) => {
   selectedChildrenRanges.value.splice(index, 1);
 };
 
+/**
+ * Maneja la selección de imagen del formulario
+ * Valida tipo y tamaño del archivo, crea preview
+ * @param {Event} event - Evento del input file
+ */
 const onImageSelected = (event) => {
   const file = event.target.files[0];
   if (!file) return;
@@ -517,6 +534,9 @@ const onImageSelected = (event) => {
   reader.readAsDataURL(file);
 };
 
+/**
+ * Elimina la imagen seleccionada y limpia el preview
+ */
 const removeImage = () => {
   selectedImageFile.value = null;
   imagePreview.value = null;
@@ -528,18 +548,18 @@ const removeImage = () => {
 
 // Función removida - ahora la imagen se envía junto con el formulario
 
+/**
+ * Crea las duraciones asociadas al service price
+ * @param {string} servicePriceId - ID del service price
+ */
 const createDurations = async (servicePriceId) => {
   try {
-    console.log('createDurations called with servicePriceId:', servicePriceId);
-    console.log('selectedDurations.value:', selectedDurations.value);
-
     // Validar que servicePriceId esté definido
     if (!servicePriceId) {
-      console.error('servicePriceId is undefined or null:', servicePriceId);
       throw new Error('Service Price ID is required to create durations');
     }
 
-    // Crear duraciones en cascada (una por una) para asegurar el service_price_id
+    // Crear duraciones en cascada (una por una) para asegurar la relación
     for (let i = 0; i < selectedDurations.value.length; i++) {
       const duration = selectedDurations.value[i];
 
@@ -555,34 +575,26 @@ const createDurations = async (servicePriceId) => {
         is_active: true
       };
 
-      console.log(`Creating duration ${i + 1}:`, payload);
-      console.log(`service_price_id value:`, servicePriceId);
-      console.log(`servicePriceId type:`, typeof servicePriceId);
-      console.log(`Payload being sent to backend:`, JSON.stringify(payload, null, 2));
-
-      const result = await api.post("/durations", payload);
-      console.log(`Duration ${i + 1} created:`, result.data);
+      await api.post("/durations", payload);
     }
-    console.log('All durations created successfully');
   } catch (error) {
     console.error('Error creating durations:', error);
-    console.error('Error details:', error.response?.data);
     // No lanzamos el error para no interrumpir el flujo principal
   }
 };
 
+/**
+ * Crea los rangos de cantidad de niños asociados al service price
+ * @param {string} servicePriceId - ID del service price
+ */
 const createChildrenRanges = async (servicePriceId) => {
   try {
-    console.log('createChildrenRanges called with servicePriceId:', servicePriceId);
-    console.log('selectedChildrenRanges.value:', selectedChildrenRanges.value);
-
     // Validar que servicePriceId esté definido
     if (!servicePriceId) {
-      console.error('servicePriceId is undefined or null:', servicePriceId);
       throw new Error('Service Price ID is required to create children ranges');
     }
 
-    // Crear rangos de niños en cascada (uno por uno) para asegurar el service_price_id
+    // Crear rangos de niños en cascada (uno por uno) para asegurar la relación
     for (let i = 0; i < selectedChildrenRanges.value.length; i++) {
       const range = selectedChildrenRanges.value[i];
 
@@ -599,23 +611,18 @@ const createChildrenRanges = async (servicePriceId) => {
         is_active: true
       };
 
-      console.log(`Creating range ${i + 1}:`, payload);
-      console.log(`service_price_id value:`, servicePriceId);
-      console.log(`servicePriceId type:`, typeof servicePriceId);
-      console.log(`Payload being sent to backend:`, JSON.stringify(payload, null, 2));
-
-      const result = await api.post("/children-ranges", payload);
-      console.log(`Range ${i + 1} created:`, result.data);
+      await api.post("/children-ranges", payload);
     }
-    console.log('All children ranges created successfully');
   } catch (error) {
     console.error('Error creating children ranges:', error);
-    console.error('Error details:', error.response?.data);
     // No lanzamos el error para no interrumpir el flujo principal
   }
 };
 
-// Función de validación con Yup
+/**
+ * Valida el formulario usando el esquema Yup
+ * @returns {boolean} true si es válido, false si hay errores
+ */
 const validateForm = async () => {
   try {
     await validationSchema.validate(form.value, { abortEarly: false });
@@ -631,8 +638,15 @@ const validateForm = async () => {
   }
 };
 
+/**
+ * Cierra el modal de creación
+ */
 const closeModal = () => emit("close");
 
+/**
+ * Procesa el envío del formulario de creación de service price
+ * Incluye validación, creación del service price, duraciones y rangos de niños
+ */
 const submitForm = async () => {
   try {
     loading.value = true;
@@ -666,52 +680,25 @@ const submitForm = async () => {
       }
     });
 
-    // Si se creó exitosamente, crear duraciones y rangos de niños
+    // Procesar creación de duraciones y rangos si el service price se creó exitosamente
     if (response.data) {
-      console.log('Service price creation response:', response.data);
-      console.log('Full response object:', response);
-
-      // Intentar diferentes formas de extraer el ID
+      // Extraer el ID del service price creado
       let servicePriceId = response.data.data || response.data.id || response.data;
-
-      console.log('Extracted servicePriceId:', servicePriceId);
-      console.log('servicePriceId type:', typeof servicePriceId);
-      console.log('selectedDurations.value.length:', selectedDurations.value.length);
-      console.log('selectedChildrenRanges.value.length:', selectedChildrenRanges.value.length);
 
       // Validar que tenemos un ID válido
       if (!servicePriceId || typeof servicePriceId !== 'string') {
-        console.error('Invalid servicePriceId extracted:', servicePriceId);
         throw new Error('Could not extract valid service price ID from response');
       }
 
-      // Crear duraciones en cascada si hay seleccionadas
+      // Crear duraciones si hay seleccionadas
       if (selectedDurations.value.length > 0) {
-        console.log('About to call createDurations with servicePriceId:', servicePriceId);
-        console.log('servicePriceId value before calling createDurations:', servicePriceId);
-        console.log('servicePriceId type before calling createDurations:', typeof servicePriceId);
-        console.log('Durations to create:', selectedDurations.value);
-
         await createDurations(servicePriceId);
-        console.log('Durations creation completed');
-      } else {
-        console.log('No durations to create');
       }
 
-      // Crear rangos de niños en cascada si hay seleccionados
+      // Crear rangos de niños si hay seleccionados
       if (selectedChildrenRanges.value.length > 0) {
-        console.log('About to call createChildrenRanges with servicePriceId:', servicePriceId);
-        console.log('servicePriceId value before calling createChildrenRanges:', servicePriceId);
-        console.log('servicePriceId type before calling createChildrenRanges:', typeof servicePriceId);
-        console.log('Children ranges to create:', selectedChildrenRanges.value);
-
         await createChildrenRanges(servicePriceId);
-        console.log('Children ranges creation completed');
-      } else {
-        console.log('No children ranges to create');
       }
-    } else {
-      console.log('No response.data received');
     }
 
     emit("saved", true);
