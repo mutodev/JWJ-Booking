@@ -99,22 +99,25 @@ class ServicePriceController extends ResourceController
     }
 
     /**
-     * Crear un nuevo precio de servicio.
+     * Crear un nuevo precio de servicio con carga de imagen.
      */
     public function createData()
     {
         try {
-            $json = $this->request->getBody();
-            $data = json_decode($json, true);
+            $result = $this->service->createWithImage($this->request);
+
             return $this->response
                 ->setStatusCode(201)
                 ->setJSON(
                     create_response(
                         lang('App.service_price_created'),
-                        $this->service->create($data)
+                        $result
                     )
                 );
+
         } catch (\Throwable $th) {
+            log_message('error', 'ServicePrice creation error: ' . $th->getMessage());
+            log_message('error', 'ServicePrice creation trace: ' . $th->getTraceAsString());
             return $this->response
                 ->setStatusCode($th->getCode() ?: 500)
                 ->setJSON(['message' => $th->getMessage()]);

@@ -25,6 +25,7 @@ class ServicePriceModel extends Model
         'max_children',
         'extra_child_fee',
         'extra_children',
+        'range_age',
     ];
 
     protected bool $allowEmptyInserts = false;
