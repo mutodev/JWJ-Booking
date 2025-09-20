@@ -33,6 +33,32 @@
           </div>
         </div>
       </div>
+
+      <!-- Botón de confirmación -->
+      <div class="confirmation-section mt-5">
+        <div class="d-flex align-items-center justify-content-center">
+          <input
+            type="checkbox"
+            class="btn-check"
+            id="confirm-purchase"
+            v-model="isConfirmed"
+          />
+          <label
+            class="btn confirmation-btn d-flex align-items-center"
+            :class="isConfirmed ? 'btn-success' : 'btn-outline-success'"
+            for="confirm-purchase"
+          >
+            <i
+              class="bi me-2"
+              :class="isConfirmed ? 'bi-check-circle-fill' : 'bi-check-circle'"
+            ></i>
+            <span>Confirm Purchase</span>
+          </label>
+        </div>
+        <p class="text-muted text-center mt-2 small">
+          Please confirm your purchase to continue
+        </p>
+      </div>
     </div>
   </div>
 </template>
@@ -62,6 +88,7 @@ const props = defineProps({
 const emit = defineEmits(["setData"]);
 
 const showBreakdown = ref(true);
+const isConfirmed = ref(false);
 
 // Calcular precio del servicio
 const servicePrice = computed(() => {
@@ -88,7 +115,8 @@ function emitSubtotalData() {
     subtotal: subtotal.value,
     servicePrice: servicePrice.value,
     addonsTotal: addonsTotal.value,
-    isValid: true
+    isConfirmed: isConfirmed.value,
+    isValid: isConfirmed.value && subtotal.value > 0
   };
 
   emit("setData", { subtotal: subtotalData });
@@ -96,14 +124,19 @@ function emitSubtotalData() {
 
 // Watch para emitir datos cuando sea activo o cambien los valores
 watch(
-  () => [props.active, subtotal.value],
-  ([active, newSubtotal]) => {
+  () => [props.active, subtotal.value, isConfirmed.value],
+  ([active]) => {
     if (active) {
       emitSubtotalData();
     }
   },
   { immediate: true }
 );
+
+// Watch específico para la confirmación
+watch(isConfirmed, () => {
+  emitSubtotalData();
+});
 </script>
 
 <style scoped>
@@ -148,6 +181,42 @@ h2 {
   color: #333;
 }
 
+.confirmation-section {
+  margin-top: 3rem;
+}
+
+.confirmation-btn {
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  border-width: 2px;
+}
+
+.confirmation-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+.confirmation-btn.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+}
+
+.confirmation-btn.btn-outline-success {
+  background-color: transparent;
+  border-color: #198754;
+  color: #198754;
+}
+
+.confirmation-btn.btn-outline-success:hover {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+}
+
 @media (max-width: 768px) {
   .subtotal-display {
     font-size: 3rem;
@@ -155,6 +224,11 @@ h2 {
 
   .breakdown {
     margin: 0 1rem;
+  }
+
+  .confirmation-btn {
+    font-size: 1rem;
+    padding: 0.65rem 1.5rem;
   }
 }
 </style>
