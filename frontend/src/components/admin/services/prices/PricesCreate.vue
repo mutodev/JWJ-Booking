@@ -122,6 +122,78 @@
               </div>
             </div>
 
+            <!-- 👶 CHILDREN RANGES -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="bi bi-people me-2"></i>Children Ranges
+              </h6>
+              <div class="duration-container">
+                <!-- Current ranges display -->
+                <div v-if="selectedChildrenRanges.length > 0" class="selected-durations mb-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="fw-medium text-secondary">
+                      <i class="bi bi-check-circle-fill text-success me-1"></i>
+                      {{ selectedChildrenRanges.length }} Range{{ selectedChildrenRanges.length > 1 ? 's' : '' }} Added
+                    </span>
+                  </div>
+                  <div class="duration-tags">
+                    <div
+                      v-for="(range, index) in selectedChildrenRanges"
+                      :key="index"
+                      class="duration-tag"
+                    >
+                      <span class="duration-time">{{ range.min_children }} - {{ range.max_children }} kids</span>
+                      <button
+                        type="button"
+                        class="duration-remove"
+                        @click="removeChildrenRange(index)"
+                        title="Remove range"
+                      >
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Add new children range -->
+                <div class="row align-items-end g-2">
+                  <div class="col-md-5">
+                    <label for="newRangeMin" class="form-label">Min Children</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="newRangeMin"
+                      v-model.number="newChildrenRange.min_children"
+                      placeholder="1"
+                      min="1"
+                    />
+                  </div>
+                  <div class="col-md-5">
+                    <label for="newRangeMax" class="form-label">Max Children</label>
+                    <input
+                      type="number"
+                      class="form-control"
+                      id="newRangeMax"
+                      v-model.number="newChildrenRange.max_children"
+                      placeholder="10"
+                      min="1"
+                    />
+                  </div>
+                  <div class="col-md-2">
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary w-100"
+                      @click="addChildrenRange"
+                      :disabled="!isValidChildrenRange"
+                    >
+                      <i class="bi bi-plus me-1"></i>Add
+                    </button>
+                  </div>
+                </div>
+                <small v-if="errors.childrenRanges" class="text-danger small mt-1">{{ errors.childrenRanges }}</small>
+              </div>
+            </div>
+
             <!-- ⏰ DURATION OPTIONS -->
             <div class="form-section">
               <h6 class="section-title">
@@ -259,7 +331,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import api from "@/services/axios";
 import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.css";
@@ -310,10 +382,20 @@ const selectedService = ref(null);
 const selectedCounty = ref(null);
 const selectedDurations = ref([]);
 const newDuration = ref({ minutes: null });
+const selectedChildrenRanges = ref([]);
+const newChildrenRange = ref({ min_children: null, max_children: null });
 const selectedImageFile = ref(null);
 const imagePreview = ref(null);
 const errors = ref({});
 const loading = ref(false);
+
+// Computed para validar rango de niños
+const isValidChildrenRange = computed(() => {
+  return newChildrenRange.value.min_children &&
+         newChildrenRange.value.max_children &&
+         newChildrenRange.value.min_children > 0 &&
+         newChildrenRange.value.max_children >= newChildrenRange.value.min_children;
+});
 
 watch(
   () => props.show,
@@ -338,6 +420,8 @@ const resetForm = () => {
   selectedCounty.value = null;
   selectedDurations.value = [];
   newDuration.value = { minutes: null };
+  selectedChildrenRanges.value = [];
+  newChildrenRange.value = { min_children: null, max_children: null };
   selectedImageFile.value = null;
   imagePreview.value = null;
   errors.value = {};
@@ -373,6 +457,35 @@ const addDuration = () => {
 
 const removeDuration = (index) => {
   selectedDurations.value.splice(index, 1);
+};
+
+const addChildrenRange = () => {
+  if (!isValidChildrenRange.value) return;
+
+  // Verificar que no exista ya ese rango
+  const exists = selectedChildrenRanges.value.some(range =>
+    range.min_children === newChildrenRange.value.min_children &&
+    range.max_children === newChildrenRange.value.max_children
+  );
+
+  if (exists) {
+    errors.value.childrenRanges = "This children range already exists";
+    return;
+  }
+
+  selectedChildrenRanges.value.push({
+    min_children: newChildrenRange.value.min_children,
+    max_children: newChildrenRange.value.max_children,
+    is_active: true
+  });
+
+  // Limpiar el input
+  newChildrenRange.value = { min_children: null, max_children: null };
+  errors.value.childrenRanges = "";
+};
+
+const removeChildrenRange = (index) => {
+  selectedChildrenRanges.value.splice(index, 1);
 };
 
 const onImageSelected = (event) => {
@@ -417,17 +530,87 @@ const removeImage = () => {
 
 const createDurations = async (servicePriceId) => {
   try {
-    const durationPromises = selectedDurations.value.map(duration => {
-      return api.post("/durations", {
+    console.log('createDurations called with servicePriceId:', servicePriceId);
+    console.log('selectedDurations.value:', selectedDurations.value);
+
+    // Validar que servicePriceId esté definido
+    if (!servicePriceId) {
+      console.error('servicePriceId is undefined or null:', servicePriceId);
+      throw new Error('Service Price ID is required to create durations');
+    }
+
+    // Crear duraciones en cascada (una por una) para asegurar el service_price_id
+    for (let i = 0; i < selectedDurations.value.length; i++) {
+      const duration = selectedDurations.value[i];
+
+      // Validar que la duración tenga los datos necesarios
+      if (!duration.minutes) {
+        console.error('Invalid duration data:', duration);
+        continue;
+      }
+
+      const payload = {
         service_price_id: servicePriceId,
         minutes: duration.minutes,
         is_active: true
-      });
-    });
+      };
 
-    await Promise.all(durationPromises);
+      console.log(`Creating duration ${i + 1}:`, payload);
+      console.log(`service_price_id value:`, servicePriceId);
+      console.log(`servicePriceId type:`, typeof servicePriceId);
+      console.log(`Payload being sent to backend:`, JSON.stringify(payload, null, 2));
+
+      const result = await api.post("/durations", payload);
+      console.log(`Duration ${i + 1} created:`, result.data);
+    }
+    console.log('All durations created successfully');
   } catch (error) {
     console.error('Error creating durations:', error);
+    console.error('Error details:', error.response?.data);
+    // No lanzamos el error para no interrumpir el flujo principal
+  }
+};
+
+const createChildrenRanges = async (servicePriceId) => {
+  try {
+    console.log('createChildrenRanges called with servicePriceId:', servicePriceId);
+    console.log('selectedChildrenRanges.value:', selectedChildrenRanges.value);
+
+    // Validar que servicePriceId esté definido
+    if (!servicePriceId) {
+      console.error('servicePriceId is undefined or null:', servicePriceId);
+      throw new Error('Service Price ID is required to create children ranges');
+    }
+
+    // Crear rangos de niños en cascada (uno por uno) para asegurar el service_price_id
+    for (let i = 0; i < selectedChildrenRanges.value.length; i++) {
+      const range = selectedChildrenRanges.value[i];
+
+      // Validar que el range tenga los datos necesarios
+      if (!range.min_children || !range.max_children) {
+        console.error('Invalid range data:', range);
+        continue;
+      }
+
+      const payload = {
+        service_price_id: servicePriceId,
+        min_age: range.min_children,      // El backend usa min_age para cantidad mínima
+        max_age: range.max_children,      // El backend usa max_age para cantidad máxima
+        is_active: true
+      };
+
+      console.log(`Creating range ${i + 1}:`, payload);
+      console.log(`service_price_id value:`, servicePriceId);
+      console.log(`servicePriceId type:`, typeof servicePriceId);
+      console.log(`Payload being sent to backend:`, JSON.stringify(payload, null, 2));
+
+      const result = await api.post("/children-ranges", payload);
+      console.log(`Range ${i + 1} created:`, result.data);
+    }
+    console.log('All children ranges created successfully');
+  } catch (error) {
+    console.error('Error creating children ranges:', error);
+    console.error('Error details:', error.response?.data);
     // No lanzamos el error para no interrumpir el flujo principal
   }
 };
@@ -483,10 +666,52 @@ const submitForm = async () => {
       }
     });
 
-    // Si se creó exitosamente y hay duraciones seleccionadas, crearlas
-    if (response.data && selectedDurations.value.length > 0) {
-      const servicePriceId = response.data.data; // Asumiendo que el ID viene en data.data
-      await createDurations(servicePriceId);
+    // Si se creó exitosamente, crear duraciones y rangos de niños
+    if (response.data) {
+      console.log('Service price creation response:', response.data);
+      console.log('Full response object:', response);
+
+      // Intentar diferentes formas de extraer el ID
+      let servicePriceId = response.data.data || response.data.id || response.data;
+
+      console.log('Extracted servicePriceId:', servicePriceId);
+      console.log('servicePriceId type:', typeof servicePriceId);
+      console.log('selectedDurations.value.length:', selectedDurations.value.length);
+      console.log('selectedChildrenRanges.value.length:', selectedChildrenRanges.value.length);
+
+      // Validar que tenemos un ID válido
+      if (!servicePriceId || typeof servicePriceId !== 'string') {
+        console.error('Invalid servicePriceId extracted:', servicePriceId);
+        throw new Error('Could not extract valid service price ID from response');
+      }
+
+      // Crear duraciones en cascada si hay seleccionadas
+      if (selectedDurations.value.length > 0) {
+        console.log('About to call createDurations with servicePriceId:', servicePriceId);
+        console.log('servicePriceId value before calling createDurations:', servicePriceId);
+        console.log('servicePriceId type before calling createDurations:', typeof servicePriceId);
+        console.log('Durations to create:', selectedDurations.value);
+
+        await createDurations(servicePriceId);
+        console.log('Durations creation completed');
+      } else {
+        console.log('No durations to create');
+      }
+
+      // Crear rangos de niños en cascada si hay seleccionados
+      if (selectedChildrenRanges.value.length > 0) {
+        console.log('About to call createChildrenRanges with servicePriceId:', servicePriceId);
+        console.log('servicePriceId value before calling createChildrenRanges:', servicePriceId);
+        console.log('servicePriceId type before calling createChildrenRanges:', typeof servicePriceId);
+        console.log('Children ranges to create:', selectedChildrenRanges.value);
+
+        await createChildrenRanges(servicePriceId);
+        console.log('Children ranges creation completed');
+      } else {
+        console.log('No children ranges to create');
+      }
+    } else {
+      console.log('No response.data received');
     }
 
     emit("saved", true);

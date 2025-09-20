@@ -60,8 +60,6 @@ class ChildrenAgeRangeController extends ResourceController
                 ->setStatusCode(200)
                 ->setJSON(create_response(lang('App.service_age_ranges'), $this->service->getRangesByServicePrice($servicePriceId, true)));
         } catch (\Throwable $th) {
-            print_r($th);
-            die();
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
                 ->setJSON(['message' => $th->getMessage()]);

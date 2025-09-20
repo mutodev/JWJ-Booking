@@ -54,14 +54,6 @@
           {{ formatCurrency(extra_child_fee) }}
         </template>
 
-        <!-- 📝 Limitar notas a 40 caracteres con tooltip -->
-        <template #item-notes="{ notes }">
-          <span v-if="notes" :title="notes">
-            {{ truncate(notes, 40) }}
-          </span>
-          <span v-else>-</span>
-        </template>
-
         <!-- Acciones -->
         <template #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
@@ -132,23 +124,17 @@ const deleteModal = (item) => {
   modalDeleteVisible.value = true;
 };
 
-// 📝 Cabeceras de tabla
-const headers = computed(() => {
-  return tableHelpers.generateTableHeaders(data.value, {
-    customLabels: {
-      service_id: "Service",
-      county_id: "County",
-      performers_count: "Performers",
-      amount: "Amount",
-      extra_child_fee: "Extra Child Fee", // 👈 etiqueta legible
-      price_type: "Price Type",
-      min_duration_hours: "Min Hours",
-      is_available: "State",
-      notes: "Notes",
-      actions: "Actions",
-    },
-  });
-});
+// 📝 Cabeceras de tabla - solo campos importantes
+const headers = ref([
+  { text: "Service", value: "service_name" },
+  { text: "County", value: "county_name" },
+  { text: "Performers", value: "performers_count" },
+  { text: "Base Price", value: "amount" },
+  { text: "Extra Child Fee", value: "extra_child_fee" },
+  { text: "Age Range", value: "range_age" },
+  { text: "Status", value: "is_available" },
+  { text: "Actions", value: "actions" },
+]);
 
 // 🔍 Campos de búsqueda
 const searchField = computed(() => {
@@ -192,12 +178,6 @@ const formatCurrency = (value) => {
     style: "currency",
     currency: "USD",
   }).format(value);
-};
-
-// ✂️ Función para truncar texto
-const truncate = (text, maxLength) => {
-  if (!text) return "";
-  return text.length > maxLength ? text.substring(0, maxLength) + "..." : text;
 };
 
 // 🔄 Recargar tabla tras guardar/editar/eliminar

@@ -121,6 +121,7 @@ $routes->group('api', function ($routes) {
         $routes->get('(:segment)', [ServicePriceController::class, 'getById']);
         $routes->post('', [ServicePriceController::class, 'createData']);
         $routes->put('(:segment)', [ServicePriceController::class, 'updateData']);
+        $routes->post('update/(:segment)', [ServicePriceController::class, 'updateWithImage']);
         $routes->delete('(:segment)', [ServicePriceController::class, 'delete']);
     });
 
@@ -170,6 +171,18 @@ $routes->group('api', function ($routes) {
         $routes->put('deactivate/(:any)', [DurationController::class, 'deactivate']);
         $routes->put('deactivate-all/(:any)', [DurationController::class, 'deactivateAllByServicePrice']);
         $routes->delete('(:any)', [DurationController::class, 'delete']);
+    });
+
+    $routes->group('children-ranges', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [ChildrenAgeRangeController::class, 'getAll']);
+        $routes->get('by-service-price/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
+        $routes->get('(:any)', [ChildrenAgeRangeController::class, 'getById']);
+        $routes->post('/', [ChildrenAgeRangeController::class, 'create']);
+        $routes->put('(:any)', [ChildrenAgeRangeController::class, 'update']);
+        $routes->put('activate/(:any)', [ChildrenAgeRangeController::class, 'activate']);
+        $routes->put('deactivate/(:any)', [ChildrenAgeRangeController::class, 'deactivate']);
+        $routes->put('deactivate-all/(:any)', [ChildrenAgeRangeController::class, 'deactivateAllByServicePrice']);
+        $routes->delete('(:any)', [ChildrenAgeRangeController::class, 'delete']);
     });
 });
 

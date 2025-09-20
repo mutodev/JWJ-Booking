@@ -299,4 +299,63 @@ class ServicePriceService
 
         return $data['id'];
     }
+
+    /**
+     * Actualizar un precio de servicio con manejo de imagen
+     *
+     * @param string $id
+     * @param \CodeIgniter\HTTP\IncomingRequest $request
+     * @return mixed
+     * @throws HTTPException
+     */
+    public function updateWithImage(string $id, $request)
+    {
+        // Verificar que el registro existe
+        $price = $this->repo->getById($id);
+        if (!$price) {
+            throw new HTTPException(lang('ServicePrice.notFound'), Response::HTTP_NOT_FOUND);
+        }
+
+        $data = [];
+
+        // Verificar Content-Type para determinar cómo obtener datos
+        $contentType = $request->getHeaderLine('Content-Type');
+
+        if (strpos($contentType, 'application/json') !== false) {
+            // Si es JSON, intentar parsearlo de forma segura
+            try {
+                $json = $request->getJSON(true);
+                if ($json) {
+                    $data = $json;
+                }
+            } catch (\Exception $e) {
+                // Si falla el JSON, continuar sin datos JSON
+                log_message('debug', 'JSON parse failed: ' . $e->getMessage());
+            }
+        }
+
+        // Si no hay datos JSON o es multipart, usar POST
+        if (empty($data)) {
+            $data = $request->getPost() ?: [];
+
+            // Convertir arrays a strings (problema común con multiselect)
+            foreach ($data as $key => $value) {
+                if (is_array($value) && !empty($value)) {
+                    $data[$key] = $value[0]; // Tomar primer elemento
+                }
+            }
+        }
+
+        // Limpiar y validar campos
+        $data = $this->sanitizeFormData($data);
+
+        // Procesar imagen si existe
+        $image = $request->getFile('image');
+        if ($image && $image->isValid() && !$image->hasMoved()) {
+            $imagePath = $this->handleImageUpload($image);
+            $data['img'] = $imagePath;
+        }
+
+        return $this->repo->update($id, $data);
+    }
 }

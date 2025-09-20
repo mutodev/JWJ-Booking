@@ -143,6 +143,32 @@ class ServicePriceController extends ResourceController
     }
 
     /**
+     * Actualizar un precio de servicio con carga de imagen.
+     */
+    public function updateWithImage($id)
+    {
+        try {
+            $result = $this->service->updateWithImage($id, $this->request);
+
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(
+                    create_response(
+                        lang('App.service_price_updated'),
+                        $result
+                    )
+                );
+
+        } catch (\Throwable $th) {
+            log_message('error', 'ServicePrice update error: ' . $th->getMessage());
+            log_message('error', 'ServicePrice update trace: ' . $th->getTraceAsString());
+            return $this->response
+                ->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Eliminar (soft delete) un precio de servicio.
      */
     public function deleteDelete($id)
