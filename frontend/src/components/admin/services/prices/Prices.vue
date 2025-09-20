@@ -126,14 +126,14 @@ const deleteModal = (item) => {
 
 // 📝 Cabeceras de tabla - solo campos importantes
 const headers = ref([
-  { text: "Service", value: "service_name" },
-  { text: "County", value: "county_name" },
-  { text: "Performers", value: "performers_count" },
-  { text: "Base Price", value: "amount" },
-  { text: "Extra Child Fee", value: "extra_child_fee" },
-  { text: "Age Range", value: "range_age" },
-  { text: "Status", value: "is_available" },
-  { text: "Actions", value: "actions" },
+  { text: "Service", value: "service_name", sortable: true },
+  { text: "County", value: "county_name", sortable: true },
+  { text: "Performers", value: "performers_count", sortable: true },
+  { text: "Base Price", value: "amount", sortable: true },
+  { text: "Extra Child Fee", value: "extra_child_fee", sortable: true },
+  { text: "Age Range", value: "range_age", sortable: true },
+  { text: "Status", value: "is_available", sortable: true },
+  { text: "Actions", value: "actions", sortable: false },
 ]);
 
 // 🔍 Campos de búsqueda
