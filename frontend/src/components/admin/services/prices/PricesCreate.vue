@@ -72,7 +72,7 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
-                  <label for="extra_child_fee" class="form-label">Extra Child Fee (USD)</label>
+                  <label for="extra_child_fee" class="form-label required">Extra Child Fee (USD)</label>
                   <input
                     type="number"
                     class="form-control"
@@ -81,6 +81,7 @@
                     min="0"
                     step="0.01"
                     placeholder="0.00"
+                    required
                   />
                   <small class="text-danger small">{{ errors.extra_child_fee }}</small>
                 </div>
@@ -107,13 +108,14 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
-                  <label for="range_age" class="form-label">Age Range</label>
+                  <label for="range_age" class="form-label required">Age Range</label>
                   <input
                     type="text"
                     class="form-control"
                     id="range_age"
                     v-model="form.range_age"
                     placeholder="e.g., 3-8 years"
+                    required
                   />
                   <small class="text-danger small">{{ errors.range_age }}</small>
                 </div>
@@ -217,13 +219,14 @@
                 </div>
 
                 <div class="col-md-12 mb-3">
-                  <label for="notes" class="form-label">Additional Notes</label>
+                  <label for="notes" class="form-label required">Additional Notes</label>
                   <textarea
                     class="form-control"
                     id="notes"
                     v-model="form.notes"
                     rows="3"
-                    placeholder="Optional notes about this service..."
+                    placeholder="Required notes about this service..."
+                    required
                   ></textarea>
                   <small v-if="errors.notes" class="text-danger small">{{ errors.notes }}</small>
                 </div>
@@ -260,12 +263,35 @@ import { ref, watch } from "vue";
 import api from "@/services/axios";
 import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.css";
+import * as yup from "yup";
 
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
   show: Boolean,
   services: { type: Array, default: () => [] },
   counties: { type: Array, default: () => [] },
+});
+
+// Esquema de validación con Yup
+const validationSchema = yup.object().shape({
+  service_id: yup.string().required("Service is required"),
+  county_id: yup.string().required("County is required"),
+  performers_count: yup.number()
+    .required("Performers count is required")
+    .min(1, "At least 1 performer is required")
+    .integer("Must be a whole number"),
+  amount: yup.number()
+    .required("Base price is required")
+    .min(0.01, "Price must be greater than 0"),
+  extra_child_fee: yup.number()
+    .required("Extra child fee is required")
+    .min(0, "Fee cannot be negative"),
+  range_age: yup.string()
+    .required("Age range is required")
+    .min(1, "Age range cannot be empty"),
+  notes: yup.string()
+    .required("Notes are required")
+    .min(1, "Notes cannot be empty"),
 });
 
 const form = ref({
@@ -406,6 +432,22 @@ const createDurations = async (servicePriceId) => {
   }
 };
 
+// Función de validación con Yup
+const validateForm = async () => {
+  try {
+    await validationSchema.validate(form.value, { abortEarly: false });
+    errors.value = {};
+    return true;
+  } catch (error) {
+    const validationErrors = {};
+    error.inner.forEach((err) => {
+      validationErrors[err.path] = err.message;
+    });
+    errors.value = validationErrors;
+    return false;
+  }
+};
+
 const closeModal = () => emit("close");
 
 const submitForm = async () => {
@@ -413,21 +455,9 @@ const submitForm = async () => {
     loading.value = true;
     errors.value = {};
 
-    // Validación básica
-    if (!form.value.service_id) {
-      errors.value.service_id = "Service is required";
-      return;
-    }
-    if (!form.value.county_id) {
-      errors.value.county_id = "County is required";
-      return;
-    }
-    if (!form.value.amount || form.value.amount <= 0) {
-      errors.value.amount = "Amount must be greater than 0";
-      return;
-    }
-    if (!form.value.performers_count || form.value.performers_count <= 0) {
-      errors.value.performers_count = "Performers count must be greater than 0";
+    // Validación con Yup
+    const isValid = await validateForm();
+    if (!isValid) {
       return;
     }
 
