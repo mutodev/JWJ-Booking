@@ -84,7 +84,7 @@ class ReservationService
             'children_count' => $extraChildren,
             'performers_count' => $data['price']['performers_count'] ?? null,
             'duration_hours' => $data['price']['min_duration_hours'] ?? null,
-            'price_type' => $data['price']['price_type'] ?? 'standard',
+            'price_type' => $this->determinePriceType($data['addons'] ?? []),
             'base_price' => $servicePrice,
             'addons_total' => $addonsTotal,
             'expedition_fee' => 0,
@@ -144,5 +144,18 @@ class ReservationService
         }
 
         return true;
+    }
+
+    /**
+     * Determinar el price_type basado en los addons seleccionados
+     */
+    private function determinePriceType(array $addons): string
+    {
+        foreach ($addons as $addon) {
+            if (isset($addon['price_type']) && $addon['price_type'] === 'jukebox') {
+                return 'jukebox';
+            }
+        }
+        return 'standard';
     }
 }

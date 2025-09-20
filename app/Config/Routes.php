@@ -33,6 +33,7 @@ $routes->group('api', function ($routes) {
         $routes->get('services/(:any)', [ServicePriceController::class, 'getAllByCounty']);
         $routes->get('range-kids/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
         $routes->get('hours/(:any)', [DurationController::class, 'getByServicePriceId']);
+        $routes->get('addons', [AddonController::class, 'getAllActive']);
     });
 
 

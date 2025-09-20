@@ -53,14 +53,14 @@ class ServicePriceRepository
     }
 
     /**
-     * Obtener por combinación única (service_id + county_id + price_type).
+     * Obtener por combinación única (service_id + county_id + performers_count).
      */
-    public function getByUnique(string $serviceId, string $countyId, string $priceType, bool $withDeleted = false): ?ServicePrice
+    public function getByUnique(string $serviceId, string $countyId, int $performersCount, bool $withDeleted = false): ?ServicePrice
     {
         $builder = $this->model->where([
             'service_id' => $serviceId,
             'county_id'  => $countyId,
-            'price_type' => $priceType,
+            'performers_count' => $performersCount,
         ]);
 
         if ($withDeleted) {
@@ -118,7 +118,6 @@ class ServicePriceRepository
                 service_prices.county_id,
                 service_prices.performers_count,
                 service_prices.img,
-                service_prices.price_type,
                 service_prices.amount,
                 service_prices.max_children,
                 service_prices.extra_child_fee,

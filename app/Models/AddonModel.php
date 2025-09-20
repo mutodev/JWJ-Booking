@@ -18,7 +18,9 @@ class AddonModel extends Model
         'description',
         'base_price',
         'is_active',
-        'estimated_duration_minutes'
+        'estimated_duration_minutes',
+        'image',
+        'price_type'
     ];
 
     protected bool $allowEmptyInserts = false;

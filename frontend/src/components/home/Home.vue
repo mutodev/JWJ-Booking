@@ -209,6 +209,17 @@ function getCurrentStepProps() {
       props.active = activeStep.value === 5;
       props.hours = form.value?.hours;
       break;
+    case 6:
+      props.active = activeStep.value === 6;
+      props.addons = form.value?.addons || [];
+      props.service = form.value?.service;
+      break;
+    case 7:
+      props.active = activeStep.value === 7;
+      props.service = form.value?.service;
+      props.addons = form.value?.addons || [];
+      props.hours = form.value?.hours;
+      break;
   }
 
   return props;
@@ -274,6 +285,12 @@ function validateCurrentStep() {
       break;
     case 5:
       isValid = !!form.value.hours;
+      break;
+    case 6:
+      isValid = true; // Addons are optional, always valid
+      break;
+    case 7:
+      isValid = !!form.value.subtotal; // Subtotal should be calculated
       break;
     default:
       isValid = true; // Assume valid for other steps

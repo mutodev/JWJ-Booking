@@ -12,6 +12,7 @@ class Addon extends Entity
         'id' => 'string',
         'base_price' => 'float',
         'is_active' => 'boolean',
-        'estimated_duration_minutes' => 'integer'
+        'estimated_duration_minutes' => 'integer',
+        'price_type' => 'string'
     ];
 }

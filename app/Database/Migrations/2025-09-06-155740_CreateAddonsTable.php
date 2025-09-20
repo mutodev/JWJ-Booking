@@ -42,6 +42,19 @@ class CreateAddonsTable extends Migration
                 'null' => true,
                 'comment' => 'Duración estimada en minutos que agrega este add-on'
             ],
+            'image' => [
+                'type' => 'VARCHAR',
+                'constraint' => 500,
+                'null' => true,
+                'comment' => 'URL de la imagen del add-on'
+            ],
+            'price_type' => [
+                'type' => 'ENUM',
+                'constraint' => ['standard', 'jukebox'],
+                'default' => 'standard',
+                'null' => false,
+                'comment' => 'Tipo de precio: standard o jukebox'
+            ],
             'created_at' => [
                 'type' => 'TIMESTAMP',
                 'default' => new RawSql('CURRENT_TIMESTAMP')

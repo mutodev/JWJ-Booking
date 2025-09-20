@@ -45,7 +45,7 @@ class ServicePriceService
 
     public function create(array $data)
     {
-        $existing = $this->repo->getByUnique($data['service_id'], $data['county_id'], $data['price_type'], true);
+        $existing = $this->repo->getByUnique($data['service_id'], $data['county_id'], $data['performers_count'], true);
 
         // Existe y activo → conflicto
         if ($existing && $existing->deleted_at === null) {

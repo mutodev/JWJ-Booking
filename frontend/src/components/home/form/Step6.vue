@@ -6,63 +6,120 @@
       <h3 class="mb-0">Select your add-on services</h3>
     </div>
 
+
     <!-- Grid de cards con checkbox -->
-    <div class="row g-4">
+    <div v-if="addons.length" class="row g-4">
       <div
-        v-for="(service, index) in services"
-        :key="index"
+        v-for="addon in addons"
+        :key="addon.id"
         class="col-12 col-md-6 col-lg-4"
       >
         <input
           type="checkbox"
           class="btn-check"
-          :id="'service-' + index"
-          :value="service.value"
-          v-model="selectedServices"
+          :id="'addon-' + addon.id"
+          :value="addon"
+          v-model="selectedAddons"
         />
         <label
           class="card h-100 shadow-sm border-0 service-card"
-          :for="'service-' + index"
+          :for="'addon-' + addon.id"
         >
-          <img :src="service.image" class="card-img-top" :alt="service.title" />
+          <img
+            :src="addon.image || defaultImage"
+            class="card-img-top"
+            :alt="addon.name"
+            @error="handleImageError"
+          />
           <div class="card-body">
-            <h6 class="card-title mb-1">{{ service.title }}</h6>
-            <p class="card-text text-muted small mb-0">{{ service.extra }}</p>
+            <h6 class="card-title mb-1">{{ addon.name }}</h6>
+            <p class="card-text text-muted small mb-2">{{ addon.description }}</p>
+            <span class="badge" :class="addon.price_type === 'jukebox' ? 'bg-info' : 'bg-secondary'">
+              {{ addon.price_type }}
+            </span>
           </div>
         </label>
       </div>
     </div>
 
-    <!-- Debug -->
-    <p class="mt-3 text-muted">Selected: {{ selectedServices }}</p>
+    <!-- Mensaje si no hay addons -->
+    <div v-else class="text-muted text-center">
+      <i class="bi bi-info-circle fs-4 mb-2"></i>
+      <p>No add-on services available</p>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import api from "@/services/axios";
 
-const selectedServices = ref([]);
+const props = defineProps({
+  active: {
+    type: Boolean,
+    default: false,
+  },
+  addons: {
+    type: Array,
+    default: () => [],
+  },
+  service: {
+    type: Object,
+    default: null,
+  },
+});
 
-const services = [
-  {
-    value: "jukebox-1h",
-    title: "Jukebox: Family Friendly Live Background Music",
-    extra: "+1 Hour",
-    image: "https://via.placeholder.com/300x200?text=Jukebox+1h",
+const emit = defineEmits(["setData"]);
+
+const addons = ref([]);
+const selectedAddons = ref([]);
+const defaultImage = "https://via.placeholder.com/300x200?text=Add-on+Service";
+
+async function loadAddons() {
+  if (!props.active) return;
+
+  try {
+    const { data } = await api.get("/home/addons");
+    addons.value = data;
+
+    // Restore selected addons if they exist
+    if (props.addons && props.addons.length > 0) {
+      selectedAddons.value = props.addons.filter(savedAddon =>
+        addons.value.some(addon => addon.id === savedAddon.id)
+      );
+    }
+  } catch (error) {
+    console.error("Error loading addons:", error);
+    addons.value = [];
+  }
+}
+
+function handleImageError(event) {
+  event.target.src = defaultImage;
+}
+
+function emitAddonsData() {
+  const addonsData = {
+    addons: selectedAddons.value,
+    isValid: true // Los addons no son requeridos
+  };
+
+  emit("setData", addonsData);
+}
+
+watch(
+  () => props.active,
+  (active) => {
+    if (active) {
+      loadAddons();
+    }
   },
-  {
-    value: "jukebox-2h",
-    title: "Jukebox: Family Friendly Live Background Music",
-    extra: "+2 Hour",
-    image: "https://via.placeholder.com/300x200?text=Jukebox+2h",
-  },
-  {
-    value: "custom-song",
-    title: "Custom Song: original composition for the birthday child",
-    extra: "",
-    image: "https://via.placeholder.com/300x200?text=Custom+Song",
-  },
-];
+  { immediate: true }
+);
+
+watch(selectedAddons, () => {
+  emitAddonsData();
+}, { deep: true });
 </script>
 
 <style scoped>
@@ -72,9 +129,35 @@ const services = [
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
+.service-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+}
+
 .btn-check:checked + .service-card {
-  border: 2px solid #198754; /* borde verde al seleccionar */
+  border: 2px solid #198754 !important;
   box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.25);
   transform: translateY(-3px);
+}
+
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+}
+
+.card-body {
+  padding: 1.25rem;
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.card-text {
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 </style>

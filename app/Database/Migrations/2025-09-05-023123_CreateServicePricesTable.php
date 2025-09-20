@@ -34,12 +34,6 @@ class CreateServicePricesTable extends Migration
                 'constraint' => 100,
                 'null' => true
             ],
-            'price_type' => [
-                'type' => 'ENUM',
-                'constraint' => ['standard', 'jukebox'],
-                'default' => 'standard',
-                'null' => false
-            ],
             'amount' => [
                 'type' => 'DECIMAL',
                 'constraint' => '10,2',
@@ -77,7 +71,7 @@ class CreateServicePricesTable extends Migration
         $this->forge->addPrimaryKey('id');
         $this->forge->addForeignKey('service_id', 'services', 'id', 'CASCADE', 'CASCADE');
         $this->forge->addForeignKey('county_id', 'counties', 'id', 'CASCADE', 'CASCADE');
-        $this->forge->addUniqueKey(['service_id', 'county_id', 'performers_count', 'price_type']);
+        $this->forge->addUniqueKey(['service_id', 'county_id', 'performers_count']);
         $this->forge->createTable('service_prices');
     }
 

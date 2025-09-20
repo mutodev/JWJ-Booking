@@ -18,7 +18,6 @@ class ServicePriceModel extends Model
         'county_id',
         'img',
         'performers_count',
-        'price_type',
         'amount',
         'min_duration_hours',
         'is_available',

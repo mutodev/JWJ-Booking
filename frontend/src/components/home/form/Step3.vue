@@ -29,7 +29,7 @@
           <div class="card-body d-flex flex-column">
             <!-- Título + precio -->
             <h5 class="card-title fw-bold">
-              {{ service.name }} / {{ service.price_type }}
+              {{ service.name }}
             </h5>
             <p class="price mb-2">${{ service.amount }}</p>
 
