@@ -156,8 +156,7 @@ class ServicePriceService
         $sanitized = [];
         $allowedFields = [
             'service_id', 'county_id', 'performers_count', 'amount',
-            'is_available', 'notes', 'max_children', 'extra_child_fee',
-            'extra_children', 'range_age'
+            'is_available', 'notes', 'extra_child_fee', 'range_age'
         ];
 
         foreach ($allowedFields as $field) {
@@ -172,8 +171,6 @@ class ServicePriceService
                 // Convertir según tipo de campo
                 switch ($field) {
                     case 'performers_count':
-                    case 'max_children':
-                    case 'extra_children':
                         $sanitized[$field] = (int)$value;
                         break;
                     case 'amount':

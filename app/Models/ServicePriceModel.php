@@ -22,9 +22,7 @@ class ServicePriceModel extends Model
         'min_duration_hours',
         'is_available',
         'notes',
-        'max_children',
         'extra_child_fee',
-        'extra_children',
         'range_age',
     ];
 

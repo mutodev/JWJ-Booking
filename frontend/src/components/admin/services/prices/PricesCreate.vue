@@ -10,54 +10,91 @@
         <div class="modal-body">
           <form @submit.prevent="submitForm">
 
-            <!-- 📋 BASIC INFORMATION -->
+            <!-- 🎯 SERVICE & LOCATION -->
             <div class="form-section">
               <h6 class="section-title">
-                <i class="bi bi-info-circle me-2"></i>Basic Information
+                <i class="bi bi-geo-alt me-2"></i>Service & Location
               </h6>
               <div class="row">
                 <div class="col-md-6 mb-3">
-                  <label class="form-label">Service <span class="text-danger">*</span></label>
+                  <label class="form-label required">Service</label>
                   <Multiselect
                     v-model="selectedService"
                     :options="services"
                     label="name"
                     track-by="id"
-                    placeholder="Select a service"
+                    placeholder="Choose a service..."
                     @select="onSelectService"
                     :searchable="true"
                     :show-labels="false"
+                    :allow-empty="false"
                   />
                   <small class="text-danger small">{{ errors.service_id }}</small>
                 </div>
 
                 <div class="col-md-6 mb-3">
-                  <label class="form-label">County <span class="text-danger">*</span></label>
+                  <label class="form-label required">County</label>
                   <Multiselect
                     v-model="selectedCounty"
                     :options="counties"
                     label="name"
                     track-by="id"
-                    placeholder="Select a county"
+                    placeholder="Choose a county..."
                     @select="onSelectCounty"
                     :searchable="true"
                     :show-labels="false"
+                    :allow-empty="false"
                   />
                   <small class="text-danger small">{{ errors.county_id }}</small>
                 </div>
               </div>
             </div>
 
-            <!-- 💰 PRICING & PERFORMERS -->
+            <!-- 💰 PRICING DETAILS -->
             <div class="form-section">
               <h6 class="section-title">
-                <i class="bi bi-currency-dollar me-2"></i>Pricing & Performers
+                <i class="bi bi-cash-stack me-2"></i>Pricing Details
               </h6>
               <div class="row">
-                <div class="col-md-4 mb-3">
-                  <label for="performers_count" class="form-label">
-                    Performers Count <span class="text-danger">*</span>
-                  </label>
+                <div class="col-md-6 mb-3">
+                  <label for="amount" class="form-label required">Base Price (USD)</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="amount"
+                    v-model.number="form.amount"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    required
+                  />
+                  <small class="text-danger small">{{ errors.amount }}</small>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label for="extra_child_fee" class="form-label">Extra Child Fee (USD)</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="extra_child_fee"
+                    v-model.number="form.extra_child_fee"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                  <small class="text-danger small">{{ errors.extra_child_fee }}</small>
+                </div>
+              </div>
+            </div>
+
+            <!-- 👥 PERFORMERS & TARGET -->
+            <div class="form-section">
+              <h6 class="section-title">
+                <i class="bi bi-people me-2"></i>Performers & Target Audience
+              </h6>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="performers_count" class="form-label required">Performers Count</label>
                   <input
                     type="number"
                     class="form-control"
@@ -69,77 +106,16 @@
                   <small class="text-danger small">{{ errors.performers_count }}</small>
                 </div>
 
-                <div class="col-md-4 mb-3">
-                  <label for="amount" class="form-label">
-                    Base Price (USD) <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="amount"
-                    v-model.number="form.amount"
-                    min="0"
-                    step="0.01"
-                    required
-                  />
-                  <small class="text-danger small">{{ errors.amount }}</small>
-                </div>
-
-                <div class="col-md-4 mb-3">
+                <div class="col-md-6 mb-3">
                   <label for="range_age" class="form-label">Age Range</label>
                   <input
                     type="text"
                     class="form-control"
                     id="range_age"
                     v-model="form.range_age"
-                    placeholder="e.g., 1 - 10"
+                    placeholder="e.g., 3-8 years"
                   />
                   <small class="text-danger small">{{ errors.range_age }}</small>
-                </div>
-              </div>
-            </div>
-
-            <!-- 👶 CHILDREN SETTINGS -->
-            <div class="form-section">
-              <h6 class="section-title">
-                <i class="bi bi-people me-2"></i>Children Settings
-              </h6>
-              <div class="row">
-                <div class="col-md-4 mb-3">
-                  <label for="max_children" class="form-label">Maximum Children</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="max_children"
-                    v-model.number="form.max_children"
-                    min="0"
-                  />
-                  <small class="text-danger small">{{ errors.max_children }}</small>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                  <label for="extra_child_fee" class="form-label">Extra Child Fee (USD)</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="extra_child_fee"
-                    v-model.number="form.extra_child_fee"
-                    min="0"
-                    step="0.01"
-                  />
-                  <small class="text-danger small">{{ errors.extra_child_fee }}</small>
-                </div>
-
-                <div class="col-md-4 mb-3">
-                  <label for="extra_children" class="form-label">Extra Children Count</label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="extra_children"
-                    v-model.number="form.extra_children"
-                    min="0"
-                  />
-                  <small class="text-danger small">{{ errors.extra_children }}</small>
                 </div>
               </div>
             </div>
@@ -147,33 +123,38 @@
             <!-- ⏰ DURATION OPTIONS -->
             <div class="form-section">
               <h6 class="section-title">
-                <i class="bi bi-clock me-2"></i>Duration Options
+                <i class="bi bi-clock me-2"></i>Available Durations
               </h6>
-              <div class="duration-manager border rounded p-3">
-                <!-- Lista de duraciones agregadas -->
-                <div v-if="selectedDurations.length > 0" class="mb-3">
+              <div class="duration-container">
+                <!-- Current durations display -->
+                <div v-if="selectedDurations.length > 0" class="selected-durations mb-3">
                   <div class="d-flex align-items-center justify-content-between mb-2">
-                    <strong class="text-muted">Selected Durations:</strong>
-                    <small class="text-muted">{{ selectedDurations.length }} option(s)</small>
+                    <span class="fw-medium text-secondary">
+                      <i class="bi bi-check-circle-fill text-success me-1"></i>
+                      {{ selectedDurations.length }} Duration{{ selectedDurations.length > 1 ? 's' : '' }} Added
+                    </span>
                   </div>
-                  <div class="d-flex flex-wrap gap-2">
-                    <span
+                  <div class="duration-tags">
+                    <div
                       v-for="(duration, index) in selectedDurations"
                       :key="index"
-                      class="badge bg-primary d-flex align-items-center"
+                      class="duration-tag"
                     >
-                      {{ duration.minutes }} min ({{ (duration.minutes / 60).toFixed(1) }}h)
+                      <span class="duration-time">{{ duration.minutes }} min</span>
+                      <span class="duration-hours">({{ (duration.minutes / 60).toFixed(1) }}h)</span>
                       <button
                         type="button"
-                        class="btn-close btn-close-white ms-2"
+                        class="duration-remove"
                         @click="removeDuration(index)"
-                        style="font-size: 0.65em;"
-                      ></button>
-                    </span>
+                        title="Remove duration"
+                      >
+                        <i class="bi bi-x"></i>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Formulario para agregar nueva duración -->
+                <!-- Add new duration -->
                 <div class="row align-items-end">
                   <div class="col-md-8">
                     <label for="newDurationMinutes" class="form-label">Add Duration (minutes)</label>
@@ -182,9 +163,8 @@
                       class="form-control"
                       id="newDurationMinutes"
                       v-model.number="newDuration.minutes"
-                      placeholder="e.g., 60, 90, 120"
+                      placeholder="60, 90, 120"
                       min="30"
-                      max="480"
                       step="15"
                     />
                   </div>
@@ -195,65 +175,58 @@
                       @click="addDuration"
                       :disabled="!newDuration.minutes || newDuration.minutes < 30"
                     >
-                      <i class="bi bi-plus-circle me-1"></i>
-                      Add
+                      <i class="bi bi-plus me-1"></i>Add
                     </button>
                   </div>
                 </div>
-
-                <small class="text-muted d-block mt-2">
-                  Add multiple duration options for this service (minimum 30 minutes)
-                </small>
-                <small class="text-danger small">{{ errors.durations }}</small>
+                <small v-if="errors.durations" class="text-danger small mt-1">{{ errors.durations }}</small>
               </div>
             </div>
 
             <!-- 🖼️ IMAGE & NOTES -->
             <div class="form-section">
               <h6 class="section-title">
-                <i class="bi bi-image me-2"></i>Image & Notes
+                <i class="bi bi-image me-2"></i>Additional Information
               </h6>
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <label for="img" class="form-label">Image</label>
+                  <input
+                    type="file"
+                    class="form-control"
+                    id="img"
+                    accept="image/*"
+                    @change="onImageSelected"
+                  />
+                  <small class="text-muted">JPG, PNG, GIF (max 2MB)</small>
+                  <small v-if="errors.img" class="text-danger small d-block">{{ errors.img }}</small>
 
-              <!-- Image Upload -->
-              <div class="mb-3">
-                <label for="img" class="form-label">Service Image</label>
-                <div class="row">
-                  <div class="col-md-8">
-                    <input
-                      type="file"
-                      class="form-control"
-                      id="img"
-                      @change="onImageSelected"
-                      accept="image/*"
-                    />
-                    <small class="text-muted">Supported formats: JPG, PNG, GIF. Max size: 2MB</small>
-                  </div>
-                  <div class="col-md-4" v-if="imagePreview">
-                    <div class="image-preview text-center">
-                      <img :src="imagePreview" alt="Preview" class="img-thumbnail" style="max-height: 80px;">
-                      <button type="button" class="btn btn-sm btn-outline-danger mt-1 w-100" @click="removeImage">
-                        <i class="bi bi-trash me-1"></i> Remove
+                  <!-- Image Preview -->
+                  <div v-if="imagePreview" class="image-preview">
+                    <div class="preview-container">
+                      <img :src="imagePreview" alt="Preview" class="preview-image" />
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-danger preview-remove"
+                        @click="removeImage"
+                      >
+                        <i class="bi bi-x"></i>
                       </button>
                     </div>
                   </div>
                 </div>
-                <small class="text-danger small">{{ errors.img }}</small>
-              </div>
 
-              <!-- Availability - Hidden, always true -->
-              <!-- El servicio siempre se crea como disponible por defecto -->
-
-              <!-- Notes -->
-              <div class="mb-3">
-                <label for="notes" class="form-label">Additional Notes</label>
-                <textarea
-                  class="form-control"
-                  id="notes"
-                  v-model="form.notes"
-                  rows="3"
-                  placeholder="Optional notes about this service price..."
-                ></textarea>
-                <small class="text-danger small">{{ errors.notes }}</small>
+                <div class="col-md-12 mb-3">
+                  <label for="notes" class="form-label">Additional Notes</label>
+                  <textarea
+                    class="form-control"
+                    id="notes"
+                    v-model="form.notes"
+                    rows="3"
+                    placeholder="Optional notes about this service..."
+                  ></textarea>
+                  <small v-if="errors.notes" class="text-danger small">{{ errors.notes }}</small>
+                </div>
               </div>
             </div>
 
@@ -303,9 +276,7 @@ const form = ref({
   amount: 0,
   is_available: true,
   notes: "",
-  max_children: 0,
   extra_child_fee: 0,
-  extra_children: 0,
   range_age: "",
 });
 
@@ -334,9 +305,7 @@ const resetForm = () => {
     amount: 0,
     is_available: true,
     notes: "",
-    max_children: 0,
     extra_child_fee: 0,
-    extra_children: 0,
     range_age: "",
   };
   selectedService.value = null;
@@ -516,10 +485,9 @@ const submitForm = async () => {
   z-index: 1050;
 }
 
-/* Form Section Styles */
 .form-section {
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid #e9ecef;
 }
 
@@ -533,71 +501,69 @@ const submitForm = async () => {
   color: #495057;
   font-weight: 600;
   margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid #e9ecef;
   display: flex;
   align-items: center;
 }
 
-.section-title i {
-  color: #6c757d;
+.form-label.required::after {
+  content: " *";
+  color: #dc3545;
 }
 
-/* Duration Manager Styles */
-.duration-manager {
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6 !important;
+.duration-container {
+  border: 1px solid #dee2e6;
+  border-radius: 0.375rem;
+  padding: 1rem;
 }
 
-.badge {
-  padding: 0.5rem 0.75rem;
+.duration-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.duration-tag {
+  background: #0d6efd;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
   font-size: 0.875rem;
-  font-weight: 500;
 }
 
-.badge .btn-close {
+.duration-remove {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
   padding: 0;
-  margin: 0;
+  margin-left: 0.25rem;
 }
 
-.gap-2 {
-  gap: 0.5rem !important;
+.image-preview {
+  margin-top: 0.5rem;
 }
 
-/* Form Controls */
-.form-label {
-  font-weight: 500;
-  color: #495057;
-  margin-bottom: 0.5rem;
+.preview-container {
+  position: relative;
+  display: inline-block;
 }
 
-.form-control:focus,
-.form-select:focus {
-  border-color: #80bdff;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-/* Image Preview */
-.image-preview img {
+.preview-image {
+  max-width: 100px;
+  max-height: 100px;
   border-radius: 0.375rem;
 }
 
-/* Switch Style */
-.form-check-input:checked {
-  background-color: #28a745;
-  border-color: #28a745;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .form-section {
-    margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
-  }
-
-  .section-title {
-    font-size: 1rem;
-    margin-bottom: 0.75rem;
-  }
+.preview-remove {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
 }
 </style>
