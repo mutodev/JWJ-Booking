@@ -18,6 +18,7 @@ class ServicePrice extends Entity
         'min_duration_hours' => 'integer',
         'is_available' => 'boolean',
         'max_children' => 'integer',
-        'extra_child_fee' => 'float'
+        'extra_child_fee' => 'float',
+        'extra_children' => 'integer'
     ];
 }

@@ -50,6 +50,26 @@ class ReservationController extends ResourceController
         }
     }
 
+    /**
+     * Crear reserva desde el formulario del frontend
+     * Recibe todos los datos de los steps y los mapea correctamente
+     */
+    public function createFromForm()
+    {
+        try {
+            $json = $this->request->getBody();
+            $formData = json_decode($json, true);
+
+            return $this->response->setStatusCode(201)
+                ->setJSON(create_response(lang('Reservation.created'), $this->service->createFromForm($formData)));
+        } catch (\Throwable $th) {
+            print_r($th);
+            die();
+            return $this->response->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function updateData($id)
     {
         try {

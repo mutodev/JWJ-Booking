@@ -262,14 +262,84 @@
       <!-- Submit Button -->
       <div class="text-center mt-4">
         <button
+          v-if="!isValid"
           type="button"
           class="btn btn-primary btn-lg px-5"
-          :class="{ 'btn-success': isValid }"
           @click="validateForm"
         >
-          {{ isValid ? 'Information Complete' : 'Validate Information' }}
-          <i class="bi ms-2" :class="isValid ? 'bi-check-circle-fill' : 'bi-arrow-right'"></i>
+          Validate Information
+          <i class="bi ms-2 bi-arrow-right"></i>
         </button>
+
+        <button
+          v-else
+          type="button"
+          class="btn btn-success btn-lg px-5"
+          @click="showConfirmationModal"
+          :disabled="isSubmitting"
+        >
+          <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          {{ isSubmitting ? 'Submitting...' : 'Submit Reservation' }}
+          <i v-if="!isSubmitting" class="bi ms-2 bi-send"></i>
+        </button>
+      </div>
+
+      <!-- Confirmation Modal -->
+      <div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+                Confirm Reservation
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <p class="mb-3">Please review your reservation details before submitting:</p>
+
+              <div class="row g-3">
+                <div class="col-12">
+                  <strong>Event Details:</strong>
+                  <ul class="list-unstyled ms-3">
+                    <li>📅 Date: {{ form.eventDate }}</li>
+                    <li>⏰ Time: {{ form.startTime }} - {{ form.endTime }}</li>
+                    <li>📍 Address: {{ form.fullAddress }}</li>
+                  </ul>
+                </div>
+
+                <div class="col-12">
+                  <strong>Birthday Child:</strong>
+                  <ul class="list-unstyled ms-3">
+                    <li>👶 Name: {{ form.birthdayChildName }}</li>
+                    <li>🎂 Age: {{ form.childAge }} years old</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="alert alert-warning mt-3">
+                <small>
+                  <i class="bi bi-info-circle me-1"></i>
+                  Once submitted, you will receive a confirmation email with your reservation details.
+                </small>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              <button
+                type="button"
+                class="btn btn-success"
+                @click="submitReservation"
+                :disabled="isSubmitting"
+              >
+                <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                {{ isSubmitting ? 'Processing...' : 'Confirm & Submit' }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </form>
   </div>
@@ -278,6 +348,9 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import * as yup from "yup";
+import { Modal } from "bootstrap";
+import { ElMessage } from 'element-plus';
+import api from "@/services/axios";
 
 const props = defineProps({
   active: {
@@ -292,9 +365,30 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  // Agregamos los props necesarios para el envío
+  zipcode: {
+    type: Object,
+    default: null,
+  },
+  service: {
+    type: Object,
+    default: null,
+  },
+  kids: {
+    type: Object,
+    default: null,
+  },
+  hours: {
+    type: Object,
+    default: null,
+  },
+  addons: {
+    type: Array,
+    default: () => [],
+  },
 });
 
-const emit = defineEmits(["setData"]);
+const emit = defineEmits(["setData", "reservationSuccess"]);
 
 // Form data
 const form = reactive({
@@ -315,6 +409,8 @@ const form = reactive({
 });
 
 const errors = reactive({});
+const isSubmitting = ref(false);
+let confirmationModal = null;
 
 // Validation schema
 const schema = yup.object({
@@ -375,6 +471,91 @@ function emitFormData() {
   };
 
   emit("setData", { information: informationData });
+}
+
+// Modal y envío de datos
+function showConfirmationModal() {
+  const modalElement = document.getElementById('confirmationModal');
+  if (!modalElement) {
+    console.error('Modal element not found');
+    return;
+  }
+
+  if (!confirmationModal) {
+    confirmationModal = new Modal(modalElement);
+  }
+  confirmationModal.show();
+}
+
+async function submitReservation() {
+  if (isSubmitting.value) return;
+
+  isSubmitting.value = true;
+
+  try {
+    // Preparar datos para enviar al endpoint
+    const reservationData = {
+      customer: props.customer,
+      zipcode: props.zipcode,
+      service: props.service,
+      kids: props.kids,
+      hours: props.hours,
+      addons: props.addons,
+      information: {
+        ...form,
+        isValid: isValid.value
+      }
+    };
+
+    console.log('Sending reservation data:', reservationData);
+
+    // Enviar al endpoint
+    const response = await api.post('/home/reservation', reservationData);
+
+    console.log('API Response:', response);
+
+    if (response.status === 201) {
+      // Cerrar modal
+      if (confirmationModal) {
+        confirmationModal.hide();
+
+        // Cleanup modal after hiding
+        setTimeout(() => {
+          if (confirmationModal) {
+            confirmationModal.dispose();
+            confirmationModal = null;
+          }
+        }, 300);
+      }
+
+      // Mostrar mensaje de éxito
+      ElMessage.success('Reservation submitted successfully!');
+
+      // Emitir evento de éxito con los datos de respuesta
+      // Ajustar estructura según la respuesta real del API
+      const responseData = response.data?.data || response.data;
+
+      emit("reservationSuccess", {
+        reservation: responseData.reservation || responseData,
+        calculation: responseData.calculation || null
+      });
+    }
+
+  } catch (error) {
+    console.error('Error submitting reservation:', error);
+
+    let errorMessage = 'Failed to submit reservation. Please try again.';
+
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    ElMessage.error(errorMessage);
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 
 // Auto-complete from Step1 customer data

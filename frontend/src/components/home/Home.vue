@@ -47,13 +47,15 @@
             @setData="setData"
             @next="nextStep"
             @previous="previousStep"
+            @reservationSuccess="handleReservationSuccess"
+            @newReservation="handleNewReservation"
             v-bind="getCurrentStepProps()"
           />
         </transition>
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="wizard-actions">
+      <div class="wizard-actions" v-if="activeStep < 9">
         <el-button
           v-if="activeStep > 1"
           @click="previousStep"
@@ -65,7 +67,7 @@
         </el-button>
 
         <el-button
-          v-if="activeStep < totalSteps"
+          v-if="activeStep < 8"
           @click="nextStep"
           size="large"
           :disabled="!canProceed"
@@ -75,29 +77,37 @@
           Next
           <el-icon class="btn-icon"><ArrowRight /></el-icon>
         </el-button>
-
-        <el-button
-          v-if="activeStep === totalSteps"
-          @click="submitForm"
-          size="large"
-          :disabled="!canSubmit"
-          :loading="isSubmitting"
-          class="submit-btn custom-btn custom-btn-success"
-        >
-          Submit
-          <el-icon class="btn-icon"><Check /></el-icon>
-        </el-button>
       </div>
     </div>
   </div>
 </template>
 
+/**
+ * Home.vue - Componente principal del wizard de reservas
+ *
+ * Maneja un formulario multi-step para la creación de reservas de servicios de entretenimiento.
+ *
+ * Pasos del wizard:
+ * 1. Información del cliente
+ * 2. Código postal
+ * 3. Selección de servicio
+ * 4. Número de niños
+ * 5. Duración del evento
+ * 6. Servicios adicionales (add-ons)
+ * 7. Subtotal y confirmación
+ * 8. Información detallada del evento
+ * 9. Confirmación de éxito
+ *
+ * @author JamWithJamie Team
+ * @version 1.0.0
+ */
+
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { ElMessage } from 'element-plus';
-import { Check, ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
 
-// Import all step components
+// Importaciones de componentes de steps
 import Step1 from "./form/Step1.vue";
 import Step2 from "./form/Step2.vue";
 import Step3 from "./form/Step3.vue";
@@ -107,77 +117,65 @@ import Step6 from "./form/Step6.vue";
 import Step7 from "./form/Step7.vue";
 import Step8 from "./form/Step8.vue";
 import Step9 from "./form/Step9.vue";
-import Step10 from "./form/Step10.vue";
 
-// Component mapping
+/**
+ * Mapeo de componentes por número de paso
+ */
 const stepComponents = {
-  1: Step1,
-  2: Step2,
-  3: Step3,
-  4: Step4,
-  5: Step5,
-  6: Step6,
-  7: Step7,
-  8: Step8,
-  9: Step9,
-  10: Step10
+  1: Step1, 2: Step2, 3: Step3, 4: Step4, 5: Step5,
+  6: Step6, 7: Step7, 8: Step8, 9: Step9
 };
 
-// Step definitions
+/**
+ * Configuración de steps
+ */
 const steps = ref([
-  { title: "Step 1" },
-  { title: "Step 2" },
-  { title: "Step 3" },
-  { title: "Step 4" },
-  { title: "Step 5" },
-  { title: "Step 6" },
-  { title: "Step 7" },
-  { title: "Step 8" },
-  { title: "Step 9" },
-  { title: "Step 10" }
+  { title: "Step 1" }, { title: "Step 2" }, { title: "Step 3" },
+  { title: "Step 4" }, { title: "Step 5" }, { title: "Step 6" },
+  { title: "Step 7" }, { title: "Step 8" }, { title: "Step 9" }
 ]);
 
-// Reactive state
-const totalSteps = 10;
+/**
+ * Estado reactivo del wizard
+ */
+const totalSteps = 9;
 const activeStep = ref(1);
 const form = ref({});
 const isProcessing = ref(false);
-const isSubmitting = ref(false);
 const isMobile = ref(false);
 const wizardRoot = ref(null);
+const reservationData = ref(null);
 
-// Step validation states
+/**
+ * Estados de validación por step
+ */
 const stepValidations = ref({
-  1: false,
-  2: false,
-  3: false,
-  4: false,
-  5: false,
-  6: false,
-  7: false,
-  8: false,
-  9: false,
-  10: false
+  1: false, 2: false, 3: false, 4: false, 5: false,
+  6: false, 7: false, 8: false, 9: true
 });
 
-// Computed properties
+/**
+ * Propiedades computadas
+ */
 const currentStepComponent = computed(() => stepComponents[activeStep.value]);
+const canProceed = computed(() => stepValidations.value[activeStep.value] === true);
 
-const canProceed = computed(() => {
-  return stepValidations.value[activeStep.value] === true;
-});
+/**
+ * Funciones utilitarias
+ */
 
-const canSubmit = computed(() => {
-  return activeStep.value === totalSteps &&
-         Object.values(stepValidations.value).every(valid => valid);
-});
-
-// Responsive detection
+/**
+ * Detecta si la vista está en modo móvil
+ */
 function checkMobile() {
   isMobile.value = window.innerWidth <= 768;
 }
 
-// Step status for Element Plus Steps
+/**
+ * Determina el estado visual de cada step en la barra lateral
+ * @param {number} index - Índice del step (0-based)
+ * @returns {string} Estado: 'success', 'process', o 'wait'
+ */
 function getStepStatus(index) {
   const stepNum = index + 1;
   if (stepNum < activeStep.value) return 'success';
@@ -186,7 +184,14 @@ function getStepStatus(index) {
 }
 
 
-// Get props for current step
+/**
+ * Funciones de navegación y manejo de datos
+ */
+
+/**
+ * Obtiene las props necesarias para el step actual
+ * @returns {Object} Props específicas para el componente del step actual
+ */
 function getCurrentStepProps() {
   const props = {};
 
@@ -224,13 +229,23 @@ function getCurrentStepProps() {
       props.active = activeStep.value === 8;
       props.customer = form.value?.customer;
       props.information = form.value?.information;
+      props.zipcode = form.value?.zipcode;
+      props.service = form.value?.service;
+      props.kids = form.value?.kids;
+      props.hours = form.value?.hours;
+      props.addons = form.value?.addons || [];
+      break;
+    case 9:
+      props.reservationData = reservationData.value;
       break;
   }
 
   return props;
 }
 
-// Navigation methods
+/**
+ * Avanza al siguiente step si es válido
+ */
 function nextStep() {
   if (!canProceed.value) {
     ElMessage.warning('Please complete the current step before proceeding');
@@ -239,8 +254,6 @@ function nextStep() {
 
   if (activeStep.value < totalSteps) {
     isProcessing.value = true;
-
-    // Simulate async validation if needed
     setTimeout(() => {
       activeStep.value++;
       isProcessing.value = false;
@@ -248,15 +261,20 @@ function nextStep() {
   }
 }
 
+/**
+ * Retrocede al step anterior
+ */
 function previousStep() {
   if (activeStep.value > 1) {
     activeStep.value--;
   }
 }
 
-// Form data management
+/**
+ * Actualiza los datos del formulario y valida el step actual
+ * @param {Object} data - Datos a mergear con el formulario
+ */
 function setData(data) {
-  // Merge new data with existing form data
   for (const key in data) {
     if (data[key] === null) {
       delete form.value[key];
@@ -265,78 +283,68 @@ function setData(data) {
     }
   }
 
-  // Update validation for current step
   validateCurrentStep();
-
   console.log('Form data updated:', form.value);
 }
 
-// Validation logic
+/**
+ * Funciones de validación y manejo de eventos
+ */
+
+/**
+ * Valida el step actual y actualiza su estado
+ */
 function validateCurrentStep() {
   let isValid = false;
 
   switch (activeStep.value) {
-    case 1:
-      isValid = !!form.value.customer;
-      break;
-    case 2:
-      isValid = !!form.value.zipcode;
-      break;
-    case 3:
-      isValid = !!form.value.service;
-      break;
-    case 4:
-      isValid = !!form.value.kids && form.value.kids.isValid;
-      break;
-    case 5:
-      isValid = !!form.value.hours;
-      break;
-    case 6:
-      isValid = true; // Addons are optional, always valid
-      break;
-    case 7:
-      isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed; // Subtotal calculated and confirmed
-      break;
-    case 8:
-      isValid = !!form.value.information && form.value.information.isValid; // Information form completed
-      break;
-    default:
-      isValid = true; // Assume valid for other steps
+    case 1: isValid = !!form.value.customer; break;
+    case 2: isValid = !!form.value.zipcode; break;
+    case 3: isValid = !!form.value.service; break;
+    case 4: isValid = !!form.value.kids && form.value.kids.isValid; break;
+    case 5: isValid = !!form.value.hours; break;
+    case 6: isValid = true; break; // Addons son opcionales
+    case 7: isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed; break;
+    case 8: isValid = !!form.value.information && form.value.information.isValid; break;
+    case 9: isValid = true; break; // Step de confirmación siempre válido
+    default: isValid = true; break;
   }
 
   stepValidations.value[activeStep.value] = isValid;
 }
 
-// Form submission
-async function submitForm() {
-  if (!canSubmit.value) {
-    ElMessage.error('Please complete all steps before submitting');
-    return;
-  }
-
-  isSubmitting.value = true;
-
-  try {
-    // Add your form submission logic here
-    console.log('Submitting form:', form.value);
-
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    ElMessage.success('Form submitted successfully!');
-
-    // Reset form or redirect as needed
-    // router.push('/success');
-
-  } catch (error) {
-    ElMessage.error('Failed to submit form. Please try again.');
-    console.error('Form submission error:', error);
-  } finally {
-    isSubmitting.value = false;
-  }
+/**
+ * Maneja el éxito en el envío de la reserva
+ * @param {Object} data - Datos de respuesta de la reserva creada
+ */
+function handleReservationSuccess(data) {
+  reservationData.value = data;
+  activeStep.value = 9;
 }
 
-// Prevent direct tab navigation
+/**
+ * Inicia una nueva reserva reseteando todo el estado
+ */
+function handleNewReservation() {
+  form.value = {};
+  reservationData.value = null;
+  activeStep.value = 1;
+
+  Object.keys(stepValidations.value).forEach(key => {
+    stepValidations.value[key] = key === '9';
+  });
+
+  ElMessage.info('Starting new reservation...');
+}
+
+/**
+ * Funciones de ciclo de vida y eventos
+ */
+
+/**
+ * Previene la navegación directa por clics en los steps
+ * @param {Event} e - Evento de click
+ */
 function handleClick(e) {
   const stepElement = e.target.closest('.el-step');
   if (stepElement) {
@@ -346,7 +354,9 @@ function handleClick(e) {
   }
 }
 
-// Lifecycle hooks
+/**
+ * Configuración inicial del componente
+ */
 onMounted(() => {
   checkMobile();
   window.addEventListener('resize', checkMobile);
@@ -356,6 +366,9 @@ onMounted(() => {
   }
 });
 
+/**
+ * Limpieza al desmontar el componente
+ */
 onBeforeUnmount(() => {
   window.removeEventListener('resize', checkMobile);
 
@@ -364,7 +377,9 @@ onBeforeUnmount(() => {
   }
 });
 
-// Watch for step changes to trigger validation
+/**
+ * Observador para validar cuando cambia el step activo
+ */
 watch(activeStep, () => {
   validateCurrentStep();
 });

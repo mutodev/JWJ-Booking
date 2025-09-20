@@ -24,6 +24,7 @@ class ServicePriceModel extends Model
         'notes',
         'max_children',
         'extra_child_fee',
+        'extra_children',
     ];
 
     protected bool $allowEmptyInserts = false;

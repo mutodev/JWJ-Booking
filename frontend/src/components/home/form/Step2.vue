@@ -72,8 +72,13 @@ watch(
 
     if (newZip && newZip.length >= 4 && newZip.length <= 10) {
       debounceTimer = setTimeout(async () => {
-        const response = await api.get(`/home/zipcode/${props.city}/${newZip}`);
-        emit("setData", { zipcode: response.data });
+        try {
+          const response = await api.get(`/home/zipcode/${props.city}/${newZip}`);
+          emit("setData", { zipcode: response.data });
+        } catch (error) {
+          console.error('Error validating zipcode:', error);
+          errors.zipcode = "Invalid zipcode";
+        }
       }, 1000);
     }
   }

@@ -34,6 +34,7 @@ $routes->group('api', function ($routes) {
         $routes->get('range-kids/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
         $routes->get('hours/(:any)', [DurationController::class, 'getByServicePriceId']);
         $routes->get('addons', [AddonController::class, 'getAllActive']);
+        $routes->post('reservation', [ReservationController::class, 'createFromForm']);
     });
 
 
