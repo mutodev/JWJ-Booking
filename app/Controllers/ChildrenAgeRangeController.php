@@ -94,6 +94,17 @@ class ChildrenAgeRangeController extends ResourceController
             $json = $this->request->getBody();
             $data = json_decode($json, true);
 
+            // Verificar que se decodificó correctamente
+            if ($data === null && $json !== 'null') {
+                // Si falla JSON, intentar obtener datos de POST
+                $data = $this->request->getPost() ?: [];
+            }
+
+            // Asegurar que $data sea un array
+            if (!is_array($data)) {
+                $data = [];
+            }
+
             return $this->response
                 ->setStatusCode(200)
                 ->setJSON(create_response(lang('App.age_range_updated'), $this->service->updateRange($id, $data)));

@@ -85,7 +85,16 @@ class ChildrenAgeRangeRepository
      */
     public function deactivateByServicePriceId(string $servicePriceId): bool
     {
-        return $this->model->deactivateAllForServicePrice($servicePriceId);
+        try {
+            $result = $this->model->where('service_price_id', $servicePriceId)
+                                 ->set(['is_active' => false])
+                                 ->update();
+
+            return $result !== false;
+        } catch (\Exception $e) {
+            log_message('error', 'Error deactivating children ranges: ' . $e->getMessage());
+            return false;
+        }
     }
 
     /**
