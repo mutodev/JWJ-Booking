@@ -126,3 +126,10 @@ _modules/*
 /phpunit*.xml
 
 /frontend/node_modules/
+
+#-------------------------
+# Uploaded Images
+#-------------------------
+# Ignore all uploaded images but keep default image
+public/img/*
+!public/img/default.png

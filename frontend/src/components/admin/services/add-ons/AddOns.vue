@@ -1,5 +1,5 @@
 <template>
-  <!-- 🔎 Barra de búsqueda y botón -->
+  <!-- Search bar and create button -->
   <div class="row justify-content-end">
     <div class="col-10">
       <div class="input-group">
@@ -10,19 +10,19 @@
           v-model="searchValue"
           type="text"
           class="form-control"
-          placeholder="Search..."
+          placeholder="Search addons..."
         />
       </div>
     </div>
     <div class="col-md-2 pt-1">
-      <button class="btn btn-sm btn-primary" @click="createModal()">
+      <button class="btn btn-sm btn-primary" @click="openCreateModal">
         <i class="bi bi-plus-lg"></i>
         New Addon
       </button>
     </div>
   </div>
 
-  <!-- 📋 Tabla de addons -->
+  <!-- Addons table -->
   <div class="row mt-3">
     <div class="col-md-12">
       <EasyDataTable
@@ -38,20 +38,37 @@
         show-index
         index-column-text="#"
       >
-        <!-- Slot para estado -->
+        <!-- Status badge -->
         <template #item-is_active="{ is_active }">
           <span v-if="is_active" class="badge bg-success">Active</span>
           <span v-else class="badge bg-danger">Inactive</span>
         </template>
 
-        <!-- Slot para precio -->
+        <!-- Formatted base price -->
         <template #item-base_price="{ base_price }">
-          ${{ base_price.toFixed(2) }}
+          {{ formatCurrency(base_price) }}
         </template>
 
-        <!-- Slot para acciones -->
+        <!-- Price type with badge -->
+        <template #item-price_type="{ price_type }">
+          <span
+            :class="price_type === 'jukebox' ? 'badge bg-info' : 'badge bg-secondary'"
+          >
+            {{ price_type === 'jukebox' ? 'Jukebox' : 'Standard' }}
+          </span>
+        </template>
+
+        <!-- Estimated duration -->
+        <template #item-estimated_duration_minutes="{ estimated_duration_minutes }">
+          <span v-if="estimated_duration_minutes">
+            {{ estimated_duration_minutes }} min
+          </span>
+          <span v-else class="text-muted">-</span>
+        </template>
+
+        <!-- Actions -->
         <template #item-actions="item">
-          <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
+          <button class="btn btn-sm btn-warning me-2" @click="openEditModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
         </template>
@@ -59,83 +76,144 @@
     </div>
   </div>
 
-  <!-- 🔹 Modales -->
+  <!-- Modals -->
   <AddonsEdit
     :show="modalEditVisible"
     :data="selectedData"
-    @close="modalEditVisible = false"
-    @saved="handle"
+    @close="closeEditModal"
+    @saved="handleModalSaved"
   />
 
   <AddonsCreate
     :show="modalCreateVisible"
-    @close="modalCreateVisible = false"
-    @saved="handle"
+    @close="closeCreateModal"
+    @saved="handleModalSaved"
   />
 </template>
 
 <script setup>
+/**
+ * Addons List Component
+ *
+ * Displays a searchable table of addons with CRUD functionality.
+ * Manages create and edit modals for addon operations.
+ *
+ * Features:
+ * - Searchable data table with pagination
+ * - Create new addon functionality
+ * - Edit existing addon functionality
+ * - Currency formatting for prices
+ * - Badge styling for status and type
+ * - Duration display with units
+ */
+
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import AddonsEdit from "./AddonsEdit.vue";
 import AddonsCreate from "./AddonsCreate.vue";
 
+// Page header configuration
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Addons", icon: "bi-plus-circle-dotted" });
 
+// Table helpers for search functionality
 const tableHelpers = inject("tableHelpers");
+
+// Reactive data
 const data = ref([]);
 const searchValue = ref("");
-
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
-const modalDeleteVisible = ref(false);
 const selectedData = ref(null);
 
-const headers = computed(() => {
-  return tableHelpers.generateTableHeaders(data.value, {
-    customLabels: {
-      name: "Name",
-      description: "Description",
-      base_price: "Base Price (USD)",
-      estimated_duration_minutes: "Duration (min)",
-      is_active: "State",
-    },
-    exclude: ["created_at", "updated_at"],
-    actions: true,
-  });
-});
+/**
+ * Table headers configuration
+ * Defines the columns displayed in the addons table
+ */
+const headers = ref([
+  { text: "Name", value: "name", sortable: true },
+  { text: "Description", value: "description", sortable: true },
+  { text: "Price Type", value: "price_type", sortable: true },
+  { text: "Base Price", value: "base_price", sortable: true },
+  { text: "Duration", value: "estimated_duration_minutes", sortable: true },
+  { text: "Status", value: "is_active", sortable: true },
+  { text: "Actions", value: "actions", sortable: false },
+]);
 
+/**
+ * Computed search fields for table filtering
+ */
 const searchField = computed(() => {
   return tableHelpers.generateSearchFields(headers.value);
 });
 
-const editModal = (item) => {
+/**
+ * Opens the edit modal with selected addon data
+ * @param {Object} item - Addon data to edit
+ */
+const openEditModal = (item) => {
   selectedData.value = { ...item };
   modalEditVisible.value = true;
 };
 
-const createModal = () => {
+/**
+ * Opens the create modal for new addon
+ */
+const openCreateModal = () => {
   modalCreateVisible.value = true;
 };
 
-const getData = async () => {
+/**
+ * Closes the edit modal
+ */
+const closeEditModal = () => {
+  modalEditVisible.value = false;
+  selectedData.value = null;
+};
+
+/**
+ * Closes the create modal
+ */
+const closeCreateModal = () => {
+  modalCreateVisible.value = false;
+};
+
+/**
+ * Fetches addons list from the backend API
+ */
+const fetchAddons = async () => {
   try {
     const response = await api.get("/addons");
     data.value = response.data;
   } catch (error) {
-    console.error(error);
+    console.error('Error loading addons:', error);
   }
 };
 
-const handle = () => {
-  modalCreateVisible.value = false;
-  modalEditVisible.value = false;
-  modalDeleteVisible.value = false;
-  getData();
+/**
+ * Handles modal save events and refreshes data
+ */
+const handleModalSaved = () => {
+  closeEditModal();
+  closeCreateModal();
+  fetchAddons();
 };
 
+/**
+ * Formats price value as USD currency
+ * @param {number} value - Price value to format
+ * @returns {string} Formatted currency string
+ */
+const formatCurrency = (value) => {
+  if (!value) return "$0.00";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+};
+
+// Initialize component
 onMounted(() => {
-  getData();
+  fetchAddons();
 });
 </script>
