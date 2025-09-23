@@ -94,6 +94,13 @@
       @saved="handle"
     />
 
+    <ReservationEdit
+      :show="modalEditVisible"
+      :data="selectedData"
+      @close="modalEditVisible = false"
+      @saved="handle"
+    />
+
     <ReservationView
       :show="modalViewVisible"
       :data="selectedData"
@@ -106,6 +113,7 @@
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import ReservationCreate from "./ReservationCreate.vue";
+import ReservationEdit from "./ReservationEdit.vue";
 import ReservationView from "./ReservationView.vue";
 
 const updateHeaderData = inject("updateHeaderData");
@@ -138,9 +146,9 @@ const viewModal = (item) => {
 
 // Encabezados principales
 const headers = computed(() => [
-  { text: "Customer", value: "customer_id" },
-  { text: "Service", value: "service_price_id" },
-  { text: "Address", value: "event_address" },
+  { text: "Customer", value: "customer_name" },
+  { text: "Service", value: "service_name" },
+  { text: "Location", value: "location" },
   { text: "Date", value: "event_date" },
   { text: "Time", value: "event_time" },
   { text: "Total", value: "total_amount" },
@@ -150,8 +158,9 @@ const headers = computed(() => [
 ]);
 
 const searchField = computed(() => [
-  "customer_id",
-  "service_price_id",
+  "customer_name",
+  "service_name",
+  "location",
   "event_address",
 ]);
 
@@ -159,14 +168,15 @@ const searchField = computed(() => [
 const dataProcessed = computed(() =>
   data.value.map((item) => ({
     ...item,
-    customer_id: item.customer_id ?? "",
-    service_price_id: item.service_price_id ?? "",
+    customer_name: item.full_name || 'N/A',
+    service_name: item.service_name || 'N/A',
+    location: `${item.city_name || ''}, ${item.county_name || ''}`.replace(', ', '') ? `${item.city_name || ''}, ${item.county_name || ''}` : item.zipcode || 'N/A',
     event_address: item.event_address ?? "",
-    event_date: item.event_date?.date ? new Date(item.event_date.date) : null,
+    event_date: item.event_date?.date ? new Date(item.event_date.date) : (item.event_date ? new Date(item.event_date) : null),
     event_time: item.event_time ?? "",
-    total_amount: item.total_amount ?? 0,
+    total_amount: parseFloat(item.total_amount) || 0,
     status: item.status ?? "",
-    is_paid: item.is_paid ?? false,
+    is_paid: Boolean(item.is_paid),
   }))
 );
 

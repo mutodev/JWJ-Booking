@@ -20,6 +20,8 @@ class ReservationController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response(lang('Reservation.list'), $this->service->getAll()));
         } catch (\Throwable $th) {
+            print_r($th);
+            die();
             return $this->response->setStatusCode($th->getCode() ?: 500)
                 ->setJSON(['message' => $th->getMessage()]);
         }

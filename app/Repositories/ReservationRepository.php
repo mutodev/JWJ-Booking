@@ -14,19 +14,57 @@ class ReservationRepository
     }
 
     /**
-     * Obtener todas las reservas
+     * Obtener todas las reservas con información completa
      */
     public function getAll()
     {
-        return $this->model->findAll();
+        return $this->model
+            ->select("
+                reservations.*,
+                customers.full_name,
+                customers.email,
+                customers.phone,
+                service_prices.amount as service_amount,
+                services.name as service_name,
+                counties.name as county_name,
+                cities.name as city_name,
+                zipcodes.zipcode
+            ")
+            ->join("customers", "customers.id = reservations.customer_id", "left")
+            ->join("service_prices", "service_prices.id = reservations.service_price_id", "left")
+            ->join("services", "services.id = service_prices.service_id", "left")
+            ->join("zipcodes", "zipcodes.id = reservations.zipcode_id", "left")
+            ->join("cities", "cities.id = zipcodes.city_id", "left")
+            ->join("counties", "counties.id = cities.county_id", "left")
+            ->orderBy("reservations.created_at", "DESC")
+            ->findAll();
     }
 
     /**
-     * Obtener reserva por ID
+     * Obtener reserva por ID con información completa
      */
     public function getById(string $id)
     {
-        return $this->model->find($id);
+        return $this->model
+            ->select("
+                reservations.*,
+                customers.full_name,
+                customers.email,
+                customers.phone,
+                service_prices.amount as service_amount,
+                services.name as service_name,
+                counties.name as county_name,
+                cities.name as city_name,
+                zipcodes.zipcode
+            ")
+            ->join("customers", "customers.id = reservations.customer_id", "left")
+            ->join("service_prices", "service_prices.id = reservations.service_price_id", "left")
+            ->join("services", "services.id = service_prices.service_id", "left")
+            ->join("zipcodes", "zipcodes.id = reservations.zipcode_id", "left")
+            ->join("cities", "cities.id = zipcodes.city_id", "left")
+            ->join("counties", "counties.id = cities.county_id", "left")
+            ->where("reservations.id", $id)
+            ->first();
     }
 
     /**
