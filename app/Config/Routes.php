@@ -5,6 +5,7 @@ use App\Controllers\ChildrenAgeRangeController;
 use App\Controllers\CityController;
 use App\Controllers\CountyController;
 use App\Controllers\CustomerController;
+use App\Controllers\DashboardController;
 use App\Controllers\DurationController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
@@ -183,6 +184,16 @@ $routes->group('api', function ($routes) {
         $routes->put('deactivate/(:any)', [ChildrenAgeRangeController::class, 'deactivate']);
         $routes->put('deactivate-all/(:any)', [ChildrenAgeRangeController::class, 'deactivateAllByServicePrice']);
         $routes->delete('(:any)', [ChildrenAgeRangeController::class, 'delete']);
+    });
+
+    // Dashboard
+    $routes->group('dashboard', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('reservations-by-status', [DashboardController::class, 'getReservationsByStatus']);
+        $routes->get('reservations-status-evolution', [DashboardController::class, 'getReservationsStatusEvolution']);
+        $routes->get('payment-status', [DashboardController::class, 'getPaymentStatus']);
+        $routes->get('invoice-status', [DashboardController::class, 'getInvoiceStatus']);
+        $routes->get('popular-jam-types', [DashboardController::class, 'getMostPopularJamTypes']);
+        $routes->get('cities-most-events', [DashboardController::class, 'getCitiesWithMostEvents']);
     });
 });
 
