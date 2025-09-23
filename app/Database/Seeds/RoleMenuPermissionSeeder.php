@@ -129,18 +129,9 @@ class RoleMenuPermissionSeeder extends Seeder
             ];
         }
 
-        // ===== PERMISOS PARA VISUALIZADOR (Solo lectura) =====
+        // ===== PERMISOS PARA VISUALIZADOR (Solo Dashboard) =====
         $viewerMenus = [
-            $dashboardMenuId,
-            $serviceAreasId,
-            $metropolitanAreas,
-            $counties,
-            $cities,
-            $postalCodes,
-            $servicesMenuId,
-            $jamTypesMenuId,
-            $priceTableMenuId,
-            $addonsMenuId
+            $dashboardMenuId
         ];
 
         foreach ($viewerMenus as $menuId) {
