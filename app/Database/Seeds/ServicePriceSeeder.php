@@ -37,9 +37,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 350.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 10,
                 'extra_child_fee' => 75.00,
-                'extra_children' => 0,
                 'notes' => 'Classic Jam con 1 performer - Miami-Dade',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -52,9 +50,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 475.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 10,
                 'extra_child_fee' => 75.00,
-                'extra_children' => 0,
                 'notes' => 'Classic Jam con 2 performers - Miami-Dade',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -67,9 +63,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 350.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 10,
                 'extra_child_fee' => 0.00,
-                'extra_children' => 0,
                 'notes' => 'Classic Jam con 1 performer - Broward',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -82,9 +76,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 475.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 10,
                 'extra_child_fee' => 0.00,
-                'extra_children' => 0,
                 'notes' => 'Classic Jam con 2 performers - Broward',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -97,9 +89,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 400.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 24,
                 'extra_child_fee' => 75.00,
-                'extra_children' => 0,
                 'notes' => 'Eras Jam con 1 performer - Miami-Dade',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -112,9 +102,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 525.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 24,
                 'extra_child_fee' => 75.00,
-                'extra_children' => 0,
                 'notes' => 'Eras Jam con 2 performers - Miami-Dade',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -127,9 +115,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 400.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 24,
                 'extra_child_fee' => 0.00,
-                'extra_children' => 0,
                 'notes' => 'Eras Jam con 1 performer - Broward',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -142,9 +128,7 @@ class ServicePriceSeeder extends Seeder
                 'amount' => 525.00,
                 'range_age' => '1 - 10',
                 'is_available' => true,
-                'max_children' => 24,
                 'extra_child_fee' => 0.00,
-                'extra_children' => 0,
                 'notes' => 'Eras Jam con 2 performers - Broward',
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
@@ -156,8 +140,8 @@ class ServicePriceSeeder extends Seeder
 
         echo "✅ Precios de servicios insertados: " . count($servicePrices) . " registros\n";
         echo "   - Relacionados con condados: Miami-Dade County, Broward County\n";
-        echo "   - Campos incluidos: max_children, extra_child_fee, extra_children\n";
-        echo "   - Classic Jam: máximo 10 niños | Eras Jam: máximo 24 niños\n";
+        echo "   - Campos incluidos: extra_child_fee, range_age, performers_count\n";
+        echo "   - Classic Jam: $350-$475 | Eras Jam: $400-$525\n";
         echo "   - Miami-Dade: $75 fee extra por niño | Broward: sin fee extra\n";
     }
 }

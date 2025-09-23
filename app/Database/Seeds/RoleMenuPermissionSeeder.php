@@ -21,7 +21,6 @@ class RoleMenuPermissionSeeder extends Seeder
         $dashboardMenuId = 'm1a2b3c4-d5e6-7890-fgh1-234567890123';
         $reservasMenuId = 'm2b3c4d5-e6f7-8901-ghi2-345678901234';
         $clientesMenuId = 'm3c4d5e6-f7g8-9012-hij3-456789012345';
-        $reportesMenuId = 'm4d5e6f7-g8h9-0123-ijk4-567890123456';
         $configMenuId = 'm5e6f7g8-h9i0-1234-jkl5-678901234567';
         $serviceAreasId = '5758a89e-08ae-40f7-b98c-aafd0fd68627';
         $servicesMenuId = 'm5e6f7g8-h9i0-1234-jkl5-678901234ss1'; // Menú principal de SERVICIOS
@@ -47,7 +46,6 @@ class RoleMenuPermissionSeeder extends Seeder
             $dashboardMenuId,
             $reservasMenuId,
             $clientesMenuId,
-            $reportesMenuId,
             $configMenuId,
             $serviceAreasId,
             $servicesMenuId,
@@ -88,7 +86,6 @@ class RoleMenuPermissionSeeder extends Seeder
             $dashboardMenuId,
             $reservasMenuId,
             $clientesMenuId,
-            $reportesMenuId,
 
             // Submenús de Service Areas (solo lectura)
             $serviceAreasId,
@@ -135,7 +132,6 @@ class RoleMenuPermissionSeeder extends Seeder
         // ===== PERMISOS PARA VISUALIZADOR (Solo lectura) =====
         $viewerMenus = [
             $dashboardMenuId,
-            $reportesMenuId,
             $serviceAreasId,
             $metropolitanAreas,
             $counties,

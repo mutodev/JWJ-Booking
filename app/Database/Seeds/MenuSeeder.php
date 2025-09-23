@@ -83,18 +83,6 @@ class MenuSeeder extends Seeder
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
-            // Menú principal Reports
-            [
-                'id' => 'm4d5e6f7-g8h9-0123-ijk4-567890123456',
-                'name' => 'Reports',
-                'uri' => '/admin/reports',
-                'icon' => 'bi bi-graph-up',
-                'order' => 7,
-                'is_active' => true,
-                'parent_id' => null,
-                'created_at' => Time::now(),
-                'updated_at' => Time::now()
-            ],
         ];
 
         // Service Areas submenus
