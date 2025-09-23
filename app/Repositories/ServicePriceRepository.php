@@ -119,7 +119,6 @@ class ServicePriceRepository
                 service_prices.performers_count,
                 service_prices.img,
                 service_prices.amount,
-                service_prices.max_children,
                 service_prices.extra_child_fee,
                 service_prices.range_age,
                 service_prices.notes,
