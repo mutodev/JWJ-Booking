@@ -276,11 +276,12 @@
           type="button"
           class="btn btn-success btn-lg px-5"
           @click="showConfirmationModal"
-          :disabled="isSubmitting"
+          :disabled="isSubmitting || isCompleted"
         >
           <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
-          {{ isSubmitting ? 'Submitting...' : 'Submit Reservation' }}
-          <i v-if="!isSubmitting" class="bi ms-2 bi-send"></i>
+          <i v-if="isCompleted && !isSubmitting" class="bi bi-check-circle me-2"></i>
+          {{ isCompleted ? 'Reservation Completed!' : (isSubmitting ? 'Submitting...' : 'Submit Reservation') }}
+          <i v-if="!isSubmitting && !isCompleted" class="bi ms-2 bi-send"></i>
         </button>
       </div>
 
@@ -332,10 +333,11 @@
                 type="button"
                 class="btn btn-success"
                 @click="submitReservation"
-                :disabled="isSubmitting"
+                :disabled="isSubmitting || isCompleted"
               >
                 <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                {{ isSubmitting ? 'Processing...' : 'Confirm & Submit' }}
+                <i v-if="isCompleted && !isSubmitting" class="bi bi-check-circle me-2"></i>
+                {{ isCompleted ? 'Completed!' : (isSubmitting ? 'Processing...' : 'Confirm & Submit') }}
               </button>
             </div>
           </div>
@@ -410,6 +412,7 @@ const form = reactive({
 
 const errors = reactive({});
 const isSubmitting = ref(false);
+const isCompleted = ref(false);
 let confirmationModal = null;
 
 // Validation schema
@@ -475,6 +478,9 @@ function emitFormData() {
 
 // Modal y envío de datos
 function showConfirmationModal() {
+  // Prevenir si ya está completado
+  if (isCompleted.value) return;
+
   const modalElement = document.getElementById('confirmationModal');
   if (!modalElement) {
     console.error('Modal element not found');
@@ -488,7 +494,7 @@ function showConfirmationModal() {
 }
 
 async function submitReservation() {
-  if (isSubmitting.value) return;
+  if (isSubmitting.value || isCompleted.value) return;
 
   isSubmitting.value = true;
 
@@ -514,31 +520,41 @@ async function submitReservation() {
 
     console.log('API Response:', response);
 
-    if (response.status === 201) {
-      // Cerrar modal
+    if (response.status === 201 || response.status === 200) {
+      // Marcar como completado inmediatamente
+      isCompleted.value = true;
+
+      // Cerrar modal inmediatamente
       if (confirmationModal) {
         confirmationModal.hide();
-
-        // Cleanup modal after hiding
-        setTimeout(() => {
-          if (confirmationModal) {
-            confirmationModal.dispose();
-            confirmationModal = null;
-          }
-        }, 300);
       }
 
       // Mostrar mensaje de éxito
       ElMessage.success('Reservation submitted successfully!');
 
-      // Emitir evento de éxito con los datos de respuesta
-      // Ajustar estructura según la respuesta real del API
-      const responseData = response.data?.data || response.data;
+      // Dar tiempo para que el modal se cierre y luego emitir el evento
+      setTimeout(() => {
+        // Cleanup modal
+        if (confirmationModal) {
+          try {
+            confirmationModal.dispose();
+          } catch (e) {
+            console.log('Modal already disposed or does not exist');
+          }
+          confirmationModal = null;
+        }
 
-      emit("reservationSuccess", {
-        reservation: responseData.reservation || responseData,
-        calculation: responseData.calculation || null
-      });
+        // Emitir evento de éxito con los datos de respuesta
+        const responseData = response.data?.data || response.data;
+
+        emit("reservationSuccess", {
+          reservation: responseData.reservation || responseData,
+          calculation: responseData.calculation || null
+        });
+      }, 500);
+
+    } else {
+      throw new Error('Unexpected response status: ' + response.status);
     }
 
   } catch (error) {
@@ -553,9 +569,9 @@ async function submitReservation() {
     }
 
     ElMessage.error(errorMessage);
-  } finally {
-    isSubmitting.value = false;
+    isSubmitting.value = false; // Solo resetear isSubmitting en caso de error
   }
+  // No resetear isSubmitting ni isCompleted en caso de éxito para evitar múltiples envíos
 }
 
 // Auto-complete from Step1 customer data
@@ -582,6 +598,10 @@ watch(
   () => props.active,
   (active) => {
     if (active) {
+      // Resetear estados cuando se activa el step
+      isCompleted.value = false;
+      isSubmitting.value = false;
+
       autoCompleteFromCustomer();
       restoreFormData();
       emitFormData();
