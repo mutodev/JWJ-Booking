@@ -3,21 +3,21 @@
     <div
       class="container-fluid d-flex align-items-center justify-content-between"
     >
-      <!-- Logo o título -->
+      <!-- Logo or title -->
       <span class="navbar-brand mb-0 h4 text-dark">Admin JWJ</span>
       <span class="navbar-brand mb-0 h4 text-dark">
         <i :class="headerData.icon"></i> {{ headerData.title }}</span
       >
 
-      <!-- Información y dropdown del usuario -->
+      <!-- User information and dropdown -->
       <div class="d-flex align-items-center">
-        <!-- Nombre y cargo (desktop) -->
+        <!-- Name and role (desktop) -->
         <div class="d-none d-lg-flex flex-column text-end me-3">
           <span class="fw-semibold">{{ user.name }}</span>
           <small class="text-muted">{{ user.role }}</small>
         </div>
 
-        <!-- Dropdown del usuario -->
+        <!-- User dropdown -->
         <div class="dropdown" ref="dropdownElement">
           <button
             class="btn p-0 border-0 bg-transparent d-flex align-items-center"

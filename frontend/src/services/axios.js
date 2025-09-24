@@ -38,7 +38,7 @@ api.interceptors.response.use(
         const decoded = jwtDecode(token);
 
         sessionStorage.setItem("token", token);
-        // Decodificar el token y guardar los datos en sessionStorage
+        // Decode the token and save the data in sessionStorage
         for (const [key, value] of Object.entries(decoded)) {
           if (typeof value === "object") {
             sessionStorage.setItem(key, JSON.stringify(value));

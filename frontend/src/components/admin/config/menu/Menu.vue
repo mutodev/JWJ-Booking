@@ -5,5 +5,5 @@
 import { inject } from "vue";
 
 const updateHeaderData = inject("updateHeaderData");
-updateHeaderData({ title: "Menús", icon: "bi bi-list-nested" });
+updateHeaderData({ title: "Menus", icon: "bi bi-list-nested" });
 </script>

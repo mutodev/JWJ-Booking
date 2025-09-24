@@ -14,7 +14,7 @@
         data-bs-target="#mainNav"
         aria-controls="mainNav"
         aria-expanded="false"
-        aria-label="Alternar navegación"
+        aria-label="Toggle navigation"
       >
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -22,14 +22,14 @@
         <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
           <!-- <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="#inicio"
-              >Inicio</a
+              >Home</a
             >
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#features">Características</a>
+            <a class="nav-link" href="#features">Features</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#contacto">Contacto</a>
+            <a class="nav-link" href="#contacto">Contact</a>
           </li> -->
         </ul>
         <div class="d-flex ms-lg-3">

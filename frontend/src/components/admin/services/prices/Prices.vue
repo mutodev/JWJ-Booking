@@ -1,5 +1,5 @@
 <template>
-  <!-- 🔍 Buscador + botón crear -->
+  <!-- 🔍 Search + create button -->
   <div class="row justify-content-end">
     <div class="col-10">
       <div class="input-group">
@@ -101,24 +101,24 @@ const services = ref([]); // 👈 lista de servicios activos
 const counties = ref([]); // 👈 lista de counties activos
 const searchValue = ref("");
 
-// 🔄 Estados de modales
+// 🔄 Modal states
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const modalDeleteVisible = ref(false);
 const selectedData = ref(null);
 
-// ✏️ Editar
+// ✏️ Edit
 const editModal = (item) => {
   selectedData.value = { ...item };
   modalEditVisible.value = true;
 };
 
-// ➕ Crear
+// ➕ Create
 const createModal = () => {
   modalCreateVisible.value = true;
 };
 
-// 🗑️ Eliminar
+// 🗑️ Delete
 const deleteModal = (item) => {
   selectedData.value = { ...item };
   modalDeleteVisible.value = true;
@@ -180,7 +180,7 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-// 🔄 Recargar tabla tras guardar/editar/eliminar
+// 🔄 Reload table after save/edit/delete
 const handle = () => {
   modalCreateVisible.value = false;
   modalEditVisible.value = false;

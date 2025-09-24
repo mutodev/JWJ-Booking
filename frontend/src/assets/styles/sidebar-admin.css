@@ -182,7 +182,7 @@
   margin: 8px 16px;
 }
 
-/* Título de sección (opcional) */
+/* Section title (optional) */
 .sidebar-section-title {
   padding: 16px 18px 8px;
   font-size: 0.7rem;
@@ -229,7 +229,7 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* Estados de hover mejorados */
+/* Enhanced hover states */
 .sidebar-link:focus {
   outline: 2px solid rgba(255, 255, 255, 0.3);
   outline-offset: 2px;

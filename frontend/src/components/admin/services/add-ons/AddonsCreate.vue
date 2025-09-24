@@ -51,7 +51,7 @@
               </h6>
 
               <div class="row">
-                <!-- Tipo de precio -->
+                <!-- Price type -->
                 <div class="col-md-6 mb-3">
                   <label for="price_type" class="form-label required">Price Type</label>
                   <select
@@ -67,7 +67,7 @@
                   <small class="text-danger small">{{ priceTypeError }}</small>
                 </div>
 
-                <!-- Precio base -->
+                <!-- Base price -->
                 <div class="col-md-6 mb-3">
                   <label for="base_price" class="form-label required">Base Price (USD)</label>
                   <input
@@ -285,7 +285,7 @@ const onImageSelected = (event) => {
 
   selectedImage.value = file;
 
-  // Crear preview
+  // Create preview
   const reader = new FileReader();
   reader.onload = (e) => {
     imagePreview.value = e.target.result;

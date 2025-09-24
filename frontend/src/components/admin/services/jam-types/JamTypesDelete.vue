@@ -74,7 +74,7 @@ watch(
   { deep: true, immediate: true }
 );
 
-// Schema reactivo con validación de nombre exacto
+// Reactive schema with exact name validation
 const schema = computed(() =>
   yup.object({
     name: yup

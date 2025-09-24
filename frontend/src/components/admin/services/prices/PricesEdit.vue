@@ -561,7 +561,7 @@ const onImageSelected = (event) => {
   selectedImageFile.value = file;
   errors.value.img = '';
 
-  // Crear preview
+  // Create preview
   const reader = new FileReader();
   reader.onload = (e) => {
     imagePreview.value = e.target.result;
@@ -604,7 +604,7 @@ const updateDurations = async (servicePriceId) => {
     // Desactivar duraciones existentes
     await api.put(`/durations/deactivate-all/${servicePriceId}`);
 
-    // Crear nuevas duraciones
+    // Create new durations
     const durationPromises = selectedDurations.value.map(duration => {
       return api.post("/durations", {
         service_price_id: servicePriceId,
@@ -624,7 +624,7 @@ const updateChildrenRanges = async (servicePriceId) => {
     // Desactivar rangos existentes
     await api.put(`/children-ranges/deactivate-all/${servicePriceId}`);
 
-    // Crear nuevos rangos
+    // Create new ranges
     const rangePromises = selectedChildrenRanges.value.map(range => {
       return api.post("/children-ranges", {
         service_price_id: servicePriceId,
@@ -653,7 +653,7 @@ const submitForm = async () => {
       return;
     }
 
-    // Crear FormData para enviar datos y archivo
+    // Create FormData to send data and file
     const formData = new FormData();
 
     // Agregar todos los campos del formulario

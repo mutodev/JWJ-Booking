@@ -65,10 +65,10 @@ import "../../../assets/styles/sidebar-admin.css";
 
 const access = ref(JSON.parse(sessionStorage.getItem("access") || "[]"));
 
-// Estado de los colapsables
+// Collapsible state
 const openMenus = ref({});
 
-// Estado del sidebar colapsado (solo por tamaño de pantalla)
+// Collapsed sidebar state (screen size only)
 const isCollapsed = ref(false);
 
 // Toggle del collapse de menús

@@ -15,7 +15,7 @@
                 <i class="bi bi-info-circle me-2"></i>Basic Information
               </h6>
 
-              <!-- Nombre -->
+              <!-- Name -->
               <div class="mb-3">
                 <label for="edit_name" class="form-label required">Name</label>
                 <input
@@ -29,7 +29,7 @@
                 <small class="text-danger small">{{ nameError }}</small>
               </div>
 
-              <!-- Descripción -->
+              <!-- Description -->
               <div class="mb-3">
                 <label for="edit_description" class="form-label required">Description</label>
                 <textarea
@@ -51,7 +51,7 @@
               </h6>
 
               <div class="row">
-                <!-- Tipo de precio -->
+                <!-- Price type -->
                 <div class="col-md-6 mb-3">
                   <label for="edit_price_type" class="form-label required">Price Type</label>
                   <select
@@ -67,7 +67,7 @@
                   <small class="text-danger small">{{ priceTypeError }}</small>
                 </div>
 
-                <!-- Precio base -->
+                <!-- Base price -->
                 <div class="col-md-6 mb-3">
                   <label for="edit_base_price" class="form-label required">Base Price (USD)</label>
                   <input
@@ -108,7 +108,7 @@
                   <small class="text-danger small">{{ durationError }}</small>
                 </div>
 
-                <!-- Estado activo -->
+                <!-- Active state -->
                 <div class="col-md-6 mb-3">
                   <label for="edit_is_active" class="form-label">Status</label>
                   <select
@@ -319,7 +319,7 @@ const onImageSelected = (event) => {
 
   selectedImage.value = file;
 
-  // Crear preview
+  // Create preview
   const reader = new FileReader();
   reader.onload = (e) => {
     imagePreview.value = e.target.result;
@@ -361,7 +361,7 @@ watch(
       is_active.value = newData.is_active !== undefined ? newData.is_active : true;
       currentImage.value = newData.image || null;
 
-      // Resetear estados de imagen nueva
+      // Reset new image states
       selectedImage.value = null;
       imagePreview.value = null;
       imageError.value = "";

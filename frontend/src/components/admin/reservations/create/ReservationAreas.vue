@@ -68,7 +68,7 @@ const props = defineProps({
   areas: { type: Array, default: () => [] },
 });
 
-// Estados seleccionados
+// Selected states
 const selectedArea = ref(null);
 const selectedCounty = ref(null);
 const selectedCity = ref(null);

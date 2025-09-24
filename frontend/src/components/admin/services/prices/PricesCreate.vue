@@ -457,7 +457,7 @@ const addDuration = () => {
 
 /**
  * Elimina una duración de la lista
- * @param {number} index - Índice de la duración a eliminar
+ * @param {number} index - Index of the duration to remove
  */
 const removeDuration = (index) => {
   selectedDurations.value.splice(index, 1);
@@ -494,7 +494,7 @@ const addChildrenRange = () => {
 
 /**
  * Elimina un rango de cantidad de niños de la lista
- * @param {number} index - Índice del rango a eliminar
+ * @param {number} index - Index of the range to remove
  */
 const removeChildrenRange = (index) => {
   selectedChildrenRanges.value.splice(index, 1);
@@ -526,7 +526,7 @@ const onImageSelected = (event) => {
   selectedImageFile.value = file;
   errors.value.img = '';
 
-  // Crear preview
+  // Create preview
   const reader = new FileReader();
   reader.onload = (e) => {
     imagePreview.value = e.target.result;
@@ -559,7 +559,7 @@ const createDurations = async (servicePriceId) => {
       throw new Error('Service Price ID is required to create durations');
     }
 
-    // Crear duraciones en cascada (una por una) para asegurar la relación
+    // Create durations in cascade (one by one) to ensure relationship
     for (let i = 0; i < selectedDurations.value.length; i++) {
       const duration = selectedDurations.value[i];
 
@@ -594,7 +594,7 @@ const createChildrenRanges = async (servicePriceId) => {
       throw new Error('Service Price ID is required to create children ranges');
     }
 
-    // Crear rangos de niños en cascada (uno por uno) para asegurar la relación
+    // Create children ranges in cascade (one by one) to ensure relationship
     for (let i = 0; i < selectedChildrenRanges.value.length; i++) {
       const range = selectedChildrenRanges.value[i];
 
@@ -658,7 +658,7 @@ const submitForm = async () => {
       return;
     }
 
-    // Crear FormData para enviar datos y archivo
+    // Create FormData to send data and file
     const formData = new FormData();
 
     // Agregar todos los campos del formulario
@@ -690,12 +690,12 @@ const submitForm = async () => {
         throw new Error('Could not extract valid service price ID from response');
       }
 
-      // Crear duraciones si hay seleccionadas
+      // Create durations if any selected
       if (selectedDurations.value.length > 0) {
         await createDurations(servicePriceId);
       }
 
-      // Crear rangos de niños si hay seleccionados
+      // Create children ranges if any selected
       if (selectedChildrenRanges.value.length > 0) {
         await createChildrenRanges(servicePriceId);
       }

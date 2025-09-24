@@ -83,20 +83,20 @@
 </template>
 
 /**
- * Home.vue - Componente principal del wizard de reservas
+ * Home.vue - Main reservation wizard component
  *
- * Maneja un formulario multi-step para la creación de reservas de servicios de entretenimiento.
+ * Handles a multi-step form for creating entertainment service reservations.
  *
- * Pasos del wizard:
- * 1. Información del cliente
- * 2. Código postal
- * 3. Selección de servicio
- * 4. Número de niños
- * 5. Duración del evento
- * 6. Servicios adicionales (add-ons)
- * 7. Subtotal y confirmación
- * 8. Información detallada del evento
- * 9. Confirmación de éxito
+ * Wizard steps:
+ * 1. Client information
+ * 2. Postal code
+ * 3. Service selection
+ * 4. Number of children
+ * 5. Event duration
+ * 6. Additional services (add-ons)
+ * 7. Subtotal and confirmation
+ * 8. Detailed event information
+ * 9. Success confirmation
  *
  * @author JamWithJamie Team
  * @version 1.0.0
@@ -127,7 +127,7 @@ const stepComponents = {
 };
 
 /**
- * Configuración de steps
+ * Steps configuration
  */
 const steps = ref([
   { title: "Step 1" }, { title: "Step 2" }, { title: "Step 3" },
@@ -136,7 +136,7 @@ const steps = ref([
 ]);
 
 /**
- * Estado reactivo del wizard
+ * Wizard reactive state
  */
 const totalSteps = 9;
 const activeStep = ref(1);
@@ -147,7 +147,7 @@ const wizardRoot = ref(null);
 const reservationData = ref(null);
 
 /**
- * Estados de validación por step
+ * Validation states per step
  */
 const stepValidations = ref({
   1: false, 2: false, 3: false, 4: false, 5: false,
@@ -172,9 +172,9 @@ function checkMobile() {
 }
 
 /**
- * Determina el estado visual de cada step en la barra lateral
+ * Determines the visual state of each step in the sidebar
  * @param {number} index - Índice del step (0-based)
- * @returns {string} Estado: 'success', 'process', o 'wait'
+ * @returns {string} State: 'success', 'process', or 'wait'
  */
 function getStepStatus(index) {
   const stepNum = index + 1;
@@ -271,7 +271,7 @@ function previousStep() {
 }
 
 /**
- * Actualiza los datos del formulario y valida el step actual
+ * Updates form data and validates current step
  * @param {Object} data - Datos a mergear con el formulario
  */
 function setData(data) {
@@ -288,11 +288,11 @@ function setData(data) {
 }
 
 /**
- * Funciones de validación y manejo de eventos
+ * Validation functions and event handling
  */
 
 /**
- * Valida el step actual y actualiza su estado
+ * Validates current step and updates its state
  */
 function validateCurrentStep() {
   let isValid = false;
@@ -323,7 +323,7 @@ function handleReservationSuccess(data) {
 }
 
 /**
- * Inicia una nueva reserva reseteando todo el estado
+ * Starts a new reservation by resetting all state
  */
 function handleNewReservation() {
   form.value = {};
@@ -355,7 +355,7 @@ function handleClick(e) {
 }
 
 /**
- * Configuración inicial del componente
+ * Component initial configuration
  */
 onMounted(() => {
   checkMobile();
@@ -378,7 +378,7 @@ onBeforeUnmount(() => {
 });
 
 /**
- * Observador para validar cuando cambia el step activo
+ * Watcher to validate when active step changes
  */
 watch(activeStep, () => {
   validateCurrentStep();
