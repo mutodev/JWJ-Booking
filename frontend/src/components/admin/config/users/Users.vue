@@ -1,46 +1,63 @@
 <template>
-  <div class="row justify-content-end">
-    <div class="col-md-1">
-      <button class="btn btn-sm btn-primary" @click="createUserModal()">
-        <i class="bi bi-plus-lg"></i>
-        New User
-      </button>
+  <div>
+    <div class="row justify-content-end mb-3">
+      <div class="col-10">
+        <div class="input-group">
+          <span class="input-group-text">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            v-model="searchValue"
+            type="text"
+            class="form-control"
+            placeholder="Search users..."
+          />
+        </div>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-sm btn-primary" @click="createUserModal()">
+          <i class="bi bi-plus-lg"></i>
+          New User
+        </button>
+      </div>
     </div>
-  </div>
 
-  <ul class="nav nav-tabs">
-    <li class="nav-item" v-for="item in dataRol">
-      <a
-        class="nav-link"
-        :href="'#' + item.id"
+    <ul class="nav nav-tabs">
+      <li class="nav-item" v-for="item in dataRol" :key="item.id">
+        <a
+          class="nav-link"
+          :href="'#' + item.id"
+          :class="{ active: activeTab === item.id }"
+          @click.prevent="setActiveTab(item.id)"
+        >
+          {{ item.name }}
+        </a>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <div
+        class="tab-pane"
+        v-for="item in dataRol"
+        :key="item.id"
         :class="{ active: activeTab === item.id }"
-        @click.prevent="setActiveTab(item.id)"
       >
-        {{ item.name }}
-      </a>
-    </li>
-  </ul>
-
-  <div class="tab-content">
-    <div
-      class="tab-pane"
-      v-for="item in dataRol"
-      :class="{ active: activeTab === item.id }"
-    >
-      <UsersTable
-        :data="dataUsers"
-        :roles="dataRol"
-        @data-updated="handleDataUpdate"
-      />
+        <UsersTable
+          :data="dataUsers"
+          :roles="dataRol"
+          :search-value="searchValue"
+          @data-updated="handleDataUpdate"
+        />
+      </div>
     </div>
-  </div>
 
-  <UserCreate
-    :show="modalVisible"
-    :roles="dataRol"
-    @close="modalVisible = false"
-    @data-updated="handleDataUpdate"
-  />
+    <UserCreate
+      :show="modalVisible"
+      :roles="dataRol"
+      @close="modalVisible = false"
+      @data-updated="handleDataUpdate"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -50,10 +67,11 @@ import UsersTable from "./UsersTable.vue";
 import UserCreate from "./UserCreate.vue";
 
 const updateHeaderData = inject("updateHeaderData");
-updateHeaderData({ title: "Usurios", icon: "bi bi-person-gear" });
+updateHeaderData({ title: "Users", icon: "bi bi-person-gear" });
 
 const activeTab = ref("");
 const modalVisible = ref(false);
+const searchValue = ref("");
 const setActiveTab = (roleId) => {
   activeTab.value = roleId;
   getDataByRole(roleId);

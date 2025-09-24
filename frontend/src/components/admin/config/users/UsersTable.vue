@@ -1,36 +1,31 @@
 <template>
-  <table class="table table-hover">
-    <thead>
-      <tr>
-        <th class="text-center" scope="col">#</th>
-        <th scope="col">First Name</th>
-        <th scope="col">Last Name</th>
-        <th scope="col">Email</th>
-        <th class="text-center" scope="col">State</th>
-        <th class="text-center" scope="col">Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(item, index) in dataUsers" :key="item.id || index">
-        <th class="text-center" scope="row">{{ index + 1 }}</th>
-        <td>{{ item.first_name }}</td>
-        <td>{{ item.last_name }}</td>
-        <td>{{ item.email }}</td>
-        <td class="text-center">
-          <span v-if="item.is_active" class="badge bg-success">Active</span>
-          <span v-else class="badge bg-danger">Inactive</span>
-        </td>
-        <td class="text-center">
-          <button
-            class="btn btn-sm btn-warning me-2"
-            @click="editUserModal(item)"
-          >
-            <i class="bi bi-pencil-square"></i> Edit
-          </button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+  <EasyDataTable
+    :headers="headers"
+    :items="dataUsers"
+    :search-field="searchField"
+    :search-value="searchValue"
+    table-class-name="table table-hover"
+    header-text-direction="center"
+    body-text-direction="center"
+    :rows-per-page="10"
+    :rows-per-page-options="[5, 10, 25, 50]"
+    show-index
+  >
+    <template #item-is_active="{ is_active }">
+      <span v-if="is_active" class="badge bg-success">Active</span>
+      <span v-else class="badge bg-danger">Inactive</span>
+    </template>
+
+    <template #item-actions="{ id }">
+      <button
+        class="btn btn-sm btn-warning me-2"
+        @click="editUserModal(id)"
+        title="Edit User"
+      >
+        <i class="bi bi-pencil-square"></i>
+      </button>
+    </template>
+  </EasyDataTable>
 
   <UserEdit
     :show="modalVisible"
@@ -41,10 +36,11 @@
   />
 </template>
 <script setup>
-import { ref, watch, defineEmits  } from "vue";
+import { ref, watch, defineEmits, inject } from "vue";
 import UserEdit from "./UserEdit.vue";
 
 const emit = defineEmits(['data-updated']);
+const tableHelpers = inject('tableHelpers');
 
 const props = defineProps({
   data: {
@@ -54,8 +50,27 @@ const props = defineProps({
   roles: {
     type: Array,
     default: () => []
+  },
+  searchValue: {
+    type: String,
+    default: ''
   }
 });
+
+// EasyDataTable configuration
+const headers = ref([
+  { text: "First Name", value: "first_name", sortable: true },
+  { text: "Last Name", value: "last_name", sortable: true },
+  { text: "Email", value: "email", sortable: true },
+  { text: "State", value: "is_active", sortable: true },
+  { text: "Actions", value: "actions", sortable: false }
+]);
+
+const searchField = ref([
+  "first_name",
+  "last_name",
+  "email"
+]);
 
 const dataUsers = ref([]);
 const dataRoles = ref([]);
@@ -78,9 +93,13 @@ watch(
   { deep: true, immediate: true }
 );
 
-const editUserModal = (item) => {
-  selectedData.value = { ...item };
-  modalVisible.value = true;
+const editUserModal = (userId) => {
+  // Buscar el usuario por ID
+  const user = dataUsers.value.find(user => user.id === userId);
+  if (user) {
+    selectedData.value = { ...user };
+    modalVisible.value = true;
+  }
 };
 
 const handleRoleSaved = () => {

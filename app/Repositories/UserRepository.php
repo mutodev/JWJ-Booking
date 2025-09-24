@@ -115,6 +115,14 @@ class UserRepository
      */
     public function updateUser(string $userId, array $data): bool
     {
+        // Hash de la contraseña si viene en los datos
+        if (isset($data['password']) && !empty($data['password'])) {
+            // Solo hashear si no está ya hasheada (evitar double hashing)
+            if (!password_get_info($data['password'])['algo']) {
+                $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
+            }
+        }
+
         $filtered = array_intersect_key($data, array_flip($this->allowedFields));
         if (empty($filtered)) {
             return false;

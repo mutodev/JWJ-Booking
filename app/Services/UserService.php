@@ -46,7 +46,7 @@ class UserService
             throw new HTTPException(lang('User.emailInUse'), Response::HTTP_CONFLICT);
 
         $password = generate_password(12);
-        $data['password'] = password_hash($password, PASSWORD_BCRYPT);
+        $data['password'] = $password;
 
         $user = $this->userRepository->createUser($data);
         if (!$user)
@@ -74,10 +74,8 @@ class UserService
     public function update(string $id, array $data)
     {
         if (empty($data['password'])){
-            $userTemp = $this->userRepository->getUserById($id);
-            $data['password'] = $userTemp->password;
-        }else{
-            $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+            // No incluir password si está vacío para evitar problemas
+            unset($data['password']);
         }
 
         $user = $this->userRepository->updateUser($id, $data);
@@ -99,10 +97,10 @@ class UserService
         if (!$user)
             throw new HTTPException(lang('User.userNotFound'), Response::HTTP_NOT_FOUND);
 
-        if (password_hash($data['password'], PASSWORD_BCRYPT) == $user->password)
+        if (!password_verify($data['current_password'], $user->password))
             throw new HTTPException(lang('User.invalidCurrentPassword'), Response::HTTP_UNAUTHORIZED);
 
-        $updated = $this->userRepository->updateUser($data['id'], ['password' => password_hash($data['password'], PASSWORD_BCRYPT)]);
+        $updated = $this->userRepository->updateUser($data['id'], ['password' => $data['new_password']]);
         if (!$updated)
             throw new HTTPException(lang('User.passwordChangeFailed'), Response::HTTP_BAD_REQUEST);
 

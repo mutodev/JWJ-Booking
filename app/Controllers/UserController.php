@@ -100,6 +100,18 @@ class UserController extends ResourceController
         try {
             $json = $this->request->getBody();
             $data = json_decode($json, true);
+
+            // Obtener ID del usuario desde el token JWT
+            $authHeader = $this->request->getHeaderLine('Authorization');
+            if (!$authHeader) {
+                throw new \Exception('Token not provided', 401);
+            }
+
+            $token = str_replace('Bearer ', '', $authHeader);
+            $key = env('encryption.key');
+            $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($key, 'HS256'));
+            $data['id'] = $decoded->id;
+
             return $this->response
                 ->setStatusCode(200)
                 ->setJSON(create_response(lang('App.password_changed'), $this->userService->changePassword($data)));

@@ -52,6 +52,7 @@ $routes->group('api', function ($routes) {
         $routes->put('(:any)', [UserController::class, 'updateUser']);
         $routes->delete('(:any)', [UserController::class, 'deleteUser']);
         $routes->get('by-rol/(:any)', [UserController::class, 'getUserByRole']);
+        $routes->post('change-password', [UserController::class, 'changePassword']);
     });
 
     // Roles
