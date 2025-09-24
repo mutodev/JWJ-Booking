@@ -2,31 +2,23 @@
 
 namespace App\Services;
 
-use App\Models\ReservationModel;
+use App\Repositories\DashboardRepository;
 use App\Repositories\ReservationAddonRepository;
 
 class DashboardService
 {
-    protected $reservationModel;
-    protected $reservationAddonRepository;
+    protected DashboardRepository $dashboardRepository;
+    protected ReservationAddonRepository $reservationAddonRepository;
 
     public function __construct()
     {
-        $this->reservationModel = new ReservationModel();
+        $this->dashboardRepository = new DashboardRepository();
         $this->reservationAddonRepository = new ReservationAddonRepository();
     }
 
     public function getReservationsByStatus()
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('reservations');
-
-        $results = $builder
-            ->select('status, COUNT(*) as count')
-            ->where('deleted_at', null)
-            ->groupBy('status')
-            ->get()
-            ->getResultArray();
+        $results = $this->dashboardRepository->getReservationsByStatus();
 
         $statusLabels = [
             'new' => 'Nueva',
@@ -62,22 +54,11 @@ class DashboardService
 
     public function getReservationsStatusEvolution()
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('reservations');
-
         // Automáticamente calcular últimos 6 meses
         $startDate = date('Y-m-01', strtotime('-6 months'));
         $endDate = date('Y-m-t');
 
-        $results = $builder
-            ->select("DATE_FORMAT(created_at, '%Y-%m') as month, status, COUNT(*) as count")
-            ->where('deleted_at', null)
-            ->where('created_at >=', $startDate)
-            ->where('created_at <=', $endDate)
-            ->groupBy(['month', 'status'])
-            ->orderBy('month', 'ASC')
-            ->get()
-            ->getResultArray();
+        $results = $this->dashboardRepository->getReservationsStatusEvolution($startDate, $endDate);
 
         $statusLabels = [
             'new' => 'Nueva',
@@ -127,16 +108,7 @@ class DashboardService
 
     public function getPaymentStatus()
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('reservations');
-
-        $results = $builder
-            ->select('is_paid, COUNT(*) as count, SUM(total_amount) as total_amount')
-            ->where('deleted_at', null)
-            ->where('status !=', 'cancelled')
-            ->groupBy('is_paid')
-            ->get()
-            ->getResultArray();
+        $results = $this->dashboardRepository->getPaymentStatusData();
 
         $data = [
             'paid' => [
@@ -183,16 +155,7 @@ class DashboardService
 
     public function getInvoiceStatus()
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('reservations');
-
-        $results = $builder
-            ->select('is_invoiced, COUNT(*) as count, SUM(total_amount) as total_amount')
-            ->where('deleted_at', null)
-            ->where('status !=', 'cancelled')
-            ->groupBy('is_invoiced')
-            ->get()
-            ->getResultArray();
+        $results = $this->dashboardRepository->getInvoiceStatusData();
 
         $data = [
             'invoiced' => [
@@ -239,20 +202,7 @@ class DashboardService
 
     public function getMostPopularJamTypes($limit = 10)
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('reservations r');
-
-        $results = $builder
-            ->select('s.name as jam_type, COUNT(*) as total_reservations, SUM(r.total_amount) as total_revenue')
-            ->join('service_prices sp', 'r.service_price_id = sp.id')
-            ->join('services s', 'sp.service_id = s.id')
-            ->where('r.deleted_at', null)
-            ->where('r.status !=', 'cancelled')
-            ->groupBy(['s.id', 's.name'])
-            ->orderBy('total_reservations', 'DESC')
-            ->limit($limit)
-            ->get()
-            ->getResultArray();
+        $results = $this->dashboardRepository->getMostPopularJamTypesData($limit);
 
         $colors = [
             '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
@@ -278,21 +228,7 @@ class DashboardService
 
     public function getCitiesWithMostEvents($limit = 10)
     {
-        $db = \Config\Database::connect();
-        $builder = $db->table('reservations r');
-
-        $results = $builder
-            ->select('c.name as city_name, co.name as county_name, COUNT(*) as total_events, SUM(r.total_amount) as total_revenue, AVG(r.total_amount) as avg_revenue')
-            ->join('zipcodes z', 'r.zipcode_id = z.id')
-            ->join('cities c', 'z.city_id = c.id')
-            ->join('counties co', 'c.county_id = co.id')
-            ->where('r.deleted_at', null)
-            ->where('r.status !=', 'cancelled')
-            ->groupBy(['c.id', 'c.name', 'co.name'])
-            ->orderBy('total_events', 'DESC')
-            ->limit($limit)
-            ->get()
-            ->getResultArray();
+        $results = $this->dashboardRepository->getCitiesWithMostEventsData($limit);
 
         $colors = [
             '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
