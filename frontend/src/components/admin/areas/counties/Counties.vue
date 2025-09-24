@@ -47,9 +47,6 @@
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
-          <button class="btn btn-sm btn-danger" @click="deleteModal(item)">
-            <i class="bi bi-trash"></i> Delete
-          </button>
         </template>
       </EasyDataTable>
     </div>
@@ -70,12 +67,6 @@
     @saved="handle"
   />
 
-  <CountiesDelete
-    :show="modalDeleteVisible"
-    :data="selectedData"
-    @close="modalDeleteVisible = false"
-    @saved="handle"
-  />
 </template>
 
 <script setup>
@@ -83,7 +74,6 @@ import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import CountiesEdit from "./CountiesEdit.vue";
 import CountiesCreate from "./CountiesCreate.vue";
-import CountiesDelete from "./CountiesDelete.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Counties", icon: "bi-pin-map" });
@@ -95,7 +85,6 @@ const data = ref([]);
 const areas = ref([]);
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
-const modalDeleteVisible = ref(false);
 const selectedData = ref(null);
 const searchValue = ref("");
 
@@ -124,10 +113,6 @@ const createModal = () => {
   modalCreateVisible.value = true;
 };
 
-const deleteModal = (item) => {
-  selectedData.value = { ...item };
-  modalDeleteVisible.value = true;
-};
 
 const getData = async () => {
   try {

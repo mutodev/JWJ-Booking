@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar sticky-top navbar-light bg-white shadow-sm py-2">
+  <header class="admin-navbar navbar sticky-top navbar-light bg-white shadow-sm py-2">
     <div
       class="container-fluid d-flex align-items-center justify-content-between"
     >
@@ -104,62 +104,4 @@ onUnmounted(() => {
 const headerData = inject("headerData");
 </script>
 
-<style scoped>
-.navbar {
-  z-index: 1030;
-  font-family: "Segoe UI", sans-serif;
-}
-
-.btn:focus {
-  box-shadow: none;
-}
-
-.dropdown {
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  left: auto;
-  min-width: 180px;
-  max-width: 200px;
-  margin-top: 0.25rem;
-  z-index: 1050;
-}
-
-.dropdown-menu-end {
-  min-width: 180px;
-}
-
-@media (max-width: 576px) {
-  .dropdown-menu {
-    right: 0;
-    left: auto;
-    min-width: 160px;
-  }
-}
-
-.dropdown-item.router-link-active,
-.dropdown-item.router-link-exact-active {
-  color: #212529 !important;
-  background-color: #f8f9fa;
-}
-
-.dropdown-item.router-link-active:hover,
-.dropdown-item.router-link-exact-active:hover {
-  color: #1e2125 !important;
-  background-color: #e9ecef;
-}
-
-.dropdown-item.router-link-active i,
-.dropdown-item.router-link-exact-active i {
-  color: #212529 !important;
-}
-
-.dropdown-item.router-link-active:hover i,
-.dropdown-item.router-link-exact-active:hover i {
-  color: #1e2125 !important;
-}
-</style>
+<!-- Styles moved to admin-consolidated.css -->

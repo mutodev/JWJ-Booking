@@ -1,5 +1,5 @@
 <template>
-  <div class="card shadow-sm">
+  <div class="admin-dashboard card shadow-sm">
     <div class="card-header bg-white border-bottom">
       <div class="chart-header">
         <h5 class="card-title mb-0">

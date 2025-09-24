@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div v-if="show" class="admin-modal admin-form modal fade show d-block" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <!-- Header -->
@@ -325,35 +325,3 @@ const formatCurrency = (amount) => {
 };
 </script>
 
-<style scoped>
-.modal {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.modal-backdrop {
-  z-index: 1040;
-}
-.modal-dialog {
-  z-index: 1050;
-}
-
-.segment {
-  margin-bottom: 1.5rem;
-}
-.segment-title {
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  color: #333;
-  border-bottom: 2px solid #f0f0f0;
-  padding-bottom: 0.5rem;
-}
-
-.form-label {
-  font-weight: 500;
-  color: #555;
-}
-
-.form-control:read-only {
-  background-color: #f8f9fa;
-  border-color: #e9ecef;
-}
-</style>

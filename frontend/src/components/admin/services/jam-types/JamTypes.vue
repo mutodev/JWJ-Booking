@@ -58,9 +58,6 @@
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
-          <!-- <button class="btn btn-sm btn-danger me-2" @click="deleteModal(item)">
-            <i class="bi bi-trash"></i> Delete
-          </button> -->
         </template>
       </EasyDataTable>
     </div>
@@ -80,12 +77,6 @@
     @saved="handle"
   />
 
-  <JamTypesDelete
-    :show="modalDeleteVisible"
-    :data="selectedData"
-    @close="modalDeleteVisible = false"
-    @saved="handle"
-  />
 </template>
 
 <script setup>
@@ -93,7 +84,6 @@ import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import JamTypesEdit from "./JamTypesEdit.vue";
 import JamTypesCreate from "./JamTypesCreate.vue";
-import JamTypesDelete from "./JamTypesDelete.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Jam Types", icon: "bi-music-note-beamed" });
@@ -104,7 +94,6 @@ const searchValue = ref("");
 
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
-const modalDeleteVisible = ref(false);
 const selectedData = ref(null);
 
 const headers = computed(() => {
@@ -130,10 +119,6 @@ const createModal = () => {
   modalCreateVisible.value = true;
 };
 
-const deleteModal = (item) => {
-  selectedData.value = { ...item };
-  modalDeleteVisible.value = true;
-};
 
 const getData = async () => {
   try {
@@ -147,7 +132,6 @@ const getData = async () => {
 const handle = () => {
   modalCreateVisible.value = false;
   modalEditVisible.value = false;
-  modalDeleteVisible.value = false;
   getData();
 };
 

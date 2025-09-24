@@ -1,6 +1,6 @@
 <template>
   <nav
-    class="sidebar bg-dark text-white position-fixed h-100 shadow-sm"
+    class="admin-sidebar sidebar bg-dark text-white position-fixed h-100 shadow-sm"
     :class="{ collapsed: isCollapsed }"
   >
     <ul class="nav flex-column pt-5 mt-3">
@@ -61,7 +61,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import "../../../assets/styles/sidebar-admin.css";
+// Styles moved to admin-consolidated.css
 
 const access = ref(JSON.parse(sessionStorage.getItem("access") || "[]"));
 

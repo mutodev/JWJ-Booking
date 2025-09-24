@@ -1,12 +1,12 @@
 <template>
-  <div class="d-flex">
+  <div class="admin-layout d-flex">
     <!-- Sidebar fijo -->
     <SidebarAdmin />
 
     <!-- Contenido principal -->
     <div class="flex-grow-1 d-flex flex-column min-vh-100 bg-light">
       <NavbarAdmin />
-      <main class="p-4">
+      <main class="admin-content p-4">
         <router-view />
       </main>
     </div>
@@ -18,7 +18,7 @@ import SidebarAdmin from "./template/SidebarAdmin.vue";
 import NavbarAdmin from "./template/NavbarAdmin.vue";
 import { provide, ref } from "vue";
 
-import '@/assets/styles/style-admin.css';
+import '@/assets/styles/admin-consolidated.css';
 
 const headerData = ref({
   title: "Dashboard",
@@ -33,16 +33,4 @@ provide('headerData', headerData)
 provide('updateHeaderData', updateHeaderData)
 </script>
 
-<style scoped>
-main {
-  margin-left: 250px;
-  transition: margin-left 0.3s ease;
-}
-
-/* Mobile: sidebar angosto */
-@media (max-width: 991px) {
-  main {
-    margin-left: 70px;
-  }
-}
-</style>
+<!-- Styles moved to admin-consolidated.css -->

@@ -1,6 +1,6 @@
 <template>
   <div class="row justify-content-center">
-    <div class="col-10">
+    <div class="admin-form col-10">
       <table class="table table-sm table-borderless align-middle text-center">
         <thead class="border-bottom">
           <tr>
@@ -131,23 +131,3 @@ const total = computed(() => {
 });
 </script>
 
-<style scoped>
-.table td,
-.table th {
-  vertical-align: middle;
-  font-size: 0.8rem;
-}
-
-.table tbody tr:hover {
-  background-color: var(--bs-light);
-  transition: 0.2s;
-}
-
-.text-muted {
-  font-size: 0.7rem;
-}
-
-.text-danger {
-  font-weight: 500;
-}
-</style>

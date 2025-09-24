@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="modal fade show d-block" tabindex="-1" role="dialog">
+  <div v-if="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -696,14 +696,3 @@ const submitForm = async () => {
 };
 </script>
 
-<style scoped>
-.modal {
-  background-color: rgba(0, 0, 0, 0.5);
-}
-.modal-backdrop {
-  z-index: 1040;
-}
-.modal-dialog {
-  z-index: 1050;
-}
-</style>

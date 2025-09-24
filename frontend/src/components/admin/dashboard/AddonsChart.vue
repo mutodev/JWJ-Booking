@@ -1,5 +1,5 @@
 <template>
-  <div class="card shadow-sm h-100">
+  <div class="admin-dashboard card shadow-sm h-100">
     <div class="card-header bg-white border-bottom">
       <h5 class="card-title mb-0">
         <i class="bi bi-puzzle me-2 text-purple"></i>
@@ -187,36 +187,3 @@ const formatCurrency = (amount) => {
 };
 </script>
 
-<style scoped>
-.text-purple {
-  color: #6f42c1 !important;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-}
-
-.chart-container {
-  position: relative;
-  height: 300px;
-  margin-bottom: 1rem;
-}
-
-.dashboard-stats {
-  padding-top: 1rem;
-  border-top: 1px solid #e9ecef;
-  margin-top: 1rem;
-}
-
-.dashboard-stats h4 {
-  font-size: 1.5rem;
-  margin-bottom: 0.25rem;
-}
-
-.dashboard-stats small {
-  font-size: 0.875rem;
-}
-</style>

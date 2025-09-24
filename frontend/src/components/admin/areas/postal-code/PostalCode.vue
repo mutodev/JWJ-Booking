@@ -56,12 +56,6 @@
           </div>
         </template>
 
-        <!-- Slot para las acciones -->
-        <template #item-actions="item">
-          <button class="btn btn-sm btn-danger me-2" @click="deleteModal(item)">
-            <i class="bi bi-trash"></i> Delete
-          </button>
-        </template>
       </EasyDataTable>
     </div>
   </div>
@@ -73,18 +67,11 @@
     @saved="handle"
   />
 
-  <PostalCodeDelete
-    :show="modalDeleteVisible"
-    :data="selectedData"
-    @close="modalDeleteVisible = false"
-    @saved="handle"
-  />
 </template>
 
 <script setup>
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
-import PostalCodeDelete from "./PostalCodeDelete.vue";
 import PostalCodeCreate from "./PostalCodeCreate.vue";
 
 const updateHeaderData = inject("updateHeaderData");
@@ -97,7 +84,6 @@ const cities = ref([]);
 
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
-const modalDeleteVisible = ref(false);
 const selectedData = ref(null);
 
 const headers = computed(() => {
@@ -117,10 +103,6 @@ const createModal = () => {
   modalCreateVisible.value = true;
 };
 
-const deleteModal = (item) => {
-  selectedData.value = { ...item };
-  modalDeleteVisible.value = true;
-};
 
 const getData = async () => {
   try {

@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-container">
+  <div class="admin-dashboard dashboard-container">
     <!-- Dashboard Header Section -->
     <div class="row mb-4">
       <div class="col-12">
@@ -184,4 +184,4 @@ onMounted(() => {
 });
 </script>
 
-<style src="@/assets/styles/dashboard.css" scoped></style>
+<!-- Styles moved to admin-consolidated.css -->
