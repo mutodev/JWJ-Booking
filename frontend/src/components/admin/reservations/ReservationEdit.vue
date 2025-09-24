@@ -99,6 +99,9 @@
                     <option value="confirmed">Confirmed</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
+                  <small v-if="statusChangedByPayment" class="text-success">
+                    <i class="bi bi-check-circle"></i> Status automatically changed to confirmed
+                  </small>
                 </div>
                 <div class="col-md-4">
                   <div class="form-check mt-4">
@@ -107,6 +110,7 @@
                       class="form-check-input"
                       type="checkbox"
                       id="isPaid"
+                      @change="handlePaymentChange"
                     >
                     <label class="form-check-label" for="isPaid">
                       Payment Received
@@ -240,6 +244,7 @@ import api from "@/services/axios";
 
 const editData = ref({});
 const saving = ref(false);
+const statusChangedByPayment = ref(false);
 
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
@@ -254,6 +259,7 @@ watch(
   () => props.data,
   (newData) => {
     editData.value = { ...newData };
+    statusChangedByPayment.value = false; // Reset notification
     // Convert date format if needed
     if (editData.value.event_date && typeof editData.value.event_date === 'object') {
       const date = new Date(editData.value.event_date);
@@ -265,6 +271,18 @@ watch(
 
 const closeModal = () => {
   emit("close");
+};
+
+const handlePaymentChange = () => {
+  // Si se marca como pagado, cambiar automáticamente el estado a confirmado
+  if (editData.value.is_paid && editData.value.status !== 'confirmed') {
+    editData.value.status = 'confirmed';
+    statusChangedByPayment.value = true;
+    // Ocultar el mensaje después de 3 segundos
+    setTimeout(() => {
+      statusChangedByPayment.value = false;
+    }, 3000);
+  }
 };
 
 const saveReservation = async () => {

@@ -1,68 +1,261 @@
-# CodeIgniter 4 Application Starter
+# JamWithJamie - Plataforma de Entretenimiento Infantil
 
-## What is CodeIgniter?
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
+![PHP](https://img.shields.io/badge/PHP-8.1%2B-purple.svg)
+![CodeIgniter](https://img.shields.io/badge/CodeIgniter-4-orange.svg)
+![Vue.js](https://img.shields.io/badge/Vue.js-3.5-green.svg)
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+## 📋 Descripción del Proyecto
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+JamWithJamie es una plataforma web completa para la gestión de servicios de entretenimiento infantil. Permite a los clientes reservar servicios de entretenimiento para fiestas infantiles, gestionar addons, y administrar toda la operación del negocio.
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+### 🎯 Funcionalidades Principales
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+- **Reservas Multi-Step**: Wizard de 8 pasos para crear reservas
+- **Gestión de Servicios**: Catálogo completo de servicios de entretenimiento
+- **Sistema de Addons**: Servicios adicionales personalizables
+- **Cálculo Automático**: Precios dinámicos con recargos por fecha
+- **Dashboard Administrativo**: Métricas y análisis del negocio
+- **Gestión de Clientes**: CRM integrado para manejo de customers
+- **Sistema de Roles**: Control de acceso granular
+- **API RESTful**: Backend completo con CodeIgniter 4
 
-## Installation & updates
+## 🏗️ Arquitectura del Proyecto
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+```
+JamWitjJamie/
+├── 🎨 frontend/           # Vue.js 3 SPA
+│   ├── src/components/    # Componentes Vue reutilizables
+│   ├── src/views/        # Vistas principales
+│   └── src/services/     # Servicios API
+├── 🔧 app/               # Backend CodeIgniter 4
+│   ├── Controllers/      # Controladores REST
+│   ├── Services/         # Lógica de negocio
+│   ├── Repositories/     # Capa de datos
+│   ├── Models/          # Modelos de datos
+│   └── Database/        # Migraciones y seeders
+└── 📚 docs/             # Documentación
+```
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+## 🚀 Stack Tecnológico
 
-## Setup
+### Backend
+- **Framework**: CodeIgniter 4.4+
+- **PHP**: 8.1+
+- **Base de Datos**: MySQL 8.0+
+- **Autenticación**: JWT Tokens
+- **Validación**: CodeIgniter Validation
+- **Email**: Brevo API Integration
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+### Frontend
+- **Framework**: Vue.js 3.5
+- **Build Tool**: Vite 7.0
+- **UI Framework**: Bootstrap 5.3
+- **State Management**: Composables + Pinia
+- **Routing**: Vue Router 4
+- **Forms**: VeeValidate 4
+- **Charts**: Chart.js + Vue-ChartJS
+- **HTTP Client**: Axios
 
-## Important Change with index.php
+### Desarrollo
+- **CSS Preprocessor**: Sass
+- **Package Manager**: NPM
+- **Icons**: Bootstrap Icons
+- **Animations**: Animate.css
+- **Notifications**: Vue Toastification
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+## 📊 Modelo de Datos
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+### Entidades Principales
 
-**Please** read the user guide for a better explanation of how CI4 works!
+#### 🎪 **Reservas (Reservations)**
+- Sistema central de reservas con cálculos automáticos
+- Estados: new, under_review, confirmed, cancelled
+- Integración con servicios, addons y clientes
 
-## Repository Management
+#### 👨‍👩‍👧‍👦 **Clientes (Customers)**
+- Gestión completa de información de clientes
+- Historial de reservas y preferencias
+- Sistema de contacto integrado
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+#### 🎭 **Servicios (Services)**
+- Catálogo de servicios de entretenimiento
+- Precios por condado y área metropolitana
+- Configuración de performers y duraciones
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+#### ➕ **Addons**
+- Servicios adicionales personalizables
+- Tipos: standard, jukebox
+- Precios dinámicos y disponibilidad
 
-## Server Requirements
+#### 🗺️ **Geografía**
+```
+Metropolitan Areas → Counties → Cities → ZipCodes
+```
 
-PHP version 8.1 or higher is required, with the following extensions installed:
+## 🔄 Flujo de Negocio
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+### Proceso de Reserva (8 Steps)
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - If you are still using PHP 7.4 or 8.0, you should upgrade immediately.
-> - The end of life date for PHP 8.1 will be December 31, 2025.
+1. **Step 1**: Información del Cliente
+2. **Step 2**: Selección de Código Postal
+3. **Step 3**: Selección de Servicio
+4. **Step 4**: Cantidad de Niños
+5. **Step 5**: Duración del Evento
+6. **Step 6**: Selección de Addons
+7. **Step 7**: Confirmación de Subtotal
+8. **Step 8**: Información Detallada del Evento
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+### Cálculo de Precios
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+```
+Base Total = Servicio Base + Addons + (Niños Extra × Fee)
+Recargo = Base Total × Porcentaje (según proximidad fecha)
+Total Final = Base Total + Recargo
+```
+
+**Recargos por Fecha:**
+- < 2 días: +20%
+- 2-7 días: +10%
+- > 7 días: Sin recargo
+
+## 🔐 Sistema de Autenticación
+
+- **JWT Tokens** para autenticación stateless
+- **Roles y Permisos** granulares
+- **Middleware** de autorización en rutas
+- **Refresh Tokens** para sesiones extendidas
+
+## 📡 API Endpoints
+
+### Rutas Públicas (Frontend)
+```
+GET  /api/home/counties           # Lista de condados
+GET  /api/home/services/{id}      # Servicios por condado
+GET  /api/home/addons            # Addons activos
+POST /api/home/reservation       # Crear reserva
+```
+
+### Rutas Administrativas
+```
+GET  /api/reservations           # Lista reservas
+GET  /api/dashboard/*            # Métricas del negocio
+GET  /api/customers              # Gestión clientes
+```
+
+## 🚀 Instalación y Configuración
+
+### Prerrequisitos
+- PHP 8.1+
+- MySQL 8.0+
+- Node.js 18+
+- Composer 2.0+
+
+### Backend Setup
+```bash
+# Clonar repositorio
+git clone <repository-url>
+cd JamWitjJamie
+
+# Instalar dependencias PHP
+composer install
+
+# Configurar base de datos
+cp app/Config/Database.example.php app/Config/Database.php
+# Editar configuración de BD
+
+# Ejecutar migraciones
+php spark migrate
+
+# Ejecutar seeders
+php spark db:seed DatabaseSeeder
+
+# Iniciar servidor
+php spark serve
+```
+
+### Frontend Setup
+```bash
+# Navegar a frontend
+cd frontend
+
+# Instalar dependencias
+npm install
+
+# Desarrollo
+npm run watch
+
+# Producción
+npm run build
+```
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+php spark test
+```
+
+### API Testing
+- Usar Postman/Insomnia con collection incluida
+- Tests automatizados con PHPUnit
+
+## 📈 Métricas y Analytics
+
+El dashboard incluye:
+- **Reservas por Estado**: Distribución de estados
+- **Evolución Temporal**: Tendencias mensuales
+- **Estado de Pagos**: Métricas financieras
+- **Addons Populares**: Análisis de productos
+- **Ciudades Top**: Geografía de servicios
+- **Tipos de Jam**: Servicios más demandados
+
+## 🔧 Configuración
+
+### Variables de Entorno
+```env
+# Base de datos
+database.default.hostname = localhost
+database.default.database = jamwithjamie
+database.default.username = user
+database.default.password = password
+
+# JWT
+JWT_SECRET = your-secret-key
+JWT_EXPIRE = 3600
+
+# Email
+BREVO_API_KEY = your-brevo-key
+```
+
+## 📚 Documentación Técnica
+
+- [API Documentation](docs/API.md)
+- [Database Schema](docs/DATABASE.md)
+- [Frontend Components](docs/FRONTEND.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+
+## 🤝 Contribución
+
+1. Fork el proyecto
+2. Crear branch de feature (`git checkout -b feature/AmazingFeature`)
+3. Commit cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push al branch (`git push origin feature/AmazingFeature`)
+5. Abrir Pull Request
+
+## 📝 Licencia
+
+Este proyecto está bajo la licencia MIT. Ver `LICENSE` para más detalles.
+
+## 👥 Equipo
+
+- **Backend Developer**: Arquitectura CodeIgniter 4
+- **Frontend Developer**: Vue.js 3 SPA
+- **Database Designer**: Modelo de datos optimizado
+- **DevOps**: Configuración de despliegue
+
+---
+
+**JamWithJamie** - Llevando alegría a las fiestas infantiles 🎉
+
+*Versión: 2.0.0 | Última actualización: Septiembre 2025*

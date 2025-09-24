@@ -3,31 +3,72 @@
 /**
  * ReservationService
  *
- * Servicio para gestionar reservas de servicios de entretenimiento.
- * Maneja la creación, consulta, actualización y eliminación de reservas,
- * incluyendo la lógica de negocio para cálculos de precios y fees.
+ * Servicio principal para gestionar reservas de servicios de entretenimiento infantil.
+ * Maneja todo el ciclo de vida de las reservas: creación, consulta, actualización y eliminación.
+ *
+ * CARACTERÍSTICAS PRINCIPALES:
+ * - Creación de reservas desde formulario multi-step del frontend
+ * - Cálculo automático de precios, fees y recargos
+ * - Gestión de clientes (crear o encontrar existentes)
+ * - Manejo transaccional de addons
+ * - Validaciones de negocio completas
+ * - Soporte para diferentes tipos de precios (standard/jukebox)
+ *
+ * ESTRUCTURA DE PRECIOS:
+ * - Precio base del servicio
+ * - Costo por niños adicionales (extra_child_fee)
+ * - Precio total de addons seleccionados
+ * - Recargos por proximidad de fecha:
+ *   * < 2 días: +20%
+ *   * 2-7 días: +10%
+ *   * > 7 días: Sin recargo
  *
  * @package App\Services
  * @author  JamWithJamie Team
- * @version 1.0.0
+ * @version 2.0.0
+ * @since   1.0.0
  */
 
 namespace App\Services;
 
 use App\Repositories\ReservationRepository;
 use App\Repositories\CustomerRepository;
+use App\Repositories\ReservationAddonRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 
+/**
+ * Servicio principal para gestión de reservas
+ */
 class ReservationService
 {
+    /**
+     * Repository para operaciones de reservas
+     * @var ReservationRepository
+     */
     protected $repository;
+
+    /**
+     * Repository para operaciones de clientes
+     * @var CustomerRepository
+     */
     protected $customerRepository;
 
+    /**
+     * Repository para relaciones reserva-addon
+     * @var ReservationAddonRepository
+     */
+    protected $reservationAddonRepository;
+
+    /**
+     * Constructor del servicio
+     * Inicializa todos los repositories necesarios
+     */
     public function __construct()
     {
         $this->repository = new ReservationRepository();
         $this->customerRepository = new CustomerRepository();
+        $this->reservationAddonRepository = new ReservationAddonRepository();
     }
 
     /**
@@ -136,26 +177,99 @@ class ReservationService
     }
 
     /**
-     * Crea una reserva desde los datos del formulario multi-step del frontend
+     * Crea una nueva reserva desde el formulario multi-step del frontend
      *
-     * Este método procesa todos los datos recopilados en los 8 steps del wizard,
-     * crea o encuentra el customer, calcula precios y fees, y guarda la reserva.
+     * PROCESO COMPLETO:
+     * 1. Valida todos los datos requeridos y formatos
+     * 2. Inicia transacción de base de datos
+     * 3. Crea o encuentra el cliente por email
+     * 4. Calcula precios detallados (servicio + addons + extras + recargos)
+     * 5. Crea la reserva principal
+     * 6. Guarda relaciones de addons en tabla separada
+     * 7. Confirma transacción
+     *
+     * VALIDACIONES APLICADAS:
+     * - Datos requeridos presentes
+     * - Fecha del evento futura y formato válido
+     * - Al menos 1 niño requerido
+     * - Precio de servicio válido (> 0)
+     * - Addons con IDs y precios válidos
+     * - Duración requerida si no está en servicio
+     *
+     * CÁLCULOS AUTOMÁTICOS:
+     * - Niños extra: selectedKids - serviceIncludedKids
+     * - Total addons: suma(quantity × base_price)
+     * - Recargos por fecha: 20% (<2 días), 10% (2-7 días)
+     * - Total final: servicio + addons + extras + recargos
      *
      * @param array $formData Datos del formulario con estructura:
-     *   - customer: Datos del cliente (Step 1)
-     *   - zipcode: Código postal validado (Step 2)
-     *   - service: Servicio seleccionado (Step 3)
-     *   - kids: Información de niños (Step 4)
-     *   - hours: Duración del evento (Step 5)
-     *   - addons: Servicios adicionales (Step 6)
-     *   - subtotal: Confirmación de subtotal (Step 7)
-     *   - information: Información detallada del evento (Step 8)
+     *   - customer: array {
+     *       firstName: string, lastName: string,
+     *       email: string, phone: string
+     *     }
+     *   - zipcode: array { id: string }
+     *   - service: array {
+     *       id: string, amount: float, extra_child_fee: float,
+     *       performers_count: int, children_count: int
+     *     }
+     *   - kids: array { selectedKids: int }
+     *   - hours: array { duration: float }
+     *   - addons: array[] {
+     *       id: string, base_price: float, quantity: int
+     *     }
+     *   - information: array {
+     *       fullAddress: string, eventDate: string (Y-m-d),
+     *       startTime: string, entertainmentStartTime: string,
+     *       birthdayChildName: string, childAge: int,
+     *       ageRange: string, songRequests: string,
+     *       happyBirthdayRequest: string, instructions: string
+     *     }
      *
-     * @return array Reserva creada con cálculos detallados
-     * @throws HTTPException Si faltan datos requeridos o falla la creación
+     * @return array {
+     *   reservation: object,      // Objeto reserva creada
+     *   addons_saved: int,        // Cantidad de addons guardados
+     *   calculation: array {      // Desglose detallado de cálculos
+     *     service_price: float,
+     *     addons_total: float,
+     *     extra_children_total: float,
+     *     extra_children_count: int,
+     *     base_total: float,
+     *     surcharge_amount: float,
+     *     grand_total: float
+     *   }
+     * }
+     *
+     * @throws HTTPException 400 Si faltan datos requeridos
+     * @throws HTTPException 400 Si la fecha es pasada o formato inválido
+     * @throws HTTPException 400 Si menos de 1 niño
+     * @throws HTTPException 400 Si precio de servicio inválido
+     * @throws HTTPException 400 Si datos de addon inválidos
+     * @throws HTTPException 400 Si falta duración requerida
+     * @throws HTTPException 400 Si falla creación de cliente
+     * @throws HTTPException 400 Si falla creación de reserva
+     * @throws HTTPException 400 Si falla guardado de addons
+     * @throws HTTPException 500 Si falla la transacción
+     * @throws HTTPException 500 Si error inesperado
+     *
+     * @example
+     * ```php
+     * $data = [
+     *   'customer' => ['firstName' => 'Juan', 'lastName' => 'Pérez', ...],
+     *   'service' => ['id' => 'uuid', 'amount' => 350, ...],
+     *   'kids' => ['selectedKids' => 10],
+     *   'addons' => [['id' => 'uuid', 'base_price' => 150, 'quantity' => 1]],
+     *   // ... más datos
+     * ];
+     * $result = $service->createFromForm($data);
+     * echo $result['calculation']['grand_total']; // Total final
+     * ```
+     *
+     * @version 2.0.0
+     * @since 1.5.0
      */
     public function createFromForm(array $formData)
     {
+        // Validar datos requeridos
         $customer = $formData['customer'] ?? null;
         $zipcode = $formData['zipcode'] ?? null;
         $service = $formData['service'] ?? null;
@@ -164,100 +278,180 @@ class ReservationService
         $addons = $formData['addons'] ?? [];
         $information = $formData['information'] ?? null;
 
+        // Validaciones básicas
         if (!$customer || !$zipcode || !$service || !$information) {
             throw new HTTPException('Missing required data', Response::HTTP_BAD_REQUEST);
         }
 
-        $customerId = $this->createOrFindCustomer($customer, $information);
-
-        // Calcular precios
-        $servicePrice = floatval($service['amount'] ?? 0);
-        $addonsTotal = 0;
-
-        if (!empty($addons)) {
-            $addonsTotal = array_reduce($addons, function ($sum, $addon) {
-                return $sum + floatval($addon['base_price'] ?? 0);
-            }, 0);
-        }
-
-        // Calcular recargo por niños adicionales
-        $extraChildren = max(0, intval($kids['selectedKids'] ?? 0) - intval($service['children_count'] ?? 0));
-        $extraChildFee = floatval($service['extra_child_fee'] ?? 0);
-        $extraChildrenTotal = $extraChildren * $extraChildFee;
-
-        $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
-
-        // Recargo por proximidad de fecha
+        // Validar fecha del evento
         $eventDate = $information['eventDate'] ?? null;
-        $surchargeAmount = 0;
-
         if ($eventDate) {
-            $bookingDate = new \DateTime($eventDate);
-            $today = new \DateTime();
-            $diffDays = (int)$today->diff($bookingDate)->format("%r%a");
-
-            if ($diffDays < 0) $diffDays = 0;
-
-            if ($diffDays < 2) {
-                $surchargeAmount = $baseTotal * 0.2; // 20% recargo
-            } elseif ($diffDays <= 7) {
-                $surchargeAmount = $baseTotal * 0.1; // 10% recargo
+            try {
+                $eventDateTime = new \DateTime($eventDate);
+                $today = new \DateTime('today'); // Solo fecha, sin hora
+                if ($eventDateTime < $today) {
+                    throw new HTTPException('Event date cannot be in the past', Response::HTTP_BAD_REQUEST);
+                }
+            } catch (\Exception $e) {
+                throw new HTTPException('Invalid event date format', Response::HTTP_BAD_REQUEST);
             }
         }
 
-        $grandTotal = $baseTotal + $surchargeAmount;
-
-        // Mapear datos a la estructura de la BD
-        $reservationData = [
-            'customer_id' => $customerId,
-            'service_price_id' => $service['id'] ?? null,
-            'zipcode_id' => $zipcode['id'] ?? null,
-            'event_address' => $information['fullAddress'] ?? null,
-            'event_date' => $eventDate,
-            'event_time' => $information['startTime'] ?? null,
-            'children_count' => intval($kids['selectedKids'] ?? 0),
-            'performers_count' => intval($service['performers_count'] ?? 1),
-            'duration_hours' => floatval($hours['duration'] ?? $service['min_duration_hours'] ?? 1),
-            'price_type' => $this->determinePriceType($addons),
-            'base_price' => $servicePrice,
-            'addons_total' => $addonsTotal,
-            'expedition_fee' => $surchargeAmount,
-            'extra_children_fee' => $extraChildrenTotal,
-            'total_amount' => $grandTotal,
-            'status' => 'new',
-            'is_invoiced' => false,
-            'is_paid' => false,
-            'arrival_parking_instructions' => $information['instructions'] ?? null,
-            'entertainment_start_time' => $information['entertainmentStartTime'] ?? null,
-            'birthday_child_name' => $information['birthdayChildName'] ?? null,
-            'birthday_child_age' => intval($information['childAge'] ?? 0),
-            'children_age_range' => $information['ageRange'] ?? null,
-            'song_requests' => $information['songRequests'] ?? null,
-            'sing_happy_birthday' => ($information['happyBirthdayRequest'] ?? 'no') === 'yes',
-            'customer_notes' => null,
-            'internal_notes' => null
-        ];
-
-        // Crear la reserva
-        $reservation = $this->repository->create($reservationData);
-
-        if (!$reservation) {
-            throw new HTTPException('Failed to create reservation', Response::HTTP_BAD_REQUEST);
+        // Validar campos numéricos
+        $selectedKids = intval($kids['selectedKids'] ?? 0);
+        if ($selectedKids < 1) {
+            throw new HTTPException('At least one child is required', Response::HTTP_BAD_REQUEST);
         }
 
-        // TODO: Implementar guardado de addons en tabla reservation_addons
+        $serviceAmount = floatval($service['amount'] ?? 0);
+        if ($serviceAmount <= 0) {
+            throw new HTTPException('Invalid service amount', Response::HTTP_BAD_REQUEST);
+        }
 
-        return [
-            'reservation' => $reservation,
-            'calculation' => [
-                'service_price' => $servicePrice,
+        // Validar addons si se proporcionan
+        if (!empty($addons)) {
+            foreach ($addons as $addon) {
+                if (empty($addon['id']) || !isset($addon['base_price']) || floatval($addon['base_price']) < 0) {
+                    throw new HTTPException('Invalid addon data', Response::HTTP_BAD_REQUEST);
+                }
+            }
+        }
+
+        // Validar que hours esté presente si no hay min_duration_hours en service
+        if (empty($hours['duration']) && empty($service['min_duration_hours'])) {
+            throw new HTTPException('Duration is required', Response::HTTP_BAD_REQUEST);
+        }
+
+        // Iniciar transacción para garantizar consistencia
+        $db = \Config\Database::connect();
+        $db->transStart();
+
+        try {
+            $customerId = $this->createOrFindCustomer($customer, $information);
+
+            // Calcular precios
+            $servicePrice = $serviceAmount;
+            $addonsTotal = 0;
+
+            if (!empty($addons)) {
+                $addonsTotal = array_reduce($addons, function ($sum, $addon) {
+                    return $sum + (floatval($addon['base_price'] ?? 0) * intval($addon['quantity'] ?? 1));
+                }, 0);
+            }
+
+            // Calcular recargo por niños adicionales
+            $serviceIncludedKids = intval($service['children_count'] ?? 0);
+            $extraChildren = max(0, $selectedKids - $serviceIncludedKids);
+            $extraChildFee = floatval($service['extra_child_fee'] ?? 0);
+            $extraChildrenTotal = $extraChildren * $extraChildFee;
+
+            $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
+
+            // Recargo por proximidad de fecha
+            $surchargeAmount = 0;
+            if ($eventDate) {
+                $bookingDate = new \DateTime($eventDate);
+                $today = new \DateTime();
+                $diffDays = (int)$today->diff($bookingDate)->format("%r%a");
+
+                if ($diffDays < 0) $diffDays = 0;
+
+                if ($diffDays < 2) {
+                    $surchargeAmount = $baseTotal * 0.2; // 20% recargo
+                } elseif ($diffDays <= 7) {
+                    $surchargeAmount = $baseTotal * 0.1; // 10% recargo
+                }
+            }
+
+            $grandTotal = $baseTotal + $surchargeAmount;
+
+            // Mapear datos a la estructura de la BD
+            $reservationData = [
+                'customer_id' => $customerId,
+                'service_price_id' => $service['id'] ?? null,
+                'zipcode_id' => $zipcode['id'] ?? null,
+                'event_address' => $information['fullAddress'] ?? null,
+                'event_date' => $eventDate,
+                'event_time' => $information['startTime'] ?? null,
+                'children_count' => $selectedKids,
+                'performers_count' => intval($service['performers_count'] ?? 1),
+                'duration_hours' => floatval($hours['duration'] ?? $service['min_duration_hours'] ?? 1),
+                'price_type' => $this->determinePriceType($addons),
+                'base_price' => $servicePrice,
                 'addons_total' => $addonsTotal,
-                'extra_children_total' => $extraChildrenTotal,
-                'base_total' => $baseTotal,
-                'surcharge_amount' => $surchargeAmount,
-                'grand_total' => $grandTotal
-            ]
-        ];
+                'expedition_fee' => $surchargeAmount,
+                'extra_children_fee' => $extraChildrenTotal,
+                'total_amount' => $grandTotal,
+                'status' => 'new',
+                'is_invoiced' => false,
+                'is_paid' => false,
+                'arrival_parking_instructions' => $information['instructions'] ?? null,
+                'entertainment_start_time' => $information['entertainmentStartTime'] ?? null,
+                'birthday_child_name' => $information['birthdayChildName'] ?? null,
+                'birthday_child_age' => intval($information['childAge'] ?? 0),
+                'children_age_range' => $information['ageRange'] ?? null,
+                'song_requests' => $information['songRequests'] ?? null,
+                'sing_happy_birthday' => ($information['happyBirthdayRequest'] ?? 'no') === 'yes',
+                'customer_notes' => null,
+                'internal_notes' => null
+            ];
+
+            // Crear la reserva
+            $reservation = $this->repository->create($reservationData);
+
+            if (!$reservation) {
+                throw new HTTPException('Failed to create reservation', Response::HTTP_BAD_REQUEST);
+            }
+
+            // Guardar addons en tabla reservation_addons
+            if (!empty($addons)) {
+                foreach ($addons as $addon) {
+                    $addonData = [
+                        'reservation_id' => $reservation->id,
+                        'addon_id' => $addon['id'],
+                        'quantity' => intval($addon['quantity'] ?? 1),
+                        'price_at_time' => floatval($addon['base_price'] ?? 0)
+                    ];
+
+                    $addonResult = $this->reservationAddonRepository->create($addonData);
+                    if (!$addonResult) {
+                        throw new HTTPException('Failed to save addon relations', Response::HTTP_BAD_REQUEST);
+                    }
+                }
+            }
+
+            // Completar transacción
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new HTTPException('Transaction failed', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            return [
+                'reservation' => $reservation,
+                'addons_saved' => count($addons),
+                'calculation' => [
+                    'service_price' => $servicePrice,
+                    'addons_total' => $addonsTotal,
+                    'extra_children_total' => $extraChildrenTotal,
+                    'extra_children_count' => $extraChildren,
+                    'base_total' => $baseTotal,
+                    'surcharge_amount' => $surchargeAmount,
+                    'grand_total' => $grandTotal
+                ]
+            ];
+
+        } catch (\Throwable $e) {
+            // Con transStart/transComplete no necesitamos rollback manual
+            $db->transRollback(); // Esto es para garantizar limpieza por si acaso
+
+            // Re-lanzar como HTTPException si ya lo es, sino crear nueva
+            if ($e instanceof HTTPException) {
+                throw $e;
+            }
+
+            throw new HTTPException('Failed to create reservation: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -300,8 +494,20 @@ class ReservationService
     /**
      * Determina el tipo de precio basado en los addons seleccionados
      *
-     * @param array $addons Lista de addons seleccionados
+     * Los servicios pueden tener pricing especial cuando incluyen addons de tipo 'jukebox'.
+     * Esto afecta cómo se calculan algunos recargos y descuentos.
+     *
+     * @param array $addons Lista de addons con estructura: [['price_type' => string, ...], ...]
      * @return string 'jukebox' si algún addon es tipo jukebox, 'standard' en caso contrario
+     *
+     * @example
+     * ```php
+     * $addons = [
+     *   ['price_type' => 'standard', 'name' => 'Face Paint'],
+     *   ['price_type' => 'jukebox', 'name' => 'Music Hour']
+     * ];
+     * $type = $this->determinePriceType($addons); // Returns 'jukebox'
+     * ```
      */
     private function determinePriceType(array $addons): string
     {
@@ -316,10 +522,32 @@ class ReservationService
     /**
      * Crea un nuevo customer o encuentra uno existente por email
      *
-     * @param array $customerData Datos del customer del Step 1
-     * @param array $information Información adicional del Step 8
-     * @return string ID del customer creado o encontrado
-     * @throws HTTPException Si falla la creación del customer
+     * LÓGICA DE NEGOCIO:
+     * 1. Si el email ya existe en la BD, retorna el ID existente
+     * 2. Si no existe, crea un nuevo customer con los datos proporcionados
+     * 3. Combina datos del Step 1 (customer) y Step 8 (information)
+     * 4. Prioriza información del Step 8 para nombres (más completa)
+     *
+     * @param array $customerData Datos básicos del customer (Step 1):
+     *   - firstName: string
+     *   - lastName: string
+     *   - email: string
+     *   - phone: string
+     *
+     * @param array $information Información detallada (Step 8):
+     *   - name: string (opcional, sobrescribe firstName)
+     *   - lastName: string (opcional, sobrescribe lastName)
+     *
+     * @return string UUID del customer creado o encontrado
+     *
+     * @throws HTTPException 400 Si falla la creación del customer en la BD
+     *
+     * @example
+     * ```php
+     * $customer = ['firstName' => 'Juan', 'email' => 'juan@email.com'];
+     * $info = ['name' => 'Juan Carlos']; // Sobrescribe firstName
+     * $customerId = $this->createOrFindCustomer($customer, $info);
+     * ```
      */
     private function createOrFindCustomer(array $customerData, array $information): string
     {

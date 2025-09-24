@@ -3,14 +3,17 @@
 namespace App\Services;
 
 use App\Models\ReservationModel;
+use App\Repositories\ReservationAddonRepository;
 
 class DashboardService
 {
     protected $reservationModel;
+    protected $reservationAddonRepository;
 
     public function __construct()
     {
         $this->reservationModel = new ReservationModel();
+        $this->reservationAddonRepository = new ReservationAddonRepository();
     }
 
     public function getReservationsByStatus()
@@ -57,17 +60,14 @@ class DashboardService
         ];
     }
 
-    public function getReservationsStatusEvolution($startDate = null, $endDate = null)
+    public function getReservationsStatusEvolution()
     {
         $db = \Config\Database::connect();
         $builder = $db->table('reservations');
 
-        if (!$startDate) {
-            $startDate = date('Y-m-01', strtotime('-6 months'));
-        }
-        if (!$endDate) {
-            $endDate = date('Y-m-t');
-        }
+        // Automáticamente calcular últimos 6 meses
+        $startDate = date('Y-m-01', strtotime('-6 months'));
+        $endDate = date('Y-m-t');
 
         $results = $builder
             ->select("DATE_FORMAT(created_at, '%Y-%m') as month, status, COUNT(*) as count")
@@ -316,6 +316,42 @@ class DashboardService
             'data' => $data,
             'total_events' => array_sum(array_column($data, 'total_events')),
             'total_revenue' => array_sum(array_column($data, 'total_revenue'))
+        ];
+    }
+
+    /**
+     * Get most popular addons analytics
+     *
+     * @param int $limit Maximum number of addons to return
+     * @return array Analytics data with addon sales information
+     */
+    public function getMostPopularAddons(int $limit = 10): array
+    {
+        $results = $this->reservationAddonRepository->getMostPopular($limit);
+
+        $colors = [
+            '#ff6384', '#36a2eb', '#ffce56', '#4bc0c0', '#9966ff',
+            '#ff9f40', '#ff6384', '#c9cbcf', '#4bc0c0', '#ff6384'
+        ];
+
+        $data = [];
+        foreach ($results as $index => $result) {
+            $data[] = [
+                'addon_name' => $result['addon_name'],
+                'addon_description' => $result['addon_description'] ?? '',
+                'total_sold' => (int)$result['total_sold'],
+                'total_revenue' => (float)$result['total_revenue'],
+                'reservations_count' => (int)$result['reservations_count'],
+                'avg_price' => (float)$result['avg_price'],
+                'color' => $colors[$index % count($colors)]
+            ];
+        }
+
+        return [
+            'data' => $data,
+            'total_addons_sold' => array_sum(array_column($data, 'total_sold')),
+            'total_addon_revenue' => array_sum(array_column($data, 'total_revenue')),
+            'total_reservations_with_addons' => array_sum(array_column($data, 'reservations_count'))
         ];
     }
 

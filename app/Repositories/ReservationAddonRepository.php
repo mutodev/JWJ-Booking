@@ -64,4 +64,28 @@ class ReservationAddonRepository
     {
         return $this->model->delete($id);
     }
+
+    /**
+     * Obtener addons más populares con estadísticas
+     */
+    public function getMostPopular(int $limit = 10): array
+    {
+        return $this->model
+            ->select([
+                'addons.name as addon_name',
+                'addons.description as addon_description',
+                'SUM(reservation_addons.quantity) as total_sold',
+                'SUM(reservation_addons.quantity * reservation_addons.price_at_time) as total_revenue',
+                'COUNT(DISTINCT reservation_addons.reservation_id) as reservations_count',
+                'AVG(reservation_addons.price_at_time) as avg_price'
+            ])
+            ->join('addons', 'addons.id = reservation_addons.addon_id', 'left')
+            ->join('reservations', 'reservations.id = reservation_addons.reservation_id', 'left')
+            ->where('reservations.status !=', 'cancelled')
+            ->groupBy(['addons.id', 'addons.name', 'addons.description'])
+            ->orderBy('total_sold', 'DESC')
+            ->limit($limit)
+            ->get()
+            ->getResultArray();
+    }
 }

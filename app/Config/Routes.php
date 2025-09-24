@@ -189,11 +189,11 @@ $routes->group('api', function ($routes) {
     // Dashboard
     $routes->group('dashboard', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('reservations-by-status', [DashboardController::class, 'getReservationsByStatus']);
-        $routes->get('reservations-status-evolution', [DashboardController::class, 'getReservationsStatusEvolution']);
         $routes->get('payment-status', [DashboardController::class, 'getPaymentStatus']);
         $routes->get('invoice-status', [DashboardController::class, 'getInvoiceStatus']);
         $routes->get('popular-jam-types', [DashboardController::class, 'getMostPopularJamTypes']);
         $routes->get('cities-most-events', [DashboardController::class, 'getCitiesWithMostEvents']);
+        $routes->get('most-popular-addons', [DashboardController::class, 'getMostPopularAddons']);
     });
 });
 

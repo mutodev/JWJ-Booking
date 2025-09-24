@@ -18,16 +18,6 @@
       </div>
     </div>
 
-    <!-- Status Evolution Section -->
-    <div class="row mb-4">
-      <div class="col-12">
-        <EvolutionChart
-          :data="evolutionData"
-          :loading="loading"
-          @refresh="refreshEvolution"
-        />
-      </div>
-    </div>
 
     <!-- Services and Location Analytics Section -->
     <div class="row mb-4">
@@ -36,6 +26,13 @@
       </div>
       <div class="col-lg-6 col-md-12 mb-4">
         <CitiesChart :data="citiesData" :loading="loading" />
+      </div>
+    </div>
+
+    <!-- Add-ons Analytics Section -->
+    <div class="row mb-4">
+      <div class="col-lg-6 col-md-12 mb-4">
+        <AddonsChart :data="addonsData" :loading="loading" />
       </div>
     </div>
   </div>
@@ -70,9 +67,9 @@ import api from '@/services/axios';
 // Import chart components
 import StatusChart from './StatusChart.vue';
 import PaymentChart from './PaymentChart.vue';
-import EvolutionChart from './EvolutionChart.vue';
 import JamTypesChart from './JamTypesChart.vue';
 import CitiesChart from './CitiesChart.vue';
+import AddonsChart from './AddonsChart.vue';
 
 // Register Chart.js components globally
 ChartJS.register(
@@ -104,14 +101,15 @@ const statusData = ref([]);
 /** @type {import('vue').Ref<Object>} Payment status analytics data */
 const paymentData = ref({});
 
-/** @type {import('vue').Ref<Object>} Status evolution over time data */
-const evolutionData = ref({});
 
 /** @type {import('vue').Ref<Object>} JAM types popularity data */
 const jamTypesData = ref({});
 
 /** @type {import('vue').Ref<Object>} Cities with most events data */
 const citiesData = ref({});
+
+/** @type {import('vue').Ref<Object>} Most popular addons data */
+const addonsData = ref({});
 
 // ========================
 // API CONFIGURATION
@@ -121,9 +119,9 @@ const citiesData = ref({});
 const API_ENDPOINTS = {
   STATUS: '/dashboard/reservations-by-status',
   PAYMENTS: '/dashboard/payment-status',
-  EVOLUTION: '/dashboard/reservations-status-evolution',
-  JAM_TYPES: '/dashboard/popular-jam-types?limit=10',
-  CITIES: '/dashboard/cities-most-events?limit=8'
+  JAM_TYPES: '/dashboard/popular-jam-types',
+  CITIES: '/dashboard/cities-most-events',
+  ADDONS: '/dashboard/most-popular-addons'
 };
 
 // ========================
@@ -146,23 +144,23 @@ const fetchAllData = async () => {
     const [
       statusResponse,
       paymentResponse,
-      evolutionResponse,
       jamTypesResponse,
-      citiesResponse
+      citiesResponse,
+      addonsResponse
     ] = await Promise.all([
       api.get(API_ENDPOINTS.STATUS),
       api.get(API_ENDPOINTS.PAYMENTS),
-      api.get(API_ENDPOINTS.EVOLUTION),
       api.get(API_ENDPOINTS.JAM_TYPES),
-      api.get(API_ENDPOINTS.CITIES)
+      api.get(API_ENDPOINTS.CITIES),
+      api.get(API_ENDPOINTS.ADDONS)
     ]);
 
     // Process responses with error handling for each endpoint
     statusResponse.success && (statusData.value = statusResponse.data.data);
     paymentResponse.success && (paymentData.value = paymentResponse.data);
-    evolutionResponse.success && (evolutionData.value = evolutionResponse.data);
     jamTypesResponse.success && (jamTypesData.value = jamTypesResponse.data);
     citiesResponse.success && (citiesData.value = citiesResponse.data);
+    addonsResponse.success && (addonsData.value = addonsResponse.data);
 
   } catch (error) {
     console.error('Dashboard data fetch error:', error);
@@ -172,26 +170,6 @@ const fetchAllData = async () => {
   }
 };
 
-/**
- * Refreshes evolution chart data independently
- * Triggered by user interaction on the evolution chart refresh button
- *
- * @async
- * @function refreshEvolution
- * @returns {Promise<void>}
- */
-const refreshEvolution = async () => {
-  try {
-    const response = await api.get(API_ENDPOINTS.EVOLUTION);
-
-    if (response.success) {
-      evolutionData.value = response.data;
-    }
-  } catch (error) {
-    console.error('Evolution data refresh error:', error);
-    // TODO: Implement retry mechanism
-  }
-};
 
 // ========================
 // LIFECYCLE HOOKS

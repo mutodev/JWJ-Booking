@@ -7,11 +7,11 @@ use CodeIgniter\Model;
 
 class ReservationAddonModel extends Model
 {
-    protected $table            = 'reservationaddons';
+    protected $table            = 'reservation_addons';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = ReservationAddon::class;
-    protected $useSoftDeletes   = true;
+    protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
         'reservation_id',
@@ -30,6 +30,7 @@ class ReservationAddonModel extends Model
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
+    protected $updatedField  = '';
 
     // Validation
     protected $validationRules      = [];
