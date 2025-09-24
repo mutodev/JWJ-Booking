@@ -20,7 +20,7 @@ use App\Controllers\ZipCodeController;
 use CodeIgniter\Router\RouteCollection;
 
 /**
- * Rutas API
+ * Rutas API - DEBEN IR ANTES que el catch-all de Vue
  * @var RouteCollection $routes
  */
 $routes->group('api', function ($routes) {
@@ -203,4 +203,4 @@ $routes->group('api', function ($routes) {
  * @var RouteCollection $routes
  */
 $routes->get('/', [HomeController::class, 'index']);
-$routes->get('{any}', [HomeController::class, 'index'], ['where' => ['any' => '.*']]);
+$routes->get('(:any)', [HomeController::class, 'index']);

@@ -19,5 +19,14 @@ export default defineConfig({
     rollupOptions: {
       input: resolve(__dirname, 'main.js')
     }
+  },
+  server: {
+    port: 3000,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true
+      }
+    }
   }
 })
