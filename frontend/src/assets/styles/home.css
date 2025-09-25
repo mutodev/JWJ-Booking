@@ -1,0 +1,688 @@
+/* ==========================================================================
+   HOME STYLES - JamWithJamie Application - Original Design Preserved
+   ========================================================================== */
+
+/* ==========================================================================
+   1. MAIN CONTAINER & LAYOUT
+   ========================================================================== */
+
+/* Container Principal */
+.full-height-container {
+  display: flex;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+}
+
+/* Logo flotante */
+.floating-logo {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 25px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.floating-logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.logo-image {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.logo-text {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #374151;
+  white-space: nowrap;
+  letter-spacing: -0.025em;
+}
+
+/* Sidebar de pasos - Desktop */
+.steps-sidebar {
+  width: 300px;
+  padding: 2rem 1rem 2rem 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-right: 1px solid rgba(255, 255, 255, 0.18);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.steps-sidebar.mobile-hidden {
+  display: none;
+}
+
+/* Área de contenido principal */
+.content-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+/* Progress bar móvil */
+.mobile-progress {
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1rem;
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.step-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.current-step {
+  font-weight: 600;
+  color: #3b82f6;
+}
+
+/* Contenido del step */
+.step-content {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 2rem;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  position: relative;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   2. ELEMENT PLUS CUSTOMIZATIONS
+   ========================================================================== */
+
+/* Personalización de El Steps */
+.steps-sidebar :deep(.el-steps) {
+  padding: 1rem 0;
+}
+
+.steps-sidebar :deep(.el-step__head) {
+  padding: 0;
+  margin-bottom: 1rem;
+}
+
+.steps-sidebar :deep(.el-step__title) {
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #374151;
+  margin-left: 0.5rem;
+}
+
+.steps-sidebar :deep(.el-step__title.is-success) {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.steps-sidebar :deep(.el-step__title.is-process) {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.steps-sidebar :deep(.is-success) .step-number {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
+}
+
+.steps-sidebar :deep(.is-process) .step-number {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.steps-sidebar :deep(.el-step__line) {
+  left: 16px;
+  width: 2px;
+  margin-left: -1px;
+  background: #e5e7eb;
+  top: 32px;
+}
+
+.steps-sidebar :deep(.is-success .el-step__line) {
+  background: #10b981;
+}
+
+/* ==========================================================================
+   3. NAVIGATION BUTTONS (Element Plus)
+   ========================================================================== */
+
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  gap: 1rem;
+}
+
+.custom-btn {
+  border-radius: 12px !important;
+  padding: 12px 24px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  border-width: 2px !important;
+  min-width: 140px !important;
+  justify-content: center !important;
+}
+
+.prev-btn {
+  background: transparent !important;
+  color: #6b7280 !important;
+  border-color: #d1d5db !important;
+}
+
+.prev-btn:hover {
+  background: #6b7280 !important;
+  color: white !important;
+  border-color: #6b7280 !important;
+  transform: translateX(-2px) !important;
+}
+
+.custom-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+  color: white !important;
+  border-color: #3b82f6 !important;
+}
+
+.custom-btn-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%) !important;
+  border-color: #1d4ed8 !important;
+  transform: translateX(2px) !important;
+}
+
+.custom-btn-primary:disabled {
+  background: #e5e7eb !important;
+  color: #9ca3af !important;
+  border-color: #e5e7eb !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+}
+
+.btn-icon {
+  font-size: 16px !important;
+}
+
+/* ==========================================================================
+   4. STEP-SPECIFIC STYLES
+   ========================================================================== */
+
+/* Step 1 - Customer Form */
+.form-control {
+  border-radius: 8px;
+  font-size: 0.95rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #444;
+}
+
+.multiselect {
+  border-radius: 8px;
+  min-height: 42px;
+}
+
+/* Step 3 - Service Cards */
+.service-card {
+  background: #ffffff;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.service-card:hover {
+  border-color: #007bff;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.service-card.selected {
+  border-color: #007bff;
+  background: #f8f9ff;
+}
+
+/* Step 4 - Kids Selection */
+.custom-age-btn {
+  background-color: #f8f9fa !important;
+  border: 2px solid #d1d5db !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  min-width: 120px !important;
+  text-align: center !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.custom-age-btn:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+  color: #4b5563 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.btn-check:checked + .custom-age-btn {
+  background-color: #6b7280 !important;
+  border-color: #6b7280 !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4) !important;
+}
+
+.btn-check:checked + .custom-age-btn:hover {
+  background-color: #4b5563 !important;
+  border-color: #4b5563 !important;
+}
+
+.kids-selection .input-group-text {
+  background-color: #f8f9fa;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.kids-selection .form-control:focus {
+  border-color: #6b7280;
+  box-shadow: 0 0 0 0.2rem rgba(107, 114, 128, 0.25);
+}
+
+/* Step 5 - Hours Selection */
+.custom-hour-btn {
+  background-color: #ffffff !important;
+  border: 2px solid #e2e8f0 !important;
+  color: #475569 !important;
+  font-weight: 600 !important;
+  padding: 16px 24px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  cursor: pointer !important;
+  min-width: 140px !important;
+  text-align: center !important;
+  position: relative !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24) !important;
+}
+
+.custom-hour-btn:hover {
+  background-color: #f8fafc !important;
+  border-color: #cbd5e1 !important;
+  transform: translateY(-3px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+}
+
+.btn-check:checked + .custom-hour-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border-color: #667eea !important;
+  color: white !important;
+  transform: translateY(-3px) scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4) !important;
+}
+
+.btn-check:checked + .custom-hour-btn:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+}
+
+/* Step 6 - Addons */
+.addon-card {
+  background: #ffffff;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.addon-card.selected {
+  border-color: #28a745;
+  background: #f8fff8;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
+}
+
+/* Step 7 - Subtotal */
+.subtotal-display {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #198754;
+  margin: 2rem 0;
+}
+
+.subtotal-display .currency {
+  font-size: 0.8em;
+  vertical-align: top;
+  margin-right: 0.2em;
+}
+
+.subtotal-display .amount {
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.02em;
+}
+
+.breakdown {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.breakdown-item {
+  padding: 0.5rem 0;
+  color: #6c757d;
+}
+
+.breakdown-total {
+  font-size: 1.1rem;
+  color: #198754;
+}
+
+.confirmation-section {
+  margin-top: 3rem;
+}
+
+.confirmation-btn {
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 50px;
+  transition: all 0.3s ease;
+  border-width: 2px;
+}
+
+.confirmation-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+}
+
+.confirmation-btn.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+}
+
+.confirmation-btn.btn-outline-success {
+  background-color: transparent;
+  border-color: #198754;
+  color: #198754;
+}
+
+.confirmation-btn.btn-outline-success:hover {
+  background-color: #198754;
+  border-color: #198754;
+  color: white;
+}
+
+/* ==========================================================================
+   5. TRANSITIONS & ANIMATIONS
+   ========================================================================== */
+
+/* Transiciones */
+.slide-fade-enter-active {
+  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+.slide-fade-leave-active {
+  transition: all 0.5s cubic-bezier(0.55, 0, 0.1, 1);
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateX(50px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-50px);
+}
+
+/* Fade in animation for steps */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-content {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* Loading states */
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   6. RESPONSIVE DESIGN
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .full-height-container {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .steps-sidebar {
+    display: none !important;
+  }
+
+  .content-area {
+    padding: 1rem;
+    flex: 1;
+  }
+
+  .step-content {
+    padding: 1.5rem;
+    border-radius: 16px;
+    min-height: auto;
+  }
+
+  .wizard-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .custom-btn {
+    width: 100% !important;
+    min-width: auto !important;
+  }
+
+  .mobile-progress {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    margin-bottom: 1rem;
+  }
+
+  .subtotal-display {
+    font-size: 3rem;
+  }
+
+  .confirmation-btn {
+    font-size: 1rem;
+    padding: 0.65rem 1.5rem;
+  }
+
+  .custom-age-btn {
+    min-width: 100px !important;
+    padding: 10px 16px !important;
+    font-size: 0.9rem !important;
+  }
+
+  .custom-hour-btn {
+    min-width: 120px !important;
+    padding: 14px 20px !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .content-area {
+    padding: 0.75rem;
+  }
+
+  .step-content {
+    padding: 1rem;
+  }
+
+  .mobile-progress {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .subtotal-display {
+    font-size: 2.5rem;
+  }
+
+  .floating-logo {
+    top: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .logo-image {
+    width: 32px;
+    height: 32px;
+  }
+
+  .logo-text {
+    font-size: 0.875rem;
+  }
+}
+
+/* ==========================================================================
+   7. UTILITIES & STATES
+   ========================================================================== */
+
+/* Indicadores de carga */
+.loading {
+  position: relative;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid #e5e7eb;
+  border-radius: 50%;
+  border-top-color: #3b82f6;
+  animation: spin 1s ease-in-out infinite;
+}
+
+/* Estados de validación */
+.step-content.valid {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.step-content.invalid {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Focus states for accessibility */
+.custom-btn:focus,
+.custom-age-btn:focus,
+.custom-hour-btn:focus,
+.confirmation-btn:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Error states */
+.has-error .form-control,
+.has-error .form-select {
+  border-color: #dc3545;
+}
+
+.has-error .form-control:focus,
+.has-error .form-select:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* Success states */
+.has-success .form-control,
+.has-success .form-select {
+  border-color: #28a745;
+}
+
+.has-success .form-control:focus,
+.has-success .form-select:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}

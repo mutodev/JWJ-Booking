@@ -130,6 +130,7 @@ _modules/*
 #-------------------------
 # Uploaded Images
 #-------------------------
-# Ignore all uploaded images but keep default image
+# Ignore all uploaded images but keep default image and logos
 public/img/*
 !public/img/default.png
+!public/img/logos/

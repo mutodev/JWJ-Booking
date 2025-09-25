@@ -1,5 +1,10 @@
 <template>
   <div class="full-height-container">
+    <!-- Logo flotante -->
+    <div class="floating-logo">
+      <img :src="logoUrl" alt="JamWithJamie Logo" class="logo-image" />
+    </div>
+
     <!-- Progress Steps - Hidden on mobile -->
     <div class="steps-sidebar" :class="{ 'mobile-hidden': isMobile }" ref="wizardRoot">
       <el-steps
@@ -167,6 +172,11 @@ const isSubmitting = ref(false);
 const isMobile = ref(false);
 const wizardRoot = ref(null);
 const reservationData = ref(null);
+
+/**
+ * Logo URL
+ */
+const logoUrl = '/img/logos/JWJ_logo-05.png';
 
 /**
  * Validation states per step
@@ -707,6 +717,41 @@ watch(activeStep, () => {
 @media (max-width: 480px) {
   .content-area {
     padding: 1rem 0.75rem;
+  }
+}
+
+/* Logo flotante */
+.floating-logo {
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 1000 !important;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-logo:hover {
+  transform: scale(1.05);
+}
+
+.logo-image {
+  height: 100px;
+  object-fit: contain;
+}
+
+@media (max-width: 768px) {
+  .floating-logo {
+    top: 10px !important;
+    right: 10px !important;
+  }
+
+  .logo-image {
+    height: 80px;
+    object-fit: contain;
   }
 }
 </style>
