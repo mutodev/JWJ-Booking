@@ -270,79 +270,8 @@
           Validate Information
           <i class="bi ms-2 bi-arrow-right"></i>
         </button>
-
-        <button
-          v-else
-          type="button"
-          class="btn btn-success btn-lg px-5"
-          @click="showConfirmationModal"
-          :disabled="isSubmitting || isCompleted"
-        >
-          <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
-          <i v-if="isCompleted && !isSubmitting" class="bi bi-check-circle me-2"></i>
-          {{ isCompleted ? 'Reservation Completed!' : (isSubmitting ? 'Submitting...' : 'Submit Reservation') }}
-          <i v-if="!isSubmitting && !isCompleted" class="bi ms-2 bi-send"></i>
-        </button>
       </div>
 
-      <!-- Confirmation Modal -->
-      <div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">
-                <i class="bi bi-exclamation-triangle text-warning me-2"></i>
-                Confirm Reservation
-              </h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <p class="mb-3">Please review your reservation details before submitting:</p>
-
-              <div class="row g-3">
-                <div class="col-12">
-                  <strong>Event Details:</strong>
-                  <ul class="list-unstyled ms-3">
-                    <li>📅 Date: {{ form.eventDate }}</li>
-                    <li>⏰ Time: {{ form.startTime }} - {{ form.endTime }}</li>
-                    <li>📍 Address: {{ form.fullAddress }}</li>
-                  </ul>
-                </div>
-
-                <div class="col-12">
-                  <strong>Birthday Child:</strong>
-                  <ul class="list-unstyled ms-3">
-                    <li>👶 Name: {{ form.birthdayChildName }}</li>
-                    <li>🎂 Age: {{ form.childAge }} years old</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div class="alert alert-warning mt-3">
-                <small>
-                  <i class="bi bi-info-circle me-1"></i>
-                  Once submitted, you will receive a confirmation email with your reservation details.
-                </small>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                Cancel
-              </button>
-              <button
-                type="button"
-                class="btn btn-success"
-                @click="submitReservation"
-                :disabled="isSubmitting || isCompleted"
-              >
-                <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                <i v-if="isCompleted && !isSubmitting" class="bi bi-check-circle me-2"></i>
-                {{ isCompleted ? 'Completed!' : (isSubmitting ? 'Processing...' : 'Confirm & Submit') }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
     </form>
   </div>
 </template>
@@ -350,9 +279,6 @@
 <script setup>
 import { ref, reactive, computed, watch, onMounted } from "vue";
 import * as yup from "yup";
-import { Modal } from "bootstrap";
-import { ElMessage } from 'element-plus';
-import api from "@/services/axios";
 
 const props = defineProps({
   active: {
@@ -390,7 +316,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["setData", "reservationSuccess"]);
+const emit = defineEmits(["setData"]);
 
 // Form data
 const form = reactive({
@@ -411,9 +337,6 @@ const form = reactive({
 });
 
 const errors = reactive({});
-const isSubmitting = ref(false);
-const isCompleted = ref(false);
-let confirmationModal = null;
 
 // Validation schema
 const schema = yup.object({
@@ -476,103 +399,6 @@ function emitFormData() {
   emit("setData", { information: informationData });
 }
 
-// Modal y envío de datos
-function showConfirmationModal() {
-  // Prevenir si ya está completado
-  if (isCompleted.value) return;
-
-  const modalElement = document.getElementById('confirmationModal');
-  if (!modalElement) {
-    console.error('Modal element not found');
-    return;
-  }
-
-  if (!confirmationModal) {
-    confirmationModal = new Modal(modalElement);
-  }
-  confirmationModal.show();
-}
-
-async function submitReservation() {
-  if (isSubmitting.value || isCompleted.value) return;
-
-  isSubmitting.value = true;
-
-  try {
-    // Preparar datos para enviar al endpoint
-    const reservationData = {
-      customer: props.customer,
-      zipcode: props.zipcode,
-      service: props.service,
-      kids: props.kids,
-      hours: props.hours,
-      addons: props.addons,
-      information: {
-        ...form,
-        isValid: isValid.value
-      }
-    };
-
-    console.log('Sending reservation data:', reservationData);
-
-    // Enviar al endpoint
-    const response = await api.post('/home/reservation', reservationData);
-
-    console.log('API Response:', response);
-
-    if (response.status === 201 || response.status === 200) {
-      // Marcar como completado inmediatamente
-      isCompleted.value = true;
-
-      // Cerrar modal inmediatamente
-      if (confirmationModal) {
-        confirmationModal.hide();
-      }
-
-      // Mostrar mensaje de éxito
-      ElMessage.success('Reservation submitted successfully!');
-
-      // Dar tiempo para que el modal se cierre y luego emitir el evento
-      setTimeout(() => {
-        // Cleanup modal
-        if (confirmationModal) {
-          try {
-            confirmationModal.dispose();
-          } catch (e) {
-            console.log('Modal already disposed or does not exist');
-          }
-          confirmationModal = null;
-        }
-
-        // Emitir evento de éxito con los datos de respuesta
-        const responseData = response.data?.data || response.data;
-
-        emit("reservationSuccess", {
-          reservation: responseData.reservation || responseData,
-          calculation: responseData.calculation || null
-        });
-      }, 500);
-
-    } else {
-      throw new Error('Unexpected response status: ' + response.status);
-    }
-
-  } catch (error) {
-    console.error('Error submitting reservation:', error);
-
-    let errorMessage = 'Failed to submit reservation. Please try again.';
-
-    if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    } else if (error.message) {
-      errorMessage = error.message;
-    }
-
-    ElMessage.error(errorMessage);
-    isSubmitting.value = false; // Solo resetear isSubmitting en caso de error
-  }
-  // No resetear isSubmitting ni isCompleted en caso de éxito para evitar múltiples envíos
-}
 
 // Auto-complete from Step1 customer data
 function autoCompleteFromCustomer() {
@@ -598,10 +424,6 @@ watch(
   () => props.active,
   (active) => {
     if (active) {
-      // Resetear estados cuando se activa el step
-      isCompleted.value = false;
-      isSubmitting.value = false;
-
       autoCompleteFromCustomer();
       restoreFormData();
       emitFormData();

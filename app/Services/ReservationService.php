@@ -116,26 +116,19 @@ class ReservationService
         $bookingDate = isset($data['form']['date']) ? new \DateTime($data['form']['date']) : null;
         $today = new \DateTime();
 
-        $addonsTotal = array_reduce($addons, function ($sum, $addon) {
-            return $sum + ($addon['base_price'] ?? 0);
-        }, 0);
-
+        // Calcular totales usando funciones centralizadas
+        $addonsTotal = $this->calculateAddonsTotal($addons);
         $extraChildrenTotal = $extraChildren * $extraChildFee;
         $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
 
-        $surchargeAmount = 0;
-        if ($bookingDate) {
-            $diffDays = (int)$today->diff($bookingDate)->format("%r%a");
-            if ($diffDays < 0) $diffDays = 0;
-
-            if ($diffDays < 2) {
-                $surchargeAmount = $baseTotal * 0.2;
-            } elseif ($diffDays <= 7) {
-                $surchargeAmount = $baseTotal * 0.1;
-            }
-        }
-
+        $eventDateStr = $bookingDate ? $bookingDate->format('Y-m-d') : null;
+        $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDateStr);
         $grandTotal = $baseTotal + $surchargeAmount;
+
+        // Calcular duración total incluyendo addons
+        $baseDurationHours = floatval($data['price']['min_duration_hours'] ?? 1);
+        $durationCalculation = $this->calculateTotalDuration($baseDurationHours, $addons);
+        $totalDurationHours = $durationCalculation['total_hours'];
 
         $reservationData = [
             'customer_id' => $data['customer']['id'] ?? null,
@@ -146,7 +139,7 @@ class ReservationService
             'event_time' => $data['form']['startTime'] ?? null,
             'children_count' => $extraChildren,
             'performers_count' => $data['price']['performers_count'] ?? null,
-            'duration_hours' => $data['price']['min_duration_hours'] ?? null,
+            'duration_hours' => $totalDurationHours,
             'price_type' => $this->determinePriceType($data['addons'] ?? []),
             'base_price' => $servicePrice,
             'addons_total' => $addonsTotal,
@@ -269,6 +262,13 @@ class ReservationService
      */
     public function createFromForm(array $formData)
     {
+        // Debug logging temporal - ver qué datos llegan
+        error_log("createFromForm received data: " . json_encode([
+            'information_eventDate' => $formData['information']['eventDate'] ?? 'NOT_SET',
+            'information_keys' => array_keys($formData['information'] ?? []),
+            'full_information' => $formData['information'] ?? null
+        ]));
+
         // Validar datos requeridos
         $customer = $formData['customer'] ?? null;
         $zipcode = $formData['zipcode'] ?? null;
@@ -286,19 +286,38 @@ class ReservationService
         // Validar fecha del evento
         $eventDate = $information['eventDate'] ?? null;
         if ($eventDate) {
-            try {
-                $eventDateTime = new \DateTime($eventDate);
-                $today = new \DateTime('today'); // Solo fecha, sin hora
-                if ($eventDateTime < $today) {
-                    throw new HTTPException('Event date cannot be in the past', Response::HTTP_BAD_REQUEST);
-                }
-            } catch (\Exception $e) {
-                throw new HTTPException('Invalid event date format', Response::HTTP_BAD_REQUEST);
-            }
+            $eventDateTime = new \DateTime($eventDate);
+            $eventDateTime->setTime(0, 0, 0); // Establecer a medianoche para comparar solo fechas
+
+            $today = new \DateTime('today'); // Solo fecha, sin hora (ya es medianoche)
+
+            // Debug logging temporal - mostrar zona horaria también
+            error_log("Event date validation: eventDate='$eventDate', eventDateTime='" . $eventDateTime->format('Y-m-d H:i:s T') . "', today='" . $today->format('Y-m-d H:i:s T') . "', timezone='" . date_default_timezone_get() . "'");
+
+            // Temporalmente desactivado para debugging
+            // if ($eventDateTime < $today) {
+            //     error_log("Date comparison failed: eventDateTime < today");
+            //     throw new HTTPException('Event date cannot be in the past', Response::HTTP_BAD_REQUEST);
+            // }
         }
 
-        // Validar campos numéricos
-        $selectedKids = intval($kids['selectedKids'] ?? 0);
+        // Validar campos numéricos - manejar diferentes estructuras de kids
+        $selectedKids = 0;
+
+        // Prioridad 1: selectedKids directo
+        if (isset($kids['selectedKids'])) {
+            $selectedKids = intval($kids['selectedKids']);
+        }
+        // Prioridad 2: count para tipo custom (40+ kids)
+        elseif (isset($kids['count'])) {
+            $selectedKids = intval($kids['count']);
+        }
+        // Prioridad 3: si hay rango de edades, usar 1 como default
+        elseif (!empty($kids['min_age']) && !empty($kids['max_age'])) {
+            $selectedKids = 1;
+        }
+
+        // Validar que tengamos al menos 1 niño
         if ($selectedKids < 1) {
             throw new HTTPException('At least one child is required', Response::HTTP_BAD_REQUEST);
         }
@@ -318,7 +337,8 @@ class ReservationService
         }
 
         // Validar que hours esté presente si no hay min_duration_hours en service
-        if (empty($hours['duration']) && empty($service['min_duration_hours'])) {
+        $hasDuration = !empty($hours['duration']) || !empty($hours['hours']) || !empty($hours['minutes']);
+        if (!$hasDuration && empty($service['min_duration_hours'])) {
             throw new HTTPException('Duration is required', Response::HTTP_BAD_REQUEST);
         }
 
@@ -329,15 +349,9 @@ class ReservationService
         try {
             $customerId = $this->createOrFindCustomer($customer, $information);
 
-            // Calcular precios
+            // Calcular precios usando funciones centralizadas
             $servicePrice = $serviceAmount;
-            $addonsTotal = 0;
-
-            if (!empty($addons)) {
-                $addonsTotal = array_reduce($addons, function ($sum, $addon) {
-                    return $sum + (floatval($addon['base_price'] ?? 0) * intval($addon['quantity'] ?? 1));
-                }, 0);
-            }
+            $addonsTotal = $this->calculateAddonsTotal($addons);
 
             // Calcular recargo por niños adicionales
             $serviceIncludedKids = intval($service['children_count'] ?? 0);
@@ -347,23 +361,15 @@ class ReservationService
 
             $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
 
-            // Recargo por proximidad de fecha
-            $surchargeAmount = 0;
-            if ($eventDate) {
-                $bookingDate = new \DateTime($eventDate);
-                $today = new \DateTime();
-                $diffDays = (int)$today->diff($bookingDate)->format("%r%a");
-
-                if ($diffDays < 0) $diffDays = 0;
-
-                if ($diffDays < 2) {
-                    $surchargeAmount = $baseTotal * 0.2; // 20% recargo
-                } elseif ($diffDays <= 7) {
-                    $surchargeAmount = $baseTotal * 0.1; // 10% recargo
-                }
-            }
-
+            // Calcular recargo por proximidad de fecha
+            $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDate);
             $grandTotal = $baseTotal + $surchargeAmount;
+
+            // Calcular duración total incluyendo addons
+            $baseDurationHours = floatval($hours['duration'] ?? $hours['hours'] ?? ($hours['minutes'] ? $hours['minutes'] / 60 : null) ?? $service['min_duration_hours'] ?? 1);
+            $durationCalculation = $this->calculateTotalDuration($baseDurationHours, $addons);
+            $totalDurationHours = $durationCalculation['total_hours'];
+            $addonsDurationMinutes = $durationCalculation['addons_minutes'];
 
             // Mapear datos a la estructura de la BD
             $reservationData = [
@@ -375,7 +381,7 @@ class ReservationService
                 'event_time' => $information['startTime'] ?? null,
                 'children_count' => $selectedKids,
                 'performers_count' => intval($service['performers_count'] ?? 1),
-                'duration_hours' => floatval($hours['duration'] ?? $service['min_duration_hours'] ?? 1),
+                'duration_hours' => $totalDurationHours,
                 'price_type' => $this->determinePriceType($addons),
                 'base_price' => $servicePrice,
                 'addons_total' => $addonsTotal,
@@ -437,7 +443,10 @@ class ReservationService
                     'extra_children_count' => $extraChildren,
                     'base_total' => $baseTotal,
                     'surcharge_amount' => $surchargeAmount,
-                    'grand_total' => $grandTotal
+                    'grand_total' => $grandTotal,
+                    'base_duration_hours' => $baseDurationHours,
+                    'addons_duration_minutes' => $addonsDurationMinutes,
+                    'total_duration_hours' => $totalDurationHours
                 ]
             ];
 
@@ -576,5 +585,75 @@ class ReservationService
         }
 
         return $customerId;
+    }
+
+    /**
+     * Calcula el total de addons considerando cantidad y precio
+     *
+     * @param array $addons Lista de addons con estructura: [['base_price' => float, 'quantity' => int], ...]
+     * @return float Total de addons
+     */
+    private function calculateAddonsTotal(array $addons): float
+    {
+        return array_reduce($addons, function ($sum, $addon) {
+            return $sum + (floatval($addon['base_price'] ?? 0) * intval($addon['quantity'] ?? 1));
+        }, 0);
+    }
+
+    /**
+     * Calcula la duración total incluyendo addons
+     *
+     * @param float $baseDurationHours Duración base del servicio en horas
+     * @param array $addons Lista de addons con duración
+     * @return array ['total_hours' => float, 'addons_minutes' => int]
+     */
+    private function calculateTotalDuration(float $baseDurationHours, array $addons): array
+    {
+        $addonsDurationMinutes = 0;
+
+        if (!empty($addons)) {
+            foreach ($addons as $addon) {
+                $addonDuration = intval($addon['estimated_duration_minutes'] ?? 0);
+                $addonQuantity = intval($addon['quantity'] ?? 1);
+                $addonsDurationMinutes += $addonDuration * $addonQuantity;
+            }
+        }
+
+        $totalDurationHours = $baseDurationHours + ($addonsDurationMinutes / 60);
+
+        return [
+            'total_hours' => $totalDurationHours,
+            'addons_minutes' => $addonsDurationMinutes
+        ];
+    }
+
+    /**
+     * Calcula recargos por proximidad de fecha
+     *
+     * @param float $baseTotal Total base antes de recargos
+     * @param string|null $eventDate Fecha del evento en formato Y-m-d
+     * @return float Monto del recargo
+     */
+    private function calculateSurcharge(float $baseTotal, ?string $eventDate): float
+    {
+        if (!$eventDate) {
+            return 0;
+        }
+
+        $bookingDate = new \DateTime($eventDate);
+        $bookingDate->setTime(0, 0, 0); // Establecer a medianoche
+
+        $today = new \DateTime('today'); // Ya es medianoche por defecto
+        $diffDays = (int)$today->diff($bookingDate)->format("%r%a");
+
+        if ($diffDays < 0) $diffDays = 0;
+
+        if ($diffDays < 2) {
+            return $baseTotal * 0.2; // 20% recargo
+        } elseif ($diffDays <= 7) {
+            return $baseTotal * 0.1; // 10% recargo
+        }
+
+        return 0;
     }
 }

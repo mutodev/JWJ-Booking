@@ -77,6 +77,18 @@
           Next
           <el-icon class="btn-icon"><ArrowRight /></el-icon>
         </el-button>
+
+        <el-button
+          v-if="activeStep === 8"
+          @click="submitReservation"
+          size="large"
+          :disabled="!canProceed || isSubmitting"
+          :loading="isSubmitting"
+          class="next-btn custom-btn custom-btn-primary"
+        >
+          {{ isSubmitting ? 'Processing...' : 'Submit Reservation' }}
+          <el-icon v-if="!isSubmitting" class="btn-icon"><Check /></el-icon>
+        </el-button>
       </div>
     </div>
   </div>
@@ -105,7 +117,8 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { ElMessage } from 'element-plus';
-import { ArrowLeft, ArrowRight } from '@element-plus/icons-vue';
+import { ArrowLeft, ArrowRight, Check } from '@element-plus/icons-vue';
+import api from "@/services/axios";
 
 // Importaciones de componentes de steps
 import Step1 from "./form/Step1.vue";
@@ -142,6 +155,7 @@ const totalSteps = 9;
 const activeStep = ref(1);
 const form = ref({});
 const isProcessing = ref(false);
+const isSubmitting = ref(false);
 const isMobile = ref(false);
 const wizardRoot = ref(null);
 const reservationData = ref(null);
@@ -318,8 +332,92 @@ function validateCurrentStep() {
  * @param {Object} data - Datos de respuesta de la reserva creada
  */
 function handleReservationSuccess(data) {
+  console.log('handleReservationSuccess called with data:', data);
+  console.log('Current activeStep before change:', activeStep.value);
+
   reservationData.value = data;
   activeStep.value = 9;
+
+  console.log('reservationData.value set to:', reservationData.value);
+  console.log('activeStep.value changed to:', activeStep.value);
+}
+
+/**
+ * Envía la reservación cuando se está en el Step 8
+ */
+async function submitReservation() {
+  console.log('submitReservation called');
+  console.log('isSubmitting.value:', isSubmitting.value);
+  console.log('canProceed.value:', canProceed.value);
+  console.log('activeStep.value:', activeStep.value);
+  console.log('stepValidations.value:', stepValidations.value);
+
+  if (isSubmitting.value || !canProceed.value) {
+    console.log('Exiting submitReservation early - isSubmitting:', isSubmitting.value, 'canProceed:', canProceed.value);
+    return;
+  }
+
+  isSubmitting.value = true;
+
+  try {
+    // Preparar datos para enviar al endpoint
+    const reservationData = {
+      customer: form.value?.customer,
+      zipcode: form.value?.zipcode,
+      service: form.value?.service,
+      kids: form.value?.kids,
+      hours: form.value?.hours,
+      addons: form.value?.addons || [],
+      information: form.value?.information
+    };
+
+    console.log('Sending reservation data:', reservationData);
+
+    // Enviar al endpoint
+    const response = await api.post('/home/reservation', reservationData);
+
+    console.log('API Response:', response);
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
+
+    // Verificar si la respuesta contiene datos válidos (independiente del status)
+    if (response.data && (response.data.reservation || response.data.data)) {
+      // Mostrar mensaje de éxito
+      ElMessage.success('Reservation submitted successfully!');
+
+      // Llamar a la función existente para manejar el éxito
+      const responseData = response.data?.data || response.data;
+      console.log('Processed responseData:', responseData);
+
+      const dataToPass = {
+        reservation: responseData.reservation || responseData,
+        calculation: responseData.calculation || null
+      };
+      console.log('Data to pass to handleReservationSuccess:', dataToPass);
+
+      handleReservationSuccess(dataToPass);
+
+      console.log('handleReservationSuccess called, activeStep should now be:', activeStep.value);
+
+    } else {
+      throw new Error('Invalid response format: ' + JSON.stringify(response));
+    }
+
+  } catch (error) {
+    console.error('Error submitting reservation:', error);
+
+    let errorMessage = 'Failed to submit reservation. Please try again.';
+
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    ElMessage.error(errorMessage);
+  } finally {
+    isSubmitting.value = false;
+  }
 }
 
 /**

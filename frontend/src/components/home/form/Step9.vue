@@ -90,6 +90,10 @@
                     <span>Surcharge:</span>
                     <span>${{ formatPrice(reservationData.calculation.surcharge_amount) }}</span>
                   </div>
+                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.total_duration_hours">
+                    <span>Total Duration:</span>
+                    <span>{{ formatDuration(reservationData.calculation.total_duration_hours) }}</span>
+                  </div>
                   <hr>
                   <div class="d-flex justify-content-between fw-bold text-success">
                     <span>Total Amount:</span>
@@ -185,6 +189,22 @@ function formatDate(dateString) {
 function formatPrice(amount) {
   if (amount === null || amount === undefined) return '0.00';
   return parseFloat(amount).toFixed(2);
+}
+
+function formatDuration(hours) {
+  if (hours === null || hours === undefined) return '0 hours';
+
+  const totalHours = parseFloat(hours);
+  const wholeHours = Math.floor(totalHours);
+  const minutes = Math.round((totalHours - wholeHours) * 60);
+
+  if (minutes === 0) {
+    return `${wholeHours} hour${wholeHours !== 1 ? 's' : ''}`;
+  } else if (wholeHours === 0) {
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  } else {
+    return `${wholeHours} hour${wholeHours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  }
 }
 
 function printDetails() {
