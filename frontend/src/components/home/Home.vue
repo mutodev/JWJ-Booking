@@ -95,28 +95,36 @@
 </template>
 
 /**
- * Home.vue - Main reservation wizard component
+ * Home.vue - Wizard de Reservación Principal
  *
- * Handles a multi-step form for creating entertainment service reservations.
+ * Componente principal que maneja un formulario multi-paso para crear reservaciones
+ * de servicios de entretenimiento infantil. Incluye validación en cada paso,
+ * navegación entre pasos, y envío final al servidor.
  *
- * Wizard steps:
- * 1. Client information
- * 2. Postal code
- * 3. Service selection
- * 4. Number of children
- * 5. Event duration
- * 6. Additional services (add-ons)
- * 7. Subtotal and confirmation
- * 8. Detailed event information
- * 9. Success confirmation
+ * FUNCIONALIDADES PRINCIPALES:
+ * - Navegación entre 9 pasos del formulario
+ * - Validación de datos en tiempo real
+ * - Almacenamiento temporal de datos del formulario
+ * - Envío de reservación al endpoint API
+ * - Transición automática al paso de confirmación
+ *
+ * ESTRUCTURA DEL FORMULARIO:
+ * Step 1: Información del cliente (nombre, email, teléfono, ubicación)
+ * Step 2: Selección de área metropolitana
+ * Step 3: Selección de servicio de entretenimiento
+ * Step 4: Selección de rango de edades de niños
+ * Step 5: Selección de duración del evento
+ * Step 6: Selección de addons adicionales
+ * Step 7: Resumen y subtotal de selección
+ * Step 8: Información detallada del evento
+ * Step 9: Confirmación de reserva creada exitosamente
  *
  * @author JamWithJamie Team
- * @version 1.0.0
+ * @version 2.1.0
  */
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
-import { ElMessage } from 'element-plus';
 import { ArrowLeft, ArrowRight, Check } from '@element-plus/icons-vue';
 import api from "@/services/axios";
 
@@ -238,6 +246,7 @@ function getCurrentStepProps() {
       props.service = form.value?.service;
       props.addons = form.value?.addons || [];
       props.hours = form.value?.hours;
+      props.kids = form.value?.kids;
       break;
     case 8:
       props.active = activeStep.value === 8;
@@ -329,31 +338,28 @@ function validateCurrentStep() {
 
 /**
  * Maneja el éxito en el envío de la reserva
+ * Almacena los datos de la reserva creada y navega al paso final
+ *
  * @param {Object} data - Datos de respuesta de la reserva creada
+ * @param {Object} data.reservation - Objeto con los datos de la reserva
+ * @param {Object} data.calculation - Cálculos de precios y duración
  */
 function handleReservationSuccess(data) {
-  console.log('handleReservationSuccess called with data:', data);
-  console.log('Current activeStep before change:', activeStep.value);
-
   reservationData.value = data;
   activeStep.value = 9;
-
-  console.log('reservationData.value set to:', reservationData.value);
-  console.log('activeStep.value changed to:', activeStep.value);
 }
 
 /**
- * Envía la reservación cuando se está en el Step 8
+ * Envía la reservación al servidor cuando se está en el Step 8
+ *
+ * Recopila todos los datos del formulario multi-step, los envía al endpoint
+ * de creación de reservas y navega al paso final si es exitoso.
+ *
+ * @async
+ * @throws {Error} Si falla la comunicación con el servidor o la validación
  */
 async function submitReservation() {
-  console.log('submitReservation called');
-  console.log('isSubmitting.value:', isSubmitting.value);
-  console.log('canProceed.value:', canProceed.value);
-  console.log('activeStep.value:', activeStep.value);
-  console.log('stepValidations.value:', stepValidations.value);
-
   if (isSubmitting.value || !canProceed.value) {
-    console.log('Exiting submitReservation early - isSubmitting:', isSubmitting.value, 'canProceed:', canProceed.value);
     return;
   }
 
@@ -371,41 +377,28 @@ async function submitReservation() {
       information: form.value?.information
     };
 
-    console.log('Sending reservation data:', reservationData);
-
-    // Enviar al endpoint
+    // Enviar al endpoint de creación de reservas
     const response = await api.post('/home/reservation', reservationData);
 
-    console.log('API Response:', response);
-    console.log('Response status:', response.status);
-    console.log('Response data:', response.data);
-
-    // Verificar si la respuesta contiene datos válidos (independiente del status)
+    // Verificar si la respuesta contiene datos válidos
     if (response.data && (response.data.reservation || response.data.data)) {
-      // Mostrar mensaje de éxito
-      ElMessage.success('Reservation submitted successfully!');
-
-      // Llamar a la función existente para manejar el éxito
+      // Procesar respuesta del servidor
       const responseData = response.data?.data || response.data;
-      console.log('Processed responseData:', responseData);
 
       const dataToPass = {
         reservation: responseData.reservation || responseData,
         calculation: responseData.calculation || null
       };
-      console.log('Data to pass to handleReservationSuccess:', dataToPass);
 
+      // Navegar al paso final con los datos de la reserva
       handleReservationSuccess(dataToPass);
 
-      console.log('handleReservationSuccess called, activeStep should now be:', activeStep.value);
-
     } else {
-      throw new Error('Invalid response format: ' + JSON.stringify(response));
+      throw new Error('Invalid response format from server');
     }
 
   } catch (error) {
-    console.error('Error submitting reservation:', error);
-
+    // Manejar errores de red o validación del servidor
     let errorMessage = 'Failed to submit reservation. Please try again.';
 
     if (error.response?.data?.message) {
@@ -414,7 +407,7 @@ async function submitReservation() {
       errorMessage = error.message;
     }
 
-    ElMessage.error(errorMessage);
+    console.error('Reservation submission error:', errorMessage);
   } finally {
     isSubmitting.value = false;
   }

@@ -25,6 +25,10 @@
               <span>Add-ons:</span>
               <span>${{ addonsTotal.toFixed(2) }}</span>
             </div>
+            <div class="breakdown-item d-flex justify-content-between" v-if="extraChildrenTotal > 0">
+              <span>Extra Children ({{ getExtraChildrenCount() }} over 40):</span>
+              <span>${{ extraChildrenTotal.toFixed(2) }}</span>
+            </div>
             <hr class="my-2">
             <div class="breakdown-total d-flex justify-content-between fw-bold">
               <span>Sub Total:</span>
@@ -83,6 +87,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  kids: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["setData"]);
@@ -104,10 +112,50 @@ const addonsTotal = computed(() => {
   }, 0);
 });
 
+// Calcular niños extra y su costo
+const extraChildrenTotal = computed(() => {
+  if (!props.service || !props.kids) return 0;
+
+  // Obtener cantidad de niños seleccionados
+  let selectedKids = 0;
+  if (props.kids.count) {
+    // Para opción custom como "+40 kids" con cantidad específica
+    selectedKids = parseInt(props.kids.count);
+  } else if (props.kids.selectedKids) {
+    // Para opción directa con selectedKids
+    selectedKids = parseInt(props.kids.selectedKids);
+  }
+
+  // Límite fijo de 40 niños sin cargos extra
+  const maxKidsIncluded = 40;
+
+  // Calcular niños extra solo después de 40
+  const extraKids = Math.max(0, selectedKids - maxKidsIncluded);
+
+  // Calcular costo de niños extra
+  const extraChildFee = parseFloat(props.service.extra_child_fee || 0);
+
+  return extraKids * extraChildFee;
+});
+
 // Calcular subtotal
 const subtotal = computed(() => {
-  return servicePrice.value + addonsTotal.value;
+  return servicePrice.value + addonsTotal.value + extraChildrenTotal.value;
 });
+
+// Función para obtener la cantidad de niños extra
+function getExtraChildrenCount() {
+  if (!props.kids) return 0;
+
+  let selectedKids = 0;
+  if (props.kids.count) {
+    selectedKids = parseInt(props.kids.count);
+  } else if (props.kids.selectedKids) {
+    selectedKids = parseInt(props.kids.selectedKids);
+  }
+
+  return Math.max(0, selectedKids - 40);
+}
 
 // Emitir datos cuando cambie el subtotal
 function emitSubtotalData() {
@@ -115,6 +163,7 @@ function emitSubtotalData() {
     subtotal: subtotal.value,
     servicePrice: servicePrice.value,
     addonsTotal: addonsTotal.value,
+    extraChildrenTotal: extraChildrenTotal.value,
     isConfirmed: isConfirmed.value,
     isValid: isConfirmed.value && subtotal.value > 0
   };

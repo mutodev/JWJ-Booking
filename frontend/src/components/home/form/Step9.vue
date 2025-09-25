@@ -170,11 +170,32 @@ const props = defineProps({
 const emit = defineEmits(["newReservation"]);
 
 // Methods
-function formatDate(dateString) {
-  if (!dateString) return 'Not specified';
+function formatDate(dateInput) {
+  if (!dateInput) return 'Not specified';
 
   try {
+    let dateString;
+
+    // Si es un objeto DateTime de PHP serializado
+    if (typeof dateInput === 'object' && dateInput.date) {
+      dateString = dateInput.date;
+    }
+    // Si es un string directo
+    else if (typeof dateInput === 'string') {
+      dateString = dateInput;
+    }
+    // Si es otro tipo, convertir a string
+    else {
+      dateString = dateInput.toString();
+    }
+
     const date = new Date(dateString);
+
+    // Verificar que la fecha sea válida
+    if (isNaN(date.getTime())) {
+      return 'Invalid date format';
+    }
+
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -182,7 +203,8 @@ function formatDate(dateString) {
       day: 'numeric'
     });
   } catch (error) {
-    return dateString;
+    console.error('Date formatting error:', error);
+    return 'Date format error';
   }
 }
 

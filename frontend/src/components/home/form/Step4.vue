@@ -47,12 +47,15 @@
         <input
           type="number"
           class="form-control"
-          placeholder="Enter number of kids"
+          placeholder="Enter number of kids (41+)"
           v-model.number="customKidsCount"
-          min="1"
+          min="41"
         />
       </div>
-      <small class="text-muted mt-1 d-block">Please enter the exact number of children</small>
+      <small class="text-muted mt-1 d-block">Please enter the exact number of children (41 or more)</small>
+      <div v-if="customCountError" class="text-danger small mt-1">
+        {{ customCountError }}
+      </div>
     </div>
   </div>
 </template>
@@ -82,11 +85,12 @@ const emit = defineEmits(["setData"]);
 const kidsOptions = ref([]);
 const selected = ref(null);
 const customKidsCount = ref(null);
+const customCountError = ref("");
 
 // Yup schema for validation
 const customCountSchema = yup.number()
   .integer("Must be a whole number")
-  .min(1, "Minimum 1 child required")
+  .min(41, "For 41+ children option, minimum 41 children required")
   .required("Please enter the number of children");
 
 // Computed property to check if form is valid
@@ -96,8 +100,10 @@ const isValidSelection = computed(() => {
   if (selected.value.id === '40plus') {
     try {
       customCountSchema.validateSync(customKidsCount.value);
+      customCountError.value = "";
       return true;
-    } catch {
+    } catch (error) {
+      customCountError.value = error.message;
       return false;
     }
   }

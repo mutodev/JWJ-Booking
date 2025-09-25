@@ -111,13 +111,17 @@ class ReservationService
     {
         $servicePrice = $data['price']['amount'] ?? 0;
         $addons = $data['addons'] ?? [];
-        $extraChildren = $data['form']['extraChildren'] ?? 0;
-        $extraChildFee = $data['price']['extra_child_fee'] ?? 0;
         $bookingDate = isset($data['form']['date']) ? new \DateTime($data['form']['date']) : null;
         $today = new \DateTime();
 
         // Calcular totales usando funciones centralizadas
         $addonsTotal = $this->calculateAddonsTotal($addons);
+
+        // Calcular niños extra usando límite fijo de 40 niños
+        $selectedKids = intval($data['form']['selectedKids'] ?? $data['kids']['count'] ?? $data['kids']['selectedKids'] ?? 0);
+        $maxKidsIncluded = 40; // Límite fijo: solo se cobran extras después de 40 niños
+        $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
+        $extraChildFee = floatval($data['price']['extra_child_fee'] ?? 0);
         $extraChildrenTotal = $extraChildren * $extraChildFee;
         $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
 
@@ -137,14 +141,14 @@ class ReservationService
             'event_address' => $data['form']['eventAddress'],
             'event_date' => $bookingDate ? $bookingDate->format('Y-m-d') : null,
             'event_time' => $data['form']['startTime'] ?? null,
-            'children_count' => $extraChildren,
+            'children_count' => $selectedKids,
             'performers_count' => $data['price']['performers_count'] ?? null,
             'duration_hours' => $totalDurationHours,
             'price_type' => $this->determinePriceType($data['addons'] ?? []),
             'base_price' => $servicePrice,
             'addons_total' => $addonsTotal,
             'expedition_fee' => 0,
-            'extra_children_fee' => $data['form']['extraChildren'] ?? 0,
+            'extra_children_fee' => $extraChildrenTotal,
             'total_amount' => $grandTotal,
             'status' => 'new',
             'is_invoiced' => false,
@@ -262,12 +266,6 @@ class ReservationService
      */
     public function createFromForm(array $formData)
     {
-        // Debug logging temporal - ver qué datos llegan
-        error_log("createFromForm received data: " . json_encode([
-            'information_eventDate' => $formData['information']['eventDate'] ?? 'NOT_SET',
-            'information_keys' => array_keys($formData['information'] ?? []),
-            'full_information' => $formData['information'] ?? null
-        ]));
 
         // Validar datos requeridos
         $customer = $formData['customer'] ?? null;
@@ -291,14 +289,9 @@ class ReservationService
 
             $today = new \DateTime('today'); // Solo fecha, sin hora (ya es medianoche)
 
-            // Debug logging temporal - mostrar zona horaria también
-            error_log("Event date validation: eventDate='$eventDate', eventDateTime='" . $eventDateTime->format('Y-m-d H:i:s T') . "', today='" . $today->format('Y-m-d H:i:s T') . "', timezone='" . date_default_timezone_get() . "'");
-
-            // Temporalmente desactivado para debugging
-            // if ($eventDateTime < $today) {
-            //     error_log("Date comparison failed: eventDateTime < today");
-            //     throw new HTTPException('Event date cannot be in the past', Response::HTTP_BAD_REQUEST);
-            // }
+            if ($eventDateTime < $today) {
+                throw new HTTPException('Event date cannot be in the past', Response::HTTP_BAD_REQUEST);
+            }
         }
 
         // Validar campos numéricos - manejar diferentes estructuras de kids
@@ -353,9 +346,9 @@ class ReservationService
             $servicePrice = $serviceAmount;
             $addonsTotal = $this->calculateAddonsTotal($addons);
 
-            // Calcular recargo por niños adicionales
-            $serviceIncludedKids = intval($service['children_count'] ?? 0);
-            $extraChildren = max(0, $selectedKids - $serviceIncludedKids);
+            // Calcular recargo por niños adicionales usando límite fijo de 40 niños
+            $maxKidsIncluded = 40; // Límite fijo: solo se cobran extras después de 40 niños
+            $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
             $extraChildFee = floatval($service['extra_child_fee'] ?? 0);
             $extraChildrenTotal = $extraChildren * $extraChildFee;
 
