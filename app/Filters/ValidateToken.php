@@ -28,12 +28,25 @@ class ValidateToken implements FilterInterface
     public function before(RequestInterface $request, $arguments = null)
     {
         try {
+            // Intentar obtener el token de múltiples fuentes
             $token = $request->getHeaderLine('Authorization');
-            if (!$token) {
+
+            // Si no se encuentra, intentar en variables de servidor
+            if (empty($token)) {
+                $token = $request->getServer('HTTP_AUTHORIZATION');
+            }
+
+            // También revisar en REDIRECT_HTTP_AUTHORIZATION (para algunos servidores Apache)
+            if (empty($token)) {
+                $token = $request->getServer('REDIRECT_HTTP_AUTHORIZATION');
+            }
+
+            if (empty($token)) {
                 return service('response')->setStatusCode(403)->setJSON(['message' => 'Token not provided']);
             }
 
-            $token = substr($token, 7);
+            // Remover el prefijo "Bearer " si existe
+            $token = str_starts_with($token, 'Bearer ') ? substr($token, 7) : $token;
             $this->tokenResponse = verify_token($token, true);
 
             $userModel = new UserRepository();
