@@ -54,8 +54,10 @@ import { useForm, useField } from "vee-validate";
 import * as yup from "yup";
 import api from "@/services/axios";
 import { useRouter } from "vue-router";
+import { useAuth } from "@/composables/useAuth";
 
 const router = useRouter();
+const { login } = useAuth();
 
 // Esquema de validación con Yup
 const schema = yup.object({
@@ -83,15 +85,14 @@ const submitForm = handleSubmit(async (values) => {
   try {
     const response = await api.post("/auth/login", values);
 
-    // El token se guarda automáticamente en el interceptor de axios
-    // Solo verificamos que el token exista antes de redirigir
-    const token = sessionStorage.getItem("token");
-
-    if (token) {
+    // Usar el composable para manejar el login
+    if (response.token || response.data) {
+      const authToken = response.token || response.data;
+      login(authToken);
       console.log("Login successful, token saved");
       router.replace("/admin");
     } else {
-      console.error("Token not saved after login");
+      console.error("No token received from server");
     }
   } catch (error) {
     console.error("Login error:", error);

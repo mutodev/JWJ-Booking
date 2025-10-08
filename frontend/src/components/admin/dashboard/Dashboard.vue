@@ -63,6 +63,7 @@ import {
   ArcElement,
 } from 'chart.js';
 import api from '@/services/axios';
+import { useAuth } from '@/composables/useAuth';
 
 // Import chart components
 import StatusChart from './StatusChart.vue';
@@ -87,6 +88,9 @@ ChartJS.register(
 // Header configuration injection
 const updateHeaderData = inject('updateHeaderData');
 updateHeaderData({ title: "Dashboard", icon: "bi-speedometer2" });
+
+// Auth composable
+const { waitForToken } = useAuth();
 
 // ========================
 // REACTIVE STATE
@@ -177,10 +181,15 @@ const fetchAllData = async () => {
 
 /**
  * Component initialization
- * Fetches all dashboard data when component mounts
+ * Fetches all dashboard data when component mounts and token is available
  */
-onMounted(() => {
-  fetchAllData();
+onMounted(async () => {
+  const token = await waitForToken();
+  if (token) {
+    fetchAllData();
+  } else {
+    console.error('Dashboard: No token available after waiting');
+  }
 });
 </script>
 
