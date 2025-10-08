@@ -81,28 +81,22 @@ const { value: password, errorMessage: passError } = useField("password");
  */
 const submitForm = handleSubmit(async (values) => {
   try {
-    console.log("🚀 Starting login process...");
     const response = await api.post("/auth/login", values);
 
-    // Esperar un poco para que el interceptor procese la respuesta
-    console.log("⏳ Waiting for token to be saved...");
-    await new Promise(resolve => setTimeout(resolve, 150));
+    // El token se guarda automáticamente en el interceptor de axios
+    // Esperar un momento para que se procese completamente
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     const token = sessionStorage.getItem("token");
-    console.log(`🔑 Token after login: ${!!token}`);
 
     if (token) {
-      console.log("✅ Login successful, token saved, redirecting...");
-
-      // Delay adicional antes de redirigir para asegurar que todo esté listo
-      setTimeout(() => {
-        router.replace("/admin");
-      }, 100);
+      console.log("Login successful, token saved");
+      router.replace("/admin");
     } else {
-      console.error("❌ Token not saved after login");
+      console.error("Token not saved after login");
     }
   } catch (error) {
-    console.error("💥 Login error:", error);
+    console.error("Login error:", error);
   }
 });
 </script>
