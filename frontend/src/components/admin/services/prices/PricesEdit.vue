@@ -501,12 +501,7 @@ const removeDuration = (index) => {
 };
 
 const addChildrenRange = () => {
-  console.log('addChildrenRange called');
-  console.log('isValidChildrenRange:', isValidChildrenRange.value);
-  console.log('newChildrenRange:', newChildrenRange.value);
-
   if (!isValidChildrenRange.value) {
-    console.log('Invalid children range');
     return;
   }
 
@@ -517,19 +512,15 @@ const addChildrenRange = () => {
   );
 
   if (exists) {
-    console.log('Range already exists');
     errors.value.childrenRanges = "This children range already exists";
     return;
   }
 
-  console.log('Adding range to selectedChildrenRanges');
   selectedChildrenRanges.value.push({
     min_children: newChildrenRange.value.min_children,
     max_children: newChildrenRange.value.max_children,
     is_active: true
   });
-
-  console.log('selectedChildrenRanges after add:', selectedChildrenRanges.value);
 
   // Limpiar el input
   newChildrenRange.value = { min_children: null, max_children: null };

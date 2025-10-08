@@ -85,11 +85,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("token");
 
-  console.log(`Router guard - Going to: ${to.path}, Token exists: ${!!token}`);
-
   if (to.matched.some((record) => record.meta.requiresAuth)) {
     if (!token) {
-      console.log("No token found, redirecting to login");
       next("/login");
       return;
     }
@@ -100,7 +97,6 @@ router.beforeEach((to, from, next) => {
       const currentTime = Date.now() / 1000;
 
       if (decoded.exp && decoded.exp < currentTime) {
-        console.log("Token expired, clearing session and redirecting to login");
         localStorage.clear();
         next("/login");
         return;

@@ -15,9 +15,6 @@ const baseURL =
     ? "http://72.60.169.233/api"
     : `${window.location.origin}/api`;
 
-console.log("🌍 CI_ENVIRONMENT:", appEnv);
-console.log("🔗 API Base URL:", baseURL);
-
 const api = axios.create({
   baseURL,
   timeout: 30000,
@@ -93,7 +90,6 @@ api.interceptors.response.use(
     if (error.response) {
       const status = error.response.status;
       if ([401, 403, 419].includes(status)) {
-        console.log("Authentication error, clearing session and redirecting to login");
         localStorage.clear();
         router.replace("/login").catch((err) =>
           console.error("Redirect error:", err)

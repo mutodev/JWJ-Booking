@@ -122,7 +122,7 @@ const saveReservation = async() => {
       await api.post('/reservations', dataForm.value)
       emit("saved");
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 }
 

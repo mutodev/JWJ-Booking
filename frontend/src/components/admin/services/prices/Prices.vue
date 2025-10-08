@@ -147,7 +147,7 @@ const getData = async () => {
     const response = await api.get("/service-prices");
     data.value = response.data;
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 };
 
@@ -157,7 +157,7 @@ const getServices = async () => {
     const response = await api.get("/services/get-all-active");
     services.value = response.data;
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 };
 
@@ -167,7 +167,7 @@ const getCounties = async () => {
     const response = await api.get("/counties/get-all-active");
     counties.value = response.data;
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 };
 

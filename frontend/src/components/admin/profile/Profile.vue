@@ -163,7 +163,7 @@ const submitForm = handleSubmit(async (values) => {
 
     router.push("/admin");
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 
 

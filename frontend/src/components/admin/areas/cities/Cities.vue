@@ -114,7 +114,7 @@ const getData = async () => {
     const response = await api.get("/cities/get-all-and-county");
     data.value = response.data;
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 };
 

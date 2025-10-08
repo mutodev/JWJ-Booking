@@ -88,7 +88,6 @@ const submitForm = handleSubmit(async (values) => {
     const token = localStorage.getItem("token");
 
     if (token) {
-      console.log("✅ Login successful, token saved in localStorage");
       router.replace("/admin");
     } else {
       console.error("⚠️ Token not saved after login");

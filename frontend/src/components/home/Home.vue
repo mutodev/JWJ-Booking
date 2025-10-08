@@ -317,7 +317,6 @@ function setData(data) {
   }
 
   validateCurrentStep();
-  console.log('Form data updated:', form.value);
 }
 
 /**

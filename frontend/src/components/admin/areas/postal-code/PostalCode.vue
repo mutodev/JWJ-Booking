@@ -133,11 +133,11 @@ const handle = () => {
 const toggleActive = async (id) => {
   try {
     const index = data.value.findIndex((item) => item.id === id);
-    data.value[index].is_active = !data.value[index].is_active;    
+    data.value[index].is_active = !data.value[index].is_active;
     await api.put(`/zipcodes/${data.value[index].id}`, data.value[index]);
     getData();
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 };
 

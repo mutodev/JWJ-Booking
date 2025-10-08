@@ -111,7 +111,7 @@ const getData = async () => {
     const response = await api.get("/metropolitan-areas");
     data.value = response.data;
   } catch (error) {
-    console.log(error);
+    // Error handled by axios interceptor
   }
 };
 

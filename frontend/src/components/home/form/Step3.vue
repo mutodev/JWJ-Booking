@@ -114,9 +114,7 @@ function selectService(service) {
 watch(
   () => [props.county, props.active],
   ([county, active]) => {
-    console.log('Step 3 watcher triggered:', { county, active });
     if (active && county) {
-      console.log('Loading services for county:', county);
       loadServices();
     }
   },
