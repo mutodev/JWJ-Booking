@@ -14,7 +14,7 @@ export default defineConfig({
   },
   build: {
     outDir: '../public/build',
-    emptyOutDir: true,
+    emptyOutDir: false,
     manifest: true,
     rollupOptions: {
       input: resolve(__dirname, 'main.js')

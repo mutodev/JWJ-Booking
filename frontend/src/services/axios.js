@@ -20,12 +20,23 @@ api.interceptors.request.use(
   (config) => {
     showLoader();
     const token = sessionStorage.getItem("token");
-    if (token) config.headers["Authorization"] = `Bearer ${token}`;
+
+    console.log(`🔍 API Request to: ${config.url}`);
+    console.log(`🔑 Token available: ${!!token}`);
+
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+      console.log(`✅ Token attached: ${token.substring(0, 20)}...`);
+    } else {
+      console.warn("❌ No token found in sessionStorage for request");
+      console.log("📦 SessionStorage contents:", Object.keys(sessionStorage));
+    }
 
     config.headers["X-Language"] = localStorage.getItem("language") ?? "es";
     return config;
   },
   (error) => {
+    hideLoader();
     return Promise.reject(error);
   }
 );

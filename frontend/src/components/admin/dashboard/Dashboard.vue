@@ -176,11 +176,26 @@ const fetchAllData = async () => {
 // ========================
 
 /**
- * Component initialization
- * Fetches all dashboard data when component mounts
+ * Component initialization with token validation
+ * Ensures token is available before making API calls
  */
 onMounted(() => {
-  fetchAllData();
+  console.log("📊 Dashboard mounted, checking token availability...");
+
+  const checkTokenAndFetch = () => {
+    const token = sessionStorage.getItem('token');
+    console.log(`🔑 Token check: ${!!token}`);
+
+    if (token) {
+      console.log("✅ Token found, fetching dashboard data");
+      fetchAllData();
+    } else {
+      console.warn("❌ No token found, retrying in 100ms...");
+      setTimeout(checkTokenAndFetch, 100);
+    }
+  };
+
+  checkTokenAndFetch();
 });
 </script>
 
