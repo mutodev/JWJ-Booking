@@ -17,7 +17,19 @@ class App extends BaseConfig
      * E.g., http://example.com/
      */
     public string $baseURL = 'http://localhost:8080/';
-    // public string $baseURL = 'http://192.168.0.104:8080/';
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        // Establecer baseURL según el entorno
+        if (ENVIRONMENT === 'production') {
+            $this->baseURL = 'http://72.60.169.233/';
+        } else {
+            // development, testing, o cualquier otro entorno usa localhost
+            $this->baseURL = 'http://localhost:8080/';
+        }
+    }
 
     /**
      * Allowed Hostnames in the Site URL other than the hostname in the baseURL.

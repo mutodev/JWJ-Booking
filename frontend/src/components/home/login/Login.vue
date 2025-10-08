@@ -80,13 +80,22 @@ const { value: password, errorMessage: passError } = useField("password");
  * Submit validado con vee-validate
  */
 const submitForm = handleSubmit(async (values) => {
-  api
-    .post("/auth/login", values)
-    .then((response) => {
-      sessionStorage.setItem("token", response.data);
+  try {
+    const response = await api.post("/auth/login", values);
+
+    // El token se guarda automáticamente en el interceptor de axios
+    // Solo verificamos que el token exista antes de redirigir
+    const token = sessionStorage.getItem("token");
+
+    if (token) {
+      console.log("Login successful, token saved");
       router.replace("/admin");
-    })
-    .catch((error) => {});
+    } else {
+      console.error("Token not saved after login");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+  }
 });
 </script>
 

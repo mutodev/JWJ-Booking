@@ -2,6 +2,7 @@ import axios from "axios";
 import { useToast } from "vue-toastification";
 import { showLoader, hideLoader } from "@/assets/scripts/loader";
 import { jwtDecode } from "jwt-decode";
+import router from "@/router";
 
 const toast = useToast();
 const baseURL = `${window.location.origin}/api`;
@@ -33,30 +34,51 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     try {
+      // Verificar si hay token en la respuesta
       if (response.data?.token || response.data?.data) {
         const token = response.data?.token ?? response.data.data;
-        const decoded = jwtDecode(token);
 
-        sessionStorage.setItem("token", token);
-        // Decode the token and save the data in sessionStorage
-        for (const [key, value] of Object.entries(decoded)) {
-          if (typeof value === "object") {
-            sessionStorage.setItem(key, JSON.stringify(value));
-          } else {
-            sessionStorage.setItem(key, String(value));
+        // Validar que el token sea una string válida
+        if (typeof token === 'string' && token.length > 0) {
+          try {
+            const decoded = jwtDecode(token);
+
+            // Guardar el token
+            sessionStorage.setItem("token", token);
+            console.log("Token saved to sessionStorage:", token.substring(0, 20) + "...");
+
+            // Decodificar y guardar datos del token
+            for (const [key, value] of Object.entries(decoded)) {
+              if (key !== 'exp' && key !== 'iat') { // Excluir campos de tiempo
+                if (typeof value === "object") {
+                  sessionStorage.setItem(key, JSON.stringify(value));
+                } else {
+                  sessionStorage.setItem(key, String(value));
+                }
+              }
+            }
+          } catch (jwtError) {
+            console.error("Error decoding JWT:", jwtError);
           }
         }
       }
 
-      if (response.config.method?.toUpperCase() !== "GET")
-        toast.success(response.data.message ?? "Success");
+      // Solo mostrar toast para métodos que no sean GET
+      if (response.config.method?.toUpperCase() !== "GET" && response.data?.message) {
+        toast.success(response.data.message);
+      }
 
       hideLoader();
       return response?.data ?? response;
     } catch (error) {
-      console.log(error);
-      if ([200, 201].includes(response.status) && response.config.method?.toUpperCase() !== "GET")
-        toast.success(response.data.message ?? "Success");
+      console.error("Response interceptor error:", error);
+
+      // Si hay error pero la respuesta fue exitosa, aún mostrar toast
+      if ([200, 201].includes(response.status) &&
+          response.config.method?.toUpperCase() !== "GET" &&
+          response.data?.message) {
+        toast.success(response.data.message);
+      }
 
       hideLoader();
       return response?.data ?? response;
@@ -64,14 +86,26 @@ api.interceptors.response.use(
   },
   (error) => {
     hideLoader();
-    toast.error(error.response.data.message);
+
+    // Manejo más robusto de errores
+    const errorMessage = error.response?.data?.message || error.message || "An error occurred";
+    console.error("API Error:", errorMessage);
+
+    // Solo mostrar toast si hay un mensaje específico del servidor
+    if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    }
+
+    // Manejo de errores de autenticación
     if (error.response) {
       const status = error.response.status;
       if ([401, 403, 419].includes(status)) {
+        console.log("Authentication error, clearing session and redirecting to login");
         sessionStorage.clear();
-        router.replace("/login");
+        router.replace("/login").catch(err => console.error("Redirect error:", err));
       }
     }
+
     return Promise.reject(error);
   }
 );
