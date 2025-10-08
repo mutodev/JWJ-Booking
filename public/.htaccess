@@ -2,6 +2,10 @@
     RewriteEngine On
     RewriteBase /
 
+    # 🔐 Pasar el header Authorization a PHP
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
     # 🚫 No reescribir peticiones a archivos o carpetas existentes
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
