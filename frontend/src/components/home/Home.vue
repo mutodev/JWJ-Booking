@@ -525,7 +525,7 @@ watch(activeStep, () => {
 
       &.is-process {
         background: #FFEF81 !important;
-        border-color: #FFEF81 !important;
+        border-color: #000000 !important;
         color: black !important;
       }
 
@@ -572,14 +572,45 @@ watch(activeStep, () => {
   justify-content: center;
 }
 
-/* Force the current step styling */
-:deep(.el-step.is-process .el-step__icon) {
+/* Force the current step styling with maximum specificity */
+:deep(.el-steps--vertical .el-step.is-process .el-step__head .el-step__icon) {
   background: #FFEF81 !important;
-  border-color: #FFEF81 !important;
+  border-color: #000000 !important;
+  background-color: #FFEF81 !important;
+}
+
+:deep(.el-steps--vertical .el-step.is-process .el-step__head .el-step__icon.is-process) {
+  background: #FFEF81 !important;
+  border-color: #000000 !important;
+  background-color: #FFEF81 !important;
 }
 
 :deep(.el-step.is-process .step-number) {
   color: black !important;
+}
+
+/* Alternative approach - target by step content */
+:deep(.el-step__head.is-process .el-step__icon) {
+  background: #FFEF81 !important;
+  border: 2px solid #000000 !important;
+  background-color: #FFEF81 !important;
+}
+
+/* Nuclear option - override everything */
+.steps-sidebar :deep(.el-step__icon) {
+  --el-color-primary: #FFEF81;
+}
+
+.steps-sidebar :deep(.el-steps .el-step.is-process .el-step__head .el-step__icon) {
+  background: #FFEF81 !important;
+  border-color: #000000 !important;
+  background-color: #FFEF81 !important;
+}
+
+/* Direct style override */
+.steps-sidebar :deep(.el-step__icon.is-process) {
+  background: #FFEF81 !important;
+  border: 2px solid #000000 !important;
 }
 
 

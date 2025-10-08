@@ -135,8 +135,8 @@ watch(selectedAddons, () => {
 }
 
 .btn-check:checked + .service-card {
-  border: 2px solid #198754 !important;
-  box-shadow: 0 0 0 4px rgba(25, 135, 84, 0.25);
+  border: 2px solid #FF74B7 !important;
+  box-shadow: 0 0 0 4px rgba(255, 116, 183, 0.25);
   transform: translateY(-3px);
 }
 

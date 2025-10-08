@@ -259,19 +259,6 @@
         </div>
       </div>
 
-      <!-- Submit Button -->
-      <div class="text-center mt-4">
-        <button
-          v-if="!isValid"
-          type="button"
-          class="btn btn-primary btn-lg px-5"
-          @click="validateForm"
-        >
-          Validate Information
-          <i class="bi ms-2 bi-arrow-right"></i>
-        </button>
-      </div>
-
     </form>
   </div>
 </template>

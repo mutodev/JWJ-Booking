@@ -128,15 +128,16 @@ watch(selected, () => {
 }
 
 .btn-check:checked + .custom-hour-btn {
-  background-color: #6b7280 !important;
-  border-color: #6b7280 !important;
-  color: white !important;
+  background-color: #FF74B7 !important;
+  border-color: #FF74B7 !important;
+  color: black !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(255, 116, 183, 0.4) !important;
 }
 
 .btn-check:checked + .custom-hour-btn:hover {
-  background-color: #4b5563 !important;
-  border-color: #4b5563 !important;
+  background-color: #FF74B7 !important;
+  border-color: #FF74B7 !important;
+  color: black !important;
 }
 </style>

@@ -27,18 +27,33 @@
 
           <!-- Info -->
           <div class="card-body d-flex flex-column">
-            <!-- Título + precio -->
+            <!-- Título -->
             <h5 class="card-title fw-bold">
               {{ service.name }}
             </h5>
-            <p class="price mb-2">${{ service.amount }}</p>
 
-            <p class="card-text small text-muted mb-2">
-              {{ service.performers_count }} performer<span
-                v-if="service.performers_count > 1"
-                >s</span
-              >
-            </p>
+            <div class="service-details mb-2">
+              <p class="card-text small text-muted mb-1">
+                <i class="bi bi-people-fill me-1"></i>
+                {{ service.performers_count }} performer<span
+                  v-if="service.performers_count > 1"
+                  >s</span
+                >
+              </p>
+
+              <p class="card-text small text-muted mb-1" v-if="service.min_duration_hours">
+                <i class="bi bi-clock me-1"></i>
+                {{ service.min_duration_hours }} hour<span
+                  v-if="service.min_duration_hours > 1"
+                  >s</span
+                > minimum
+              </p>
+
+              <p class="card-text small text-muted mb-1" v-if="service.children_count">
+                <i class="bi bi-person-hearts me-1"></i>
+                Up to {{ service.children_count }} children included
+              </p>
+            </div>
 
             <span class="badge bg-light text-dark mb-2">
               For Ages {{ service.range_age }}
@@ -136,9 +151,9 @@ watch(
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
 }
 .selectable-card.selected {
-  border: 2px solid rgba(78, 245, 167, 0.45) !important;
+  border: 2px solid rgba(255, 116, 183, 0.6) !important;
   transform: translateY(-8px);
-  box-shadow: 0 5px 10px rgba(78, 245, 167, 0.45) !important;
+  box-shadow: 0 5px 15px rgba(255, 116, 183, 0.4) !important;
 }
 .card-img-top {
   height: 180px;
@@ -146,10 +161,13 @@ watch(
   border-top-left-radius: 14px;
   border-top-right-radius: 14px;
 }
-.price {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #198754;
+.service-details {
+  line-height: 1.3;
+}
+
+.service-details i {
+  color: #6c757d;
+  width: 14px;
 }
 .badge {
   font-size: 0.75rem;

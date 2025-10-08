@@ -2,7 +2,7 @@
   <div class="container py-5">
     <!-- Título -->
     <div class="d-flex align-items-center justify-content-center mb-5">
-      <i class="bi bi-calculator fs-3 me-2 text-success"></i>
+      <i class="bi bi-calculator fs-3 me-2 text-dark"></i>
       <h2 class="mb-0">Sub Total</h2>
     </div>
 
@@ -235,35 +235,44 @@ h2 {
 }
 
 .confirmation-btn {
-  font-size: 1.1rem;
-  font-weight: 600;
-  padding: 0.75rem 2rem;
-  border-radius: 50px;
-  transition: all 0.3s ease;
-  border-width: 2px;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  min-width: 200px;
+  font-size: 1rem;
 }
 
 .confirmation-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3);
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+}
+
+.confirmation-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 .confirmation-btn.btn-success {
-  background-color: #198754;
-  border-color: #198754;
-  color: white;
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
 }
 
 .confirmation-btn.btn-outline-success {
-  background-color: transparent;
-  border-color: #198754;
-  color: #198754;
+  border: 2px solid #d1d5db !important;
+  background: white !important;
+  color: #6b7280 !important;
 }
 
 .confirmation-btn.btn-outline-success:hover {
-  background-color: #198754;
-  border-color: #198754;
-  color: white;
+  border-color: #9ca3af !important;
+  background: #f9fafb !important;
+  color: #4b5563 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
 @media (max-width: 768px) {

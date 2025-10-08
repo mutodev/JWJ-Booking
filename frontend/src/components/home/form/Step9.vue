@@ -3,9 +3,9 @@
     <!-- Success Icon & Title -->
     <div class="text-center mb-5">
       <div class="success-icon mb-4">
-        <i class="bi bi-check-circle-fill text-success"></i>
+        <i class="bi bi-check-circle-fill text-dark"></i>
       </div>
-      <h2 class="text-success mb-2">Reservation Confirmed!</h2>
+      <h2 class="text-dark mb-2">Reservation Confirmed!</h2>
       <p class="text-muted">Thank you for choosing our services. Your reservation has been successfully submitted.</p>
     </div>
 
@@ -13,22 +13,13 @@
     <div class="row justify-content-center">
       <div class="col-lg-8">
         <div class="card shadow-sm border-0">
-          <div class="card-header bg-success text-white">
+          <div class="card-header bg-dark text-white">
             <h5 class="mb-0">
               <i class="bi bi-calendar-check me-2"></i>
               Reservation Details
             </h5>
           </div>
           <div class="card-body">
-            <!-- Reservation ID -->
-            <div class="row mb-3" v-if="reservationData?.reservation?.id">
-              <div class="col-sm-4">
-                <strong>Reservation ID:</strong>
-              </div>
-              <div class="col-sm-8">
-                <code class="text-primary">{{ reservationData.reservation.id }}</code>
-              </div>
-            </div>
 
             <!-- Event Details -->
             <div class="row mb-3">
@@ -95,7 +86,7 @@
                     <span>{{ formatDuration(reservationData.calculation.total_duration_hours) }}</span>
                   </div>
                   <hr>
-                  <div class="d-flex justify-content-between fw-bold text-success">
+                  <div class="d-flex justify-content-between fw-bold" style="color: #FF74B7;">
                     <span>Total Amount:</span>
                     <span>${{ formatPrice(reservationData.calculation.grand_total) }}</span>
                   </div>
@@ -103,15 +94,6 @@
               </div>
             </div>
 
-            <!-- Status -->
-            <div class="row mb-3">
-              <div class="col-sm-4">
-                <strong>Status:</strong>
-              </div>
-              <div class="col-sm-8">
-                <span class="badge bg-warning text-dark">{{ reservationData?.reservation?.status || 'Pending' }}</span>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -139,7 +121,7 @@
     <div class="text-center mt-4">
       <button
         type="button"
-        class="btn btn-primary btn-lg me-3"
+        class="btn custom-btn custom-btn-primary btn-lg me-3"
         @click="printDetails"
       >
         <i class="bi bi-printer me-2"></i>
@@ -147,7 +129,7 @@
       </button>
       <button
         type="button"
-        class="btn btn-outline-secondary btn-lg"
+        class="btn custom-btn btn-lg"
         @click="startNewReservation"
       >
         <i class="bi bi-plus-circle me-2"></i>
@@ -277,17 +259,49 @@ code {
   border-radius: 4px;
 }
 
-.btn-lg {
-  font-size: 1.1rem;
-  font-weight: 600;
-  border-radius: 50px;
-  padding: 0.75rem 2rem;
-  transition: all 0.3s ease;
+/* Custom button styles consistent with home wizard */
+.custom-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  border: 2px solid #d1d5db !important;
+  background: white !important;
+  color: #6b7280 !important;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.custom-btn:hover {
+  border-color: #9ca3af !important;
+  background: #f9fafb !important;
+  color: #4b5563 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.custom-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.custom-btn-primary {
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+}
+
+.custom-btn-primary:hover {
+  border-color: #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+}
+
+.custom-btn-primary:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 @media (max-width: 768px) {
@@ -299,9 +313,7 @@ code {
     font-size: 2rem;
   }
 
-  .btn-lg {
-    font-size: 1rem;
-    padding: 0.65rem 1.5rem;
+  .custom-btn {
     width: 100%;
     margin-bottom: 0.5rem;
   }
