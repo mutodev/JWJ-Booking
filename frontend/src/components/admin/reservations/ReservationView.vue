@@ -59,6 +59,10 @@
                     <div class="col-sm-7">{{ data.customer_name || 'Not specified' }}</div>
                   </div>
                   <div class="row mb-2">
+                    <div class="col-sm-5"><strong>Email:</strong></div>
+                    <div class="col-sm-7">{{ data.email || 'Not specified' }}</div>
+                  </div>
+                  <div class="row mb-2">
                     <div class="col-sm-5"><strong>Birthday Child:</strong></div>
                     <div class="col-sm-7">{{ data.birthday_child_name || 'Not specified' }}</div>
                   </div>

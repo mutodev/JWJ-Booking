@@ -94,4 +94,20 @@ class ReservationController extends ResourceController
                 ->setJSON(['message' => $th->getMessage()]);
         }
     }
+
+    public function sendPaymentEmail()
+    {
+        try {
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
+
+            $this->service->sendPaymentEmail($data['reservationId'], $data['paymentUrl']);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Payment email sent successfully', null));
+        } catch (\Throwable $th) {
+            return $this->response->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
 }

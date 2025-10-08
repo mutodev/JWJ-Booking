@@ -34,6 +34,7 @@ namespace App\Services;
 use App\Repositories\ReservationRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ReservationAddonRepository;
+use App\Services\BrevoEmailService;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 
@@ -61,6 +62,12 @@ class ReservationService
     protected $reservationAddonRepository;
 
     /**
+     * Servicio para envío de emails
+     * @var BrevoEmailService
+     */
+    protected $emailService;
+
+    /**
      * Constructor del servicio
      * Inicializa todos los repositories necesarios
      */
@@ -69,6 +76,7 @@ class ReservationService
         $this->repository = new ReservationRepository();
         $this->customerRepository = new CustomerRepository();
         $this->reservationAddonRepository = new ReservationAddonRepository();
+        $this->emailService = new BrevoEmailService();
     }
 
     /**
@@ -648,5 +656,59 @@ class ReservationService
         }
 
         return 0;
+    }
+
+    /**
+     * Envía un correo con la URL de pago y los datos de la reserva
+     *
+     * @param string $reservationId ID de la reserva
+     * @param string $paymentUrl URL de pago
+     * @return void
+     * @throws HTTPException Si la reserva no existe o falla el envío del email
+     */
+    public function sendPaymentEmail(string $reservationId, string $paymentUrl): void
+    {
+        // Obtener datos completos de la reserva
+        $reservation = $this->repository->getById($reservationId);
+
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        // Crear el contenido del email
+        $subject = "Payment Information for Your Event Reservation - ID: {$reservation->id}";
+
+        $htmlContent = $this->buildPaymentEmailContent($reservation, $paymentUrl);
+
+        // Enviar el email
+        try {
+            $this->emailService->sendEmail($reservation->email, $subject, $htmlContent);
+        } catch (\Throwable $e) {
+            throw new HTTPException('Failed to send payment email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Construye el contenido HTML del email de pago
+     *
+     * @param object $reservation Datos de la reserva
+     * @param string $paymentUrl URL de pago
+     * @return string Contenido HTML del email
+     */
+    private function buildPaymentEmailContent($reservation, string $paymentUrl): string
+    {
+        $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+        $totalAmount = number_format($reservation->total_amount, 2);
+
+        // Preparar datos para la vista
+        $data = [
+            'reservation' => $reservation,
+            'paymentUrl' => $paymentUrl,
+            'eventDate' => $eventDate,
+            'totalAmount' => $totalAmount
+        ];
+
+        // Cargar la vista y capturar el output
+        return view('emails/payment_notification', $data);
     }
 }

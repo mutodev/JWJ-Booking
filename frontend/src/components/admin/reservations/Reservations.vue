@@ -79,6 +79,13 @@
             >
               <i class="bi bi-eye"></i> View
             </button>
+            <button
+              class="btn btn-sm btn-success"
+              @click="paymentUrlModal(item)"
+              :disabled="item.is_paid"
+            >
+              <i class="bi bi-credit-card"></i> Payment URL
+            </button>
           </template>
         </EasyDataTable>
       </div>
@@ -106,6 +113,47 @@
       :data="selectedData"
       @close="modalViewVisible = false"
     />
+
+    <!-- Payment URL Modal -->
+    <div v-if="modalPaymentUrlVisible" class="modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
+      <div class="modal-dialog modal-md" role="document" style="z-index: 1056;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Send Payment URL</h5>
+            <button type="button" class="btn-close" @click="modalPaymentUrlVisible = false"></button>
+          </div>
+          <div class="modal-body">
+            <p><strong>Customer:</strong> {{ selectedData?.customer_name || 'N/A' }}</p>
+            <p><strong>Total Amount:</strong> {{ formatCurrency(selectedData?.total_amount) }}</p>
+
+            <div class="mb-3">
+              <label for="paymentUrl" class="form-label">Payment URL *</label>
+              <input
+                v-model="paymentUrl"
+                type="url"
+                class="form-control"
+                id="paymentUrl"
+                placeholder="https://..."
+                required
+              >
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="modalPaymentUrlVisible = false">Cancel</button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              @click="sendPaymentEmail"
+              :disabled="!paymentUrl || sendingEmail"
+            >
+              <span v-if="sendingEmail" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              {{ sendingEmail ? 'Sending...' : 'Send Email' }}
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show" style="z-index: 1054;" @click="modalPaymentUrlVisible = false"></div>
+    </div>
   </div>
 </template>
 
@@ -130,7 +178,10 @@ const addons = ref([]);
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const modalViewVisible = ref(false);
+const modalPaymentUrlVisible = ref(false);
 const selectedData = ref(null);
+const paymentUrl = ref('');
+const sendingEmail = ref(false);
 
 const editModal = (item) => {
   selectedData.value = { ...item };
@@ -142,6 +193,12 @@ const createModal = () => {
 const viewModal = (item) => {
   selectedData.value = { ...item };
   modalViewVisible.value = true;
+};
+
+const paymentUrlModal = (item) => {
+  selectedData.value = { ...item };
+  paymentUrl.value = '';
+  modalPaymentUrlVisible.value = true;
 };
 
 // Encabezados principales
@@ -210,6 +267,31 @@ const handle = () => {
   modalCreateVisible.value = false;
   modalEditVisible.value = false;
   getData();
+};
+
+const formatCurrency = (amount) => {
+  if (amount == null || amount === 0) return "$0.00";
+  return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
+};
+
+const sendPaymentEmail = async () => {
+  try {
+    sendingEmail.value = true;
+
+    const requestData = {
+      reservationId: selectedData.value.id,
+      paymentUrl: paymentUrl.value
+    };
+
+    await api.post('/reservations/send-payment-email', requestData);
+
+    modalPaymentUrlVisible.value = false;
+    paymentUrl.value = '';
+  } catch (error) {
+    console.error('Error sending payment email:', error);
+  } finally {
+    sendingEmail.value = false;
+  }
 };
 
 onMounted(() => {

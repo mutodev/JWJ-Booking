@@ -524,15 +524,15 @@ watch(activeStep, () => {
       box-sizing: border-box !important;
 
       &.is-process {
-        background: #3b82f6;
-        border-color: #3b82f6;
-        color: white;
+        background: #FFEF81 !important;
+        border-color: #FFEF81 !important;
+        color: black !important;
       }
 
       &.is-success {
-        background: #10b981;
-        border-color: #10b981;
-        color: white;
+        background: #f3f4f6;
+        border-color: #e5e7eb;
+        color: #6b7280;
       }
     }
   }
@@ -550,13 +550,13 @@ watch(activeStep, () => {
     line-height: 36px !important;
 
     &.is-process {
-      color: #3b82f6;
+      color: #000000;
       font-weight: 600;
     }
 
     &.is-success {
-      color: #10b981;
-      font-weight: 600;
+      color: #6b7280;
+      font-weight: 500;
     }
   }
 }
@@ -570,6 +570,16 @@ watch(activeStep, () => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Force the current step styling */
+:deep(.el-step.is-process .el-step__icon) {
+  background: #FFEF81 !important;
+  border-color: #FFEF81 !important;
+}
+
+:deep(.el-step.is-process .step-number) {
+  color: black !important;
 }
 
 
@@ -638,48 +648,67 @@ watch(activeStep, () => {
   font-weight: 600 !important;
   padding: 12px 24px !important;
   height: auto !important;
-  border: 2px solid #d1d5db !important;
-  background: #f9fafb !important;
-  color: #6b7280 !important;
   transition: all 0.2s ease !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
-.custom-btn:hover {
+/* Previous button - White background */
+.prev-btn {
+  border: 2px solid #d1d5db !important;
+  background: white !important;
+  color: #6b7280 !important;
+}
+
+.prev-btn:hover {
   border-color: #9ca3af !important;
-  background: #f3f4f6 !important;
+  background: #f9fafb !important;
   color: #4b5563 !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
-.custom-btn:active {
+.prev-btn:active {
   transform: translateY(0) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
+/* Next button - Pink background with black text */
 .custom-btn-primary {
-  border-color: #9ca3af !important;
-  background: #6b7280 !important;
-  color: white !important;
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
 }
 
 .custom-btn-primary:hover {
-  border-color: #6b7280 !important;
-  background: #4b5563 !important;
-  color: white !important;
+  border-color: #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+}
+
+.custom-btn-primary:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 .custom-btn-success {
-  border-color: #9ca3af !important;
-  background: #6b7280 !important;
-  color: white !important;
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
 }
 
 .custom-btn-success:hover {
-  border-color: #6b7280 !important;
-  background: #4b5563 !important;
-  color: white !important;
+  border-color: #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+}
+
+.custom-btn-success:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 .custom-btn:disabled {
