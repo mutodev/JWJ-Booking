@@ -2,18 +2,19 @@
     RewriteEngine On
     RewriteBase /
 
-    # ⚙️ No reescribir peticiones a archivos estáticos (Vue build, imágenes, etc.)
-    RewriteCond %{REQUEST_URI} ^/assets/ [OR]
-    RewriteCond %{REQUEST_URI} ^/js/ [OR]
-    RewriteCond %{REQUEST_URI} ^/css/ [OR]
-    RewriteCond %{REQUEST_URI} ^/img/ [OR]
-    RewriteCond %{REQUEST_URI} ^/favicon.ico$ [OR]
-    RewriteCond %{REQUEST_URI} ^/vue/ [OR]
+    # 🚫 No reescribir peticiones a archivos o carpetas existentes
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^ - [L]
 
-    # 🚀 Redirige todo lo demás a index.php (CodeIgniter)
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php [L]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # ✅ Permitir que Vue sirva sus archivos compilados (build/assets)
+    RewriteCond %{REQUEST_URI} ^/build/ [OR]
+    RewriteCond %{REQUEST_URI} ^/assets/ [OR]
+    RewriteCond %{REQUEST_URI} ^/favicon.ico$
+    RewriteRule ^ - [L]
+
+    # 🔄 Todo lo demás pasa por CodeIgniter
+    RewriteRule ^ index.php [L]
 </IfModule>
