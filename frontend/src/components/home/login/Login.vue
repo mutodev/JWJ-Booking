@@ -84,9 +84,7 @@ const submitForm = handleSubmit(async (values) => {
     const response = await api.post("/auth/login", values);
 
     // El token se guarda automáticamente en el interceptor de axios
-    // Esperar un momento para que se procese completamente
-    await new Promise(resolve => setTimeout(resolve, 100));
-
+    // Solo verificamos que el token exista antes de redirigir
     const token = sessionStorage.getItem("token");
 
     if (token) {
