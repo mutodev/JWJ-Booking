@@ -134,8 +134,8 @@ const schema = yup.object({
 const { handleSubmit } = useForm({
   validationSchema: schema,
   initialValues: {
-    first_name: sessionStorage.getItem('first_name'),
-    last_name: sessionStorage.getItem('last_name'),
+    first_name: localStorage.getItem('first_name'),
+    last_name: localStorage.getItem('last_name'),
     change_password: false,
     password: "",
     confirm_password: "",
@@ -155,11 +155,11 @@ const { value: confirm_password, errorMessage: confirm_password_error } =
 // 3) submit
 const submitForm = handleSubmit(async (values) => {
   try {
-    const id = sessionStorage.getItem("id");
+    const id = localStorage.getItem("id");
     await api.put(`/users/${id}`, values);
 
-    sessionStorage.setItem('last_name', last_name.value)
-    sessionStorage.setItem('first_name', first_name.value)
+    localStorage.setItem('last_name', last_name.value)
+    localStorage.setItem('first_name', first_name.value)
 
     router.push("/admin");
   } catch (error) {

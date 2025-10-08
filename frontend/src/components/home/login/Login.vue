@@ -38,9 +38,9 @@
               </form>
             </div>
             <div class="card-footer text-center">
-              <router-link to="/reset-password" class="text-decoration-none"
-                >Forgot your password?</router-link
-              >
+              <router-link to="/reset-password" class="text-decoration-none">
+                Forgot your password?
+              </router-link>
             </div>
           </div>
         </div>
@@ -59,10 +59,7 @@ const router = useRouter();
 
 // Esquema de validación con Yup
 const schema = yup.object({
-  email: yup
-    .string()
-    .email("Invalid email")
-    .required("Email is required"),
+  email: yup.string().email("Invalid email").required("Email is required"),
   password: yup
     .string()
     .min(6, "Minimum 6 characters")
@@ -83,20 +80,21 @@ const submitForm = handleSubmit(async (values) => {
   try {
     const response = await api.post("/auth/login", values);
 
-    // El token se guarda automáticamente en el interceptor de axios
-    // Solo verificamos que el token exista antes de redirigir
-    const token = sessionStorage.getItem("token");
+    // Guarda el token en localStorage (más persistente que localStorage)
+    if (response.data?.token) {
+      localStorage.setItem("token", response.data.token);
+    }
+
+    const token = localStorage.getItem("token");
 
     if (token) {
-      console.log("Login successful, token saved");
+      console.log("✅ Login successful, token saved in localStorage");
       router.replace("/admin");
     } else {
-      console.error("Token not saved after login");
+      console.error("⚠️ Token not saved after login");
     }
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("❌ Login error:", error);
   }
 });
 </script>
-
-<style scoped></style>

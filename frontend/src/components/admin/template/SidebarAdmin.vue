@@ -63,7 +63,7 @@
 import { ref, onMounted, watch } from "vue";
 // Styles moved to admin-consolidated.css
 
-const access = ref(JSON.parse(sessionStorage.getItem("access") || "[]"));
+const access = ref(JSON.parse(localStorage.getItem("access") || "[]"));
 
 // Collapsible state
 const openMenus = ref({});

@@ -19,7 +19,7 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 
 const goBack = () => {
-  const token = sessionStorage.getItem("token");
+  const token = localStorage.getItem("token");
   if (token) {
     router.push("/admin/dashboard");
   } else {

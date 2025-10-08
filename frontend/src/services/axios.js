@@ -19,7 +19,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     showLoader();
-    const token = sessionStorage.getItem("token");
+    const token = localStorage.getItem("token");
     if (token) config.headers["Authorization"] = `Bearer ${token}`;
 
     config.headers["X-Language"] = localStorage.getItem("language") ?? "es";
@@ -44,16 +44,16 @@ api.interceptors.response.use(
             const decoded = jwtDecode(token);
 
             // Guardar el token
-            sessionStorage.setItem("token", token);
-            console.log("Token saved to sessionStorage:", token.substring(0, 20) + "...");
+            localStorage.setItem("token", token);
+            console.log("Token saved to localStorage:", token.substring(0, 20) + "...");
 
             // Decodificar y guardar datos del token
             for (const [key, value] of Object.entries(decoded)) {
               if (key !== 'exp' && key !== 'iat') { // Excluir campos de tiempo
                 if (typeof value === "object") {
-                  sessionStorage.setItem(key, JSON.stringify(value));
+                  localStorage.setItem(key, JSON.stringify(value));
                 } else {
-                  sessionStorage.setItem(key, String(value));
+                  localStorage.setItem(key, String(value));
                 }
               }
             }
@@ -101,7 +101,7 @@ api.interceptors.response.use(
       const status = error.response.status;
       if ([401, 403, 419].includes(status)) {
         console.log("Authentication error, clearing session and redirecting to login");
-        sessionStorage.clear();
+        localStorage.clear();
         router.replace("/login").catch(err => console.error("Redirect error:", err));
       }
     }

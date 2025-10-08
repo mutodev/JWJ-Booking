@@ -65,10 +65,10 @@ const router = useRouter();
 
 const user = ref({
   name:
-    sessionStorage.getItem("first_name") +
+    localStorage.getItem("first_name") +
     " " +
-    sessionStorage.getItem("last_name"),
-  role: sessionStorage.getItem("role_name"),
+    localStorage.getItem("last_name"),
+  role: localStorage.getItem("role_name"),
 });
 
 const dropdownOpen = ref(false);
@@ -83,7 +83,7 @@ const closeDropdown = () => {
 };
 
 const closeSession = () => {
-  sessionStorage.clear();
+  localStorage.clear();
   router.replace("/login");
 };
 
