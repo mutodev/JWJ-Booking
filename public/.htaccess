@@ -2,7 +2,17 @@
     RewriteEngine On
     RewriteBase /
 
-    # Redirige todo lo que no sea archivo o carpeta existente a index.php
+    # ⚙️ No reescribir peticiones a archivos estáticos (Vue build, imágenes, etc.)
+    RewriteCond %{REQUEST_URI} ^/assets/ [OR]
+    RewriteCond %{REQUEST_URI} ^/js/ [OR]
+    RewriteCond %{REQUEST_URI} ^/css/ [OR]
+    RewriteCond %{REQUEST_URI} ^/img/ [OR]
+    RewriteCond %{REQUEST_URI} ^/favicon.ico$ [OR]
+    RewriteCond %{REQUEST_URI} ^/vue/ [OR]
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # 🚀 Redirige todo lo demás a index.php (CodeIgniter)
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.php [L]
