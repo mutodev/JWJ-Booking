@@ -25,6 +25,10 @@ class HomeController extends ResourceController
             log_message('error', 'Vite manifest not found. Run: npm run build');
         }
 
-        return view('index');
+        $env = getenv('CI_ENVIRONMENT') ?: 'production';
+
+        return view('index', [
+            'APP_ENV' => $env
+        ]);
     }
 }

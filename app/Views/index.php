@@ -56,6 +56,9 @@ if (file_exists($manifestPath)) {
     <?php if ($jsFile): ?>
         <script type="module" src="<?= base_url('build/' . $jsFile) ?>"></script>
     <?php endif; ?>
+    <script>
+        window.APP_ENV = '<?= esc($APP_ENV) ?>';
+    </script>
 </body>
 
 </html>

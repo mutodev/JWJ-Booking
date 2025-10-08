@@ -5,56 +5,58 @@ import { jwtDecode } from "jwt-decode";
 import router from "@/router";
 
 const toast = useToast();
-const baseURL = `${window.location.origin}/api`;
+
+// 🔹 Detectar entorno desde variable global inyectada por CodeIgniter
+const appEnv = window.APP_ENV || "production";
+
+// 🔹 Definir baseURL según entorno
+const baseURL =
+  appEnv === "production"
+    ? "http://72.60.169.233/api"
+    : `${window.location.origin}/api`;
+
+console.log("🌍 CI_ENVIRONMENT:", appEnv);
+console.log("🔗 API Base URL:", baseURL);
 
 const api = axios.create({
   baseURL,
-  timeout: 30000, // 10 segundos
+  timeout: 30000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Interceptor de solicitud
+// === Interceptor de solicitud ===
 api.interceptors.request.use(
   (config) => {
     showLoader();
     const token = localStorage.getItem("token");
     if (token) config.headers["Authorization"] = `Bearer ${token}`;
-
     config.headers["X-Language"] = localStorage.getItem("language") ?? "es";
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Interceptor de RESPUESTA
+// === Interceptor de respuesta ===
 api.interceptors.response.use(
   (response) => {
     try {
-      // Verificar si hay token en la respuesta
+      // Guardar token si viene en la respuesta
       if (response.data?.token || response.data?.data) {
         const token = response.data?.token ?? response.data.data;
-
-        // Validar que el token sea una string válida
-        if (typeof token === 'string' && token.length > 0) {
+        if (typeof token === "string" && token.length > 0) {
           try {
             const decoded = jwtDecode(token);
-
-            // Guardar el token
             localStorage.setItem("token", token);
-            console.log("Token saved to localStorage:", token.substring(0, 20) + "...");
 
-            // Decodificar y guardar datos del token
+            // Guardar claims del token (excepto tiempos)
             for (const [key, value] of Object.entries(decoded)) {
-              if (key !== 'exp' && key !== 'iat') { // Excluir campos de tiempo
-                if (typeof value === "object") {
-                  localStorage.setItem(key, JSON.stringify(value));
-                } else {
-                  localStorage.setItem(key, String(value));
-                }
+              if (key !== "exp" && key !== "iat") {
+                localStorage.setItem(
+                  key,
+                  typeof value === "object" ? JSON.stringify(value) : String(value)
+                );
               }
             }
           } catch (jwtError) {
@@ -63,8 +65,11 @@ api.interceptors.response.use(
         }
       }
 
-      // Solo mostrar toast para métodos que no sean GET
-      if (response.config.method?.toUpperCase() !== "GET" && response.data?.message) {
+      // Mostrar mensajes de éxito solo para métodos != GET
+      if (
+        response.config.method?.toUpperCase() !== "GET" &&
+        response.data?.message
+      ) {
         toast.success(response.data.message);
       }
 
@@ -72,37 +77,27 @@ api.interceptors.response.use(
       return response?.data ?? response;
     } catch (error) {
       console.error("Response interceptor error:", error);
-
-      // Si hay error pero la respuesta fue exitosa, aún mostrar toast
-      if ([200, 201].includes(response.status) &&
-          response.config.method?.toUpperCase() !== "GET" &&
-          response.data?.message) {
-        toast.success(response.data.message);
-      }
-
       hideLoader();
       return response?.data ?? response;
     }
   },
   (error) => {
     hideLoader();
-
-    // Manejo más robusto de errores
-    const errorMessage = error.response?.data?.message || error.message || "An error occurred";
+    const errorMessage =
+      error.response?.data?.message || error.message || "An error occurred";
     console.error("API Error:", errorMessage);
 
-    // Solo mostrar toast si hay un mensaje específico del servidor
-    if (error.response?.data?.message) {
-      toast.error(error.response.data.message);
-    }
+    if (error.response?.data?.message) toast.error(error.response.data.message);
 
-    // Manejo de errores de autenticación
+    // Manejar errores de autenticación
     if (error.response) {
       const status = error.response.status;
       if ([401, 403, 419].includes(status)) {
         console.log("Authentication error, clearing session and redirecting to login");
         localStorage.clear();
-        router.replace("/login").catch(err => console.error("Redirect error:", err));
+        router.replace("/login").catch((err) =>
+          console.error("Redirect error:", err)
+        );
       }
     }
 
