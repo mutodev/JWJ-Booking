@@ -139,6 +139,28 @@
             </div>
           </div>
         </div>
+
+        <!-- Zipcode -->
+        <div class="mb-3">
+          <label for="zipcode" class="form-label">
+            Zipcode <span class="text-danger">*</span>
+          </label>
+          <input
+            v-model="form.zipcode"
+            type="text"
+            class="form-control"
+            id="zipcode"
+            placeholder="Enter your zipcode (e.g. 12345)"
+            @blur="validateField('zipcode')"
+            :disabled="!form.cityId"
+          />
+          <div v-if="errors.zipcode" class="text-danger small">
+            {{ errors.zipcode }}
+          </div>
+          <div v-if="!form.cityId" class="text-muted small">
+            Please select a city first
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -166,8 +188,10 @@ const form = reactive({
   areaId: "",
   countyId: "",
   cityId: "",
+  zipcode: "",
 });
 const errors = reactive({});
+const zipcodeData = ref(null);
 const schema = yup.object({
   firstName: yup.string().required("First name is required"),
   lastName: yup.string().required("Last name is required"),
@@ -179,6 +203,10 @@ const schema = yup.object({
   areaId: yup.string().required("Metropolitan area is required"),
   countyId: yup.string().required("County is required"),
   cityId: yup.string().required("City is required"),
+  zipcode: yup
+    .string()
+    .matches(/^[0-9]{4,10}$/, "Invalid zipcode (4-10 digits)")
+    .required("Zipcode is required"),
 });
 async function validateField(field) {
   try {
@@ -196,7 +224,9 @@ function areAllFieldsFilled() {
     form.phone.trim() !== "" &&
     form.areaId !== "" &&
     form.countyId !== "" &&
-    form.cityId !== ""
+    form.cityId !== "" &&
+    form.zipcode.trim() !== "" &&
+    zipcodeData.value !== null
   );
 }
 
@@ -238,19 +268,68 @@ function onSelectCounty(county) {
 
 function onSelectCity(city) {
   form.cityId = city?.id || "";
+  form.zipcode = "";
+  zipcodeData.value = null;
 }
+
+// Función para emitir datos al padre
+function emitData() {
+  if (areAllFieldsFilled()) {
+    emit("setData", { customer: form, zipcode: zipcodeData.value });
+  } else {
+    emit("setData", { customer: null, zipcode: null });
+  }
+}
+
+let debounceTimer = null;
+watch(
+  () => form.zipcode,
+  async (newZip) => {
+    clearTimeout(debounceTimer);
+
+    if (!form.cityId) {
+      zipcodeData.value = null;
+      emitData();
+      return;
+    }
+
+    try {
+      await schema.validateAt("zipcode", form);
+      errors.zipcode = "";
+    } catch (e) {
+      errors.zipcode = e.message;
+      zipcodeData.value = null;
+      emitData();
+      return;
+    }
+
+    if (newZip && newZip.length >= 4 && newZip.length <= 10) {
+      debounceTimer = setTimeout(async () => {
+        try {
+          const response = await api.get(`/home/zipcode/${form.cityId}/${newZip}`);
+          zipcodeData.value = response.data;
+          emitData(); // Emitir después de obtener los datos del zipcode
+        } catch (error) {
+          console.error('Error validating zipcode:', error);
+          errors.zipcode = "Invalid zipcode";
+          zipcodeData.value = null;
+          emitData();
+        }
+      }, 1000);
+    } else {
+      zipcodeData.value = null;
+      emitData();
+    }
+  }
+);
+
 watch(
   form,
   async (newVal) => {
     try {
       await schema.validate(newVal, { abortEarly: false });
       Object.keys(errors).forEach((key) => (errors[key] = ""));
-
-      if (areAllFieldsFilled()) {
-        emit("setData", { customer: newVal });
-      } else {
-        emit("setData", { customer: null });
-      }
+      emitData();
     } catch (validationErrors) {
       Object.keys(errors).forEach((key) => (errors[key] = ""));
       if (validationErrors?.inner) {
@@ -258,7 +337,7 @@ watch(
           errors[err.path] = err.message;
         });
       }
-      emit("setData", { customer: null });
+      emit("setData", { customer: null, zipcode: null });
     }
   },
   { deep: true }
