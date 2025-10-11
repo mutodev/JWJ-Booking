@@ -117,7 +117,7 @@ async function loadKidsOptions() {
 
   kidsOptions.value = data.map((opt) => ({
     ...opt,
-    label: `Ages ${opt.min_age}–${opt.max_age}`,
+    label: `${opt.min_age}–${opt.max_age} children`,
   }));
 
   // Restore selected kids if it exists
