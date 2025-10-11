@@ -3,7 +3,7 @@
     <!-- Título -->
     <div class="d-flex align-items-center mb-4">
       <i class="bi bi-music-note-beamed fs-3 me-2 text-success"></i>
-      <h2 class="mb-0">Choose your jam</h2>
+      <h2 class="mb-0">Choose your jam and duration</h2>
     </div>
 
     <!-- Grid de tarjetas -->
@@ -16,19 +16,20 @@
         <div
           class="card h-100 shadow-sm border-0 selectable-card"
           :class="{ selected: selectedService?.id === service.id }"
-          @click="selectService(service)"
         >
           <!-- Imagen -->
           <img
             :src="service.img || '/img/default.jpg'"
             class="card-img-top"
             :alt="service.name"
+            @click="selectService(service)"
+            style="cursor: pointer;"
           />
 
           <!-- Info -->
           <div class="card-body d-flex flex-column">
             <!-- Título -->
-            <h5 class="card-title fw-bold">
+            <h5 class="card-title fw-bold" @click="selectService(service)" style="cursor: pointer;">
               {{ service.name }}
             </h5>
 
@@ -55,9 +56,37 @@
               </p>
             </div>
 
-            <span class="badge bg-light text-dark mb-2">
+            <span class="badge bg-light text-dark mb-3">
               For Ages {{ service.range_age }}
             </span>
+
+            <!-- Selector de duración -->
+            <div v-if="selectedService?.id === service.id && hoursOptions[service.id]?.length" class="duration-selector mt-auto">
+              <p class="small fw-bold text-muted mb-2">
+                <i class="bi bi-clock me-1"></i>Select Duration:
+              </p>
+              <div class="d-flex flex-wrap gap-2">
+                <template v-for="option in hoursOptions[service.id]" :key="option.id">
+                  <div class="form-check-container">
+                    <input
+                      type="radio"
+                      class="btn-check"
+                      :id="`hour-${service.id}-${option.id}`"
+                      :value="option"
+                      v-model="selectedHours"
+                      @click.stop
+                    />
+                    <label
+                      class="btn custom-hour-btn-small"
+                      :for="`hour-${service.id}-${option.id}`"
+                      @click.stop
+                    >
+                      {{ option.label }}
+                    </label>
+                  </div>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -85,12 +114,18 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  hours: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["setData"]);
 
 const services = ref([]);
 const selectedService = ref(null);
+const hoursOptions = ref({});
+const selectedHours = ref(null);
 
 async function loadServices() {
   if (!props.county) return;
@@ -102,13 +137,62 @@ async function loadServices() {
     const foundService = data.find(s => s.id === props.service.id);
     if (foundService) {
       selectedService.value = foundService;
+      await loadHoursForService(foundService.id);
     }
   }
 }
 
-function selectService(service) {
+async function loadHoursForService(serviceId) {
+  try {
+    const { data } = await api.get(`/home/hours/${serviceId}`);
+    hoursOptions.value[serviceId] = data.map((opt) => ({
+      ...opt,
+      label: `${opt.hours} hour${opt.hours > 1 ? 's' : ''}`,
+    }));
+
+    // Restore selected hours if it exists
+    if (props.hours && hoursOptions.value[serviceId]) {
+      const foundOption = hoursOptions.value[serviceId].find(opt => opt.id === props.hours.id);
+      if (foundOption) {
+        selectedHours.value = foundOption;
+      }
+    }
+  } catch (error) {
+    console.error('Error loading hours:', error);
+  }
+}
+
+async function selectService(service) {
   selectedService.value = service;
-  emit("setData", { service });
+  selectedHours.value = null;
+
+  // Load hours for this service
+  if (!hoursOptions.value[service.id]) {
+    await loadHoursForService(service.id);
+  }
+
+  emitData();
+}
+
+function emitData() {
+  if (!selectedService.value) {
+    emit("setData", { service: null, hours: null });
+    return;
+  }
+
+  const serviceData = selectedService.value;
+
+  if (!selectedHours.value) {
+    emit("setData", { service: serviceData, hours: null });
+    return;
+  }
+
+  const hoursData = {
+    ...selectedHours.value,
+    isValid: true
+  };
+
+  emit("setData", { service: serviceData, hours: hoursData });
 }
 
 watch(
@@ -129,20 +213,26 @@ watch(
       const foundService = services.value.find(s => s.id === service.id);
       if (foundService) {
         selectedService.value = foundService;
+        loadHoursForService(foundService.id);
       }
     } else if (!service) {
       selectedService.value = null;
+      selectedHours.value = null;
     }
   },
   { immediate: true }
 );
+
+// Watch for hours selection changes
+watch(selectedHours, () => {
+  emitData();
+});
 </script>
 
 <style scoped>
 .card {
   border-radius: 14px;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  cursor: pointer;
 }
 .card:hover {
   transform: translateY(-4px);
@@ -169,5 +259,50 @@ watch(
 }
 .badge {
   font-size: 0.75rem;
+}
+
+.duration-selector {
+  border-top: 1px solid #e9ecef;
+  padding-top: 0.75rem;
+}
+
+.form-check-container {
+  position: relative;
+}
+
+.custom-hour-btn-small {
+  background-color: #f8f9fa !important;
+  border: 2px solid #d1d5db !important;
+  color: #6b7280 !important;
+  font-weight: 600 !important;
+  padding: 6px 12px !important;
+  border-radius: 6px !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  font-size: 0.875rem !important;
+  text-align: center !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.custom-hour-btn-small:hover {
+  background-color: #f3f4f6 !important;
+  border-color: #9ca3af !important;
+  color: #4b5563 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.btn-check:checked + .custom-hour-btn-small {
+  background-color: #FF74B7 !important;
+  border-color: #FF74B7 !important;
+  color: black !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 6px rgba(255, 116, 183, 0.4) !important;
+}
+
+.btn-check:checked + .custom-hour-btn-small:hover {
+  background-color: #FF74B7 !important;
+  border-color: #FF74B7 !important;
+  color: black !important;
 }
 </style>

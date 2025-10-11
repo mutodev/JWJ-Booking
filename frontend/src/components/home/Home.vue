@@ -60,7 +60,7 @@
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="wizard-actions" v-if="activeStep < 8">
+      <div class="wizard-actions" v-if="activeStep < 7">
         <el-button
           v-if="activeStep > 1"
           @click="previousStep"
@@ -72,7 +72,7 @@
         </el-button>
 
         <el-button
-          v-if="activeStep < 7"
+          v-if="activeStep < 6"
           @click="nextStep"
           size="large"
           :disabled="!canProceed"
@@ -84,7 +84,7 @@
         </el-button>
 
         <el-button
-          v-if="activeStep === 7"
+          v-if="activeStep === 6"
           @click="submitReservation"
           size="large"
           :disabled="!canProceed || isSubmitting"
@@ -107,7 +107,7 @@
  * navegación entre pasos, y envío final al servidor.
  *
  * FUNCIONALIDADES PRINCIPALES:
- * - Navegación entre 8 pasos del formulario
+ * - Navegación entre 7 pasos del formulario
  * - Validación de datos en tiempo real
  * - Almacenamiento temporal de datos del formulario
  * - Envío de reservación al endpoint API
@@ -115,16 +115,15 @@
  *
  * ESTRUCTURA DEL FORMULARIO:
  * Step 1: Información del cliente (nombre, email, teléfono, ubicación, zipcode)
- * Step 2: Selección de servicio de entretenimiento
+ * Step 2: Selección de servicio de entretenimiento y duración
  * Step 3: Selección de rango de edades de niños
- * Step 4: Selección de duración del evento
- * Step 5: Selección de addons adicionales
- * Step 6: Resumen y subtotal de selección
- * Step 7: Información detallada del evento
- * Step 8: Confirmación de reserva creada exitosamente
+ * Step 4: Selección de addons adicionales
+ * Step 5: Resumen y subtotal de selección
+ * Step 6: Información detallada del evento
+ * Step 7: Confirmación de reserva creada exitosamente
  *
  * @author JamWithJamie Team
- * @version 2.2.0
+ * @version 2.3.0
  */
 
 <script setup>
@@ -134,20 +133,19 @@ import api from "@/services/axios";
 
 // Importaciones de componentes de steps
 import Step1 from "./form/Step1.vue";
-import Step2 from "./form/Step3.vue"; // Anteriormente Step3
-import Step3 from "./form/Step4.vue"; // Anteriormente Step4
-import Step4 from "./form/Step5.vue"; // Anteriormente Step5
-import Step5 from "./form/Step6.vue"; // Anteriormente Step6
-import Step6 from "./form/Step7.vue"; // Anteriormente Step7
-import Step7 from "./form/Step8.vue"; // Anteriormente Step8
-import Step8 from "./form/Step9.vue"; // Anteriormente Step9
+import Step2 from "./form/Step3.vue"; // Selección de servicio y duración
+import Step3 from "./form/Step4.vue"; // Rango de edades (antes Step3)
+import Step4 from "./form/Step6.vue"; // Addons (antes Step5)
+import Step5 from "./form/Step7.vue"; // Resumen (antes Step6)
+import Step6 from "./form/Step8.vue"; // Información del evento (antes Step7)
+import Step7 from "./form/Step9.vue"; // Confirmación (antes Step8)
 
 /**
  * Mapeo de componentes por número de paso
  */
 const stepComponents = {
   1: Step1, 2: Step2, 3: Step3, 4: Step4, 5: Step5,
-  6: Step6, 7: Step7, 8: Step8
+  6: Step6, 7: Step7
 };
 
 /**
@@ -156,13 +154,13 @@ const stepComponents = {
 const steps = ref([
   { title: "Step 1" }, { title: "Step 2" }, { title: "Step 3" },
   { title: "Step 4" }, { title: "Step 5" }, { title: "Step 6" },
-  { title: "Step 7" }, { title: "Step 8" }
+  { title: "Step 7" }
 ]);
 
 /**
  * Wizard reactive state
  */
-const totalSteps = 8;
+const totalSteps = 7;
 const activeStep = ref(1);
 const form = ref({});
 const isProcessing = ref(false);
@@ -181,7 +179,7 @@ const logoUrl = '/img/logos/JWJ_logo-05.png';
  */
 const stepValidations = ref({
   1: false, 2: false, 3: false, 4: false, 5: false,
-  6: false, 7: false, 8: true
+  6: false, 7: true
 });
 
 /**
@@ -230,6 +228,7 @@ function getCurrentStepProps() {
       props.county = form.value?.customer?.countyId;
       props.active = activeStep.value === 2;
       props.service = form.value?.service;
+      props.hours = form.value?.hours;
       break;
     case 3:
       props.service = form.value?.service?.id;
@@ -237,24 +236,19 @@ function getCurrentStepProps() {
       props.kids = form.value?.kids;
       break;
     case 4:
-      props.service = form.value?.service?.id;
       props.active = activeStep.value === 4;
-      props.hours = form.value?.hours;
-      break;
-    case 5:
-      props.active = activeStep.value === 5;
       props.addons = form.value?.addons || [];
       props.service = form.value?.service;
       break;
-    case 6:
-      props.active = activeStep.value === 6;
+    case 5:
+      props.active = activeStep.value === 5;
       props.service = form.value?.service;
       props.addons = form.value?.addons || [];
       props.hours = form.value?.hours;
       props.kids = form.value?.kids;
       break;
-    case 7:
-      props.active = activeStep.value === 7;
+    case 6:
+      props.active = activeStep.value === 6;
       props.customer = form.value?.customer;
       props.information = form.value?.information;
       props.zipcode = form.value?.zipcode;
@@ -263,7 +257,7 @@ function getCurrentStepProps() {
       props.hours = form.value?.hours;
       props.addons = form.value?.addons || [];
       break;
-    case 8:
+    case 7:
       props.reservationData = reservationData.value;
       break;
   }
@@ -326,13 +320,12 @@ function validateCurrentStep() {
 
   switch (activeStep.value) {
     case 1: isValid = !!form.value.customer && !!form.value.zipcode; break;
-    case 2: isValid = !!form.value.service; break;
+    case 2: isValid = !!form.value.service && !!form.value.hours; break;
     case 3: isValid = !!form.value.kids && form.value.kids.isValid; break;
-    case 4: isValid = !!form.value.hours; break;
-    case 5: isValid = true; break; // Addons son opcionales
-    case 6: isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed; break;
-    case 7: isValid = !!form.value.information && form.value.information.isValid; break;
-    case 8: isValid = true; break; // Step de confirmación siempre válido
+    case 4: isValid = true; break; // Addons son opcionales
+    case 5: isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed; break;
+    case 6: isValid = !!form.value.information && form.value.information.isValid; break;
+    case 7: isValid = true; break; // Step de confirmación siempre válido
     default: isValid = true; break;
   }
 
@@ -349,7 +342,7 @@ function validateCurrentStep() {
  */
 function handleReservationSuccess(data) {
   reservationData.value = data;
-  activeStep.value = 8;
+  activeStep.value = 7;
 }
 
 /**
@@ -425,7 +418,7 @@ function handleNewReservation() {
   activeStep.value = 1;
 
   Object.keys(stepValidations.value).forEach(key => {
-    stepValidations.value[key] = key === '8';
+    stepValidations.value[key] = key === '7';
   });
 
   ElMessage.info('Starting new reservation...');
