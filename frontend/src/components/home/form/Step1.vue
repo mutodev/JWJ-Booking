@@ -143,7 +143,7 @@
         <!-- Zipcode -->
         <div class="mb-3">
           <label for="zipcode" class="form-label">
-            Zipcode <span class="text-danger">*</span>
+            Zip Code <span class="text-danger">*</span>
           </label>
           <input
             v-model="form.zipcode"
