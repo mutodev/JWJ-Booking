@@ -1,5 +1,11 @@
 <template>
   <div class="full-height-container">
+    <!-- Privacy Policy Modal -->
+    <PrivacyPolicyModal
+      @accepted="handlePrivacyAccepted"
+      @declined="handlePrivacyDeclined"
+    />
+
     <!-- Logo flotante -->
     <div class="floating-logo">
       <img :src="logoUrl" alt="JamWithJamie Logo" class="logo-image" />
@@ -139,6 +145,7 @@ import Step4 from "./form/Step4.vue"; // Select Add-ons
 import Step5 from "./form/Step5.vue"; // Summary
 import Step6 from "./form/Step6.vue"; // Event Information
 import Step7 from "./form/Step7.vue"; // Confirmation
+import PrivacyPolicyModal from "./PrivacyPolicyModal.vue"; // Privacy Policy
 
 /**
  * Mapeo de componentes por número de paso
@@ -425,6 +432,26 @@ function handleNewReservation() {
   });
 
   ElMessage.info('Starting new reservation...');
+}
+
+/**
+ * Privacy Policy handlers
+ */
+
+/**
+ * Handles when user accepts the privacy policy
+ */
+function handlePrivacyAccepted() {
+  console.log('Privacy policy accepted');
+  // User can now use the application normally
+}
+
+/**
+ * Handles when user declines the privacy policy
+ */
+function handlePrivacyDeclined() {
+  console.log('Privacy policy declined');
+  // The modal component will handle redirecting the user
 }
 
 /**
