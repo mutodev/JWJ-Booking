@@ -68,6 +68,19 @@ class ZipCodeController extends ResourceController
         }
     }
 
+    public function getByMetropolitanAreaAndCode($metropolitanAreaId, $code)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response(lang('App.zipcode_found'), $this->service->getByMetropolitanAreaAndCode($metropolitanAreaId, $code)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function getByCity($id)
     {
         try {

@@ -40,7 +40,7 @@ class ServicePriceController extends ResourceController
     }
 
     /**
-     * Obtener los precios del servicio por condado 
+     * Obtener los precios del servicio por condado
      */
     public function getAllByCounty($countyId)
     {
@@ -53,6 +53,22 @@ class ServicePriceController extends ResourceController
                         $this->service->getAllByCounty($countyId)
                     )
                 );
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
+     * Obtener los precios del servicio por metropolitan area
+     */
+    public function getAllByMetropolitanArea($metropolitanAreaId)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON($this->service->getAllByMetropolitanArea($metropolitanAreaId));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() ?: 500)

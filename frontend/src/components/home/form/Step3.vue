@@ -1,108 +1,72 @@
 <template>
   <div class="container py-4">
-    <!-- Título -->
-    <div class="d-flex align-items-center mb-4">
-      <i class="bi bi-music-note-beamed fs-3 me-2 text-success"></i>
-      <h2 class="mb-0">Choose your jam and duration</h2>
+    <!-- Título con ícono -->
+    <div class="d-flex align-items-center mb-3">
+      <i class="bi bi-people-fill fs-4 me-2 text-success"></i>
+      <h4 class="mb-0">Number of children attending</h4>
     </div>
 
-    <!-- Grid de tarjetas -->
-    <div v-if="services.length" class="row g-4">
-      <div
-        v-for="service in services"
-        :key="service.id"
-        class="col-12 col-sm-6 col-lg-4"
-      >
-        <div
-          class="card h-100 shadow-sm border-0 selectable-card"
-          :class="{ selected: selectedService?.id === service.id }"
-        >
-          <!-- Imagen -->
-          <img
-            :src="service.img || '/img/default.jpg'"
-            class="card-img-top"
-            :alt="service.name"
-            @click="selectService(service)"
-            style="cursor: pointer;"
+    <!-- Botones dinámicos -->
+    <div v-if="kidsOptions.length" class="d-flex flex-wrap gap-3">
+      <template v-for="option in kidsOptions" :key="option.id">
+        <div class="form-check-container">
+          <input
+            type="radio"
+            class="btn-check"
+            :id="option.id"
+            :value="option"
+            v-model="selected"
           />
-
-          <!-- Info -->
-          <div class="card-body d-flex flex-column">
-            <!-- Título -->
-            <h5 class="card-title fw-bold" @click="selectService(service)" style="cursor: pointer;">
-              {{ service.name }}
-            </h5>
-
-            <div class="service-details mb-2">
-              <p class="card-text small text-muted mb-1">
-                <i class="bi bi-people-fill me-1"></i>
-                {{ service.performers_count }} performer<span
-                  v-if="service.performers_count > 1"
-                  >s</span
-                >
-              </p>
-
-              <p class="card-text small text-muted mb-1" v-if="service.min_duration_hours">
-                <i class="bi bi-clock me-1"></i>
-                {{ service.min_duration_hours }} hour<span
-                  v-if="service.min_duration_hours > 1"
-                  >s</span
-                > minimum
-              </p>
-
-              <p class="card-text small text-muted mb-1" v-if="service.children_count">
-                <i class="bi bi-person-hearts me-1"></i>
-                Up to {{ service.children_count }} children included
-              </p>
-            </div>
-
-            <span class="badge bg-light text-dark mb-3">
-              For Ages {{ service.range_age }}
-            </span>
-
-            <!-- Selector de duración -->
-            <div v-if="selectedService?.id === service.id && hoursOptions[service.id]?.length" class="duration-selector mt-auto">
-              <p class="small fw-bold text-muted mb-2">
-                <i class="bi bi-clock me-1"></i>Select Duration:
-              </p>
-              <div class="d-flex flex-wrap gap-2">
-                <template v-for="option in hoursOptions[service.id]" :key="option.id">
-                  <div class="form-check-container">
-                    <input
-                      type="radio"
-                      class="btn-check"
-                      :id="`hour-${service.id}-${option.id}`"
-                      :value="option"
-                      v-model="selectedHours"
-                      @click.stop
-                    />
-                    <label
-                      class="btn custom-hour-btn-small"
-                      :for="`hour-${service.id}-${option.id}`"
-                      @click.stop
-                    >
-                      {{ option.label }}
-                    </label>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </div>
+          <label class="btn custom-age-btn" :for="option.id">
+            {{ option.label }}
+          </label>
         </div>
+      </template>
+
+      <!-- Botón fijo 40+ kids -->
+      <div class="form-check-container">
+        <input
+          type="radio"
+          class="btn-check"
+          id="kids40plus"
+          :value="{ id: '40plus', label: '40+ kids' }"
+          v-model="selected"
+        />
+        <label class="btn custom-age-btn" for="kids40plus">
+          40+ kids
+        </label>
       </div>
     </div>
 
-    <!-- Mensaje si no hay servicios -->
-    <div v-else class="text-muted">No services available</div>
+    <!-- Input para cantidad específica cuando es 40+ -->
+    <div v-if="selected?.id === '40plus'" class="mt-4">
+      <div class="input-group" style="max-width: 300px;">
+        <span class="input-group-text">
+          <i class="bi bi-123"></i>
+        </span>
+        <input
+          type="number"
+          class="form-control"
+          placeholder="Enter number of kids (41+)"
+          v-model.number="customKidsCount"
+          min="41"
+        />
+      </div>
+      <small class="text-muted mt-1 d-block">Please enter the exact number of children (41 or more)</small>
+      <div v-if="customCountError" class="text-danger small mt-1">
+        {{ customCountError }}
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import api from "@/services/axios";
+import * as yup from "yup";
 
 const props = defineProps({
-  county: {
+  service: {
     type: String,
     required: true,
   },
@@ -110,11 +74,7 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  service: {
-    type: Object,
-    default: null,
-  },
-  hours: {
+  kids: {
     type: Object,
     default: null,
   },
@@ -122,187 +82,161 @@ const props = defineProps({
 
 const emit = defineEmits(["setData"]);
 
-const services = ref([]);
-const selectedService = ref(null);
-const hoursOptions = ref({});
-const selectedHours = ref(null);
+const kidsOptions = ref([]);
+const selected = ref(null);
+const customKidsCount = ref(null);
+const customCountError = ref("");
 
-async function loadServices() {
-  if (!props.county) return;
-  const { data } = await api.get(`/home/services/${props.county}`);
-  services.value = data;
+// Yup schema for validation
+const customCountSchema = yup.number()
+  .integer("Must be a whole number")
+  .min(41, "For 41+ children option, minimum 41 children required")
+  .required("Please enter the number of children");
 
-  // Restore selected service if it exists in the loaded services
-  if (props.service) {
-    const foundService = data.find(s => s.id === props.service.id);
-    if (foundService) {
-      selectedService.value = foundService;
-      await loadHoursForService(foundService.id);
+// Computed property to check if form is valid
+const isValidSelection = computed(() => {
+  if (!selected.value) return false;
+
+  if (selected.value.id === '40plus') {
+    try {
+      customCountSchema.validateSync(customKidsCount.value);
+      customCountError.value = "";
+      return true;
+    } catch (error) {
+      customCountError.value = error.message;
+      return false;
     }
   }
-}
 
-async function loadHoursForService(serviceId) {
-  try {
-    const { data } = await api.get(`/home/hours/${serviceId}`);
-    hoursOptions.value[serviceId] = data.map((opt) => ({
-      ...opt,
-      label: `${opt.hours} hour${opt.hours > 1 ? 's' : ''}`,
-    }));
+  return true;
+});
 
-    // Restore selected hours if it exists
-    if (props.hours && hoursOptions.value[serviceId]) {
-      const foundOption = hoursOptions.value[serviceId].find(opt => opt.id === props.hours.id);
+async function loadKidsOptions() {
+  if (!props.active || !props.service) return;
+  const response = await api.get(`/home/range-kids/${props.service}`);
+  const kidsList = Array.isArray(response) ? response : (response?.data || []);
+
+  kidsOptions.value = kidsList.map((opt) => ({
+    ...opt,
+    label: `${opt.min_age}–${opt.max_age} children`,
+  }));
+
+  // Restore selected kids if it exists
+  if (props.kids) {
+    if (props.kids.type === 'custom') {
+      selected.value = { id: '40plus', label: '40+ kids' };
+      customKidsCount.value = props.kids.count || null;
+    } else if (props.kids.type === 'range') {
+      const foundOption = kidsOptions.value.find(opt => opt.id === props.kids.id);
       if (foundOption) {
-        selectedHours.value = foundOption;
+        selected.value = foundOption;
       }
     }
-  } catch (error) {
-    console.error('Error loading hours:', error);
   }
 }
 
-async function selectService(service) {
-  selectedService.value = service;
-  selectedHours.value = null;
-
-  // Load hours for this service
-  if (!hoursOptions.value[service.id]) {
-    await loadHoursForService(service.id);
-  }
-
-  emitData();
-}
-
-function emitData() {
-  if (!selectedService.value) {
-    emit("setData", { service: null, hours: null });
+function emitKidsData() {
+  if (!selected.value) {
+    emit("setData", { kids: null });
     return;
   }
 
-  const serviceData = selectedService.value;
-
-  if (!selectedHours.value) {
-    emit("setData", { service: serviceData, hours: null });
-    return;
+  let kidsData;
+  if (selected.value.id === '40plus') {
+    kidsData = {
+      ...selected.value,
+      type: 'custom',
+      count: customKidsCount.value,
+      isValid: isValidSelection.value
+    };
+  } else {
+    kidsData = {
+      ...selected.value,
+      type: 'range',
+      isValid: true
+    };
   }
 
-  const hoursData = {
-    ...selectedHours.value,
-    isValid: true
-  };
-
-  emit("setData", { service: serviceData, hours: hoursData });
+  emit("setData", { kids: kidsData });
 }
 
 watch(
-  () => [props.county, props.active],
-  ([county, active]) => {
-    if (active && county) {
-      loadServices();
+  () => props.active,
+  (active) => {
+    if (active) {
+      loadKidsOptions();
     }
   },
   { immediate: true }
 );
 
-// Watch for service prop changes to maintain selection
-watch(
-  () => props.service,
-  (service) => {
-    if (service && services.value.length > 0) {
-      const foundService = services.value.find(s => s.id === service.id);
-      if (foundService) {
-        selectedService.value = foundService;
-        loadHoursForService(foundService.id);
-      }
-    } else if (!service) {
-      selectedService.value = null;
-      selectedHours.value = null;
-    }
-  },
-  { immediate: true }
-);
+watch(selected, (newVal) => {
+  if (newVal?.id !== '40plus') {
+    customKidsCount.value = null;
+  }
+  emitKidsData();
+});
 
-// Watch for hours selection changes
-watch(selectedHours, () => {
-  emitData();
+watch(customKidsCount, () => {
+  if (selected.value?.id === '40plus') {
+    emitKidsData();
+  }
 });
 </script>
 
 <style scoped>
-.card {
-  border-radius: 14px;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-}
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
-}
-.selectable-card.selected {
-  border: 2px solid rgba(255, 116, 183, 0.6) !important;
-  transform: translateY(-8px);
-  box-shadow: 0 5px 15px rgba(255, 116, 183, 0.4) !important;
-}
-.card-img-top {
-  height: 180px;
-  object-fit: cover;
-  border-top-left-radius: 14px;
-  border-top-right-radius: 14px;
-}
-.service-details {
-  line-height: 1.3;
-}
-
-.service-details i {
-  color: #6c757d;
-  width: 14px;
-}
-.badge {
-  font-size: 0.75rem;
-}
-
-.duration-selector {
-  border-top: 1px solid #e9ecef;
-  padding-top: 0.75rem;
-}
-
 .form-check-container {
   position: relative;
 }
 
-.custom-hour-btn-small {
+.custom-age-btn {
   background-color: #f8f9fa !important;
   border: 2px solid #d1d5db !important;
   color: #6b7280 !important;
   font-weight: 600 !important;
-  padding: 6px 12px !important;
-  border-radius: 6px !important;
+  padding: 12px 20px !important;
+  border-radius: 8px !important;
   transition: all 0.2s ease !important;
   cursor: pointer !important;
-  font-size: 0.875rem !important;
+  min-width: 120px !important;
   text-align: center !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
 }
 
-.custom-hour-btn-small:hover {
+.custom-age-btn:hover {
   background-color: #f3f4f6 !important;
   border-color: #9ca3af !important;
   color: #4b5563 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
 }
 
-.btn-check:checked + .custom-hour-btn-small {
+.btn-check:checked + .custom-age-btn {
   background-color: #FF74B7 !important;
   border-color: #FF74B7 !important;
   color: black !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 2px 6px rgba(255, 116, 183, 0.4) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 12px rgba(255, 116, 183, 0.4) !important;
 }
 
-.btn-check:checked + .custom-hour-btn-small:hover {
+.btn-check:checked + .custom-age-btn:hover {
   background-color: #FF74B7 !important;
   border-color: #FF74B7 !important;
   color: black !important;
+}
+
+.input-group-text {
+  background-color: #f8f9fa;
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.form-control {
+  border-color: #d1d5db;
+}
+
+.form-control:focus {
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 0.2rem rgba(255, 116, 183, 0.25);
 }
 </style>

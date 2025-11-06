@@ -132,13 +132,13 @@ import { ArrowLeft, ArrowRight, Check } from '@element-plus/icons-vue';
 import api from "@/services/axios";
 
 // Importaciones de componentes de steps
-import Step1 from "./form/Step1.vue";
-import Step2 from "./form/Step3.vue"; // Selección de servicio y duración
-import Step3 from "./form/Step4.vue"; // Rango de edades (antes Step3)
-import Step4 from "./form/Step6.vue"; // Addons (antes Step5)
-import Step5 from "./form/Step7.vue"; // Resumen (antes Step6)
-import Step6 from "./form/Step8.vue"; // Información del evento (antes Step7)
-import Step7 from "./form/Step9.vue"; // Confirmación (antes Step8)
+import Step1 from "./form/Step1.vue"; // Contact Information
+import Step2 from "./form/Step2.vue"; // Choose Service and Duration
+import Step3 from "./form/Step3.vue"; // Children Age Range
+import Step4 from "./form/Step4.vue"; // Select Add-ons
+import Step5 from "./form/Step5.vue"; // Summary
+import Step6 from "./form/Step6.vue"; // Event Information
+import Step7 from "./form/Step7.vue"; // Confirmation
 
 /**
  * Mapeo de componentes por número de paso
@@ -225,7 +225,10 @@ function getCurrentStepProps() {
 
   switch (activeStep.value) {
     case 2:
-      props.county = form.value?.customer?.countyId;
+      console.log('Step 2 - form.value:', form.value);
+      console.log('Step 2 - customer:', form.value?.customer);
+      console.log('Step 2 - areaId:', form.value?.customer?.areaId);
+      props.metropolitanArea = form.value?.customer?.areaId;
       props.active = activeStep.value === 2;
       props.service = form.value?.service;
       props.hours = form.value?.hours;
@@ -483,6 +486,7 @@ watch(activeStep, () => {
 
 /* Steps sidebar */
 .steps-sidebar {
+  display: none !important;
   width: 280px;
   background: white;
   padding: 2rem 1.5rem;

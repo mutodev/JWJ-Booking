@@ -1,48 +1,93 @@
 <template>
-  <div class="container py-4">
-    <!-- Título con ícono -->
-    <div class="d-flex align-items-center mb-4">
-      <i class="bi bi-clock fs-4 me-2 text-success"></i>
-      <h4 class="mb-0">Choose the duration</h4>
+  <div class="container py-5">
+    <!-- Título -->
+    <div class="d-flex align-items-center justify-content-center mb-5">
+      <i class="bi bi-calculator fs-3 me-2 text-dark"></i>
+      <h2 class="mb-0">Sub Total</h2>
     </div>
 
-    <!-- Botones dinámicos -->
-    <div v-if="hoursOptions.length" class="d-flex flex-wrap gap-3">
-      <template v-for="option in hoursOptions" :key="option.id">
-        <div class="form-check-container">
+    <!-- Valor centrado -->
+    <div class="text-center">
+      <div class="subtotal-display">
+        <span class="currency">$</span>
+        <span class="amount">{{ subtotal.toFixed(2) }}</span>
+      </div>
+
+      <!-- Desglose opcional -->
+      <div class="breakdown mt-4" v-if="showBreakdown">
+        <div class="row justify-content-center">
+          <div class="col-md-6">
+            <div class="breakdown-item d-flex justify-content-between">
+              <span>Service:</span>
+              <span>${{ servicePrice.toFixed(2) }}</span>
+            </div>
+            <div class="breakdown-item d-flex justify-content-between" v-if="addonsTotal > 0">
+              <span>Add-ons:</span>
+              <span>${{ addonsTotal.toFixed(2) }}</span>
+            </div>
+            <div class="breakdown-item d-flex justify-content-between" v-if="extraChildrenTotal > 0">
+              <span>Extra Children ({{ getExtraChildrenCount() }} over 40):</span>
+              <span>${{ extraChildrenTotal.toFixed(2) }}</span>
+            </div>
+            <hr class="my-2">
+            <div class="breakdown-total d-flex justify-content-between fw-bold">
+              <span>Sub Total:</span>
+              <span>${{ subtotal.toFixed(2) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón de confirmación -->
+      <div class="confirmation-section mt-5">
+        <div class="d-flex align-items-center justify-content-center">
           <input
-            type="radio"
+            type="checkbox"
             class="btn-check"
-            :id="option.id"
-            :value="option"
-            v-model="selected"
+            id="confirm-purchase"
+            v-model="isConfirmed"
           />
-          <label class="btn custom-hour-btn" :for="option.id">
-            {{ option.label }}
+          <label
+            class="btn confirmation-btn d-flex align-items-center"
+            :class="isConfirmed ? 'btn-success' : 'btn-outline-success'"
+            for="confirm-purchase"
+          >
+            <i
+              class="bi me-2"
+              :class="isConfirmed ? 'bi-check-circle-fill' : 'bi-check-circle'"
+            ></i>
+            <span>Confirm Purchase</span>
           </label>
         </div>
-      </template>
+        <p class="text-muted text-center mt-2 small">
+          Please confirm your purchase to continue
+        </p>
+      </div>
     </div>
-
-    <!-- Mensaje si no hay opciones -->
-    <div v-else class="text-muted">No duration options available</div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
-import api from "@/services/axios";
+import { ref, computed, watch } from "vue";
 
 const props = defineProps({
-  service: {
-    type: String,
-    required: true,
-  },
   active: {
     type: Boolean,
     default: false,
   },
+  service: {
+    type: Object,
+    default: null,
+  },
+  addons: {
+    type: Array,
+    default: () => [],
+  },
   hours: {
+    type: Object,
+    default: null,
+  },
+  kids: {
     type: Object,
     default: null,
   },
@@ -50,94 +95,198 @@ const props = defineProps({
 
 const emit = defineEmits(["setData"]);
 
-const hoursOptions = ref([]);
-const selected = ref(null);
+const showBreakdown = ref(true);
+const isConfirmed = ref(false);
 
-async function loadHoursOptions() {
-  if (!props.active || !props.service) return;
-  const { data } = await api.get(`/home/hours/${props.service}`);
+// Calcular precio del servicio
+const servicePrice = computed(() => {
+  if (!props.service) return 0;
+  return parseFloat(props.service.amount || 0);
+});
 
-  hoursOptions.value = data.map((opt) => ({
-    ...opt,
-    label: `${opt.hours} hour${opt.hours > 1 ? 's' : ''}`,
-  }));
+// Calcular total de addons
+const addonsTotal = computed(() => {
+  if (!props.addons || props.addons.length === 0) return 0;
+  return props.addons.reduce((total, addon) => {
+    return total + parseFloat(addon.base_price || 0);
+  }, 0);
+});
 
-  // Restore selected hours if it exists
-  if (props.hours) {
-    const foundOption = hoursOptions.value.find(opt => opt.id === props.hours.id);
-    if (foundOption) {
-      selected.value = foundOption;
-    }
+// Calcular niños extra y su costo
+const extraChildrenTotal = computed(() => {
+  if (!props.service || !props.kids) return 0;
+
+  // Obtener cantidad de niños seleccionados
+  let selectedKids = 0;
+  if (props.kids.count) {
+    // Para opción custom como "+40 kids" con cantidad específica
+    selectedKids = parseInt(props.kids.count);
+  } else if (props.kids.selectedKids) {
+    // Para opción directa con selectedKids
+    selectedKids = parseInt(props.kids.selectedKids);
   }
+
+  // Límite fijo de 40 niños sin cargos extra
+  const maxKidsIncluded = 40;
+
+  // Calcular niños extra solo después de 40
+  const extraKids = Math.max(0, selectedKids - maxKidsIncluded);
+
+  // Calcular costo de niños extra
+  const extraChildFee = parseFloat(props.service.extra_child_fee || 0);
+
+  return extraKids * extraChildFee;
+});
+
+// Calcular subtotal
+const subtotal = computed(() => {
+  return servicePrice.value + addonsTotal.value + extraChildrenTotal.value;
+});
+
+// Función para obtener la cantidad de niños extra
+function getExtraChildrenCount() {
+  if (!props.kids) return 0;
+
+  let selectedKids = 0;
+  if (props.kids.count) {
+    selectedKids = parseInt(props.kids.count);
+  } else if (props.kids.selectedKids) {
+    selectedKids = parseInt(props.kids.selectedKids);
+  }
+
+  return Math.max(0, selectedKids - 40);
 }
 
-function emitHoursData() {
-  if (!selected.value) {
-    emit("setData", { hours: null });
-    return;
-  }
-
-  const hoursData = {
-    ...selected.value,
-    isValid: true
+// Emitir datos cuando cambie el subtotal
+function emitSubtotalData() {
+  const subtotalData = {
+    subtotal: subtotal.value,
+    servicePrice: servicePrice.value,
+    addonsTotal: addonsTotal.value,
+    extraChildrenTotal: extraChildrenTotal.value,
+    isConfirmed: isConfirmed.value,
+    isValid: isConfirmed.value && subtotal.value > 0
   };
 
-  emit("setData", { hours: hoursData });
+  emit("setData", { subtotal: subtotalData });
 }
 
+// Watch para emitir datos cuando sea activo o cambien los valores
 watch(
-  () => props.active,
-  (active) => {
+  () => [props.active, subtotal.value, isConfirmed.value],
+  ([active]) => {
     if (active) {
-      loadHoursOptions();
+      emitSubtotalData();
     }
   },
   { immediate: true }
 );
 
-watch(selected, () => {
-  emitHoursData();
+// Watch específico para la confirmación
+watch(isConfirmed, () => {
+  emitSubtotalData();
 });
 </script>
 
 <style scoped>
-.form-check-container {
-  position: relative;
+.subtotal-display {
+  font-size: 4rem;
+  font-weight: 700;
+  color: #198754;
+  margin: 2rem 0;
 }
 
-.custom-hour-btn {
-  background-color: #f8f9fa !important;
-  border: 2px solid #d1d5db !important;
-  color: #6b7280 !important;
-  font-weight: 600 !important;
-  padding: 12px 20px !important;
+.currency {
+  font-size: 0.8em;
+  vertical-align: top;
+  margin-right: 0.2em;
+}
+
+.amount {
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.02em;
+}
+
+.breakdown {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.breakdown-item {
+  padding: 0.5rem 0;
+  color: #6c757d;
+}
+
+.breakdown-total {
+  font-size: 1.1rem;
+  color: #198754;
+}
+
+h2 {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.confirmation-section {
+  margin-top: 3rem;
+}
+
+.confirmation-btn {
   border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
   transition: all 0.2s ease !important;
-  cursor: pointer !important;
-  min-width: 120px !important;
-  text-align: center !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  min-width: 200px;
+  font-size: 1rem;
 }
 
-.custom-hour-btn:hover {
-  background-color: #f3f4f6 !important;
+.confirmation-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+}
+
+.confirmation-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.confirmation-btn.btn-success {
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+}
+
+.confirmation-btn.btn-outline-success {
+  border: 2px solid #d1d5db !important;
+  background: white !important;
+  color: #6b7280 !important;
+}
+
+.confirmation-btn.btn-outline-success:hover {
   border-color: #9ca3af !important;
+  background: #f9fafb !important;
   color: #4b5563 !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
 }
 
-.btn-check:checked + .custom-hour-btn {
-  background-color: #FF74B7 !important;
-  border-color: #FF74B7 !important;
-  color: black !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(255, 116, 183, 0.4) !important;
-}
+@media (max-width: 768px) {
+  .subtotal-display {
+    font-size: 3rem;
+  }
 
-.btn-check:checked + .custom-hour-btn:hover {
-  background-color: #FF74B7 !important;
-  border-color: #FF74B7 !important;
-  color: black !important;
+  .breakdown {
+    margin: 0 1rem;
+  }
+
+  .confirmation-btn {
+    font-size: 1rem;
+    padding: 0.65rem 1.5rem;
+  }
 }
 </style>

@@ -30,7 +30,7 @@ class ZipCodeRepository
 
     /**
      * Consulta por código
-     * 
+     *
      * @param string $code
      * @return User
      */
@@ -40,6 +40,25 @@ class ZipCodeRepository
             ->where('zipcode', $code)
             ->where('city_id', $cityId)
             ->where('is_active', true)
+            ->first();
+    }
+
+    /**
+     * Consulta por Metropolitan Area y código
+     *
+     * @param string $metropolitanAreaId
+     * @param string $code
+     * @return Zipcode|null
+     */
+    public function getByMetropolitanAreaAndCode($metropolitanAreaId, $code): ?Zipcode
+    {
+        return $this->zipCodeModel
+            ->select('zipcodes.*')
+            ->join('cities', 'cities.id = zipcodes.city_id')
+            ->join('counties', 'counties.id = cities.county_id')
+            ->where('zipcodes.zipcode', $code)
+            ->where('counties.metropolitan_area_id', $metropolitanAreaId)
+            ->where('zipcodes.is_active', true)
             ->first();
     }
 

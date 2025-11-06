@@ -30,8 +30,8 @@ $routes->group('api', function ($routes) {
         $routes->get('metropolitan-areas', [MetropolitanAreaController::class, 'getAllActive']);
         $routes->get('counties/(:any)', [CountyController::class, 'getByMetropolitan']);
         $routes->get('cities/(:any)', [CityController::class, 'getByCounty']);
-        $routes->get('zipcode/(:any)/(:any)', [ZipCodeController::class, 'getByCityAndCode']);
-        $routes->get('services/(:any)', [ServicePriceController::class, 'getAllByCounty']);
+        $routes->get('zipcode/(:any)/(:any)', [ZipCodeController::class, 'getByMetropolitanAreaAndCode']);
+        $routes->get('services/(:any)', [ServicePriceController::class, 'getAllByMetropolitanArea']);
         $routes->get('range-kids/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
         $routes->get('hours/(:any)', [DurationController::class, 'getByServicePriceId']);
         $routes->get('addons', [AddonController::class, 'getAllActive']);

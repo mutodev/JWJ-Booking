@@ -20,7 +20,7 @@ if (file_exists($manifestPath)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JamWithJamie - Children's Entertainment Services</title>
+    <title>Jam with Jamie</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="<?= base_url('img/logos/icon.png') ?>">
@@ -34,14 +34,14 @@ if (file_exists($manifestPath)) {
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?= base_url() ?>">
-    <meta property="og:title" content="JamWithJamie - Children's Entertainment Services">
+    <meta property="og:title" content="Jam with Jamie">
     <meta property="og:description" content="Professional children's entertainment services for birthdays and special events.">
     <meta property="og:image" content="<?= base_url('img/logos/JWJ_logo-05.png') ?>">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="<?= base_url() ?>">
-    <meta property="twitter:title" content="JamWithJamie - Children's Entertainment Services">
+    <meta property="twitter:title" content="Jam with Jamie">
     <meta property="twitter:description" content="Professional children's entertainment services for birthdays and special events.">
     <meta property="twitter:image" content="<?= base_url('img/logos/JWJ_logo-05.png') ?>">
 

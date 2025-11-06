@@ -106,7 +106,7 @@ class ServicePriceRepository
     }
 
     /**
-     * Obtener los precios del servicio por condado 
+     * Obtener los precios del servicio por condado
      *
      * @return ServicePrice[]
      */
@@ -128,6 +128,35 @@ class ServicePriceRepository
             ->where('service_prices.county_id', $countyId)
             ->where('service_prices.is_available', true)
             ->where('services.is_active', true)
+            ->findAll();
+    }
+
+    /**
+     * Obtener los precios del servicio por metropolitan area
+     *
+     * @return ServicePrice[]
+     */
+    public function getAllByMetropolitanArea($metropolitanAreaId)
+    {
+        return $this->model
+            ->select("
+                service_prices.id,
+                service_prices.county_id,
+                service_prices.performers_count,
+                service_prices.img,
+                service_prices.amount,
+                service_prices.extra_child_fee,
+                service_prices.range_age,
+                service_prices.notes,
+                services.name,
+                services.id as service_id
+            ")
+            ->join("services", "services.id = service_prices.service_id", "left")
+            ->join("counties", "counties.id = service_prices.county_id", "left")
+            ->where('counties.metropolitan_area_id', $metropolitanAreaId)
+            ->where('service_prices.is_available', true)
+            ->where('services.is_active', true)
+            ->groupBy('service_prices.id')
             ->findAll();
     }
 }

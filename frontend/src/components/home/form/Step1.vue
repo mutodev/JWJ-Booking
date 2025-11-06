@@ -10,14 +10,20 @@
           <label for="firstName" class="form-label">
             First name <span class="text-danger">*</span>
           </label>
-          <input
-            v-model="form.firstName"
-            type="text"
-            class="form-control"
-            id="firstName"
-            placeholder="Enter your first name"
-            @blur="validateField('firstName')"
-          />
+          <el-tooltip
+            content="Enter the first name of the person making the reservation"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <input
+              v-model="form.firstName"
+              type="text"
+              class="form-control"
+              id="firstName"
+              @blur="validateField('firstName')"
+            />
+          </el-tooltip>
           <div v-if="errors.firstName" class="text-danger small">
             {{ errors.firstName }}
           </div>
@@ -28,14 +34,20 @@
           <label for="lastName" class="form-label">
             Last name <span class="text-danger">*</span>
           </label>
-          <input
-            v-model="form.lastName"
-            type="text"
-            class="form-control"
-            id="lastName"
-            placeholder="Enter your last name"
-            @blur="validateField('lastName')"
-          />
+          <el-tooltip
+            content="Enter the last name of the person making the reservation"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <input
+              v-model="form.lastName"
+              type="text"
+              class="form-control"
+              id="lastName"
+              @blur="validateField('lastName')"
+            />
+          </el-tooltip>
           <div v-if="errors.lastName" class="text-danger small">
             {{ errors.lastName }}
           </div>
@@ -46,14 +58,20 @@
           <label for="email" class="form-label">
             Email <span class="text-danger">*</span>
           </label>
-          <input
-            v-model="form.email"
-            type="email"
-            class="form-control"
-            id="email"
-            placeholder="Enter your email (e.g. name@example.com)"
-            @blur="validateField('email')"
-          />
+          <el-tooltip
+            content="Enter a valid email address to receive booking confirmations"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <input
+              v-model="form.email"
+              type="email"
+              class="form-control"
+              id="email"
+              @blur="validateField('email')"
+            />
+          </el-tooltip>
           <div v-if="errors.email" class="text-danger small">
             {{ errors.email }}
           </div>
@@ -64,14 +82,20 @@
           <label for="phone" class="form-label">
             Phone number <span class="text-danger">*</span>
           </label>
-          <input
-            v-model="form.phone"
-            type="tel"
-            class="form-control"
-            id="phone"
-            placeholder="Enter your phone number (e.g. +1 555 123 4567)"
-            @blur="validateField('phone')"
-          />
+          <el-tooltip
+            content="Enter your phone number (7-15 digits, can include + and spaces)"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <input
+              v-model="form.phone"
+              type="tel"
+              class="form-control"
+              id="phone"
+              @blur="validateField('phone')"
+            />
+          </el-tooltip>
           <div v-if="errors.phone" class="text-danger small">
             {{ errors.phone }}
           </div>
@@ -81,84 +105,57 @@
         <div class="mb-3">
           <div class="form-group">
             <label for="metropolitan-area" class="form-label">
-              Metropolitan Area <span class="text-danger">*</span>
+              Location <span class="text-danger">*</span>
             </label>
-            <Multiselect
-              id="metropolitan-area"
-              v-model="selectedArea"
-              :options="listAreas"
-              label="name"
-              track-by="id"
-              placeholder="Select a metropolitan area"
-              @select="onSelectArea"
-            />
+            <el-tooltip
+              content="Select the metropolitan area where the event will take place"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <div>
+                <Multiselect
+                  id="metropolitan-area"
+                  v-model="selectedArea"
+                  :options="listAreas"
+                  label="name"
+                  track-by="id"
+                  @select="onSelectArea"
+                />
+              </div>
+            </el-tooltip>
             <div v-if="errors.areaId" class="text-danger small">
               {{ errors.areaId }}
             </div>
           </div>
         </div>
 
-        <!-- County -->
-        <div class="mb-3">
-          <div class="form-group">
-            <label for="county" class="form-label">
-              County <span class="text-danger">*</span>
-            </label>
-            <Multiselect
-              id="county"
-              v-model="selectedCounty"
-              :options="listCounties"
-              label="name"
-              track-by="id"
-              placeholder="Select a county"
-              @select="onSelectCounty"
-            />
-            <div v-if="errors.countyId" class="text-danger small">
-              {{ errors.countyId }}
-            </div>
-          </div>
-        </div>
-
-        <!-- City -->
-        <div class="mb-3">
-          <div class="form-group">
-            <label for="city" class="form-label">
-              City <span class="text-danger">*</span>
-            </label>
-            <Multiselect
-              id="city"
-              v-model="selectedCity"
-              :options="listCities"
-              label="name"
-              track-by="id"
-              placeholder="Select a city"
-              @select="onSelectCity"
-            />
-            <div v-if="errors.cityId" class="text-danger small">
-              {{ errors.cityId }}
-            </div>
-          </div>
-        </div>
 
         <!-- Zipcode -->
         <div class="mb-3">
           <label for="zipcode" class="form-label">
             Zip Code <span class="text-danger">*</span>
           </label>
-          <input
-            v-model="form.zipcode"
-            type="text"
-            class="form-control"
-            id="zipcode"
-            placeholder="Enter your zipcode (e.g. 12345)"
-            @blur="validateField('zipcode')"
-            :disabled="!form.cityId"
-          />
+          <el-tooltip
+            content="Enter the zip code for the event location (4-10 digits)"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <input
+              v-model="form.zipcode"
+              type="text"
+              class="form-control"
+              id="zipcode"
+              @blur="validateField('zipcode')"
+              :disabled="!form.areaId"
+            />
+          </el-tooltip>
           <div v-if="errors.zipcode" class="text-danger small">
             {{ errors.zipcode }}
           </div>
-          <div v-if="!form.cityId" class="text-muted small">
-            Please select a city first
+          <div v-if="!form.areaId" class="text-muted small">
+            Please select a metropolitan area first
           </div>
         </div>
       </div>
@@ -175,19 +172,13 @@ import "vue-multiselect/dist/vue-multiselect.css";
 
 const { emit } = getCurrentInstance();
 const listAreas = ref([]);
-const listCounties = ref([]);
-const listCities = ref([]);
 const selectedArea = ref(null);
-const selectedCounty = ref(null);
-const selectedCity = ref(null);
 const form = reactive({
   firstName: "",
   lastName: "",
   email: "",
   phone: "",
   areaId: "",
-  countyId: "",
-  cityId: "",
   zipcode: "",
 });
 const errors = reactive({});
@@ -201,8 +192,6 @@ const schema = yup.object({
     .matches(/^[0-9+\s-]{7,15}$/, "Invalid phone number")
     .required("Phone number is required"),
   areaId: yup.string().required("Metropolitan area is required"),
-  countyId: yup.string().required("County is required"),
-  cityId: yup.string().required("City is required"),
   zipcode: yup
     .string()
     .matches(/^[0-9]{4,10}$/, "Invalid zipcode (4-10 digits)")
@@ -223,8 +212,6 @@ function areAllFieldsFilled() {
     form.email.trim() !== "" &&
     form.phone.trim() !== "" &&
     form.areaId !== "" &&
-    form.countyId !== "" &&
-    form.cityId !== "" &&
     form.zipcode.trim() !== "" &&
     zipcodeData.value !== null
   );
@@ -237,37 +224,6 @@ const getDataMetropolitan = async () => {
 
 function onSelectArea(area) {
   form.areaId = area?.id || "";
-  form.countyId = "";
-  form.cityId = "";
-
-  listCounties.value = [];
-  listCities.value = [];
-  selectedCounty.value = null;
-  selectedCity.value = null;
-
-  if (area?.id) {
-    api.get(`/home/counties/${area.id}`).then((res) => {
-      listCounties.value = res.data;
-    });
-  }
-}
-
-function onSelectCounty(county) {
-  form.countyId = county?.id || "";
-  form.cityId = "";
-
-  listCities.value = [];
-  selectedCity.value = null;
-
-  if (county?.id) {
-    api.get(`/home/cities/${county.id}`).then((res) => {
-      listCities.value = res.data;
-    });
-  }
-}
-
-function onSelectCity(city) {
-  form.cityId = city?.id || "";
   form.zipcode = "";
   zipcodeData.value = null;
 }
@@ -287,7 +243,7 @@ watch(
   async (newZip) => {
     clearTimeout(debounceTimer);
 
-    if (!form.cityId) {
+    if (!form.areaId) {
       zipcodeData.value = null;
       emitData();
       return;
@@ -306,7 +262,7 @@ watch(
     if (newZip && newZip.length >= 4 && newZip.length <= 10) {
       debounceTimer = setTimeout(async () => {
         try {
-          const response = await api.get(`/home/zipcode/${form.cityId}/${newZip}`);
+          const response = await api.get(`/home/zipcode/${form.areaId}/${newZip}`);
           zipcodeData.value = response.data;
           emitData(); // Emitir después de obtener los datos del zipcode
         } catch (error) {

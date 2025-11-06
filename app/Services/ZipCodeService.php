@@ -44,6 +44,20 @@ class ZipCodeService
     }
 
     /**
+     * Obtener código postal por Metropolitan Area y código
+     */
+    public function getByMetropolitanAreaAndCode($metropolitanAreaId, $code)
+    {
+        $zipcode = $this->repository->getByMetropolitanAreaAndCode($metropolitanAreaId, $code);
+
+        if (!$zipcode) {
+            throw new HTTPException(lang('Zipcode.notFound'), Response::HTTP_NOT_FOUND);
+        }
+
+        return $zipcode;
+    }
+
+    /**
      * Obtener todos los códigos postales
      */
     public function getAll(): array

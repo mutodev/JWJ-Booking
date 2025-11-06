@@ -39,6 +39,16 @@ class ServicePriceService
     }
 
     /**
+     * Obtiene los precios del servicio por metropolitan area
+     * @param string $metropolitanAreaId ID del área metropolitana
+     * @return array Lista de precios filtrados por área metropolitana
+     */
+    public function getAllByMetropolitanArea($metropolitanAreaId)
+    {
+        return $this->repo->getAllByMetropolitanArea($metropolitanAreaId);
+    }
+
+    /**
      * Obtiene un precio de servicio por ID
      * @param string $id ID del precio de servicio
      * @return object Precio de servicio encontrado
