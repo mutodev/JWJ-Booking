@@ -1,627 +1,331 @@
 <template>
-  <div class="container py-4">
-    <!-- Título -->
-    <div class="d-flex align-items-center mb-4">
-      <i class="bi bi-person-fill fs-3 me-2 text-success"></i>
-      <h2 class="mb-0">Information</h2>
+  <div class="container py-5">
+    <!-- Success Icon & Title -->
+    <div class="text-center mb-5">
+      <div class="success-icon mb-4">
+        <i class="bi bi-check-circle-fill text-dark"></i>
+      </div>
+      <h2 class="text-dark mb-2">Reservation Confirmed!</h2>
+      <p class="text-muted">Thank you for choosing our services. Your reservation has been successfully submitted.</p>
     </div>
 
-    <!-- Subtitle -->
-    <p class="text-muted mb-4">
-      In case the event is not a birthday, please fill the boxes with N/A.
-    </p>
-
-    <!-- Contact Info Display (Auto-filled from Step 1) -->
-    <div class="info-display mb-4">
-      <div class="row">
-        <div class="col-md-6">
-          <div class="info-item">
-            <span class="info-label">Contact Name:</span>
-            <span class="info-value">{{ contactName }}</span>
+    <!-- Reservation Details Card -->
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">
+              <i class="bi bi-calendar-check me-2"></i>
+              Reservation Details
+            </h5>
           </div>
-        </div>
-        <div class="col-md-6">
-          <div class="info-item">
-            <span class="info-label">Event Date:</span>
-            <span class="info-value">{{ eventDateDisplay }}</span>
+          <div class="card-body">
+
+            <!-- Event Details -->
+            <div class="row mb-3">
+              <div class="col-sm-4">
+                <strong>Event Date:</strong>
+              </div>
+              <div class="col-sm-8">
+                {{ formatDate(reservationData?.reservation?.event_date) }}
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-4">
+                <strong>Event Time:</strong>
+              </div>
+              <div class="col-sm-8">
+                {{ reservationData?.reservation?.event_time || 'Not specified' }}
+              </div>
+            </div>
+
+            <div class="row mb-3">
+              <div class="col-sm-4">
+                <strong>Event Address:</strong>
+              </div>
+              <div class="col-sm-8">
+                {{ reservationData?.reservation?.event_address || 'Not specified' }}
+              </div>
+            </div>
+
+            <!-- Birthday Child Info -->
+            <div class="row mb-3" v-if="reservationData?.reservation?.birthday_child_name">
+              <div class="col-sm-4">
+                <strong>Birthday Child:</strong>
+              </div>
+              <div class="col-sm-8">
+                {{ reservationData.reservation.birthday_child_name }}
+                <span v-if="reservationData?.reservation?.birthday_child_age">({{ reservationData.reservation.birthday_child_age }} years old)</span>
+              </div>
+            </div>
+
+            <!-- Price Breakdown -->
+            <div class="row mb-3" v-if="reservationData?.calculation">
+              <div class="col-12">
+                <strong>Price Breakdown:</strong>
+                <div class="mt-2">
+                  <div class="d-flex justify-content-between">
+                    <span>Service Price:</span>
+                    <span>${{ formatPrice(reservationData.calculation.service_price) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.addons_total > 0">
+                    <span>Add-ons:</span>
+                    <span>${{ formatPrice(reservationData.calculation.addons_total) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.extra_children_total > 0">
+                    <span>Extra Children:</span>
+                    <span>${{ formatPrice(reservationData.calculation.extra_children_total) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.surcharge_amount > 0">
+                    <span>Surcharge:</span>
+                    <span>${{ formatPrice(reservationData.calculation.surcharge_amount) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.total_duration_hours">
+                    <span>Total Duration:</span>
+                    <span>{{ formatDuration(reservationData.calculation.total_duration_hours) }}</span>
+                  </div>
+                  <hr>
+                  <div class="d-flex justify-content-between fw-bold" style="color: #FF74B7;">
+                    <span>Total Amount:</span>
+                    <span>${{ formatPrice(reservationData.calculation.grand_total) }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>
     </div>
 
-    <form @submit.prevent="validateForm">
-      <div class="row">
-        <!-- Left Column -->
-        <div class="col-md-6">
-          <!-- Full address -->
-          <div class="mb-3">
-            <label for="fullAddress" class="form-label">
-              Full address <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Enter the complete address where the event will take place"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <input
-                v-model="form.fullAddress"
-                type="text"
-                class="form-control"
-                id="fullAddress"
-                @blur="validateField('fullAddress')"
-              />
-            </el-tooltip>
-            <div v-if="errors.fullAddress" class="text-danger small mt-1">
-              {{ errors.fullAddress }}
-            </div>
-          </div>
-
-          <!-- Arrival, parking, and additional instructions -->
-          <div class="mb-3">
-            <label for="instructions" class="form-label">
-              Arrival, parking, and additional instructions <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Provide details about parking, access, or any special instructions for arrival"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <textarea
-                v-model="form.instructions"
-                class="form-control"
-                id="instructions"
-                rows="3"
-                @blur="validateField('instructions')"
-              ></textarea>
-            </el-tooltip>
-            <div v-if="errors.instructions" class="text-danger small mt-1">
-              {{ errors.instructions }}
-            </div>
-          </div>
-
-          <!-- Time frame of the event -->
-          <div class="mb-3">
-            <label class="form-label">
-              Time frame of the event <span class="text-danger">*</span>
-            </label>
-            <div class="row">
-              <div class="col-6">
-                <el-tooltip
-                  content="Select the start time for the event"
-                  placement="right"
-                  effect="dark"
-                  trigger="focus"
-                >
-                  <el-time-picker
-                    v-model="form.startTime"
-                    placeholder="Start time"
-                    format="hh:mm A"
-                    value-format="HH:mm"
-                    style="width: 100%"
-                    size="large"
-                    @blur="validateField('startTime')"
-                  />
-                </el-tooltip>
-              </div>
-              <div class="col-6">
-                <el-tooltip
-                  content="Select the end time for the event"
-                  placement="right"
-                  effect="dark"
-                  trigger="focus"
-                >
-                  <el-time-picker
-                    v-model="form.endTime"
-                    placeholder="End time"
-                    format="hh:mm A"
-                    value-format="HH:mm"
-                    style="width: 100%"
-                    size="large"
-                    @blur="validateField('endTime')"
-                  />
-                </el-tooltip>
-              </div>
-            </div>
-            <div v-if="errors.startTime || errors.endTime" class="text-danger small mt-1">
-              {{ errors.startTime || errors.endTime }}
-            </div>
-          </div>
-
-          <!-- Entertainment start time -->
-          <div class="mb-3">
-            <label class="form-label">Entertainment start time</label>
-            <div class="row">
-              <div class="col-6">
-                <el-tooltip
-                  content="Recommended at least 30 minutes after the party start time"
-                  placement="right"
-                  effect="dark"
-                  trigger="focus"
-                >
-                  <el-time-picker
-                    v-model="form.entertainmentStartTime"
-                    placeholder="Start time"
-                    format="hh:mm A"
-                    value-format="HH:mm"
-                    style="width: 100%"
-                    size="large"
-                  />
-                </el-tooltip>
-              </div>
-              <div class="col-6">
-                <el-tooltip
-                  content="Select when the entertainment should end"
-                  placement="right"
-                  effect="dark"
-                  trigger="focus"
-                >
-                  <el-time-picker
-                    v-model="form.entertainmentEndTime"
-                    placeholder="End time"
-                    format="hh:mm A"
-                    value-format="HH:mm"
-                    style="width: 100%"
-                    size="large"
-                  />
-                </el-tooltip>
-              </div>
-            </div>
-            <p class="text-muted small mt-1">
-              (recommended at least 30 minutes after the party start time)
-            </p>
-          </div>
-        </div>
-
-        <!-- Right Column -->
-        <div class="col-md-6">
-          <!-- Birthday child's name -->
-          <div class="mb-3">
-            <label for="birthdayChildName" class="form-label">
-              Birthday child's name <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Enter the name of the birthday child (or N/A if not applicable)"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <input
-                v-model="form.birthdayChildName"
-                type="text"
-                class="form-control"
-                id="birthdayChildName"
-                @blur="validateField('birthdayChildName')"
-              />
-            </el-tooltip>
-            <div v-if="errors.birthdayChildName" class="text-danger small mt-1">
-              {{ errors.birthdayChildName }}
-            </div>
-          </div>
-
-          <!-- Age they are turning -->
-          <div class="mb-3">
-            <label for="childAge" class="form-label">
-              Age they are turning <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Enter the age the child is turning (1-18, or N/A if not a birthday)"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <input
-                v-model="form.childAge"
-                type="text"
-                class="form-control"
-                id="childAge"
-                placeholder="Enter age (1-18) or N/A"
-                @blur="validateField('childAge')"
-              />
-            </el-tooltip>
-            <div v-if="errors.childAge" class="text-danger small mt-1">
-              {{ errors.childAge }}
-            </div>
-          </div>
-
-          <!-- Age range of children attending -->
-          <div class="mb-3">
-            <label for="ageRange" class="form-label">
-              Age range of children attending <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Enter the age range of children attending (e.g., 5-10 years)"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <input
-                v-model="form.ageRange"
-                type="text"
-                class="form-control"
-                id="ageRange"
-                @blur="validateField('ageRange')"
-              />
-            </el-tooltip>
-            <div v-if="errors.ageRange" class="text-danger small mt-1">
-              {{ errors.ageRange }}
-            </div>
-          </div>
-
-          <!-- Song requests -->
-          <div class="mb-3">
-            <label for="songRequests" class="form-label">
-              Song requests, up to 3 (provide links) <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Provide YouTube or Spotify links for up to 3 songs (one per line)"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <textarea
-                v-model="form.songRequests"
-                class="form-control"
-                id="songRequests"
-                rows="4"
-                @blur="validateField('songRequests')"
-              ></textarea>
-            </el-tooltip>
-            <div v-if="errors.songRequests" class="text-danger small mt-1">
-              {{ errors.songRequests }}
-            </div>
-          </div>
-
-          <!-- Happy Birthday song -->
-          <div class="mb-3">
-            <label for="happyBirthdayRequest" class="form-label">
-              Would you like Happy Birthday to be sung at the end of the set? <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Select whether you want the Happy Birthday song performed"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <select
-                v-model="form.happyBirthdayRequest"
-                class="form-control"
-                id="happyBirthdayRequest"
-                @blur="validateField('happyBirthdayRequest')"
-              >
-                <option value="">Please select</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-              </select>
-            </el-tooltip>
-            <div v-if="errors.happyBirthdayRequest" class="text-danger small mt-1">
-              {{ errors.happyBirthdayRequest }}
-            </div>
-          </div>
+    <!-- Next Steps -->
+    <div class="row justify-content-center mt-4">
+      <div class="col-lg-8">
+        <div class="alert alert-info">
+          <h6 class="alert-heading">
+            <i class="bi bi-info-circle me-2"></i>
+            What's Next?
+          </h6>
+          <ul class="mb-0">
+            <li>You will receive a confirmation email shortly with all the details</li>
+            <li>Our team will contact you within 24 hours to confirm the booking</li>
+            <li>Payment instructions will be included in the confirmation email</li>
+            <li>If you need to make changes, please contact us as soon as possible</li>
+          </ul>
         </div>
       </div>
+    </div>
 
-    </form>
+    <!-- Action Buttons -->
+    <div class="text-center mt-4">
+      <button
+        type="button"
+        class="btn custom-btn custom-btn-primary btn-lg me-3"
+        @click="printDetails"
+      >
+        <i class="bi bi-printer me-2"></i>
+        Print Details
+      </button>
+      <button
+        type="button"
+        class="btn custom-btn btn-lg"
+        @click="startNewReservation"
+      >
+        <i class="bi bi-plus-circle me-2"></i>
+        New Reservation
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted } from "vue";
-import * as yup from "yup";
+import { computed } from "vue";
 
 const props = defineProps({
-  active: {
-    type: Boolean,
-    default: false,
-  },
-  customer: {
+  reservationData: {
     type: Object,
     default: null,
   },
-  information: {
-    type: Object,
-    default: null,
-  },
-  // Agregamos los props necesarios para el envío
-  zipcode: {
-    type: Object,
-    default: null,
-  },
-  service: {
-    type: Object,
-    default: null,
-  },
-  kids: {
-    type: Object,
-    default: null,
-  },
-  hours: {
-    type: Object,
-    default: null,
-  },
-  addons: {
-    type: Array,
-    default: () => [],
-  },
 });
 
-const emit = defineEmits(["setData"]);
-
-// Form data (campos que no están en Step1)
-const form = reactive({
-  fullAddress: "",
-  instructions: "",
-  startTime: "",
-  endTime: "",
-  entertainmentStartTime: "",
-  entertainmentEndTime: "",
-  birthdayChildName: "",
-  childAge: "",
-  ageRange: "",
-  songRequests: "",
-  happyBirthdayRequest: "",
-});
-
-const errors = reactive({});
-
-// Computed properties para mostrar datos de Step1
-const contactName = computed(() => {
-  if (!props.customer) return "N/A";
-  return `${props.customer.firstName || ""} ${props.customer.lastName || ""}`.trim() || "N/A";
-});
-
-const eventDateDisplay = computed(() => {
-  if (!props.customer || !props.customer.eventDateTime) return "N/A";
-  const date = new Date(props.customer.eventDateTime);
-  return date.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric'
-  });
-});
-
-// Validation schema
-const schema = yup.object({
-  fullAddress: yup.string().required("Full address is required"),
-  instructions: yup.string().required("Instructions are required"),
-  startTime: yup.string().required("Start time is required"),
-  endTime: yup.string().required("End time is required"),
-  birthdayChildName: yup.string().required("Birthday child's name is required (or N/A)"),
-  childAge: yup.mixed().test('valid-age', 'Age must be between 1-18 or N/A', function(value) {
-    if (!value || value === '' || value.toString().toUpperCase() === 'N/A') return true;
-    const num = Number(value);
-    return !isNaN(num) && num >= 1 && num <= 18;
-  }).required("Child age is required (or N/A)"),
-  ageRange: yup.string().required("Age range is required"),
-  songRequests: yup.string().required("Song requests are required"),
-  happyBirthdayRequest: yup.string().oneOf(["yes", "no"], "Please select an option").required("Please select an option"),
-});
-
-// Computed properties
-const isValid = computed(() => {
-  try {
-    schema.validateSync(form);
-    return true;
-  } catch {
-    return false;
-  }
-});
+const emit = defineEmits(["newReservation"]);
 
 // Methods
-async function validateField(field) {
-  try {
-    await schema.validateAt(field, form);
-    errors[field] = "";
-  } catch (e) {
-    errors[field] = e.message;
-  }
-  emitFormData();
-}
+function formatDate(dateInput) {
+  if (!dateInput) return 'Not specified';
 
-async function validateForm() {
   try {
-    await schema.validate(form, { abortEarly: false });
-    Object.keys(errors).forEach((key) => (errors[key] = ""));
-    emitFormData();
-  } catch (validationErrors) {
-    Object.keys(errors).forEach((key) => (errors[key] = ""));
-    if (validationErrors?.inner) {
-      validationErrors.inner.forEach((err) => {
-        errors[err.path] = err.message;
-      });
+    let dateString;
+
+    // Si es un objeto DateTime de PHP serializado
+    if (typeof dateInput === 'object' && dateInput.date) {
+      dateString = dateInput.date;
     }
-  }
-}
+    // Si es un string directo
+    else if (typeof dateInput === 'string') {
+      dateString = dateInput;
+    }
+    // Si es otro tipo, convertir a string
+    else {
+      dateString = dateInput.toString();
+    }
 
-function emitFormData() {
-  const informationData = {
-    ...form,
-    isValid: isValid.value
-  };
+    const date = new Date(dateString);
 
-  emit("setData", { information: informationData });
-}
+    // Verificar que la fecha sea válida
+    if (isNaN(date.getTime())) {
+      return 'Invalid date format';
+    }
 
-// Restore form data if available
-function restoreFormData() {
-  if (props.information) {
-    Object.keys(form).forEach(key => {
-      if (props.information[key] !== undefined) {
-        form[key] = props.information[key];
-      }
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'Date format error';
   }
 }
 
-// Watchers
-watch(
-  () => props.active,
-  (active) => {
-    if (active) {
-      restoreFormData();
-      emitFormData();
-    }
-  },
-  { immediate: true }
-);
+function formatPrice(amount) {
+  if (amount === null || amount === undefined) return '0.00';
+  return parseFloat(amount).toFixed(2);
+}
 
-onMounted(() => {
-  if (props.active) {
-    restoreFormData();
+function formatDuration(hours) {
+  if (hours === null || hours === undefined) return '0 hours';
+
+  const totalHours = parseFloat(hours);
+  const wholeHours = Math.floor(totalHours);
+  const minutes = Math.round((totalHours - wholeHours) * 60);
+
+  if (minutes === 0) {
+    return `${wholeHours} hour${wholeHours !== 1 ? 's' : ''}`;
+  } else if (wholeHours === 0) {
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  } else {
+    return `${wholeHours} hour${wholeHours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
   }
-});
+}
+
+function printDetails() {
+  window.print();
+}
+
+function startNewReservation() {
+  emit("newReservation");
+}
 </script>
 
 <style scoped>
-/* Info Display */
-.info-display {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 2px solid #d1d5db;
+.success-icon {
+  font-size: 5rem;
+  animation: bounce 1s ease-in-out;
 }
 
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.info-label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #6b7280;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.info-value {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1f2937;
-}
-
-/* Form Controls */
-.form-control {
-  border-radius: 8px;
-  font-size: 0.95rem;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid #d1d5db;
-}
-
-.form-control:focus {
-  border-color: #FF74B7;
-  box-shadow: 0 0 0 0.2rem rgba(255, 116, 183, 0.25);
-}
-
-/* Element Plus Overrides */
-:deep(.el-input__wrapper) {
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  box-shadow: none;
-  padding: 0.6rem 0.75rem;
-}
-
-:deep(.el-input__wrapper:hover) {
-  border-color: #9ca3af;
-}
-
-:deep(.el-input__wrapper.is-focus) {
-  border-color: #FF74B7;
-  box-shadow: 0 0 0 0.2rem rgba(255, 116, 183, 0.25);
-}
-
-:deep(.el-input__inner) {
-  font-size: 0.95rem;
-}
-
-:deep(.el-picker-panel) {
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-:deep(.el-date-picker__header-label:hover),
-:deep(.el-picker-panel__icon-btn:hover) {
-  color: #FF74B7;
-}
-
-:deep(.el-date-table td.available:hover) {
-  color: #FF74B7;
-}
-
-:deep(.el-date-table td.today span) {
-  color: #FF74B7;
-  font-weight: bold;
-}
-
-:deep(.el-date-table td.current:not(.disabled) span) {
-  background-color: #FF74B7;
-  color: white;
-}
-
-:deep(.el-time-panel__btn.confirm) {
-  color: #FF74B7;
-}
-
-:deep(.el-time-spinner__item:hover:not(.disabled):not(.active)) {
-  background: rgba(255, 116, 183, 0.1);
-}
-
-:deep(.el-time-spinner__item.active:not(.disabled)) {
-  color: #FF74B7;
-  font-weight: bold;
-}
-
-.form-label {
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: #374151;
-  margin-bottom: 0.5rem;
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
 }
 
 h2 {
-  font-size: 1.8rem;
+  font-size: 2.5rem;
   font-weight: 600;
-  color: #333;
 }
 
-textarea.form-control {
-  resize: vertical;
-  min-height: 80px;
+.card {
+  border-radius: 12px;
 }
 
-.btn-lg {
-  font-size: 1.1rem;
-  font-weight: 600;
-  border-radius: 50px;
-  padding: 0.75rem 2rem;
-  transition: all 0.3s ease;
+.card-header {
+  border-radius: 12px 12px 0 0 !important;
 }
 
-.btn-primary {
-  background-color: #6c757d;
-  border-color: #6c757d;
+code {
+  font-size: 0.9rem;
+  padding: 0.25rem 0.5rem;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
 }
 
-.btn-success {
-  background-color: #FF74B7;
-  border-color: #FF74B7;
+/* Custom button styles consistent with home wizard */
+.custom-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  border: 2px solid #d1d5db !important;
+  background: white !important;
+  color: #6b7280 !important;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.custom-btn:hover {
+  border-color: #9ca3af !important;
+  background: #f9fafb !important;
+  color: #4b5563 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.custom-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.custom-btn-primary {
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+}
+
+.custom-btn-primary:hover {
+  border-color: #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+}
+
+.custom-btn-primary:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
 @media (max-width: 768px) {
-  .container {
-    padding-left: 1rem;
-    padding-right: 1rem;
+  .success-icon {
+    font-size: 4rem;
   }
 
   h2 {
-    font-size: 1.5rem;
+    font-size: 2rem;
+  }
+
+  .custom-btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .me-3 {
+    margin-right: 0 !important;
+  }
+}
+
+@media print {
+  .btn, .alert {
+    display: none !important;
   }
 }
 </style>

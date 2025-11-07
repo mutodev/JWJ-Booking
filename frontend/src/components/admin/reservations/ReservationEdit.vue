@@ -34,12 +34,22 @@
                   />
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Event Time</label>
+                  <label class="form-label">Event Start Time</label>
                   <input
                     v-model="editData.event_time"
                     type="time"
                     class="form-control"
                   />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Entertainment Start Time</label>
+                  <input
+                    v-model="editData.entertainment_start_time"
+                    type="time"
+                    class="form-control"
+                    placeholder="Optional"
+                  />
+                  <small class="text-muted">Recommended at least 30 minutes after party start</small>
                 </div>
               </div>
             </div>
@@ -58,12 +68,12 @@
                   />
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Birthday Child Age</label>
+                  <label class="form-label">Children Age Range</label>
                   <input
-                    v-model.number="editData.birthday_child_age"
-                    type="number"
+                    v-model="editData.children_age_range"
+                    type="text"
                     class="form-control"
-                    min="0"
+                    placeholder="e.g., 5-10 years"
                   />
                 </div>
                 <div class="col-md-3">
@@ -83,6 +93,32 @@
                     class="form-control"
                     min="1"
                   />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Birthday Child's Name</label>
+                  <input
+                    v-model="editData.birthday_child_name"
+                    type="text"
+                    class="form-control"
+                    placeholder="Enter name or N/A"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Age They Are Turning</label>
+                  <input
+                    v-model="editData.birthday_child_age"
+                    type="text"
+                    class="form-control"
+                    placeholder="Enter age (1-18) or N/A"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Happy Birthday Song?</label>
+                  <select v-model="editData.sing_happy_birthday" class="form-select">
+                    <option value="">Please select</option>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -292,8 +328,12 @@ const saveReservation = async () => {
       event_address: editData.value.event_address,
       event_date: editData.value.event_date,
       event_time: editData.value.event_time,
+      entertainment_start_time: editData.value.entertainment_start_time,
       children_count: editData.value.children_count,
+      children_age_range: editData.value.children_age_range,
+      birthday_child_name: editData.value.birthday_child_name,
       birthday_child_age: editData.value.birthday_child_age,
+      sing_happy_birthday: editData.value.sing_happy_birthday,
       performers_count: editData.value.performers_count,
       duration_hours: editData.value.duration_hours,
       status: editData.value.status,

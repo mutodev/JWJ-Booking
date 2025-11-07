@@ -26,7 +26,12 @@ const api = axios.create({
 // === Interceptor de solicitud ===
 api.interceptors.request.use(
   (config) => {
-    showLoader();
+    // Don't show loader for draft requests (silent background operation)
+    const isDraftRequest = config.url?.includes('/home/draft');
+    if (!isDraftRequest) {
+      showLoader();
+    }
+
     const token = localStorage.getItem("token");
     if (token) config.headers["Authorization"] = `Bearer ${token}`;
     config.headers["X-Language"] = localStorage.getItem("language") ?? "es";
@@ -39,6 +44,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     try {
+      const isDraftRequest = response.config.url?.includes('/home/draft');
+
       // Guardar token si viene en la respuesta
       if (response.data?.token || response.data?.data) {
         const token = response.data?.token ?? response.data.data;
@@ -62,15 +69,20 @@ api.interceptors.response.use(
         }
       }
 
-      // Mostrar mensajes de éxito solo para métodos != GET
+      // Mostrar mensajes de éxito solo para métodos != GET y NO para drafts
       if (
+        !isDraftRequest &&
         response.config.method?.toUpperCase() !== "GET" &&
         response.data?.message
       ) {
         toast.success(response.data.message);
       }
 
-      hideLoader();
+      // Don't hide loader for draft requests (it was never shown)
+      if (!isDraftRequest) {
+        hideLoader();
+      }
+
       return response?.data ?? response;
     } catch (error) {
       console.error("Response interceptor error:", error);
@@ -79,12 +91,21 @@ api.interceptors.response.use(
     }
   },
   (error) => {
-    hideLoader();
+    const isDraftRequest = error.config?.url?.includes('/home/draft');
+
+    // Don't hide loader for draft requests (it was never shown)
+    if (!isDraftRequest) {
+      hideLoader();
+    }
+
     const errorMessage =
       error.response?.data?.message || error.message || "An error occurred";
     console.error("API Error:", errorMessage);
 
-    if (error.response?.data?.message) toast.error(error.response.data.message);
+    // Don't show error toast for draft requests (fail silently)
+    if (!isDraftRequest && error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    }
 
     // Manejar errores de autenticación
     if (error.response) {

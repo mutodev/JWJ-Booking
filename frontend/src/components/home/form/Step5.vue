@@ -1,162 +1,299 @@
 <template>
-  <div class="container py-5">
+  <div class="container py-4">
     <!-- Título -->
-    <div class="d-flex align-items-center justify-content-center mb-5">
-      <i class="bi bi-calculator fs-3 me-2 text-dark"></i>
-      <h2 class="mb-0">Sub Total</h2>
+    <div class="d-flex align-items-center mb-4">
+      <i class="bi bi-person-fill fs-3 me-2 text-success"></i>
+      <h2 class="mb-0">Information</h2>
     </div>
 
-    <!-- Valor centrado -->
-    <div class="text-center">
-      <div class="subtotal-display">
-        <span class="currency">$</span>
-        <span class="amount">{{ subtotal.toFixed(2) }}</span>
+    <!-- Subtitle -->
+    <p class="text-muted mb-4">
+      In case the event is not a birthday, please fill the boxes with N/A.
+    </p>
+
+    <!-- Contact Info Display (Auto-filled from Step 1) -->
+    <div class="info-display mb-4">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="info-item">
+            <span class="info-label">Contact Name:</span>
+            <span class="info-value">{{ contactName }}</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="info-item">
+            <span class="info-label">Event Date:</span>
+            <span class="info-value">{{ eventDateDisplay }}</span>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- Desglose opcional -->
-      <div class="breakdown mt-4" v-if="showBreakdown">
-        <div class="row justify-content-center">
-          <div class="col-md-8 col-lg-6">
-            <!-- Base rate -->
-            <div class="breakdown-item d-flex justify-content-between">
-              <span>Base Service Rate:</span>
-              <span>${{ servicePrice.toFixed(2) }}</span>
+    <form @submit.prevent="validateForm">
+      <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-6">
+          <!-- Full address -->
+          <div class="mb-3">
+            <label for="fullAddress" class="form-label">
+              Full address <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Enter the complete address where the event will take place"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <input
+                v-model="form.fullAddress"
+                type="text"
+                class="form-control"
+                id="fullAddress"
+                @blur="validateField('fullAddress')"
+              />
+            </el-tooltip>
+            <div v-if="errors.fullAddress" class="text-danger small mt-1">
+              {{ errors.fullAddress }}
             </div>
+          </div>
 
-            <!-- Add-ons (listado detallado) -->
-            <template v-if="props.addons && props.addons.length > 0">
-              <div
-                v-for="(addon, index) in props.addons"
-                :key="index"
-                class="breakdown-item d-flex justify-content-between"
-                v-show="addon.is_referral_service !== '1' && addon.is_referral_service !== 1 && addon.is_referral_service !== true"
+          <!-- Arrival, parking, and additional instructions -->
+          <div class="mb-3">
+            <label for="instructions" class="form-label">
+              Arrival, parking, and additional instructions
+            </label>
+            <el-tooltip
+              content="Provide details about parking, access, or any special instructions for arrival (optional)"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <textarea
+                v-model="form.instructions"
+                class="form-control"
+                id="instructions"
+                rows="3"
+                @blur="validateField('instructions')"
+              ></textarea>
+            </el-tooltip>
+            <div v-if="errors.instructions" class="text-danger small mt-1">
+              {{ errors.instructions }}
+            </div>
+          </div>
+
+          <!-- Event start time -->
+          <div class="mb-3">
+            <label class="form-label">
+              Event start time <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Select the start time for the event"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <el-time-picker
+                v-model="form.startTime"
+                placeholder="Start time"
+                format="hh:mm A"
+                value-format="HH:mm"
+                style="width: 100%"
+                size="large"
+                @blur="validateField('startTime')"
+              />
+            </el-tooltip>
+            <div v-if="errors.startTime" class="text-danger small mt-1">
+              {{ errors.startTime }}
+            </div>
+          </div>
+
+          <!-- Entertainment start time -->
+          <div class="mb-3">
+            <label class="form-label">Entertainment start time</label>
+            <el-tooltip
+              content="Recommended at least 30 minutes after the party start time"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <el-time-picker
+                v-model="form.entertainmentStartTime"
+                placeholder="Start time"
+                format="hh:mm A"
+                value-format="HH:mm"
+                style="width: 100%"
+                size="large"
+              />
+            </el-tooltip>
+            <p class="text-muted small mt-1">
+              (recommended at least 30 minutes after the party start time)
+            </p>
+          </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="col-md-6">
+          <!-- Birthday child's name -->
+          <div class="mb-3">
+            <label for="birthdayChildName" class="form-label">
+              Birthday child's name <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Enter the name of the birthday child (or N/A if not applicable)"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <input
+                v-model="form.birthdayChildName"
+                type="text"
+                class="form-control"
+                id="birthdayChildName"
+                @blur="validateField('birthdayChildName')"
+              />
+            </el-tooltip>
+            <div v-if="errors.birthdayChildName" class="text-danger small mt-1">
+              {{ errors.birthdayChildName }}
+            </div>
+          </div>
+
+          <!-- Age they are turning -->
+          <div class="mb-3">
+            <label for="childAge" class="form-label">
+              Age they are turning <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Enter the age the child is turning (1-18, or N/A if not a birthday)"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <input
+                v-model="form.childAge"
+                type="text"
+                class="form-control"
+                id="childAge"
+                placeholder="Enter age (1-18) or N/A"
+                @blur="validateField('childAge')"
+              />
+            </el-tooltip>
+            <div v-if="errors.childAge" class="text-danger small mt-1">
+              {{ errors.childAge }}
+            </div>
+          </div>
+
+          <!-- Age range of children attending -->
+          <div class="mb-3">
+            <label for="ageRange" class="form-label">
+              Age range of children attending <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Enter the age range of children attending (e.g., 5-10 years)"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <input
+                v-model="form.ageRange"
+                type="text"
+                class="form-control"
+                id="ageRange"
+                @blur="validateField('ageRange')"
+              />
+            </el-tooltip>
+            <div v-if="errors.ageRange" class="text-danger small mt-1">
+              {{ errors.ageRange }}
+            </div>
+          </div>
+
+          <!-- Song requests -->
+          <div class="mb-3">
+            <label for="songRequests" class="form-label">
+              Song requests, up to 3 (provide links)
+            </label>
+            <el-tooltip
+              content="Provide YouTube or Spotify links for up to 3 songs (one per line) - Optional"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <textarea
+                v-model="form.songRequests"
+                class="form-control"
+                id="songRequests"
+                rows="4"
+                @blur="validateField('songRequests')"
+              ></textarea>
+            </el-tooltip>
+            <div v-if="errors.songRequests" class="text-danger small mt-1">
+              {{ errors.songRequests }}
+            </div>
+          </div>
+
+          <!-- Happy Birthday song -->
+          <div class="mb-3">
+            <label for="happyBirthdayRequest" class="form-label">
+              Would you like Happy Birthday to be sung at the end of the set? <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Select whether you want the Happy Birthday song performed"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <select
+                v-model="form.happyBirthdayRequest"
+                class="form-control"
+                id="happyBirthdayRequest"
+                @blur="validateField('happyBirthdayRequest')"
               >
-                <span>{{ addon.name }} <span v-if="addon.quantity > 1">(x{{ addon.quantity }})</span>:</span>
-                <span>${{ ((parseFloat(addon.selectedPrice || addon.base_price || 0)) * (parseInt(addon.quantity || 1))).toFixed(2) }}</span>
-              </div>
-            </template>
-
-            <!-- Extra children -->
-            <div class="breakdown-item d-flex justify-content-between" v-if="extraChildrenTotal > 0">
-              <span>Extra Children ({{ getExtraChildrenCount() }} over {{ getMaxKidsIncluded() }}):</span>
-              <span>${{ extraChildrenTotal.toFixed(2) }}</span>
-            </div>
-
-            <!-- Subtotal before discount -->
-            <div class="breakdown-item d-flex justify-content-between border-top pt-2 mt-2 fw-semibold">
-              <span>Subtotal (Service + Add-ons):</span>
-              <span>${{ baseAmount.toFixed(2) }}</span>
-            </div>
-
-            <!-- Promo code input -->
-            <div class="promo-code-section mt-3 mb-3">
-              <label class="form-label small fw-semibold text-muted">Promo Code (Optional)</label>
-              <div class="input-group">
-                <input
-                  v-model="promoCode"
-                  type="text"
-                  class="form-control"
-                  :class="{ 'is-valid': promoValid, 'is-invalid': promoInvalid }"
-                  placeholder="Enter promo code (auto-validates)"
-                  @input="resetPromoValidation"
-                  @keyup.enter="validatePromoCode"
-                />
-                <button
-                  class="btn btn-outline-secondary"
-                  type="button"
-                  @click="validatePromoCode"
-                  :disabled="!promoCode || promoValidating"
-                >
-                  {{ promoValidating ? 'Validating...' : 'Apply' }}
-                </button>
-              </div>
-              <div v-if="promoValid" class="valid-feedback d-block">
-                <i class="bi bi-check-circle-fill me-1"></i>
-                Promo code applied successfully!
-              </div>
-              <div v-if="promoInvalid" class="invalid-feedback d-block">
-                <i class="bi bi-x-circle-fill me-1"></i>
-                {{ promoErrorMessage }}
-              </div>
-            </div>
-
-            <!-- Discount -->
-            <div class="breakdown-item d-flex justify-content-between text-success" v-if="discount > 0">
-              <span>Discount ({{ promoCodeData?.discount_percentage }}%):</span>
-              <span>-${{ discount.toFixed(2) }}</span>
-            </div>
-
-            <!-- Subtotal after discount (only show if discount applied) -->
-            <div v-if="discount > 0" class="breakdown-item d-flex justify-content-between fw-semibold text-primary">
-              <span>Subtotal (after discount):</span>
-              <span>${{ (baseAmount - discount).toFixed(2) }}</span>
-            </div>
-
-            <!-- Travel fee -->
-            <div class="breakdown-item d-flex justify-content-between mt-2" v-if="travelFee > 0">
-              <span>Travel Fee ({{ getZoneName() }}):</span>
-              <span>${{ travelFee.toFixed(2) }}</span>
-            </div>
-
-            <hr class="my-2">
-
-            <!-- Total -->
-            <div class="breakdown-total d-flex justify-content-between fw-bold">
-              <span>Grand Total:</span>
-              <span>${{ subtotal.toFixed(2) }}</span>
-            </div>
-
-            <!-- Discount note -->
-            <div v-if="discount > 0 || promoCode" class="discount-note mt-2">
-              <i class="bi bi-info-circle me-1"></i>
-              <small>*Discount applies to service, add-ons, and extra children. Travel fees are not discounted.</small>
+                <option value="">Please select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </el-tooltip>
+            <div v-if="errors.happyBirthdayRequest" class="text-danger small mt-1">
+              {{ errors.happyBirthdayRequest }}
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Botón de confirmación -->
-      <div class="confirmation-section mt-5">
-        <div class="d-flex align-items-center justify-content-center">
-          <input
-            type="checkbox"
-            class="btn-check"
-            id="confirm-purchase"
-            v-model="isConfirmed"
-          />
-          <label
-            class="btn confirmation-btn d-flex align-items-center"
-            :class="isConfirmed ? 'btn-success' : 'btn-outline-success'"
-            for="confirm-purchase"
-          >
-            <i
-              class="bi me-2"
-              :class="isConfirmed ? 'bi-check-circle-fill' : 'bi-check-circle'"
-            ></i>
-            <span>Confirm Purchase</span>
-          </label>
-        </div>
-        <p class="text-muted text-center mt-2 small">
-          Please confirm your purchase to continue
-        </p>
-      </div>
-    </div>
+    </form>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import api from "@/services/axios";
-import { useToast } from "vue-toastification";
-
-const toast = useToast();
+import { ref, reactive, computed, watch, onMounted } from "vue";
+import * as yup from "yup";
 
 const props = defineProps({
   active: {
     type: Boolean,
     default: false,
   },
+  customer: {
+    type: Object,
+    default: null,
+  },
+  information: {
+    type: Object,
+    default: null,
+  },
+  // Agregamos los props necesarios para el envío
+  zipcode: {
+    type: Object,
+    default: null,
+  },
   service: {
+    type: Object,
+    default: null,
+  },
+  kids: {
+    type: Object,
+    default: null,
+  },
+  hours: {
     type: Object,
     default: null,
   },
@@ -164,392 +301,281 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  kids: {
-    type: Object,
-    default: null,
-  },
-  zipcode: {
-    type: Object,
-    default: null,
-  },
-  customer: {
-    type: Object,
-    default: null,
-  },
 });
 
 const emit = defineEmits(["setData"]);
 
-const showBreakdown = ref(true);
-const isConfirmed = ref(false);
-const promoCode = ref("");
-const promoValid = ref(false);
-const promoInvalid = ref(false);
-const promoValidating = ref(false);
-const promoErrorMessage = ref("");
-const promoCodeData = ref(null);
-let promoValidationTimeout = null;
-
-// Calcular precio del servicio
-const servicePrice = computed(() => {
-  if (!props.service) return 0;
-  return parseFloat(props.service.amount || 0);
+// Form data (campos que no están en Step1)
+const form = reactive({
+  fullAddress: "",
+  instructions: "",
+  startTime: "",
+  entertainmentStartTime: "",
+  birthdayChildName: "",
+  childAge: "",
+  ageRange: "",
+  songRequests: "",
+  happyBirthdayRequest: "",
 });
 
-// Calcular total de addons
-const addonsTotal = computed(() => {
-  if (!props.addons || props.addons.length === 0) return 0;
+const errors = reactive({});
 
-  const total = props.addons.reduce((total, addon) => {
-    // Filtrar solo add-ons que no sean referral services
-    // Comparar explícitamente con "1", 1 o true para evitar problemas con strings
-    const isReferral = addon.is_referral_service === "1" || addon.is_referral_service === 1 || addon.is_referral_service === true;
-
-    if (isReferral) {
-      return total;
-    }
-
-    // Usar selectedPrice si existe (para Jukebox Live), sino usar base_price
-    const price = parseFloat(addon.selectedPrice || addon.base_price || 0);
-    const quantity = parseInt(addon.quantity || 1);
-    const addonTotal = price * quantity;
-
-    return total + addonTotal;
-  }, 0);
-
-  return total;
+// Computed properties para mostrar datos de Step1
+const contactName = computed(() => {
+  if (!props.customer) return "N/A";
+  return `${props.customer.firstName || ""} ${props.customer.lastName || ""}`.trim() || "N/A";
 });
 
-// Calcular tarifa de viaje basada en la zona
-const travelFee = computed(() => {
-  if (!props.zipcode) return 0;
-
-  // Obtener travel_fee del zipcode
-  return parseFloat(props.zipcode.travel_fee || 0);
+const eventDateDisplay = computed(() => {
+  if (!props.customer || !props.customer.eventDateTime) return "N/A";
+  const date = new Date(props.customer.eventDateTime);
+  return date.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric'
+  });
 });
 
-// Obtener el límite de niños incluidos del servicio
-function getMaxKidsIncluded() {
-  if (!props.service) return 40;
-  return parseInt(props.service.max_kids_included || 40);
-}
-
-// Calcular niños extra y su costo
-const extraChildrenTotal = computed(() => {
-  if (!props.customer) return 0;
-
-  // Obtener cantidad de niños del customer data
-  let selectedKids = 0;
-
-  // Si seleccionaron "25+ kids", usar exactChildrenCount
-  if (props.customer.childrenRange === "25+ kids" && props.customer.exactChildrenCount) {
-    selectedKids = parseInt(props.customer.exactChildrenCount);
-  } else if (props.customer.childrenRange === "11-24 kids") {
-    // Para 11-24, usar el punto medio (17) o no cobrar extra si está dentro del límite
-    selectedKids = 17;
-  } else if (props.customer.childrenRange === "1-10 kids") {
-    selectedKids = 5; // Punto medio
-  }
-
-  // Límite de niños incluidos en el servicio
-  const maxKidsIncluded = getMaxKidsIncluded();
-
-  // Calcular niños extra solo después del límite
-  const extraKids = Math.max(0, selectedKids - maxKidsIncluded);
-
-  // Calcular costo de niños extra
-  const extraChildFee = parseFloat(props.service?.extra_child_fee || 0);
-
-  return extraKids * extraChildFee;
+// Validation schema
+const schema = yup.object({
+  fullAddress: yup.string().required("Full address is required"),
+  instructions: yup.string(), // Optional field
+  startTime: yup.string().required("Start time is required"),
+  birthdayChildName: yup.string().required("Birthday child's name is required (or N/A)"),
+  childAge: yup.mixed().test('valid-age', 'Age must be between 1-18 or N/A', function(value) {
+    if (!value || value === '' || value.toString().toUpperCase() === 'N/A') return true;
+    const num = Number(value);
+    return !isNaN(num) && num >= 1 && num <= 18;
+  }).required("Child age is required (or N/A)"),
+  ageRange: yup.string().required("Age range is required"),
+  songRequests: yup.string(), // Optional field
+  happyBirthdayRequest: yup.string().oneOf(["yes", "no"], "Please select an option").required("Please select an option"),
 });
 
-// Calcular base amount (antes del descuento)
-const baseAmount = computed(() => {
-  return servicePrice.value + addonsTotal.value + extraChildrenTotal.value;
-});
-
-// Calcular descuento
-const discount = computed(() => {
-  if (!promoCodeData.value || !promoValid.value) return 0;
-
-  const discountPercentage = parseFloat(promoCodeData.value.discount_percentage || 0);
-
-  // El descuento solo aplica al base amount (no incluye travel fee)
-  return (baseAmount.value * discountPercentage) / 100;
-});
-
-// Calcular subtotal
-const subtotal = computed(() => {
-  return baseAmount.value - discount.value + travelFee.value;
-});
-
-// Función para obtener la cantidad de niños extra
-function getExtraChildrenCount() {
-  if (!props.customer) return 0;
-
-  let selectedKids = 0;
-
-  if (props.customer.childrenRange === "25+ kids" && props.customer.exactChildrenCount) {
-    selectedKids = parseInt(props.customer.exactChildrenCount);
-  } else if (props.customer.childrenRange === "11-24 kids") {
-    selectedKids = 17;
-  } else if (props.customer.childrenRange === "1-10 kids") {
-    selectedKids = 5;
-  }
-
-  return Math.max(0, selectedKids - getMaxKidsIncluded());
-}
-
-// Función para obtener el nombre de la zona
-function getZoneName() {
-  if (!props.zipcode) return '';
-
-  const zoneType = props.zipcode.zone_type;
-  const zoneNames = {
-    'A': 'Zone A',
-    'B': 'Zone B',
-    'C': 'Zone C',
-    'D': 'Zone D'
-  };
-
-  return zoneNames[zoneType] || 'Unknown Zone';
-}
-
-// Función para resetear validación de promo code
-function resetPromoValidation() {
-  promoValid.value = false;
-  promoInvalid.value = false;
-  promoErrorMessage.value = "";
-  promoCodeData.value = null;
-
-  // Limpiar timeout anterior
-  if (promoValidationTimeout) {
-    clearTimeout(promoValidationTimeout);
-    promoValidationTimeout = null;
-  }
-}
-
-// Función para validar promo code
-async function validatePromoCode() {
-  if (!promoCode.value.trim()) return;
-
-  promoValidating.value = true;
-  // No resetear aquí, solo limpiar errores previos
-  promoInvalid.value = false;
-  promoErrorMessage.value = "";
-
+// Computed properties
+const isValid = computed(() => {
   try {
-    const response = await api.get(`/home/promo-codes/validate/${promoCode.value.trim()}`);
+    schema.validateSync(form);
+    return true;
+  } catch {
+    return false;
+  }
+});
 
-    if (response.data && response.data.is_valid) {
-      promoCodeData.value = response.data;
-      promoValid.value = true;
+// Methods
+async function validateField(field) {
+  try {
+    await schema.validateAt(field, form);
+    errors[field] = "";
+  } catch (e) {
+    errors[field] = e.message;
+  }
+  emitFormData();
+}
 
-      toast.success(
-        `Promo code applied! You save ${response.data.discount_percentage}%`,
-        { timeout: 3000 }
-      );
-
-      emitSubtotalData();
-    } else {
-      // Si es inválido, limpiar el promo code data
-      promoCodeData.value = null;
-      promoValid.value = false;
-      promoInvalid.value = true;
-      promoErrorMessage.value = response.data?.message || "Invalid promo code";
-      emitSubtotalData();
+async function validateForm() {
+  try {
+    await schema.validate(form, { abortEarly: false });
+    Object.keys(errors).forEach((key) => (errors[key] = ""));
+    emitFormData();
+  } catch (validationErrors) {
+    Object.keys(errors).forEach((key) => (errors[key] = ""));
+    if (validationErrors?.inner) {
+      validationErrors.inner.forEach((err) => {
+        errors[err.path] = err.message;
+      });
     }
-  } catch (error) {
-    // Si hay error, limpiar el promo code data
-    promoCodeData.value = null;
-    promoValid.value = false;
-    promoInvalid.value = true;
-    promoErrorMessage.value = error.response?.data?.message || "Invalid or expired promo code";
-    emitSubtotalData();
-  } finally {
-    promoValidating.value = false;
   }
 }
 
-// Emitir datos cuando cambie el subtotal
-function emitSubtotalData() {
-  const subtotalData = {
-    subtotal: subtotal.value,
-    servicePrice: servicePrice.value,
-    addonsTotal: addonsTotal.value,
-    extraChildrenTotal: extraChildrenTotal.value,
-    travelFee: travelFee.value,
-    discount: discount.value,
-    promoCode: promoValid.value ? promoCode.value : null,
-    promoCodeData: promoCodeData.value,
-    isConfirmed: isConfirmed.value,
-    isValid: isConfirmed.value && subtotal.value > 0
+function emitFormData() {
+  const informationData = {
+    ...form,
+    isValid: isValid.value
   };
 
-  emit("setData", { subtotal: subtotalData });
+  emit("setData", { information: informationData });
 }
 
-// Watch para emitir datos cuando sea activo o cambien los valores
+// Restore form data if available
+function restoreFormData() {
+  if (props.information) {
+    Object.keys(form).forEach(key => {
+      if (props.information[key] !== undefined) {
+        form[key] = props.information[key];
+      }
+    });
+  }
+}
+
+// Watchers
 watch(
-  () => [props.active, subtotal.value, isConfirmed.value],
-  ([active]) => {
+  () => props.active,
+  (active) => {
     if (active) {
-      emitSubtotalData();
+      restoreFormData();
+      emitFormData();
     }
   },
   { immediate: true }
 );
 
-// Watch específico para la confirmación
-watch(isConfirmed, () => {
-  emitSubtotalData();
-});
-
-// Watch específico para promoCodeData y discount
-watch([promoCodeData, discount], () => {
+onMounted(() => {
   if (props.active) {
-    emitSubtotalData();
+    restoreFormData();
   }
 });
 </script>
 
 <style scoped>
-.subtotal-display {
-  font-size: 4rem;
-  font-weight: 700;
-  color: #FF74B7;
-  margin: 2rem 0;
-}
-
-.currency {
-  font-size: 0.8em;
-  vertical-align: top;
-  margin-right: 0.2em;
-}
-
-.amount {
-  font-feature-settings: 'tnum';
-  letter-spacing: -0.02em;
-}
-
-.breakdown {
-  background: #f8f9fa;
+/* Info Display */
+.info-display {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid #e9ecef;
+  border: 2px solid #d1d5db;
 }
 
-.breakdown-item {
-  padding: 0.5rem 0;
-  color: #6c757d;
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
 }
 
-.breakdown-total {
+.info-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
   font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Form Controls */
+.form-control {
+  border-radius: 8px;
+  font-size: 0.95rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #d1d5db;
+}
+
+.form-control:focus {
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 0.2rem rgba(255, 116, 183, 0.25);
+}
+
+/* Element Plus Overrides */
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  box-shadow: none;
+  padding: 0.6rem 0.75rem;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: #9ca3af;
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 0.2rem rgba(255, 116, 183, 0.25);
+}
+
+:deep(.el-input__inner) {
+  font-size: 0.95rem;
+}
+
+:deep(.el-picker-panel) {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.el-date-picker__header-label:hover),
+:deep(.el-picker-panel__icon-btn:hover) {
   color: #FF74B7;
 }
 
-/* Promo code section */
-.promo-code-section {
-  background: #f9fafb;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px solid #e5e7eb;
+:deep(.el-date-table td.available:hover) {
+  color: #FF74B7;
 }
 
-.promo-code-section .input-group {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+:deep(.el-date-table td.today span) {
+  color: #FF74B7;
+  font-weight: bold;
 }
 
-.promo-code-section .form-control {
-  border-right: none;
+:deep(.el-date-table td.current:not(.disabled) span) {
+  background-color: #FF74B7;
+  color: white;
+}
+
+:deep(.el-time-panel__btn.confirm) {
+  color: #FF74B7;
+}
+
+:deep(.el-time-spinner__item:hover:not(.disabled):not(.active)) {
+  background: rgba(255, 116, 183, 0.1);
+}
+
+:deep(.el-time-spinner__item.active:not(.disabled)) {
+  color: #FF74B7;
+  font-weight: bold;
+}
+
+.form-label {
+  font-size: 0.9rem;
   font-weight: 500;
-}
-
-.promo-code-section .form-control:focus {
-  border-color: #FF74B7;
-  box-shadow: 0 0 0 0.25rem rgba(255, 116, 183, 0.1);
-}
-
-.promo-code-section .btn {
-  font-weight: 600;
-  border-left: 1px solid #d1d5db;
-}
-
-/* Discount note */
-.discount-note {
-  color: #6b7280;
-  font-style: italic;
-  text-align: center;
-  padding: 0.5rem;
-  background: #fffbeb;
-  border-radius: 6px;
-  border: 1px solid #fde68a;
+  color: #374151;
+  margin-bottom: 0.5rem;
 }
 
 h2 {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 600;
   color: #333;
 }
 
-.confirmation-section {
-  margin-top: 3rem;
+textarea.form-control {
+  resize: vertical;
+  min-height: 80px;
 }
 
-.confirmation-btn {
-  border-radius: 8px !important;
-  font-weight: 600 !important;
-  padding: 12px 24px !important;
-  height: auto !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
-  min-width: 200px;
-  font-size: 1rem;
+.btn-lg {
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 50px;
+  padding: 0.75rem 2rem;
+  transition: all 0.3s ease;
 }
 
-.confirmation-btn:hover {
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+.btn-primary {
+  background-color: #6c757d;
+  border-color: #6c757d;
 }
 
-.confirmation-btn:active {
-  transform: translateY(0) !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+.btn-success {
+  background-color: #FF74B7;
+  border-color: #FF74B7;
 }
 
-.confirmation-btn.btn-success {
-  border: 2px solid #FF74B7 !important;
-  background: #FF74B7 !important;
-  color: black !important;
-}
-
-.confirmation-btn.btn-outline-success {
-  border: 2px solid #d1d5db !important;
-  background: white !important;
-  color: #6b7280 !important;
-}
-
-.confirmation-btn.btn-outline-success:hover {
-  border-color: #9ca3af !important;
-  background: #f9fafb !important;
-  color: #4b5563 !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 @media (max-width: 768px) {
-  .subtotal-display {
-    font-size: 3rem;
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 
-  .breakdown {
-    margin: 0 1rem;
-  }
-
-  .confirmation-btn {
-    font-size: 1rem;
-    padding: 0.65rem 1.5rem;
+  h2 {
+    font-size: 1.5rem;
   }
 }
 </style>

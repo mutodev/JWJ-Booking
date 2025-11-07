@@ -38,6 +38,9 @@ $routes->group('api', function ($routes) {
         $routes->get('addons', [AddonController::class, 'getAllActive']);
         $routes->get('promo-codes/validate/(:any)', [PromoCodeController::class, 'validateCode']);
         $routes->post('reservation', [ReservationController::class, 'createFromForm']);
+        // Draft endpoints
+        $routes->post('draft', [ReservationController::class, 'saveDraft']);
+        $routes->get('draft', [ReservationController::class, 'getDraft']);
     });
 
 

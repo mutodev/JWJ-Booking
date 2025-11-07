@@ -143,10 +143,10 @@ const toast = useToast();
 // Importaciones de componentes de steps
 import Step1 from "./form/Step1.vue"; // Contact Information + Event Details
 import Step2 from "./form/Step2.vue"; // Choose Service
-import Step3 from "./form/Step4.vue"; // Select Add-ons (antes Step4)
-import Step4 from "./form/Step5.vue"; // Subtotal (antes Step5)
-import Step5 from "./form/Step6.vue"; // Event Information (antes Step6)
-import Step6 from "./form/Step7.vue"; // Confirmation (antes Step7)
+import Step3 from "./form/Step3.vue"; // Select Add-ons
+import Step4 from "./form/Step4.vue"; // Subtotal
+import Step5 from "./form/Step5.vue"; // Event Information
+import Step6 from "./form/Step6.vue"; // Confirmation
 import PrivacyPolicyModal from "./PrivacyPolicyModal.vue"; // Privacy Policy
 
 /**
@@ -175,6 +175,7 @@ const isSubmitting = ref(false);
 const isMobile = ref(false);
 const wizardRoot = ref(null);
 const reservationData = ref(null);
+const sessionId = ref(null);
 
 /**
  * Logo URL
@@ -232,6 +233,7 @@ function getCurrentStepProps() {
 
   switch (activeStep.value) {
     case 2:
+      // Step 2: Choose Service
       console.log('Step 2 - form.value:', form.value);
       console.log('Step 2 - customer:', form.value?.customer);
       console.log('Step 2 - areaId:', form.value?.customer?.areaId);
@@ -241,13 +243,13 @@ function getCurrentStepProps() {
       props.service = form.value?.service;
       break;
     case 3:
-      // Add-ons (antes Step 4)
+      // Step 3: Select Add-ons
       props.active = activeStep.value === 3;
       props.addons = form.value?.addons || [];
       props.service = form.value?.service;
       break;
     case 4:
-      // Subtotal (antes Step 5)
+      // Step 4: Subtotal
       props.active = activeStep.value === 4;
       props.service = form.value?.service;
       props.addons = form.value?.addons || [];
@@ -255,7 +257,7 @@ function getCurrentStepProps() {
       props.customer = form.value?.customer;
       break;
     case 5:
-      // Event Information (antes Step 6)
+      // Step 5: Event Information
       props.active = activeStep.value === 5;
       props.customer = form.value?.customer;
       props.information = form.value?.information;
@@ -264,7 +266,7 @@ function getCurrentStepProps() {
       props.addons = form.value?.addons || [];
       break;
     case 6:
-      // Confirmation (antes Step 7)
+      // Step 6: Confirmation
       props.reservationData = reservationData.value;
       break;
   }
@@ -316,6 +318,9 @@ function setData(data) {
   }
 
   validateCurrentStep();
+
+  // Auto-save draft
+  saveDraft();
 }
 
 /**
@@ -330,27 +335,29 @@ function validateCurrentStep() {
 
   switch (activeStep.value) {
     case 1:
+      // Step 1: Contact Information + Event Details
       isValid = !!form.value.customer &&
                 !!form.value.zipcode &&
                 form.value.customer.isValid === true;
       break;
     case 2:
+      // Step 2: Choose Service
       isValid = !!form.value.service;
       break;
     case 3:
-      // Add-ons (antes Step 4) - son opcionales
+      // Step 3: Select Add-ons (optional)
       isValid = true;
       break;
     case 4:
-      // Subtotal (antes Step 5) - requiere confirmación
+      // Step 4: Subtotal (requires confirmation)
       isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed;
       break;
     case 5:
-      // Event Information (antes Step 6)
+      // Step 5: Event Information
       isValid = !!form.value.information && form.value.information.isValid;
       break;
     case 6:
-      // Confirmation (antes Step 7) - siempre válido
+      // Step 6: Confirmation (always valid)
       isValid = true;
       break;
     default:
@@ -393,6 +400,7 @@ async function submitReservation() {
   try {
     // Preparar datos para enviar al endpoint
     const reservationData = {
+      session_id: sessionId.value, // Include session ID
       customer: form.value?.customer,
       zipcode: form.value?.zipcode,
       service: form.value?.service,
@@ -449,6 +457,9 @@ function handleNewReservation() {
     stepValidations.value[key] = key === '7';
   });
 
+  // Generate new session ID for new reservation
+  sessionId.value = generateNewSessionId();
+
   toast.info(
     'Starting new reservation...',
     { timeout: 2000 }
@@ -500,6 +511,50 @@ function handleClick(e) {
 }
 
 /**
+ * Generate new session ID (always new, never reuse)
+ */
+function generateNewSessionId() {
+  // Generate UUID v4
+  const newSessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+
+  return newSessionId;
+}
+
+/**
+ * Save draft to server (debounced)
+ */
+let saveDraftTimer = null;
+async function saveDraft() {
+  clearTimeout(saveDraftTimer);
+
+  saveDraftTimer = setTimeout(async () => {
+    try {
+      // Don't save if on confirmation step or no data
+      if (activeStep.value === 6 || Object.keys(form.value).length === 0) {
+        return;
+      }
+
+      const draftData = {
+        session_id: sessionId.value,
+        email: form.value?.customer?.email || null,
+        phone: form.value?.customer?.phone || null,
+        current_step: activeStep.value,
+        form_data: form.value
+      };
+
+      await api.post('/home/draft', draftData);
+      // Saved silently in background
+    } catch (error) {
+      // Fail silently - don't interrupt user experience
+    }
+  }, 2000); // Save 2 seconds after last change
+}
+
+/**
  * Component initial configuration
  */
 onMounted(() => {
@@ -509,6 +564,9 @@ onMounted(() => {
   if (wizardRoot.value) {
     wizardRoot.value.addEventListener("click", handleClick, true);
   }
+
+  // Generate new session ID (always start fresh)
+  sessionId.value = generateNewSessionId();
 });
 
 /**

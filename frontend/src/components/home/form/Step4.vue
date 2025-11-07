@@ -1,126 +1,151 @@
 <template>
-  <div class="container py-4">
-    <!-- Título y botón SKIP -->
-    <div class="d-flex align-items-center justify-content-between mb-4">
-      <div class="d-flex align-items-center">
-        <i class="bi bi-plus-circle fs-3 me-2 text-success"></i>
-        <h2 class="mb-0">Available add-ons and referral services</h2>
+  <div class="container py-5">
+    <!-- Título -->
+    <div class="d-flex align-items-center justify-content-center mb-5">
+      <i class="bi bi-calculator fs-3 me-2 text-dark"></i>
+      <h2 class="mb-0">Sub Total</h2>
+    </div>
+
+    <!-- Valor centrado -->
+    <div class="text-center">
+      <div class="subtotal-display">
+        <span class="currency">$</span>
+        <span class="amount">{{ subtotal.toFixed(2) }}</span>
       </div>
-      <el-button
-        size="large"
-        class="skip-btn"
-        @click="skipAddons"
-      >
-        SKIP
-      </el-button>
-    </div>
 
-    <!-- Mensaje informativo -->
-    <div class="alert alert-info mb-4">
-      <i class="bi bi-info-circle me-2"></i>
-      <strong>Optional:</strong> Add-ons are completely optional. You can skip this step or select services to enhance your event.
-    </div>
-
-    <!-- Grid de cards con checkbox -->
-    <div v-if="addons.length" class="addons-grid">
-      <div
-        v-for="addon in addons"
-        :key="addon.id"
-        class="addon-card"
-        :class="{ 'addon-card--selected': isAddonSelected(addon.id) }"
-      >
-        <!-- Checkbox (oculto visualmente) -->
-        <input
-          type="checkbox"
-          class="addon-checkbox"
-          :id="'addon-' + addon.id"
-          :value="addon"
-          v-model="selectedAddons"
-        />
-
-        <!-- Card clickeable -->
-        <label class="addon-card__container" :for="'addon-' + addon.id">
-          <!-- Imagen -->
-          <div class="addon-card__image-wrapper">
-            <img
-              :src="addon.image || defaultImage"
-              class="addon-card__image"
-              :alt="addon.name"
-              @error="handleImageError"
-            />
-          </div>
-
-          <!-- Contenido -->
-          <div class="addon-card__content">
-            <!-- Título y precio -->
-            <div class="addon-card__header">
-              <h4 class="addon-card__title">{{ addon.name }}</h4>
-              <div class="addon-card__price">
-                <template v-if="addon.is_referral_service">
-                  <span class="referral-badge">Referral Service</span>
-                </template>
-                <template v-else-if="addon.base_price">
-                  <span class="fw-bold">${{ addon.base_price }}</span>
-                </template>
-              </div>
+      <!-- Desglose opcional -->
+      <div class="breakdown mt-4" v-if="showBreakdown">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-6">
+            <!-- Base rate -->
+            <div class="breakdown-item d-flex justify-content-between">
+              <span>Base Service Rate:</span>
+              <span>${{ servicePrice.toFixed(2) }}</span>
             </div>
 
-            <!-- Descripción -->
-            <p class="addon-card__description">{{ addon.description }}</p>
+            <!-- Add-ons (listado detallado) -->
+            <template v-if="props.addons && props.addons.length > 0">
+              <div
+                v-for="(addon, index) in props.addons"
+                :key="index"
+                class="breakdown-item d-flex justify-content-between"
+                v-show="addon.is_referral_service !== '1' && addon.is_referral_service !== 1 && addon.is_referral_service !== true"
+              >
+                <span>{{ addon.name }} <span v-if="addon.quantity > 1">(x{{ addon.quantity }})</span>:</span>
+                <span>${{ ((parseFloat(addon.selectedPrice || addon.base_price || 0)) * (parseInt(addon.quantity || 1))).toFixed(2) }}</span>
+              </div>
+            </template>
 
-            <!-- Sub-opciones para Jukebox Live -->
-            <div v-if="addon.price_type === 'jukebox' && isAddonSelected(addon.id)" class="addon-card__suboptions">
-              <p class="addon-card__suboptions-label">Select duration:</p>
-              <div class="addon-card__suboptions-grid">
-                <div
-                  v-for="option in jukeboxOptions"
-                  :key="option.value"
-                  class="addon-suboption"
-                  :class="{ 'addon-suboption--selected': getAddonSuboption(addon.id) === option.value }"
-                  @click.prevent="setAddonSuboption(addon.id, option.value, option.price)"
+            <!-- Extra children -->
+            <div class="breakdown-item d-flex justify-content-between" v-if="extraChildrenTotal > 0">
+              <span>Extra Children ({{ getExtraChildrenCount() }} over {{ getMaxKidsIncluded() }}):</span>
+              <span>${{ extraChildrenTotal.toFixed(2) }}</span>
+            </div>
+
+            <!-- Subtotal before discount -->
+            <div class="breakdown-item d-flex justify-content-between border-top pt-2 mt-2 fw-semibold">
+              <span>Subtotal (Service + Add-ons):</span>
+              <span>${{ baseAmount.toFixed(2) }}</span>
+            </div>
+
+            <!-- Promo code input -->
+            <div class="promo-code-section mt-3 mb-3">
+              <label class="form-label small fw-semibold text-muted">Promo Code (Optional)</label>
+              <div class="input-group">
+                <input
+                  v-model="promoCode"
+                  type="text"
+                  class="form-control"
+                  :class="{ 'is-valid': promoValid, 'is-invalid': promoInvalid }"
+                  placeholder="Enter promo code (auto-validates)"
+                  @input="resetPromoValidation"
+                  @keyup.enter="validatePromoCode"
+                />
+                <button
+                  class="btn promo-apply-btn"
+                  type="button"
+                  @click="validatePromoCode"
+                  :disabled="!promoCode || promoValidating"
                 >
-                  <span class="addon-suboption__label">{{ option.label }}</span>
-                  <span class="addon-suboption__price">${{ option.price }}</span>
-                </div>
+                  {{ promoValidating ? 'Validating...' : 'Apply' }}
+                </button>
+              </div>
+              <div v-if="promoValid" class="valid-feedback d-block">
+                <i class="bi bi-check-circle-fill me-1"></i>
+                Promo code applied successfully!
+              </div>
+              <div v-if="promoInvalid" class="invalid-feedback d-block">
+                <i class="bi bi-x-circle-fill me-1"></i>
+                {{ promoErrorMessage }}
               </div>
             </div>
 
-            <!-- Botón de checkbox o referral -->
-            <button
-              v-if="addon.is_referral_service"
-              type="button"
-              class="addon-card__button addon-card__button--referral"
-              @click.prevent="handleReferralService(addon)"
-            >
-              <i class="bi bi-telephone-fill me-2"></i>
-              <span>Request Information</span>
-            </button>
-            <button
-              v-else
-              type="button"
-              class="addon-card__button"
-              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
-              @click.prevent="toggleAddon(addon)"
-            >
-              <i v-if="isAddonSelected(addon.id)" class="bi bi-check-square-fill me-2"></i>
-              <i v-else class="bi bi-square me-2"></i>
-              <span>{{ isAddonSelected(addon.id) ? 'Added to booking' : 'Add to booking' }}</span>
-            </button>
-          </div>
-        </label>
-      </div>
-    </div>
+            <!-- Discount -->
+            <div class="breakdown-item d-flex justify-content-between text-success" v-if="discount > 0">
+              <span>Discount ({{ promoCodeData?.discount_percentage }}%):</span>
+              <span>-${{ discount.toFixed(2) }}</span>
+            </div>
 
-    <!-- Mensaje si no hay addons -->
-    <div v-else class="text-muted text-center">
-      <i class="bi bi-info-circle fs-4 mb-2"></i>
-      <p>No add-on services available</p>
+            <!-- Subtotal after discount (only show if discount applied) -->
+            <div v-if="discount > 0" class="breakdown-item d-flex justify-content-between fw-semibold text-primary">
+              <span>Subtotal (after discount):</span>
+              <span>${{ (baseAmount - discount).toFixed(2) }}</span>
+            </div>
+
+            <!-- Travel fee -->
+            <div class="breakdown-item d-flex justify-content-between mt-2" v-if="travelFee > 0">
+              <span>Travel Fee ({{ getZoneName() }}):</span>
+              <span>${{ travelFee.toFixed(2) }}</span>
+            </div>
+
+            <hr class="my-2">
+
+            <!-- Total -->
+            <div class="breakdown-total d-flex justify-content-between fw-bold">
+              <span>Grand Total:</span>
+              <span>${{ subtotal.toFixed(2) }}</span>
+            </div>
+
+            <!-- Discount note -->
+            <div v-if="discount > 0 || promoCode" class="discount-note mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              <small>*Discount applies to service, add-ons, and extra children. Travel fees are not discounted.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón de confirmación -->
+      <div class="confirmation-section mt-5">
+        <div class="d-flex align-items-center justify-content-center">
+          <input
+            type="checkbox"
+            class="btn-check"
+            id="confirm-purchase"
+            v-model="isConfirmed"
+          />
+          <label
+            class="btn confirmation-btn d-flex align-items-center"
+            :class="isConfirmed ? 'btn-success' : 'btn-outline-success'"
+            for="confirm-purchase"
+          >
+            <i
+              class="bi me-2"
+              :class="isConfirmed ? 'bi-check-circle-fill' : 'bi-check-circle'"
+            ></i>
+            <span>Confirm Purchase</span>
+          </label>
+        </div>
+        <p class="text-muted text-center mt-2 small">
+          Please confirm your purchase to continue
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, computed, watch } from "vue";
 import api from "@/services/axios";
 import { useToast } from "vue-toastification";
 
@@ -131,393 +156,426 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  service: {
+    type: Object,
+    default: null,
+  },
   addons: {
     type: Array,
     default: () => [],
   },
-  service: {
+  kids: {
+    type: Object,
+    default: null,
+  },
+  zipcode: {
+    type: Object,
+    default: null,
+  },
+  customer: {
     type: Object,
     default: null,
   },
 });
 
-const emit = defineEmits(["setData", "next"]);
+const emit = defineEmits(["setData"]);
 
-const addons = ref([]);
-const selectedAddons = ref([]);
-const addonSuboptions = ref({}); // Para guardar sub-opciones de Jukebox
-const defaultImage = "/img/default.jpg";
+const showBreakdown = ref(true);
+const isConfirmed = ref(false);
+const promoCode = ref("");
+const promoValid = ref(false);
+const promoInvalid = ref(false);
+const promoValidating = ref(false);
+const promoErrorMessage = ref("");
+const promoCodeData = ref(null);
+let promoValidationTimeout = null;
 
-// Opciones de Jukebox Live
-const jukeboxOptions = [
-  { value: '1h-1p', label: '1 hour, 1 performer', price: 375 },
-  { value: '1h-2p', label: '1 hour, 2 performers', price: 500 },
-  { value: '2h-1p', label: '2 hours, 1 performer', price: 650 },
-  { value: '2h-2p', label: '2 hours, 2 performers', price: 850 },
-];
+// Calcular precio del servicio
+const servicePrice = computed(() => {
+  if (!props.service) return 0;
+  return parseFloat(props.service.amount || 0);
+});
 
-async function loadAddons() {
-  if (!props.active) return;
+// Calcular total de addons
+const addonsTotal = computed(() => {
+  if (!props.addons || props.addons.length === 0) return 0;
 
-  try {
-    const response = await api.get("/home/addons");
-    const addonsList = Array.isArray(response) ? response : (response?.data || []);
-    addons.value = addonsList;
+  const total = props.addons.reduce((total, addon) => {
+    // Filtrar solo add-ons que no sean referral services
+    // Comparar explícitamente con "1", 1 o true para evitar problemas con strings
+    const isReferral = addon.is_referral_service === "1" || addon.is_referral_service === 1 || addon.is_referral_service === true;
 
-    // Restore selected addons if they exist
-    if (props.addons && props.addons.length > 0) {
-      selectedAddons.value = props.addons.filter(savedAddon =>
-        addons.value.some(addon => addon.id === savedAddon.id)
-      );
+    if (isReferral) {
+      return total;
     }
-  } catch (error) {
-    console.error("Error loading addons:", error);
-    addons.value = [];
+
+    // Usar selectedPrice si existe (para Jukebox Live), sino usar base_price
+    const price = parseFloat(addon.selectedPrice || addon.base_price || 0);
+    const quantity = parseInt(addon.quantity || 1);
+    const addonTotal = price * quantity;
+
+    return total + addonTotal;
+  }, 0);
+
+  return total;
+});
+
+// Calcular tarifa de viaje basada en la zona
+const travelFee = computed(() => {
+  if (!props.zipcode) return 0;
+
+  // Obtener travel_fee del zipcode
+  return parseFloat(props.zipcode.travel_fee || 0);
+});
+
+// Obtener el límite de niños incluidos del servicio
+function getMaxKidsIncluded() {
+  if (!props.service) return 40;
+  return parseInt(props.service.max_kids_included || 40);
+}
+
+// Calcular niños extra y su costo
+const extraChildrenTotal = computed(() => {
+  if (!props.customer) return 0;
+
+  // Obtener cantidad de niños del customer data
+  let selectedKids = 0;
+
+  // Si seleccionaron "25+ kids", usar exactChildrenCount
+  if (props.customer.childrenRange === "25+ kids" && props.customer.exactChildrenCount) {
+    selectedKids = parseInt(props.customer.exactChildrenCount);
+  } else if (props.customer.childrenRange === "11-24 kids") {
+    // Para 11-24, usar el punto medio (17) o no cobrar extra si está dentro del límite
+    selectedKids = 17;
+  } else if (props.customer.childrenRange === "1-10 kids") {
+    selectedKids = 5; // Punto medio
   }
-}
 
-function handleImageError(event) {
-  event.target.src = defaultImage;
-}
+  // Límite de niños incluidos en el servicio
+  const maxKidsIncluded = getMaxKidsIncluded();
 
-function isAddonSelected(addonId) {
-  return selectedAddons.value.some(addon => addon.id === addonId);
-}
+  // Calcular niños extra solo después del límite
+  const extraKids = Math.max(0, selectedKids - maxKidsIncluded);
 
-function toggleAddon(addon) {
-  const index = selectedAddons.value.findIndex(a => a.id === addon.id);
-  if (index > -1) {
-    selectedAddons.value.splice(index, 1);
-    // Limpiar sub-opción si existe
-    delete addonSuboptions.value[addon.id];
-  } else {
-    selectedAddons.value.push({ ...addon });
+  // Calcular costo de niños extra
+  const extraChildFee = parseFloat(props.service?.extra_child_fee || 0);
+
+  return extraKids * extraChildFee;
+});
+
+// Calcular base amount (antes del descuento)
+const baseAmount = computed(() => {
+  return servicePrice.value + addonsTotal.value + extraChildrenTotal.value;
+});
+
+// Calcular descuento
+const discount = computed(() => {
+  if (!promoCodeData.value || !promoValid.value) return 0;
+
+  const discountPercentage = parseFloat(promoCodeData.value.discount_percentage || 0);
+
+  // El descuento solo aplica al base amount (no incluye travel fee)
+  return (baseAmount.value * discountPercentage) / 100;
+});
+
+// Calcular subtotal
+const subtotal = computed(() => {
+  return baseAmount.value - discount.value + travelFee.value;
+});
+
+// Función para obtener la cantidad de niños extra
+function getExtraChildrenCount() {
+  if (!props.customer) return 0;
+
+  let selectedKids = 0;
+
+  if (props.customer.childrenRange === "25+ kids" && props.customer.exactChildrenCount) {
+    selectedKids = parseInt(props.customer.exactChildrenCount);
+  } else if (props.customer.childrenRange === "11-24 kids") {
+    selectedKids = 17;
+  } else if (props.customer.childrenRange === "1-10 kids") {
+    selectedKids = 5;
   }
+
+  return Math.max(0, selectedKids - getMaxKidsIncluded());
 }
 
-function getAddonSuboption(addonId) {
-  return addonSuboptions.value[addonId];
-}
+// Función para obtener el nombre de la zona
+function getZoneName() {
+  if (!props.zipcode) return '';
 
-function setAddonSuboption(addonId, value, price) {
-  addonSuboptions.value[addonId] = value;
-
-  // Actualizar el precio del addon en selectedAddons
-  const addon = selectedAddons.value.find(a => a.id === addonId);
-  if (addon) {
-    addon.selectedOption = value;
-    addon.selectedPrice = price;
-  }
-
-  emitAddonsData();
-}
-
-function emitAddonsData() {
-  const addonsData = {
-    addons: selectedAddons.value.map(addon => ({
-      ...addon,
-      suboption: addonSuboptions.value[addon.id] || null
-    })),
-    isValid: true // Los addons no son requeridos
+  const zoneType = props.zipcode.zone_type;
+  const zoneNames = {
+    'A': 'Zone A',
+    'B': 'Zone B',
+    'C': 'Zone C',
+    'D': 'Zone D'
   };
 
-  emit("setData", addonsData);
+  return zoneNames[zoneType] || 'Unknown Zone';
 }
 
-function skipAddons() {
-  // Clear all selected addons
-  selectedAddons.value = [];
-  addonSuboptions.value = {};
+// Función para resetear validación de promo code
+function resetPromoValidation() {
+  promoValid.value = false;
+  promoInvalid.value = false;
+  promoErrorMessage.value = "";
+  promoCodeData.value = null;
 
-  // Emit empty data and proceed to next step
-  emitAddonsData();
-
-  toast.info(
-    'Add-ons skipped. Proceeding to summary...',
-    { timeout: 2000 }
-  );
-
-  // Emit next event to move to next step
-  emit("next");
+  // Limpiar timeout anterior
+  if (promoValidationTimeout) {
+    clearTimeout(promoValidationTimeout);
+    promoValidationTimeout = null;
+  }
 }
 
-function handleReferralService(addon) {
-  toast.info(
-    `Please contact us for information about ${addon.name}. We'll be happy to help you arrange this service!`,
-    { timeout: 4000 }
-  );
+// Función para validar promo code
+async function validatePromoCode() {
+  if (!promoCode.value.trim()) return;
+
+  promoValidating.value = true;
+  // No resetear aquí, solo limpiar errores previos
+  promoInvalid.value = false;
+  promoErrorMessage.value = "";
+
+  try {
+    const response = await api.get(`/home/promo-codes/validate/${promoCode.value.trim()}`);
+
+    if (response.data && response.data.is_valid) {
+      promoCodeData.value = response.data;
+      promoValid.value = true;
+
+      toast.success(
+        `Promo code applied! You save ${response.data.discount_percentage}%`,
+        { timeout: 3000 }
+      );
+
+      emitSubtotalData();
+    } else {
+      // Si es inválido, limpiar el promo code data
+      promoCodeData.value = null;
+      promoValid.value = false;
+      promoInvalid.value = true;
+      promoErrorMessage.value = response.data?.message || "Invalid promo code";
+      emitSubtotalData();
+    }
+  } catch (error) {
+    // Si hay error, limpiar el promo code data
+    promoCodeData.value = null;
+    promoValid.value = false;
+    promoInvalid.value = true;
+    promoErrorMessage.value = error.response?.data?.message || "Invalid or expired promo code";
+    emitSubtotalData();
+  } finally {
+    promoValidating.value = false;
+  }
 }
 
+// Emitir datos cuando cambie el subtotal
+function emitSubtotalData() {
+  const subtotalData = {
+    subtotal: subtotal.value,
+    servicePrice: servicePrice.value,
+    addonsTotal: addonsTotal.value,
+    extraChildrenTotal: extraChildrenTotal.value,
+    travelFee: travelFee.value,
+    discount: discount.value,
+    promoCode: promoValid.value ? promoCode.value : null,
+    promoCodeData: promoCodeData.value,
+    isConfirmed: isConfirmed.value,
+    isValid: isConfirmed.value && subtotal.value > 0
+  };
+
+  emit("setData", { subtotal: subtotalData });
+}
+
+// Watch para emitir datos cuando sea activo o cambien los valores
 watch(
-  () => props.active,
-  (active) => {
+  () => [props.active, subtotal.value, isConfirmed.value],
+  ([active]) => {
     if (active) {
-      loadAddons();
+      emitSubtotalData();
     }
   },
   { immediate: true }
 );
 
-watch(selectedAddons, () => {
-  emitAddonsData();
-}, { deep: true });
+// Watch específico para la confirmación
+watch(isConfirmed, () => {
+  emitSubtotalData();
+});
+
+// Watch específico para promoCodeData y discount
+watch([promoCodeData, discount], () => {
+  if (props.active) {
+    emitSubtotalData();
+  }
+});
 </script>
 
 <style scoped>
-/* Grid de add-ons */
-.addons-grid {
-  display: grid;
-  gap: 20px;
-  grid-template-columns: 1fr;
-}
-
-@media (min-width: 769px) {
-  .addons-grid {
-    gap: 24px;
-  }
-}
-
-/* Ocultar checkbox nativo */
-.addon-checkbox {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Card de addon */
-.addon-card {
-  position: relative;
-}
-
-.addon-card__container {
-  display: flex;
-  flex-direction: column;
-  background: white;
-  border-radius: 10px;
-  border: 2px solid #e5e7eb;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-/* Desktop: Layout horizontal */
-@media (min-width: 769px) {
-  .addon-card__container {
-    flex-direction: row;
-  }
-}
-
-/* Hover estado */
-.addon-card__container:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
-}
-
-/* Estado seleccionado */
-.addon-card--selected .addon-card__container {
-  border-color: #FF74B7;
-  background: #fff5f9;
-  box-shadow: 0 4px 12px rgba(255, 116, 183, 0.25);
-}
-
-/* Imagen wrapper */
-.addon-card__image-wrapper {
-  width: 100%;
-  height: 150px;
-  flex-shrink: 0;
-  background: #f3f4f6;
-  overflow: hidden;
-}
-
-@media (min-width: 769px) {
-  .addon-card__image-wrapper {
-    width: 200px;
-    height: auto;
-  }
-}
-
-.addon-card__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.addon-card__container:hover .addon-card__image {
-  transform: scale(1.05);
-}
-
-/* Contenido */
-.addon-card__content {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-}
-
-/* Header (título + precio) */
-.addon-card__header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-  gap: 12px;
-}
-
-.addon-card__title {
-  font-size: 1.25rem;
+.subtotal-display {
+  font-size: 4rem;
   font-weight: 700;
-  margin: 0;
-  color: #1f2937;
+  color: #FF74B7;
+  margin: 2rem 0;
 }
 
-.addon-card__price {
+.currency {
+  font-size: 0.8em;
+  vertical-align: top;
+  margin-right: 0.2em;
+}
+
+.amount {
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.02em;
+}
+
+.breakdown {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.breakdown-item {
+  padding: 0.5rem 0;
+  color: #6c757d;
+}
+
+.breakdown-total {
   font-size: 1.1rem;
   color: #FF74B7;
-  font-weight: 600;
-  white-space: nowrap;
 }
 
-/* Descripción */
-.addon-card__description {
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: #6b7280;
-  margin: 0 0 16px 0;
-  flex-grow: 1;
-}
-
-/* Sub-opciones de Jukebox */
-.addon-card__suboptions {
-  margin-bottom: 16px;
-  padding: 12px;
+/* Promo code section */
+.promo-code-section {
   background: #f9fafb;
+  padding: 1rem;
   border-radius: 8px;
+  border: 1px solid #e5e7eb;
 }
 
-.addon-card__suboptions-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 10px 0;
+.promo-code-section .input-group {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.addon-card__suboptions-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.addon-suboption {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.addon-suboption:hover {
-  border-color: #FF74B7;
-  background: #fff5f9;
-}
-
-.addon-suboption--selected {
-  border-color: #FF74B7;
-  background: #fff5f9;
-  box-shadow: 0 0 0 3px rgba(255, 116, 183, 0.1);
-}
-
-.addon-suboption__label {
-  font-size: 0.9rem;
-  color: #374151;
+.promo-code-section .form-control {
+  border-right: none;
   font-weight: 500;
 }
 
-.addon-suboption__price {
-  font-size: 0.9rem;
-  color: #FF74B7;
-  font-weight: 600;
+.promo-code-section .form-control:focus {
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 0.25rem rgba(255, 116, 183, 0.1);
 }
 
-/* Botón de checkbox */
-.addon-card__button {
-  width: 100%;
-  padding: 12px;
-  border: 2px solid #FF74B7;
-  background: white;
-  color: #FF74B7;
-  font-weight: 600;
-  font-size: 0.95rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-top: auto;
+/* Apply button - Matching Next button design */
+.promo-apply-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
 }
 
-.addon-card__button:hover {
-  background: #FF74B7;
-  color: white;
+.promo-apply-btn:hover:not(:disabled) {
+  border-color: #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
 }
 
-.addon-card__button--selected {
-  background: #FF74B7;
-  color: white;
+.promo-apply-btn:active:not(:disabled) {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
 }
 
-.addon-card__button--selected:hover {
-  background: #e662a5;
-  border-color: #e662a5;
+.promo-apply-btn:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed;
 }
 
-/* Referral service badge */
-.referral-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #92400e;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid #f59e0b;
-}
-
-/* Referral service button */
-.addon-card__button--referral {
-  border-color: #f59e0b;
-  background: white;
-  color: #f59e0b;
-}
-
-.addon-card__button--referral:hover {
-  background: #f59e0b;
-  color: white;
-}
-
-/* SKIP button */
-.skip-btn {
-  background: #f3f4f6;
-  border-color: #d1d5db;
+/* Discount note */
+.discount-note {
   color: #6b7280;
+  font-style: italic;
+  text-align: center;
+  padding: 0.5rem;
+  background: #fffbeb;
+  border-radius: 6px;
+  border: 1px solid #fde68a;
+}
+
+h2 {
+  font-size: 2rem;
   font-weight: 600;
-  padding: 10px 24px;
-  transition: all 0.2s ease;
+  color: #333;
 }
 
-.skip-btn:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
-  color: #374151;
-  transform: translateY(-1px);
+.confirmation-section {
+  margin-top: 3rem;
 }
 
-.skip-btn:active {
-  transform: translateY(0);
+.confirmation-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  min-width: 200px;
+  font-size: 1rem;
+}
+
+.confirmation-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
+}
+
+.confirmation-btn:active {
+  transform: translateY(0) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.confirmation-btn.btn-success {
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+}
+
+.confirmation-btn.btn-outline-success {
+  border: 2px solid #d1d5db !important;
+  background: white !important;
+  color: #6b7280 !important;
+}
+
+.confirmation-btn.btn-outline-success:hover {
+  border-color: #9ca3af !important;
+  background: #f9fafb !important;
+  color: #4b5563 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+@media (max-width: 768px) {
+  .subtotal-display {
+    font-size: 3rem;
+  }
+
+  .breakdown {
+    margin: 0 1rem;
+  }
+
+  .confirmation-btn {
+    font-size: 1rem;
+    padding: 0.65rem 1.5rem;
+  }
 }
 </style>
