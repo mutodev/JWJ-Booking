@@ -13,6 +13,7 @@ use App\Controllers\MetropolitanAreaController;
 use App\Controllers\PromoCodeController;
 use App\Controllers\ReservationAddonController;
 use App\Controllers\ReservationController;
+use App\Controllers\ReservationDraftController;
 use App\Controllers\RoleController;
 use App\Controllers\ServiceController;
 use App\Controllers\ServicePriceController;
@@ -201,6 +202,22 @@ $routes->group('api', function ($routes) {
         $routes->get('popular-jam-types', [DashboardController::class, 'getMostPopularJamTypes']);
         $routes->get('cities-most-events', [DashboardController::class, 'getCitiesWithMostEvents']);
         $routes->get('most-popular-addons', [DashboardController::class, 'getMostPopularAddons']);
+    });
+
+    // Promo Codes (Admin)
+    $routes->group('promo-codes', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [PromoCodeController::class, 'index']);
+        $routes->post('/', [PromoCodeController::class, 'create']);
+        $routes->put('(:segment)', [PromoCodeController::class, 'update']);
+        $routes->delete('(:segment)', [PromoCodeController::class, 'delete']);
+    });
+
+    // Abandoned Carts / Reservation Drafts (Admin)
+    $routes->group('reservation-drafts', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [ReservationDraftController::class, 'index']);
+        $routes->get('stats', [ReservationDraftController::class, 'stats']);
+        $routes->get('abandoned', [ReservationDraftController::class, 'abandoned']);
+        $routes->get('(:segment)', [ReservationDraftController::class, 'show']);
     });
 });
 

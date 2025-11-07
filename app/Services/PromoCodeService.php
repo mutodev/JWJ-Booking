@@ -119,4 +119,107 @@ class PromoCodeService
     {
         return $this->repo->incrementUsage($promoCodeId);
     }
+
+    /**
+     * Obtener todos los códigos promocionales (Admin)
+     * @return array Lista de todos los códigos promocionales
+     */
+    public function getAllPromoCodes()
+    {
+        return $this->repo->getAll();
+    }
+
+    /**
+     * Crear un nuevo código promocional (Admin)
+     * @param array $data Datos del código promocional
+     * @return array Código promocional creado
+     */
+    public function createPromoCode(array $data)
+    {
+        // Validar datos requeridos
+        if (empty($data['code'])) {
+            throw new \Exception('Promo code is required');
+        }
+
+        if (empty($data['discount_percentage'])) {
+            throw new \Exception('Discount percentage is required');
+        }
+
+        // Validar que el código no exista
+        $existing = $this->repo->findByCode($data['code']);
+        if ($existing) {
+            throw new \Exception('Promo code already exists');
+        }
+
+        // Preparar datos
+        $promoData = [
+            'id' => \Ramsey\Uuid\Uuid::uuid4()->toString(),
+            'code' => strtoupper($data['code']),
+            'discount_type' => 'percentage',
+            'discount_value' => $data['discount_percentage'],
+            'valid_from' => $data['valid_from'] ?? null,
+            'valid_until' => $data['valid_until'] ?? null,
+            'max_uses' => $data['max_uses'] ?? null,
+            'is_active' => isset($data['is_active']) ? (bool)$data['is_active'] : true,
+            'description' => $data['description'] ?? null,
+            'applies_to_travel_fee' => false,
+            'created_at' => Time::now()->toDateTimeString(),
+            'updated_at' => Time::now()->toDateTimeString(),
+        ];
+
+        $this->repo->create($promoData);
+
+        return $promoData;
+    }
+
+    /**
+     * Actualizar un código promocional (Admin)
+     * @param string $id ID del código promocional
+     * @param array $data Datos a actualizar
+     * @return array Código promocional actualizado
+     */
+    public function updatePromoCode(string $id, array $data)
+    {
+        // Verificar que existe
+        $existing = $this->repo->findById($id);
+        if (!$existing) {
+            throw new \Exception('Promo code not found');
+        }
+
+        // Preparar datos de actualización
+        $updateData = [
+            'discount_value' => $data['discount_percentage'] ?? $existing['discount_value'],
+            'valid_from' => $data['valid_from'] ?? $existing['valid_from'],
+            'valid_until' => $data['valid_until'] ?? $existing['valid_until'],
+            'max_uses' => $data['max_uses'] ?? $existing['max_uses'],
+            'is_active' => isset($data['is_active']) ? (bool)$data['is_active'] : $existing['is_active'],
+            'description' => $data['description'] ?? $existing['description'],
+            'updated_at' => Time::now()->toDateTimeString(),
+        ];
+
+        $this->repo->update($id, $updateData);
+
+        return array_merge($existing, $updateData);
+    }
+
+    /**
+     * Eliminar un código promocional (Admin)
+     * @param string $id ID del código promocional
+     * @return bool Éxito de la operación
+     */
+    public function deletePromoCode(string $id)
+    {
+        // Verificar que existe
+        $existing = $this->repo->findById($id);
+        if (!$existing) {
+            throw new \Exception('Promo code not found');
+        }
+
+        // Verificar si ha sido usado
+        if (isset($existing['times_used']) && $existing['times_used'] > 0) {
+            throw new \Exception('Cannot delete a promo code that has been used. Consider deactivating it instead.');
+        }
+
+        return $this->repo->delete($id);
+    }
 }

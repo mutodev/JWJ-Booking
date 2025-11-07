@@ -19,6 +19,8 @@ import PostalCode from "@/components/admin/areas/postal-code/PostalCode.vue";
 import JamTypes from "@/components/admin/services/jam-types/JamTypes.vue";
 import Prices from "@/components/admin/services/prices/Prices.vue";
 import AddOns from "@/components/admin/services/add-ons/AddOns.vue";
+import PromoCodes from "@/components/admin/promo-codes/PromoCodes.vue";
+import AbandonedCarts from "@/components/admin/abandoned-carts/AbandonedCarts.vue";
 import NotFound from "@/components/not-found/NotFound.vue";
 
 const routes = [
@@ -66,6 +68,8 @@ const routes = [
           { path: "addons", component: AddOns },
         ],
       },
+      { path: "promo-codes", component: PromoCodes },
+      { path: "abandoned-carts", component: AbandonedCarts },
     ],
   },
 

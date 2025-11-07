@@ -77,4 +77,50 @@ class PromoCodeRepository
             ->where('deleted_at', null)
             ->findAll();
     }
+
+    /**
+     * Obtener todos los códigos promocionales (Admin)
+     *
+     * @return array
+     */
+    public function getAll(): array
+    {
+        return $this->model
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
+    }
+
+    /**
+     * Crear un nuevo código promocional
+     *
+     * @param array $data
+     * @return bool|string
+     */
+    public function create(array $data)
+    {
+        return $this->model->insert($data);
+    }
+
+    /**
+     * Actualizar un código promocional
+     *
+     * @param string $id
+     * @param array $data
+     * @return bool
+     */
+    public function update(string $id, array $data): bool
+    {
+        return $this->model->update($id, $data);
+    }
+
+    /**
+     * Eliminar un código promocional (soft delete)
+     *
+     * @param string $id
+     * @return bool
+     */
+    public function delete(string $id): bool
+    {
+        return $this->model->delete($id);
+    }
 }
