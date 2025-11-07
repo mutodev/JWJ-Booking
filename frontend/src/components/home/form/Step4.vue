@@ -1,9 +1,24 @@
 <template>
   <div class="container py-4">
-    <!-- Título -->
-    <div class="d-flex align-items-center mb-4">
-      <i class="bi bi-plus-circle fs-3 me-2 text-success"></i>
-      <h2 class="mb-0">Available add-ons and referral services</h2>
+    <!-- Título y botón SKIP -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+      <div class="d-flex align-items-center">
+        <i class="bi bi-plus-circle fs-3 me-2 text-success"></i>
+        <h2 class="mb-0">Available add-ons and referral services</h2>
+      </div>
+      <el-button
+        size="large"
+        class="skip-btn"
+        @click="skipAddons"
+      >
+        SKIP
+      </el-button>
+    </div>
+
+    <!-- Mensaje informativo -->
+    <div class="alert alert-info mb-4">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong>Optional:</strong> Add-ons are completely optional. You can skip this step or select services to enhance your event.
     </div>
 
     <!-- Grid de cards con checkbox -->
@@ -41,8 +56,8 @@
             <div class="addon-card__header">
               <h4 class="addon-card__title">{{ addon.name }}</h4>
               <div class="addon-card__price">
-                <template v-if="addon.price_type === 'referral'">
-                  <span class="text-muted">Contact for pricing</span>
+                <template v-if="addon.is_referral_service">
+                  <span class="referral-badge">Referral Service</span>
                 </template>
                 <template v-else-if="addon.base_price">
                   <span class="fw-bold">${{ addon.base_price }}</span>
@@ -70,8 +85,18 @@
               </div>
             </div>
 
-            <!-- Botón de checkbox -->
+            <!-- Botón de checkbox o referral -->
             <button
+              v-if="addon.is_referral_service"
+              type="button"
+              class="addon-card__button addon-card__button--referral"
+              @click.prevent="handleReferralService(addon)"
+            >
+              <i class="bi bi-telephone-fill me-2"></i>
+              <span>Request Information</span>
+            </button>
+            <button
+              v-else
               type="button"
               class="addon-card__button"
               :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
@@ -97,6 +122,9 @@
 <script setup>
 import { ref, watch } from "vue";
 import api from "@/services/axios";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 const props = defineProps({
   active: {
@@ -113,12 +141,12 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["setData"]);
+const emit = defineEmits(["setData", "next"]);
 
 const addons = ref([]);
 const selectedAddons = ref([]);
 const addonSuboptions = ref({}); // Para guardar sub-opciones de Jukebox
-const defaultImage = "https://via.placeholder.com/300x150?text=Add-on";
+const defaultImage = "/img/default.jpg";
 
 // Opciones de Jukebox Live
 const jukeboxOptions = [
@@ -196,6 +224,30 @@ function emitAddonsData() {
   emit("setData", addonsData);
 }
 
+function skipAddons() {
+  // Clear all selected addons
+  selectedAddons.value = [];
+  addonSuboptions.value = {};
+
+  // Emit empty data and proceed to next step
+  emitAddonsData();
+
+  toast.info(
+    'Add-ons skipped. Proceeding to summary...',
+    { timeout: 2000 }
+  );
+
+  // Emit next event to move to next step
+  emit("next");
+}
+
+function handleReferralService(addon) {
+  toast.info(
+    `Please contact us for information about ${addon.name}. We'll be happy to help you arrange this service!`,
+    { timeout: 4000 }
+  );
+}
+
 watch(
   () => props.active,
   (active) => {
@@ -264,9 +316,9 @@ watch(selectedAddons, () => {
 
 /* Estado seleccionado */
 .addon-card--selected .addon-card__container {
-  border-color: #10b981;
-  background: #f0fdf4;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  border-color: #FF74B7;
+  background: #fff5f9;
+  box-shadow: 0 4px 12px rgba(255, 116, 183, 0.25);
 }
 
 /* Imagen wrapper */
@@ -322,7 +374,7 @@ watch(selectedAddons, () => {
 
 .addon-card__price {
   font-size: 1.1rem;
-  color: #10b981;
+  color: #FF74B7;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -369,14 +421,14 @@ watch(selectedAddons, () => {
 }
 
 .addon-suboption:hover {
-  border-color: #10b981;
-  background: #f0fdf4;
+  border-color: #FF74B7;
+  background: #fff5f9;
 }
 
 .addon-suboption--selected {
-  border-color: #10b981;
-  background: #f0fdf4;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: #FF74B7;
+  background: #fff5f9;
+  box-shadow: 0 0 0 3px rgba(255, 116, 183, 0.1);
 }
 
 .addon-suboption__label {
@@ -387,7 +439,7 @@ watch(selectedAddons, () => {
 
 .addon-suboption__price {
   font-size: 0.9rem;
-  color: #10b981;
+  color: #FF74B7;
   font-weight: 600;
 }
 
@@ -395,9 +447,9 @@ watch(selectedAddons, () => {
 .addon-card__button {
   width: 100%;
   padding: 12px;
-  border: 2px solid #10b981;
+  border: 2px solid #FF74B7;
   background: white;
-  color: #10b981;
+  color: #FF74B7;
   font-weight: 600;
   font-size: 0.95rem;
   border-radius: 8px;
@@ -410,17 +462,62 @@ watch(selectedAddons, () => {
 }
 
 .addon-card__button:hover {
-  background: #10b981;
+  background: #FF74B7;
   color: white;
 }
 
 .addon-card__button--selected {
-  background: #10b981;
+  background: #FF74B7;
   color: white;
 }
 
 .addon-card__button--selected:hover {
-  background: #059669;
-  border-color: #059669;
+  background: #e662a5;
+  border-color: #e662a5;
+}
+
+/* Referral service badge */
+.referral-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #f59e0b;
+}
+
+/* Referral service button */
+.addon-card__button--referral {
+  border-color: #f59e0b;
+  background: white;
+  color: #f59e0b;
+}
+
+.addon-card__button--referral:hover {
+  background: #f59e0b;
+  color: white;
+}
+
+/* SKIP button */
+.skip-btn {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #6b7280;
+  font-weight: 600;
+  padding: 10px 24px;
+  transition: all 0.2s ease;
+}
+
+.skip-btn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #374151;
+  transform: translateY(-1px);
+}
+
+.skip-btn:active {
+  transform: translateY(0);
 }
 </style>

@@ -56,7 +56,8 @@ class VerifyReservations extends BaseCommand
                 if (!empty($addons)) {
                     CLI::write('   Addons seleccionados:', 'yellow');
                     foreach ($addons as $addon) {
-                        CLI::write('     - ' . $addon->name . ': $' . number_format($addon->price_at_time, 2) . ' x ' . $addon->quantity);
+                        $suboptionText = $addon->suboption ? ' (' . $addon->suboption . ')' : '';
+                        CLI::write('     - ' . $addon->name . $suboptionText . ': $' . number_format($addon->price_at_time, 2) . ' x ' . $addon->quantity);
                     }
                 } else {
                     CLI::write('   Sin addons');

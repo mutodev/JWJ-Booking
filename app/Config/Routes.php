@@ -10,6 +10,7 @@ use App\Controllers\DurationController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
+use App\Controllers\PromoCodeController;
 use App\Controllers\ReservationAddonController;
 use App\Controllers\ReservationController;
 use App\Controllers\RoleController;
@@ -35,6 +36,7 @@ $routes->group('api', function ($routes) {
         $routes->get('range-kids/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
         $routes->get('hours/(:any)', [DurationController::class, 'getByServicePriceId']);
         $routes->get('addons', [AddonController::class, 'getAllActive']);
+        $routes->get('promo-codes/validate/(:any)', [PromoCodeController::class, 'validateCode']);
         $routes->post('reservation', [ReservationController::class, 'createFromForm']);
     });
 

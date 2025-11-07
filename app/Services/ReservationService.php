@@ -279,7 +279,7 @@ class ReservationService
         $customer = $formData['customer'] ?? null;
         $zipcode = $formData['zipcode'] ?? null;
         $service = $formData['service'] ?? null;
-        $kids = $formData['kids'] ?? null;
+        $subtotal = $formData['subtotal'] ?? null;
         $addons = $formData['addons'] ?? [];
         $information = $formData['information'] ?? null;
 
@@ -288,33 +288,48 @@ class ReservationService
             throw new HTTPException('Missing required data', Response::HTTP_BAD_REQUEST);
         }
 
-        // Validar fecha del evento
-        $eventDate = $information['eventDate'] ?? null;
-        if ($eventDate) {
-            $eventDateTime = new \DateTime($eventDate);
-            $eventDateTime->setTime(0, 0, 0); // Establecer a medianoche para comparar solo fechas
+        // Validar fecha del evento - puede venir en customer.eventDateTime o information.eventDate
+        $eventDate = null;
 
-            $today = new \DateTime('today'); // Solo fecha, sin hora (ya es medianoche)
-
-            if ($eventDateTime < $today) {
-                throw new HTTPException('Event date cannot be in the past', Response::HTTP_BAD_REQUEST);
-            }
+        // Prioridad 1: eventDateTime de customer (nuevo formulario)
+        if (!empty($customer['eventDateTime'])) {
+            // Convertir "2025-11-06 00:00:00" a "2025-11-06"
+            $eventDateTime = new \DateTime($customer['eventDateTime']);
+            $eventDate = $eventDateTime->format('Y-m-d');
+        }
+        // Prioridad 2: eventDate de information (formulario antiguo)
+        elseif (!empty($information['eventDate'])) {
+            $eventDate = $information['eventDate'];
         }
 
-        // Validar campos numéricos - manejar diferentes estructuras de kids
+        // Validación de fecha removida - se valida solo en el frontend
+
+        // Validar campos numéricos - leer desde customer (nuevo formulario)
         $selectedKids = 0;
 
-        // Prioridad 1: selectedKids directo
-        if (isset($kids['selectedKids'])) {
-            $selectedKids = intval($kids['selectedKids']);
+        // Nuevo formulario: childrenRange y exactChildrenCount en customer
+        if (isset($customer['childrenRange'])) {
+            $childrenRange = $customer['childrenRange'];
+
+            if ($childrenRange === '25+ kids' && isset($customer['exactChildrenCount'])) {
+                $selectedKids = intval($customer['exactChildrenCount']);
+            } elseif ($childrenRange === '11-24 kids') {
+                $selectedKids = 17; // Punto medio del rango
+            } elseif ($childrenRange === '1-10 kids') {
+                $selectedKids = 5; // Punto medio del rango
+            }
         }
-        // Prioridad 2: count para tipo custom (40+ kids)
-        elseif (isset($kids['count'])) {
-            $selectedKids = intval($kids['count']);
-        }
-        // Prioridad 3: si hay rango de edades, usar 1 como default
-        elseif (!empty($kids['min_age']) && !empty($kids['max_age'])) {
-            $selectedKids = 1;
+        // Formulario antiguo: kids con selectedKids o count
+        elseif (isset($formData['kids'])) {
+            $kids = $formData['kids'];
+
+            if (isset($kids['selectedKids'])) {
+                $selectedKids = intval($kids['selectedKids']);
+            } elseif (isset($kids['count'])) {
+                $selectedKids = intval($kids['count']);
+            } elseif (!empty($kids['min_age']) && !empty($kids['max_age'])) {
+                $selectedKids = 1;
+            }
         }
 
         // Validar que tengamos al menos 1 niño
@@ -336,10 +351,7 @@ class ReservationService
             }
         }
 
-        // Validar que el servicio tenga duración configurada
-        if (empty($service['min_duration_hours']) && empty($service['duration_hours'])) {
-            throw new HTTPException('Service duration not configured', Response::HTTP_BAD_REQUEST);
-        }
+        // Validación de duración removida - no es necesaria para el nuevo flujo
 
         // Iniciar transacción para garantizar consistencia
         $db = \Config\Database::connect();
@@ -348,21 +360,52 @@ class ReservationService
         try {
             $customerId = $this->createOrFindCustomer($customer, $information);
 
-            // Calcular precios usando funciones centralizadas
+            // Usar los precios calculados del frontend si están disponibles (nuevo formulario)
+            // Si no están, calcular usando las funciones centralizadas (formulario antiguo)
             $servicePrice = $serviceAmount;
-            $addonsTotal = $this->calculateAddonsTotal($addons);
+            $addonsTotal = 0;
+            $extraChildrenTotal = 0;
+            $extraChildren = 0;
+            $travelFee = 0;
+            $discount = 0;
+            $grandTotal = 0;
+            $baseTotal = 0;
+            $surchargeAmount = 0;
 
-            // Calcular recargo por niños adicionales usando límite fijo de 40 niños
-            $maxKidsIncluded = 40; // Límite fijo: solo se cobran extras después de 40 niños
-            $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
-            $extraChildFee = floatval($service['extra_child_fee'] ?? 0);
-            $extraChildrenTotal = $extraChildren * $extraChildFee;
+            if ($subtotal) {
+                // Nuevo formulario: usar valores ya calculados
+                $servicePrice = floatval($subtotal['servicePrice'] ?? $serviceAmount);
+                $addonsTotal = floatval($subtotal['addonsTotal'] ?? 0);
+                $extraChildrenTotal = floatval($subtotal['extraChildrenTotal'] ?? 0);
+                $travelFee = floatval($subtotal['travelFee'] ?? 0);
+                $discount = floatval($subtotal['discount'] ?? 0);
+                $grandTotal = floatval($subtotal['subtotal'] ?? 0);
 
-            $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
+                // Calcular extraChildren count para el reporte
+                $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
+                $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
 
-            // Calcular recargo por proximidad de fecha
-            $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDate);
-            $grandTotal = $baseTotal + $surchargeAmount;
+                // Calcular baseTotal y surchargeAmount
+                // baseTotal = servicePrice + addonsTotal + extraChildrenTotal - discount
+                $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal - $discount;
+                // El surchargeAmount se considera 0 ya que está incluido en el travelFee
+                $surchargeAmount = 0;
+            } else {
+                // Formulario antiguo: calcular usando funciones centralizadas
+                $addonsTotal = $this->calculateAddonsTotal($addons);
+
+                // Calcular recargo por niños adicionales
+                $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
+                $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
+                $extraChildFee = floatval($service['extra_child_fee'] ?? 0);
+                $extraChildrenTotal = $extraChildren * $extraChildFee;
+
+                $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
+
+                // Calcular recargo por proximidad de fecha
+                $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDate);
+                $grandTotal = $baseTotal + $surchargeAmount;
+            }
 
             // Calcular duración total incluyendo addons
             // La duración base viene del servicio (duration_hours o min_duration_hours)
@@ -374,6 +417,7 @@ class ReservationService
             // Mapear datos a la estructura de la BD
             $reservationData = [
                 'customer_id' => $customerId,
+                'event_type' => $customer['eventType'] ?? null, // Type of Event from Step 1
                 'service_price_id' => $service['id'] ?? null,
                 'zipcode_id' => $zipcode['id'] ?? null,
                 'event_address' => $information['fullAddress'] ?? null,
@@ -385,8 +429,10 @@ class ReservationService
                 'price_type' => $this->determinePriceType($addons),
                 'base_price' => $servicePrice,
                 'addons_total' => $addonsTotal,
-                'expedition_fee' => $surchargeAmount,
+                'expedition_fee' => $surchargeAmount + $travelFee, // Incluir travel fee en expedition_fee
                 'extra_children_fee' => $extraChildrenTotal,
+                'discount_amount' => $discount, // Descuento del promo code
+                'promo_code' => $subtotal['promoCode'] ?? null, // Código promocional usado
                 'total_amount' => $grandTotal,
                 'status' => 'new',
                 'is_invoiced' => false,
@@ -419,6 +465,7 @@ class ReservationService
                         'reservation_id' => $reservation->id,
                         'addon_id' => $addon['id'],
                         'quantity' => intval($addon['quantity'] ?? 1),
+                        'suboption' => $addon['suboption'] ?? $addon['selectedOption'] ?? null,
                         'price_at_time' => $priceToSave
                     ];
 
@@ -444,6 +491,8 @@ class ReservationService
                     'addons_total' => $addonsTotal,
                     'extra_children_total' => $extraChildrenTotal,
                     'extra_children_count' => $extraChildren,
+                    'travel_fee' => $travelFee,
+                    'discount' => $discount,
                     'base_total' => $baseTotal,
                     'surcharge_amount' => $surchargeAmount,
                     'grand_total' => $grandTotal,

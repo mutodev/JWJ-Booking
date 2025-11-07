@@ -2,23 +2,28 @@
 
 namespace App\Models;
 
-use App\Entities\ReservationAddon;
 use CodeIgniter\Model;
 
-class ReservationAddonModel extends Model
+class PromoCodeModel extends Model
 {
-    protected $table            = 'reservation_addons';
+    protected $table            = 'promo_codes';
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
-    protected $returnType       = ReservationAddon::class;
-    protected $useSoftDeletes   = false;
+    protected $returnType       = 'array';
+    protected $useSoftDeletes   = true;
     protected $protectFields    = true;
     protected $allowedFields    = [
-        'reservation_id',
-        'addon_id',
-        'quantity',
-        'suboption',
-        'price_at_time'
+        'code',
+        'description',
+        'discount_type',
+        'discount_value',
+        'minimum_purchase',
+        'max_uses',
+        'times_used',
+        'valid_from',
+        'valid_until',
+        'is_active',
+        'applies_to_travel_fee',
     ];
 
     protected bool $allowEmptyInserts = false;
@@ -31,10 +36,15 @@ class ReservationAddonModel extends Model
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
-    protected $updatedField  = '';
+    protected $updatedField  = 'updated_at';
+    protected $deletedField  = 'deleted_at';
 
     // Validation
-    protected $validationRules      = [];
+    protected $validationRules      = [
+        'code' => 'required|min_length[3]|max_length[50]',
+        'discount_type' => 'required|in_list[percentage,fixed_amount]',
+        'discount_value' => 'required|decimal',
+    ];
     protected $validationMessages   = [];
     protected $skipValidation       = false;
     protected $cleanValidationRules = true;

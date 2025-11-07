@@ -1,5 +1,14 @@
 <template>
   <div class="container py-4">
+    <!-- Zone Message -->
+    <div v-if="zoneMessage" class="zone-message mb-4" :class="`zone-message--${zoneType}`">
+      <i class="bi bi-geo-alt-fill fs-4 me-3"></i>
+      <div>
+        <h5 class="mb-1">{{ zoneMessage.title }}</h5>
+        <p class="mb-0">{{ zoneMessage.text }}</p>
+      </div>
+    </div>
+
     <!-- Título -->
     <div class="d-flex align-items-center mb-4">
       <i class="bi bi-music-note-beamed fs-3 me-2 text-success"></i>
@@ -21,6 +30,7 @@
             :src="service.img || '/img/default.jpg'"
             class="service-card__image"
             :alt="service.name"
+            @error="handleImageError"
           />
         </div>
 
@@ -40,14 +50,14 @@
             </div>
             <div class="service-info-item">
               <i class="bi bi-cake2 service-info-item__icon"></i>
-              <span class="service-info-item__text">Ages {{ service.range_age }}</span>
+              <span class="service-info-item__text">{{ service.age_range || service.range_age || 'All ages' }}</span>
             </div>
 
             <!-- Fila 2 -->
             <div class="service-info-item">
               <i class="bi bi-clock service-info-item__icon"></i>
               <span class="service-info-item__text">
-                {{ service.duration_hours || service.min_duration_hours || 1 }} minutes
+                1 hour
               </span>
             </div>
             <div class="service-info-item">
@@ -57,8 +67,8 @@
           </div>
 
           <!-- Descripción -->
-          <p class="service-card__description" v-if="service.notes">
-            {{ service.notes }}
+          <p class="service-card__description" v-if="service.description || service.notes">
+            {{ service.description || service.notes }}
           </p>
 
           <!-- Botón de selección -->
@@ -79,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import api from "@/services/axios";
 
 const props = defineProps({
@@ -95,12 +105,45 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  zipcode: {
+    type: Object,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["setData"]);
 
 const services = ref([]);
 const selectedService = ref(null);
+const defaultServiceImage = "/img/default.jpg";
+
+// Zone messages based on zipcode zone_type
+const zoneType = computed(() => {
+  return props.zipcode?.zone_type || 'A';
+});
+
+const zoneMessage = computed(() => {
+  const messages = {
+    'A': {
+      title: 'Premium Service Area!',
+      text: 'Great news! Your location is in our premium service area. Enjoy our standard pricing with no additional travel fees!'
+    },
+    'B': {
+      title: 'Standard Service Area',
+      text: 'Your location is within our standard service area. A small travel fee may apply based on the distance to your event.'
+    },
+    'C': {
+      title: 'Extended Service Area',
+      text: 'Your location is in our extended service area. An additional travel fee will be applied to cover the distance to your event.'
+    },
+    'D': {
+      title: 'Far Service Area',
+      text: 'Your location is in our far service area. A higher travel fee will apply due to the extended distance. We\'re excited to bring the party to you!'
+    }
+  };
+
+  return messages[zoneType.value] || messages['A'];
+});
 
 async function loadServices() {
   if (!props.metropolitanArea) return;
@@ -136,6 +179,10 @@ function emitData() {
   emit("setData", { service: selectedService.value });
 }
 
+function handleImageError(event) {
+  event.target.src = defaultServiceImage;
+}
+
 watch(
   () => [props.metropolitanArea, props.active],
   ([metropolitanArea, active]) => {
@@ -164,6 +211,52 @@ watch(
 </script>
 
 <style scoped>
+/* Zone Message Styling */
+.zone-message {
+  display: flex;
+  align-items: flex-start;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.zone-message--A {
+  background: linear-gradient(135deg, #fff5f9 0%, #ffe4f0 100%);
+  border-left-color: #FF74B7;
+  color: #7d1847;
+}
+
+.zone-message--B {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-left-color: #3b82f6;
+  color: #1e40af;
+}
+
+.zone-message--C {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left-color: #f59e0b;
+  color: #92400e;
+}
+
+.zone-message--D {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-left-color: #ef4444;
+  color: #991b1b;
+}
+
+.zone-message h5 {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.zone-message p {
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
 /* Grid de servicios - Responsive */
 .services-grid {
   display: grid;
@@ -213,13 +306,13 @@ watch(
 
 /* Estado seleccionado */
 .service-card--selected {
-  border-color: #10b981;
-  background: #f0fdf4;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  border-color: #FF74B7;
+  background: #fff5f9;
+  box-shadow: 0 4px 12px rgba(255, 116, 183, 0.3);
 }
 
 .service-card--selected:hover {
-  box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+  box-shadow: 0 8px 20px rgba(255, 116, 183, 0.4);
 }
 
 /* Imagen */
@@ -271,7 +364,7 @@ watch(
 
 .service-info-item__icon {
   font-size: 1.25rem;
-  color: #10b981;
+  color: #FF74B7;
   flex-shrink: 0;
 }
 
@@ -294,9 +387,9 @@ watch(
 .service-card__button {
   width: 100%;
   padding: 12px;
-  border: 2px solid #10b981;
+  border: 2px solid #FF74B7;
   background: white;
-  color: #10b981;
+  color: #FF74B7;
   font-weight: 600;
   font-size: 1rem;
   border-radius: 8px;
@@ -308,17 +401,17 @@ watch(
 }
 
 .service-card__button:hover {
-  background: #10b981;
+  background: #FF74B7;
   color: white;
 }
 
 .service-card__button--selected {
-  background: #10b981;
+  background: #FF74B7;
   color: white;
 }
 
 .service-card__button--selected:hover {
-  background: #059669;
-  border-color: #059669;
+  background: #e662a5;
+  border-color: #e662a5;
 }
 </style>

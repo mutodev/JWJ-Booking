@@ -11,58 +11,28 @@
       In case the event is not a birthday, please fill the boxes with N/A.
     </p>
 
+    <!-- Contact Info Display (Auto-filled from Step 1) -->
+    <div class="info-display mb-4">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="info-item">
+            <span class="info-label">Contact Name:</span>
+            <span class="info-value">{{ contactName }}</span>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="info-item">
+            <span class="info-label">Event Date:</span>
+            <span class="info-value">{{ eventDateDisplay }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <form @submit.prevent="validateForm">
       <div class="row">
         <!-- Left Column -->
         <div class="col-md-6">
-          <!-- Name -->
-          <div class="mb-3">
-            <label for="name" class="form-label">
-              Name <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Enter the name of the person responsible for the event"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <input
-                v-model="form.name"
-                type="text"
-                class="form-control"
-                id="name"
-                @blur="validateField('name')"
-              />
-            </el-tooltip>
-            <div v-if="errors.name" class="text-danger small mt-1">
-              {{ errors.name }}
-            </div>
-          </div>
-
-          <!-- Last name -->
-          <div class="mb-3">
-            <label for="lastName" class="form-label">
-              Last name <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Enter the last name of the person responsible for the event"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <input
-                v-model="form.lastName"
-                type="text"
-                class="form-control"
-                id="lastName"
-                @blur="validateField('lastName')"
-              />
-            </el-tooltip>
-            <div v-if="errors.lastName" class="text-danger small mt-1">
-              {{ errors.lastName }}
-            </div>
-          </div>
-
           <!-- Full address -->
           <div class="mb-3">
             <label for="fullAddress" class="form-label">
@@ -108,33 +78,6 @@
             </el-tooltip>
             <div v-if="errors.instructions" class="text-danger small mt-1">
               {{ errors.instructions }}
-            </div>
-          </div>
-
-          <!-- Date of the event -->
-          <div class="mb-3">
-            <label for="eventDate" class="form-label">
-              Date of the event <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Select the date when the event will take place"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-            >
-              <el-date-picker
-                v-model="form.eventDate"
-                type="date"
-                placeholder="Pick a date"
-                format="MM/DD/YYYY"
-                value-format="YYYY-MM-DD"
-                style="width: 100%"
-                size="large"
-                @blur="validateField('eventDate')"
-              />
-            </el-tooltip>
-            <div v-if="errors.eventDate" class="text-danger small mt-1">
-              {{ errors.eventDate }}
             </div>
           </div>
 
@@ -263,18 +206,17 @@
               Age they are turning <span class="text-danger">*</span>
             </label>
             <el-tooltip
-              content="Enter the age the child is turning (1-18, or N/A if not applicable)"
+              content="Enter the age the child is turning (1-18, or N/A if not a birthday)"
               placement="right"
               effect="dark"
               trigger="focus"
             >
               <input
                 v-model="form.childAge"
-                type="number"
+                type="text"
                 class="form-control"
                 id="childAge"
-                min="1"
-                max="18"
+                placeholder="Enter age (1-18) or N/A"
                 @blur="validateField('childAge')"
               />
             </el-tooltip>
@@ -406,13 +348,10 @@ const props = defineProps({
 
 const emit = defineEmits(["setData"]);
 
-// Form data
+// Form data (campos que no están en Step1)
 const form = reactive({
-  name: "",
-  lastName: "",
   fullAddress: "",
   instructions: "",
-  eventDate: "",
   startTime: "",
   endTime: "",
   entertainmentStartTime: "",
@@ -426,17 +365,34 @@ const form = reactive({
 
 const errors = reactive({});
 
+// Computed properties para mostrar datos de Step1
+const contactName = computed(() => {
+  if (!props.customer) return "N/A";
+  return `${props.customer.firstName || ""} ${props.customer.lastName || ""}`.trim() || "N/A";
+});
+
+const eventDateDisplay = computed(() => {
+  if (!props.customer || !props.customer.eventDateTime) return "N/A";
+  const date = new Date(props.customer.eventDateTime);
+  return date.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric'
+  });
+});
+
 // Validation schema
 const schema = yup.object({
-  name: yup.string().required("Name is required"),
-  lastName: yup.string().required("Last name is required"),
   fullAddress: yup.string().required("Full address is required"),
   instructions: yup.string().required("Instructions are required"),
-  eventDate: yup.date().required("Event date is required"),
   startTime: yup.string().required("Start time is required"),
   endTime: yup.string().required("End time is required"),
-  birthdayChildName: yup.string().required("Birthday child's name is required"),
-  childAge: yup.number().min(1, "Age must be at least 1").max(18, "Age must be 18 or less").required("Child age is required"),
+  birthdayChildName: yup.string().required("Birthday child's name is required (or N/A)"),
+  childAge: yup.mixed().test('valid-age', 'Age must be between 1-18 or N/A', function(value) {
+    if (!value || value === '' || value.toString().toUpperCase() === 'N/A') return true;
+    const num = Number(value);
+    return !isNaN(num) && num >= 1 && num <= 18;
+  }).required("Child age is required (or N/A)"),
   ageRange: yup.string().required("Age range is required"),
   songRequests: yup.string().required("Song requests are required"),
   happyBirthdayRequest: yup.string().oneOf(["yes", "no"], "Please select an option").required("Please select an option"),
@@ -487,15 +443,6 @@ function emitFormData() {
   emit("setData", { information: informationData });
 }
 
-
-// Auto-complete from Step1 customer data
-function autoCompleteFromCustomer() {
-  if (props.customer) {
-    form.name = props.customer.firstName || "";
-    form.lastName = props.customer.lastName || "";
-  }
-}
-
 // Restore form data if available
 function restoreFormData() {
   if (props.information) {
@@ -512,7 +459,6 @@ watch(
   () => props.active,
   (active) => {
     if (active) {
-      autoCompleteFromCustomer();
       restoreFormData();
       emitFormData();
     }
@@ -520,25 +466,43 @@ watch(
   { immediate: true }
 );
 
-watch(
-  () => props.customer,
-  () => {
-    if (props.active) {
-      autoCompleteFromCustomer();
-    }
-  },
-  { deep: true }
-);
-
 onMounted(() => {
   if (props.active) {
-    autoCompleteFromCustomer();
     restoreFormData();
   }
 });
 </script>
 
 <style scoped>
+/* Info Display */
+.info-display {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #d1d5db;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Form Controls */
 .form-control {
   border-radius: 8px;
   font-size: 0.95rem;
@@ -547,8 +511,8 @@ onMounted(() => {
 }
 
 .form-control:focus {
-  border-color: #198754;
-  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 0.2rem rgba(255, 116, 183, 0.25);
 }
 
 /* Element Plus Overrides */
@@ -564,8 +528,8 @@ onMounted(() => {
 }
 
 :deep(.el-input__wrapper.is-focus) {
-  border-color: #198754;
-  box-shadow: 0 0 0 0.2rem rgba(25, 135, 84, 0.25);
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 0.2rem rgba(255, 116, 183, 0.25);
 }
 
 :deep(.el-input__inner) {
@@ -579,33 +543,33 @@ onMounted(() => {
 
 :deep(.el-date-picker__header-label:hover),
 :deep(.el-picker-panel__icon-btn:hover) {
-  color: #198754;
+  color: #FF74B7;
 }
 
 :deep(.el-date-table td.available:hover) {
-  color: #198754;
+  color: #FF74B7;
 }
 
 :deep(.el-date-table td.today span) {
-  color: #198754;
+  color: #FF74B7;
   font-weight: bold;
 }
 
 :deep(.el-date-table td.current:not(.disabled) span) {
-  background-color: #198754;
+  background-color: #FF74B7;
   color: white;
 }
 
 :deep(.el-time-panel__btn.confirm) {
-  color: #198754;
+  color: #FF74B7;
 }
 
 :deep(.el-time-spinner__item:hover:not(.disabled):not(.active)) {
-  background: rgba(25, 135, 84, 0.1);
+  background: rgba(255, 116, 183, 0.1);
 }
 
 :deep(.el-time-spinner__item.active:not(.disabled)) {
-  color: #198754;
+  color: #FF74B7;
   font-weight: bold;
 }
 
@@ -641,8 +605,8 @@ textarea.form-control {
 }
 
 .btn-success {
-  background-color: #198754;
-  border-color: #198754;
+  background-color: #FF74B7;
+  border-color: #FF74B7;
 }
 
 .btn:hover {

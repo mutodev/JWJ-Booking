@@ -8,11 +8,11 @@
 
     <!-- Logo flotante -->
     <div class="floating-logo">
-      <img :src="logoUrl" alt="JamWithJamie Logo" class="logo-image" />
+      <img :src="logoUrl" alt="JamWithJamie Logo" class="logo-image" @error="handleLogoError" />
     </div>
 
-    <!-- Progress Steps - Hidden on mobile -->
-    <div class="steps-sidebar" :class="{ 'mobile-hidden': isMobile }" ref="wizardRoot">
+    <!-- Progress Steps - HIDDEN per REQ-UI-001 -->
+    <div class="steps-sidebar" style="display: none;" ref="wizardRoot">
       <el-steps
         :active="activeStep - 1"
         direction="vertical"
@@ -66,7 +66,7 @@
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="wizard-actions" v-if="activeStep < 7">
+      <div class="wizard-actions" v-if="activeStep < 6">
         <el-button
           v-if="activeStep > 1"
           @click="previousStep"
@@ -78,7 +78,7 @@
         </el-button>
 
         <el-button
-          v-if="activeStep < 6"
+          v-if="activeStep < 5"
           @click="nextStep"
           size="large"
           :disabled="!canProceed"
@@ -90,7 +90,7 @@
         </el-button>
 
         <el-button
-          v-if="activeStep === 6"
+          v-if="activeStep === 5"
           @click="submitReservation"
           size="large"
           :disabled="!canProceed || isSubmitting"
@@ -136,23 +136,24 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { ArrowLeft, ArrowRight, Check } from '@element-plus/icons-vue';
 import api from "@/services/axios";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 // Importaciones de componentes de steps
-import Step1 from "./form/Step1.vue"; // Contact Information
-import Step2 from "./form/Step2.vue"; // Choose Service and Duration
-import Step3 from "./form/Step3.vue"; // Children Age Range
-import Step4 from "./form/Step4.vue"; // Select Add-ons
-import Step5 from "./form/Step5.vue"; // Summary
-import Step6 from "./form/Step6.vue"; // Event Information
-import Step7 from "./form/Step7.vue"; // Confirmation
+import Step1 from "./form/Step1.vue"; // Contact Information + Event Details
+import Step2 from "./form/Step2.vue"; // Choose Service
+import Step3 from "./form/Step4.vue"; // Select Add-ons (antes Step4)
+import Step4 from "./form/Step5.vue"; // Subtotal (antes Step5)
+import Step5 from "./form/Step6.vue"; // Event Information (antes Step6)
+import Step6 from "./form/Step7.vue"; // Confirmation (antes Step7)
 import PrivacyPolicyModal from "./PrivacyPolicyModal.vue"; // Privacy Policy
 
 /**
  * Mapeo de componentes por número de paso
  */
 const stepComponents = {
-  1: Step1, 2: Step2, 3: Step3, 4: Step4, 5: Step5,
-  6: Step6, 7: Step7
+  1: Step1, 2: Step2, 3: Step3, 4: Step4, 5: Step5, 6: Step6
 };
 
 /**
@@ -160,14 +161,13 @@ const stepComponents = {
  */
 const steps = ref([
   { title: "Step 1" }, { title: "Step 2" }, { title: "Step 3" },
-  { title: "Step 4" }, { title: "Step 5" }, { title: "Step 6" },
-  { title: "Step 7" }
+  { title: "Step 4" }, { title: "Step 5" }, { title: "Step 6" }
 ]);
 
 /**
  * Wizard reactive state
  */
-const totalSteps = 7;
+const totalSteps = 6;
 const activeStep = ref(1);
 const form = ref({});
 const isProcessing = ref(false);
@@ -180,13 +180,13 @@ const reservationData = ref(null);
  * Logo URL
  */
 const logoUrl = '/img/logos/JWJ_logo-05.png';
+const defaultLogoUrl = '/img/logos/JWJ_logo-05.png';
 
 /**
  * Validation states per step
  */
 const stepValidations = ref({
-  1: false, 2: false, 3: false, 4: false, 5: false,
-  6: false, 7: true
+  1: false, 2: false, 3: false, 4: false, 5: false, 6: true
 });
 
 /**
@@ -236,35 +236,35 @@ function getCurrentStepProps() {
       console.log('Step 2 - customer:', form.value?.customer);
       console.log('Step 2 - areaId:', form.value?.customer?.areaId);
       props.metropolitanArea = form.value?.customer?.areaId;
+      props.zipcode = form.value?.zipcode;
       props.active = activeStep.value === 2;
       props.service = form.value?.service;
       break;
     case 3:
-      props.service = form.value?.service?.id;
+      // Add-ons (antes Step 4)
       props.active = activeStep.value === 3;
-      props.kids = form.value?.kids;
+      props.addons = form.value?.addons || [];
+      props.service = form.value?.service;
       break;
     case 4:
+      // Subtotal (antes Step 5)
       props.active = activeStep.value === 4;
-      props.addons = form.value?.addons || [];
       props.service = form.value?.service;
+      props.addons = form.value?.addons || [];
+      props.zipcode = form.value?.zipcode;
+      props.customer = form.value?.customer;
       break;
     case 5:
+      // Event Information (antes Step 6)
       props.active = activeStep.value === 5;
-      props.service = form.value?.service;
-      props.addons = form.value?.addons || [];
-      props.kids = form.value?.kids;
-      break;
-    case 6:
-      props.active = activeStep.value === 6;
       props.customer = form.value?.customer;
       props.information = form.value?.information;
       props.zipcode = form.value?.zipcode;
       props.service = form.value?.service;
-      props.kids = form.value?.kids;
       props.addons = form.value?.addons || [];
       break;
-    case 7:
+    case 6:
+      // Confirmation (antes Step 7)
       props.reservationData = reservationData.value;
       break;
   }
@@ -277,7 +277,10 @@ function getCurrentStepProps() {
  */
 function nextStep() {
   if (!canProceed.value) {
-    ElMessage.warning('Please complete the current step before proceeding');
+    toast.warning(
+      'Please complete the current step before proceeding',
+      { timeout: 3000 }
+    );
     return;
   }
 
@@ -326,14 +329,33 @@ function validateCurrentStep() {
   let isValid = false;
 
   switch (activeStep.value) {
-    case 1: isValid = !!form.value.customer && !!form.value.zipcode; break;
-    case 2: isValid = !!form.value.service; break; // Solo requiere servicio (duración es fija)
-    case 3: isValid = !!form.value.kids && form.value.kids.isValid; break;
-    case 4: isValid = true; break; // Addons son opcionales
-    case 5: isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed; break;
-    case 6: isValid = !!form.value.information && form.value.information.isValid; break;
-    case 7: isValid = true; break; // Step de confirmación siempre válido
-    default: isValid = true; break;
+    case 1:
+      isValid = !!form.value.customer &&
+                !!form.value.zipcode &&
+                form.value.customer.isValid === true;
+      break;
+    case 2:
+      isValid = !!form.value.service;
+      break;
+    case 3:
+      // Add-ons (antes Step 4) - son opcionales
+      isValid = true;
+      break;
+    case 4:
+      // Subtotal (antes Step 5) - requiere confirmación
+      isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed;
+      break;
+    case 5:
+      // Event Information (antes Step 6)
+      isValid = !!form.value.information && form.value.information.isValid;
+      break;
+    case 6:
+      // Confirmation (antes Step 7) - siempre válido
+      isValid = true;
+      break;
+    default:
+      isValid = true;
+      break;
   }
 
   stepValidations.value[activeStep.value] = isValid;
@@ -349,11 +371,11 @@ function validateCurrentStep() {
  */
 function handleReservationSuccess(data) {
   reservationData.value = data;
-  activeStep.value = 7;
+  activeStep.value = 6;
 }
 
 /**
- * Envía la reservación al servidor cuando se está en el Step 8
+ * Envía la reservación al servidor cuando se está en el Step 5
  *
  * Recopila todos los datos del formulario multi-step, los envía al endpoint
  * de creación de reservas y navega al paso final si es exitoso.
@@ -374,8 +396,8 @@ async function submitReservation() {
       customer: form.value?.customer,
       zipcode: form.value?.zipcode,
       service: form.value?.service,
-      kids: form.value?.kids,
       addons: form.value?.addons || [],
+      subtotal: form.value?.subtotal,
       information: form.value?.information
     };
 
@@ -427,7 +449,10 @@ function handleNewReservation() {
     stepValidations.value[key] = key === '7';
   });
 
-  ElMessage.info('Starting new reservation...');
+  toast.info(
+    'Starting new reservation...',
+    { timeout: 2000 }
+  );
 }
 
 /**
@@ -448,6 +473,13 @@ function handlePrivacyAccepted() {
 function handlePrivacyDeclined() {
   console.log('Privacy policy declined');
   // The modal component will handle redirecting the user
+}
+
+/**
+ * Handles logo image load error
+ */
+function handleLogoError(event) {
+  event.target.src = defaultLogoUrl;
 }
 
 /**

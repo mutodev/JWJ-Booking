@@ -16,6 +16,9 @@ class ZipCodeModel extends Model
     protected $allowedFields    = [
         'city_id',
         'zipcode',
+        'zone_type',
+        'travel_fee_1_performer',
+        'travel_fee_2_performers',
         'is_active'
     ];
 
