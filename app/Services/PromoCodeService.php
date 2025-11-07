@@ -141,8 +141,18 @@ class PromoCodeService
             throw new \Exception('Promo code is required');
         }
 
-        if (empty($data['discount_percentage'])) {
-            throw new \Exception('Discount percentage is required');
+        // Validar discount_type y discount_value
+        if (empty($data['discount_type'])) {
+            throw new \Exception('Discount type is required');
+        }
+
+        if (!isset($data['discount_value']) || $data['discount_value'] === '') {
+            throw new \Exception('Discount value is required');
+        }
+
+        // Validar que discount_type sea válido
+        if (!in_array($data['discount_type'], ['percentage', 'fixed_amount'])) {
+            throw new \Exception('Invalid discount type. Must be "percentage" or "fixed_amount"');
         }
 
         // Validar que el código no exista
@@ -151,18 +161,25 @@ class PromoCodeService
             throw new \Exception('Promo code already exists');
         }
 
+        // Generar ID si no viene
+        if (empty($data['id'])) {
+            $data['id'] = \Ramsey\Uuid\Uuid::uuid4()->toString();
+        }
+
         // Preparar datos
         $promoData = [
-            'id' => \Ramsey\Uuid\Uuid::uuid4()->toString(),
+            'id' => $data['id'],
             'code' => strtoupper($data['code']),
-            'discount_type' => 'percentage',
-            'discount_value' => $data['discount_percentage'],
+            'discount_type' => $data['discount_type'],
+            'discount_value' => (float)$data['discount_value'],
+            'minimum_purchase' => isset($data['minimum_purchase']) ? (float)$data['minimum_purchase'] : null,
             'valid_from' => $data['valid_from'] ?? null,
             'valid_until' => $data['valid_until'] ?? null,
-            'max_uses' => $data['max_uses'] ?? null,
+            'max_uses' => isset($data['max_uses']) ? (int)$data['max_uses'] : null,
+            'times_used' => 0,
             'is_active' => isset($data['is_active']) ? (bool)$data['is_active'] : true,
             'description' => $data['description'] ?? null,
-            'applies_to_travel_fee' => false,
+            'applies_to_travel_fee' => isset($data['applies_to_travel_fee']) ? (bool)$data['applies_to_travel_fee'] : false,
             'created_at' => Time::now()->toDateTimeString(),
             'updated_at' => Time::now()->toDateTimeString(),
         ];
@@ -186,16 +203,56 @@ class PromoCodeService
             throw new \Exception('Promo code not found');
         }
 
+        // Validar discount_type si viene
+        if (isset($data['discount_type']) && !in_array($data['discount_type'], ['percentage', 'fixed_amount'])) {
+            throw new \Exception('Invalid discount type. Must be "percentage" or "fixed_amount"');
+        }
+
         // Preparar datos de actualización
-        $updateData = [
-            'discount_value' => $data['discount_percentage'] ?? $existing['discount_value'],
-            'valid_from' => $data['valid_from'] ?? $existing['valid_from'],
-            'valid_until' => $data['valid_until'] ?? $existing['valid_until'],
-            'max_uses' => $data['max_uses'] ?? $existing['max_uses'],
-            'is_active' => isset($data['is_active']) ? (bool)$data['is_active'] : $existing['is_active'],
-            'description' => $data['description'] ?? $existing['description'],
-            'updated_at' => Time::now()->toDateTimeString(),
-        ];
+        $updateData = [];
+
+        // Solo actualizar campos que vienen en $data
+        if (isset($data['code'])) {
+            $updateData['code'] = strtoupper($data['code']);
+        }
+
+        if (isset($data['discount_type'])) {
+            $updateData['discount_type'] = $data['discount_type'];
+        }
+
+        if (isset($data['discount_value'])) {
+            $updateData['discount_value'] = (float)$data['discount_value'];
+        }
+
+        if (isset($data['minimum_purchase'])) {
+            $updateData['minimum_purchase'] = $data['minimum_purchase'] ? (float)$data['minimum_purchase'] : null;
+        }
+
+        if (isset($data['valid_from'])) {
+            $updateData['valid_from'] = $data['valid_from'];
+        }
+
+        if (isset($data['valid_until'])) {
+            $updateData['valid_until'] = $data['valid_until'];
+        }
+
+        if (isset($data['max_uses'])) {
+            $updateData['max_uses'] = $data['max_uses'] ? (int)$data['max_uses'] : null;
+        }
+
+        if (isset($data['is_active'])) {
+            $updateData['is_active'] = (bool)$data['is_active'];
+        }
+
+        if (isset($data['description'])) {
+            $updateData['description'] = $data['description'];
+        }
+
+        if (isset($data['applies_to_travel_fee'])) {
+            $updateData['applies_to_travel_fee'] = (bool)$data['applies_to_travel_fee'];
+        }
+
+        $updateData['updated_at'] = Time::now()->toDateTimeString();
 
         $this->repo->update($id, $updateData);
 

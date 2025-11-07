@@ -45,6 +45,24 @@ class PromoCodeRepository
     }
 
     /**
+     * Buscar un código promocional por ID (alias de getById)
+     *
+     * @param string $id ID del código promocional
+     * @return array|null
+     */
+    public function findById(string $id): ?array
+    {
+        $result = $this->model->where('id', $id)->first();
+
+        // Convertir a array si es necesario
+        if ($result && is_object($result)) {
+            $result = (array) $result;
+        }
+
+        return $result;
+    }
+
+    /**
      * Incrementar el contador de usos de un código promocional
      *
      * @param string $promoCodeId ID del código promocional
