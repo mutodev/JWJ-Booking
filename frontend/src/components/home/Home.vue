@@ -238,7 +238,6 @@ function getCurrentStepProps() {
       props.metropolitanArea = form.value?.customer?.areaId;
       props.active = activeStep.value === 2;
       props.service = form.value?.service;
-      props.hours = form.value?.hours;
       break;
     case 3:
       props.service = form.value?.service?.id;
@@ -254,7 +253,6 @@ function getCurrentStepProps() {
       props.active = activeStep.value === 5;
       props.service = form.value?.service;
       props.addons = form.value?.addons || [];
-      props.hours = form.value?.hours;
       props.kids = form.value?.kids;
       break;
     case 6:
@@ -264,7 +262,6 @@ function getCurrentStepProps() {
       props.zipcode = form.value?.zipcode;
       props.service = form.value?.service;
       props.kids = form.value?.kids;
-      props.hours = form.value?.hours;
       props.addons = form.value?.addons || [];
       break;
     case 7:
@@ -330,7 +327,7 @@ function validateCurrentStep() {
 
   switch (activeStep.value) {
     case 1: isValid = !!form.value.customer && !!form.value.zipcode; break;
-    case 2: isValid = !!form.value.service && !!form.value.hours; break;
+    case 2: isValid = !!form.value.service; break; // Solo requiere servicio (duración es fija)
     case 3: isValid = !!form.value.kids && form.value.kids.isValid; break;
     case 4: isValid = true; break; // Addons son opcionales
     case 5: isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed; break;
@@ -378,7 +375,6 @@ async function submitReservation() {
       zipcode: form.value?.zipcode,
       service: form.value?.service,
       kids: form.value?.kids,
-      hours: form.value?.hours,
       addons: form.value?.addons || [],
       information: form.value?.information
     };

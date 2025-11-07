@@ -11,8 +11,9 @@ use App\Repositories\MetropolitanAreaRepository;
 use App\Repositories\AddonRepository;
 
 /**
- * Seeder para crear 10 reservas de prueba con datos variados
+ * Seeder para crear 5 reservas de prueba con datos variados
  * Prueba el flujo completo desde el home
+ * Actualizado: Eliminado campo 'hours' - ahora usa duration del servicio
  */
 class ReservationTestSeeder extends Seeder
 {
@@ -34,57 +35,93 @@ class ReservationTestSeeder extends Seeder
             return;
         }
 
-        $firstNames = ['John', 'Mary', 'James', 'Patricia', 'Robert', 'Jennifer', 'Michael', 'Linda', 'William', 'Elizabeth'];
-        $lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
-        $ageRanges = ['0-2', '3-5', '6-8', '9-12'];
-        $songRequests = [
-            'Baby Shark, Let It Go',
-            'Wheels on the Bus, Old MacDonald',
-            'Happy Birthday',
-            'No song requests',
-            'Whatever the kids like!',
-            'Popular Disney songs',
-            'Classic children songs',
-            'Top 40 hits for kids'
+        // Definir 5 casos de prueba específicos
+        $testCases = [
+            [
+                'customer' => ['firstName' => 'Sarah', 'lastName' => 'Johnson', 'email' => 'sarah.johnson@test.com', 'phone' => '+1-555-123-4567'],
+                'kids' => 8,
+                'eventDays' => 15,
+                'numAddons' => 0,
+                'songRequest' => 'Baby Shark, Let It Go',
+                'description' => 'Reserva simple sin addons'
+            ],
+            [
+                'customer' => ['firstName' => 'Michael', 'lastName' => 'Brown', 'email' => 'michael.brown@test.com', 'phone' => '+1-555-234-5678'],
+                'kids' => 25,
+                'eventDays' => 30,
+                'numAddons' => 1,
+                'songRequest' => 'Popular Disney songs',
+                'description' => 'Reserva con 1 addon'
+            ],
+            [
+                'customer' => ['firstName' => 'Jennifer', 'lastName' => 'Garcia', 'email' => 'jennifer.garcia@test.com', 'phone' => '+1-555-345-6789'],
+                'kids' => 45,
+                'eventDays' => 10,
+                'numAddons' => 2,
+                'songRequest' => 'Whatever the kids like!',
+                'description' => 'Reserva con 45+ niños y 2 addons'
+            ],
+            [
+                'customer' => ['firstName' => 'Robert', 'lastName' => 'Martinez', 'email' => 'robert.martinez@test.com', 'phone' => '+1-555-456-7890'],
+                'kids' => 12,
+                'eventDays' => 5,
+                'numAddons' => 3,
+                'songRequest' => 'Classic children songs',
+                'description' => 'Reserva con surcharge (< 7 días) y 3 addons'
+            ],
+            [
+                'customer' => ['firstName' => 'Emily', 'lastName' => 'Davis', 'email' => 'emily.davis@test.com', 'phone' => '+1-555-567-8901'],
+                'kids' => 60,
+                'eventDays' => 1,
+                'numAddons' => 1,
+                'songRequest' => 'Top 40 hits for kids',
+                'description' => 'Reserva con máximo surcharge (< 2 días) y muchos niños'
+            ]
         ];
 
-        echo "Creando 10 reservas de prueba...\n\n";
+        $ageRanges = ['0-2', '3-5', '6-8', '9-12'];
 
-        for ($i = 1; $i <= 10; $i++) {
+        echo "Creando 5 reservas de prueba con datos variados...\n\n";
+
+        foreach ($testCases as $i => $testCase) {
+            $caseNum = $i + 1;
             try {
-                // Seleccionar datos aleatorios
-                $firstName = $firstNames[array_rand($firstNames)];
-                $lastName = $lastNames[array_rand($lastNames)];
-                $email = strtolower($firstName . '.' . $lastName . $i . '@test.com');
+                echo "----------------------------------------\n";
+                echo "Caso #{$caseNum}: {$testCase['description']}\n";
+                echo "----------------------------------------\n";
+
+                // Seleccionar datos del caso de prueba
+                $customer = $testCase['customer'];
                 $zipcode = $zipcodes[array_rand($zipcodes)];
                 $servicePrice = $servicePrices[array_rand($servicePrices)];
-                $selectedKids = rand(5, 50);
-                $eventDate = date('Y-m-d', strtotime('+' . rand(8, 60) . ' days'));
+                $selectedKids = $testCase['kids'];
+                $eventDate = date('Y-m-d', strtotime('+' . $testCase['eventDays'] . ' days'));
 
-                // Seleccionar addons aleatorios (0-3 addons)
-                $numAddons = rand(0, min(3, count($addons)));
+                // Seleccionar addons según el caso de prueba
                 $selectedAddons = [];
-                if ($numAddons > 0 && !empty($addons)) {
-                    $randomAddons = (array) array_rand(array_column($addons, 'id'), $numAddons);
-                    foreach ($randomAddons as $idx) {
-                        if (isset($addons[$idx])) {
-                            $selectedAddons[] = [
-                                'id' => $addons[$idx]->id,
-                                'base_price' => $addons[$idx]->base_price,
-                                'quantity' => rand(1, 2),
-                                'estimated_duration_minutes' => $addons[$idx]->estimated_duration_minutes ?? 0
-                            ];
-                        }
+                if ($testCase['numAddons'] > 0 && !empty($addons)) {
+                    $numToSelect = min($testCase['numAddons'], count($addons));
+                    $randomKeys = array_rand($addons, $numToSelect);
+                    if (!is_array($randomKeys)) $randomKeys = [$randomKeys];
+
+                    foreach ($randomKeys as $key) {
+                        $addon = $addons[$key];
+                        $selectedAddons[] = [
+                            'id' => $addon->id,
+                            'base_price' => $addon->base_price,
+                            'quantity' => 1,
+                            'estimated_duration_minutes' => $addon->estimated_duration_minutes ?? 0
+                        ];
                     }
                 }
 
-                // Crear datos del formulario
+                // Crear datos del formulario (SIN campo 'hours')
                 $formData = [
                     'customer' => [
-                        'firstName' => $firstName,
-                        'lastName' => $lastName,
-                        'email' => $email,
-                        'phone' => '+1-555-' . rand(100, 999) . '-' . rand(1000, 9999),
+                        'firstName' => $customer['firstName'],
+                        'lastName' => $customer['lastName'],
+                        'email' => $customer['email'],
+                        'phone' => $customer['phone'],
                         'areaId' => $zipcode->metropolitan_area_id ?? null
                     ],
                     'zipcode' => [
@@ -96,26 +133,22 @@ class ReservationTestSeeder extends Seeder
                         'amount' => (float) $servicePrice->amount,
                         'extra_child_fee' => (float) ($servicePrice->extra_child_fee ?? 0),
                         'performers_count' => $servicePrice->performers_count,
-                        'children_count' => 40,
-                        'min_duration_hours' => 2
+                        'min_duration_hours' => (float) ($servicePrice->min_duration_hours ?? 1),
+                        'duration_hours' => (float) ($servicePrice->min_duration_hours ?? 1)
                     ],
                     'kids' => [
                         'selectedKids' => $selectedKids
                     ],
-                    'hours' => [
-                        'duration' => rand(2, 4),
-                        'hours' => rand(2, 4)
-                    ],
                     'addons' => $selectedAddons,
                     'information' => [
-                        'fullAddress' => rand(100, 9999) . ' Main St, Anytown, USA',
+                        'fullAddress' => rand(100, 9999) . ' ' . ['Main', 'Oak', 'Elm', 'Maple'][array_rand(['Main', 'Oak', 'Elm', 'Maple'])] . ' St, Anytown, USA',
                         'eventDate' => $eventDate,
-                        'startTime' => rand(10, 16) . ':00',
-                        'entertainmentStartTime' => rand(10, 16) . ':30',
-                        'birthdayChildName' => $firstName . ' Jr.',
+                        'startTime' => sprintf('%02d:00', rand(10, 16)),
+                        'entertainmentStartTime' => sprintf('%02d:30', rand(10, 16)),
+                        'birthdayChildName' => $customer['firstName'] . ' Jr.',
                         'childAge' => rand(1, 12),
                         'ageRange' => $ageRanges[array_rand($ageRanges)],
-                        'songRequests' => $songRequests[array_rand($songRequests)],
+                        'songRequests' => $testCase['songRequest'],
                         'happyBirthdayRequest' => rand(0, 1) ? 'yes' : 'no',
                         'instructions' => 'Please park in the driveway. Ring the doorbell when you arrive.'
                     ]
@@ -124,18 +157,25 @@ class ReservationTestSeeder extends Seeder
                 // Crear reserva
                 $result = $reservationService->createFromForm($formData);
 
-                echo "✓ Reserva #{$i} creada exitosamente\n";
-                echo "  Cliente: {$firstName} {$lastName} ({$email})\n";
-                echo "  Fecha: {$eventDate}\n";
+                echo "✓ Reserva creada exitosamente\n";
+                echo "  Cliente: {$customer['firstName']} {$customer['lastName']} ({$customer['email']})\n";
+                echo "  Fecha evento: {$eventDate} (en {$testCase['eventDays']} días)\n";
                 echo "  Niños: {$selectedKids}\n";
-                echo "  Total: \${$result['calculation']['grand_total']}\n";
-                echo "  Addons: " . count($selectedAddons) . "\n\n";
+                echo "  Servicio: \${$servicePrice->amount}\n";
+                echo "  Addons: " . count($selectedAddons) . "\n";
+                echo "  Base Total: \${$result['calculation']['base_total']}\n";
+                echo "  Surcharge: \${$result['calculation']['surcharge_amount']}\n";
+                echo "  TOTAL: \${$result['calculation']['grand_total']}\n";
+                echo "  Duración: {$result['calculation']['total_duration_hours']} horas\n\n";
 
             } catch (\Throwable $e) {
-                echo "✗ Error creando reserva #{$i}: " . $e->getMessage() . "\n\n";
+                echo "✗ Error creando reserva #{$caseNum}: " . $e->getMessage() . "\n";
+                echo "  Stack trace: " . $e->getTraceAsString() . "\n\n";
             }
         }
 
+        echo "========================================\n";
         echo "Proceso completado!\n";
+        echo "========================================\n";
     }
 }

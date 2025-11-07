@@ -280,7 +280,6 @@ class ReservationService
         $zipcode = $formData['zipcode'] ?? null;
         $service = $formData['service'] ?? null;
         $kids = $formData['kids'] ?? null;
-        $hours = $formData['hours'] ?? null;
         $addons = $formData['addons'] ?? [];
         $information = $formData['information'] ?? null;
 
@@ -337,10 +336,9 @@ class ReservationService
             }
         }
 
-        // Validar que hours esté presente si no hay min_duration_hours en service
-        $hasDuration = !empty($hours['duration']) || !empty($hours['hours']) || !empty($hours['minutes']);
-        if (!$hasDuration && empty($service['min_duration_hours'])) {
-            throw new HTTPException('Duration is required', Response::HTTP_BAD_REQUEST);
+        // Validar que el servicio tenga duración configurada
+        if (empty($service['min_duration_hours']) && empty($service['duration_hours'])) {
+            throw new HTTPException('Service duration not configured', Response::HTTP_BAD_REQUEST);
         }
 
         // Iniciar transacción para garantizar consistencia
@@ -367,7 +365,8 @@ class ReservationService
             $grandTotal = $baseTotal + $surchargeAmount;
 
             // Calcular duración total incluyendo addons
-            $baseDurationHours = floatval($hours['duration'] ?? $hours['hours'] ?? ($hours['minutes'] ? $hours['minutes'] / 60 : null) ?? $service['min_duration_hours'] ?? 1);
+            // La duración base viene del servicio (duration_hours o min_duration_hours)
+            $baseDurationHours = floatval($service['duration_hours'] ?? $service['min_duration_hours'] ?? 1);
             $durationCalculation = $this->calculateTotalDuration($baseDurationHours, $addons);
             $totalDurationHours = $durationCalculation['total_hours'];
             $addonsDurationMinutes = $durationCalculation['addons_minutes'];
@@ -413,11 +412,14 @@ class ReservationService
             // Guardar addons en tabla reservation_addons
             if (!empty($addons)) {
                 foreach ($addons as $addon) {
+                    // Usar selectedPrice si existe (para Jukebox Live), sino usar base_price
+                    $priceToSave = floatval($addon['selectedPrice'] ?? $addon['base_price'] ?? 0);
+
                     $addonData = [
                         'reservation_id' => $reservation->id,
                         'addon_id' => $addon['id'],
                         'quantity' => intval($addon['quantity'] ?? 1),
-                        'price_at_time' => floatval($addon['base_price'] ?? 0)
+                        'price_at_time' => $priceToSave
                     ];
 
                     $addonResult = $this->reservationAddonRepository->create($addonData);
@@ -597,7 +599,9 @@ class ReservationService
     private function calculateAddonsTotal(array $addons): float
     {
         return array_reduce($addons, function ($sum, $addon) {
-            return $sum + (floatval($addon['base_price'] ?? 0) * intval($addon['quantity'] ?? 1));
+            // Usar selectedPrice si existe (para Jukebox Live), sino usar base_price
+            $price = floatval($addon['selectedPrice'] ?? $addon['base_price'] ?? 0);
+            return $sum + ($price * intval($addon['quantity'] ?? 1));
         }, 0);
     }
 
