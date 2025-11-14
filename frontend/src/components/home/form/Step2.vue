@@ -84,7 +84,15 @@
     </div>
 
     <!-- Mensaje si no hay servicios -->
-    <div v-else class="text-muted">No services available</div>
+    <div v-else class="no-services-message">
+      <i class="bi bi-info-circle fs-3 mb-2"></i>
+      <p class="mb-0">
+        {{ zoneType === 'not_available'
+          ? 'Unfortunately, we cannot provide services to this location at this time.'
+          : 'No services are currently available for this area. Please try a different location.'
+        }}
+      </p>
+    </div>
   </div>
 </template>
 
@@ -119,34 +127,41 @@ const defaultServiceImage = "/img/default.jpg";
 
 // Zone messages based on zipcode zone_type
 const zoneType = computed(() => {
-  return props.zipcode?.zone_type || 'A';
+  return props.zipcode?.zone_type || 'standard';
 });
 
 const zoneMessage = computed(() => {
   const messages = {
-    'A': {
-      title: 'Premium Service Area!',
-      text: 'Great news! Your location is in our premium service area. Enjoy our standard pricing with no additional travel fees!'
+    'standard': {
+      title: 'Service Available!',
+      text: 'We\'re happy to offer the services below in your area!'
     },
-    'B': {
-      title: 'Standard Service Area',
-      text: 'Your location is within our standard service area. A small travel fee may apply based on the distance to your event.'
+    'travel_fee': {
+      title: 'Service Available with Travel Fee',
+      text: 'We\'re happy to offer the services below in your area! For your zip code, an additional travel fee applies. Travel fees begin at an additional $50 to the rates listed below, and depend on the distance and number of performers booked. You will be informed of the final rate based on your selections.'
     },
-    'C': {
-      title: 'Extended Service Area',
-      text: 'Your location is in our extended service area. An additional travel fee will be applied to cover the distance to your event.'
+    'minimum_2h': {
+      title: 'Service Available - Minimum Booking Required',
+      text: 'We\'re happy to offer the services below in your area! A minimum booking of two hours is required for your location. Please select the services that interest you, and we will be in touch to share the final rate based on your selections.'
     },
-    'D': {
-      title: 'Far Service Area',
-      text: 'Your location is in our far service area. A higher travel fee will apply due to the extended distance. We\'re excited to bring the party to you!'
+    'not_available': {
+      title: 'Service Not Available',
+      text: 'We\'re sorry, we do not offer services in your area.'
     }
   };
 
-  return messages[zoneType.value] || messages['A'];
+  return messages[zoneType.value] || messages['standard'];
 });
 
 async function loadServices() {
   if (!props.metropolitanArea) return;
+
+  // If zone is not available, don't load services
+  if (zoneType.value === 'not_available') {
+    services.value = [];
+    selectedService.value = null;
+    return;
+  }
 
   try {
     const response = await api.get(`/home/services/${props.metropolitanArea}`);
@@ -221,25 +236,25 @@ watch(
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.zone-message--A {
+.zone-message--standard {
   background: linear-gradient(135deg, #fff5f9 0%, #ffe4f0 100%);
   border-left-color: #FF74B7;
   color: #7d1847;
 }
 
-.zone-message--B {
+.zone-message--travel_fee {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border-left-color: #3b82f6;
   color: #1e40af;
 }
 
-.zone-message--C {
+.zone-message--minimum_2h {
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   border-left-color: #f59e0b;
   color: #92400e;
 }
 
-.zone-message--D {
+.zone-message--not_available {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   border-left-color: #ef4444;
   color: #991b1b;
@@ -413,5 +428,29 @@ watch(
 .service-card__button--selected:hover {
   background: #e662a5;
   border-color: #e662a5;
+}
+
+/* No services message */
+.no-services-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 12px;
+  border: 2px dashed #d1d5db;
+}
+
+.no-services-message i {
+  color: #9ca3af;
+}
+
+.no-services-message p {
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 500px;
 }
 </style>
