@@ -1,5 +1,31 @@
 <template>
   <div class="container py-4">
+    <!-- Modal para Jukebox Live 3+ horas -->
+    <el-dialog
+      v-model="showJukeboxCustomQuoteDialog"
+      title="Custom Quote Required"
+      width="650px"
+      :close-on-click-modal="false"
+      center
+      class="custom-quote-modal"
+    >
+      <div class="quote-content">
+        <div class="quote-header">
+          <i class="bi bi-music-note-list fs-1 text-primary mb-3"></i>
+          <p class="quote-message">
+            If you're interested in having live music for more than 3 hours, we'll provide a custom quote. Please schedule a call, and a team member will be in touch.
+          </p>
+        </div>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button size="large" class="custom-btn accept-btn" @click="showJukeboxCustomQuoteDialog = false">
+            Got it
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
     <!-- Título y botón SKIP -->
     <div class="d-flex align-items-center justify-content-between mb-4">
       <div class="d-flex align-items-center">
@@ -80,7 +106,10 @@
                   @click.prevent="setAddonSuboption(addon.id, option.value, option.price)"
                 >
                   <span class="addon-suboption__label">{{ option.label }}</span>
-                  <span class="addon-suboption__price">${{ option.price }}</span>
+                  <span v-if="!option.isCustomQuote" class="addon-suboption__price">${{ option.price }}</span>
+                  <span v-else class="addon-suboption__custom-quote">
+                    <i class="bi bi-telephone-fill me-1"></i>
+                  </span>
                 </div>
               </div>
             </div>
@@ -147,6 +176,7 @@ const addons = ref([]);
 const selectedAddons = ref([]);
 const addonSuboptions = ref({}); // Para guardar sub-opciones de Jukebox
 const defaultImage = "/img/default.jpg";
+const showJukeboxCustomQuoteDialog = ref(false);
 
 // Opciones de Jukebox Live
 const jukeboxOptions = [
@@ -154,6 +184,7 @@ const jukeboxOptions = [
   { value: '1h-2p', label: '1 hour, 2 performers', price: 500 },
   { value: '2h-1p', label: '2 hours, 1 performer', price: 650 },
   { value: '2h-2p', label: '2 hours, 2 performers', price: 850 },
+  { value: '3h+', label: '3+ hours - Custom Quote', price: 0, isCustomQuote: true },
 ];
 
 async function loadAddons() {
@@ -200,6 +231,13 @@ function getAddonSuboption(addonId) {
 }
 
 function setAddonSuboption(addonId, value, price) {
+  // Check if this is the custom quote option (3+ hours)
+  const selectedOption = jukeboxOptions.find(opt => opt.value === value);
+  if (selectedOption?.isCustomQuote) {
+    showJukeboxCustomQuoteDialog.value = true;
+    return;
+  }
+
   addonSuboptions.value[addonId] = value;
 
   // Actualizar el precio del addon en selectedAddons
@@ -519,5 +557,92 @@ watch(selectedAddons, () => {
 
 .skip-btn:active {
   transform: translateY(0);
+}
+
+/* Custom quote modal styles */
+.custom-quote-modal {
+  max-width: 650px;
+}
+
+.custom-quote-modal :deep(.el-dialog) {
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.custom-quote-modal :deep(.el-dialog__header) {
+  padding: 24px 24px 0;
+  border-bottom: none;
+}
+
+.custom-quote-modal :deep(.el-dialog__title) {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.custom-quote-modal :deep(.el-dialog__body) {
+  padding: 0 24px 24px;
+}
+
+.custom-quote-modal :deep(.el-dialog__footer) {
+  padding: 0 24px 24px;
+  border-top: none;
+}
+
+.quote-content {
+  text-align: center;
+}
+
+.quote-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.quote-header i {
+  color: #3b82f6;
+}
+
+.quote-message {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4b5563;
+  margin: 0;
+  max-width: 500px;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.custom-btn {
+  min-width: 150px;
+  padding: 12px 32px;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.accept-btn {
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+}
+
+.accept-btn:hover {
+  background: #e662a5 !important;
+  border-color: #e662a5 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 116, 183, 0.3);
+}
+
+.addon-suboption__custom-quote {
+  display: flex;
+  align-items: center;
+  color: #f59e0b;
+  font-size: 1rem;
 }
 </style>
