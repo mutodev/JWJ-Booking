@@ -246,6 +246,7 @@ import api from "@/services/axios";
 import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.css";
 import { useToast } from "vue-toastification";
+import { ElMessageBox } from 'element-plus';
 
 const toast = useToast();
 
@@ -309,9 +310,22 @@ function onChildrenRangeChange(value) {
   if (value === "25+ kids") {
     exactKidsCount.value = 25;
     form.exactChildrenCount = null;
-    toast.info(
-      'Please enter the exact number of children below',
-      { timeout: 3000 }
+
+    // Show custom quote message for 25+ kids
+    ElMessageBox.alert(
+      "Since you're expecting more than 25 children, we'll provide a custom quote. Please schedule a call, and a team member will be in touch.",
+      'Custom Quote Required',
+      {
+        confirmButtonText: 'Got it',
+        type: 'info',
+        center: true,
+        customClass: 'custom-quote-dialog',
+        showClose: true,
+        dangerouslyUseHTMLString: false,
+        callback: () => {
+          // User acknowledged, they can continue filling the form
+        }
+      }
     );
   } else {
     form.exactChildrenCount = null;
@@ -475,6 +489,48 @@ onMounted(() => {
   border-radius: 8px;
   margin-top: 1rem;
   text-align: left;
+}
+
+/* Custom quote dialog styling */
+:deep(.custom-quote-dialog) {
+  border-radius: 16px;
+  max-width: 500px;
+}
+
+:deep(.custom-quote-dialog .el-message-box__header) {
+  padding-top: 24px;
+  padding-bottom: 16px;
+}
+
+:deep(.custom-quote-dialog .el-message-box__title) {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+:deep(.custom-quote-dialog .el-message-box__message) {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4b5563;
+  padding: 20px 0;
+}
+
+:deep(.custom-quote-dialog .el-message-box__btns) {
+  padding-bottom: 20px;
+}
+
+:deep(.custom-quote-dialog .el-button--primary) {
+  background-color: #FF74B7;
+  border-color: #FF74B7;
+  padding: 12px 32px;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+:deep(.custom-quote-dialog .el-button--primary:hover) {
+  background-color: #ff5da5;
+  border-color: #ff5da5;
 }
 
 .form-control {
