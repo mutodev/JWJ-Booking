@@ -47,14 +47,19 @@
       <strong>Optional:</strong> Add-ons are completely optional. You can skip this step or select services to enhance your event.
     </div>
 
-    <!-- Grid de cards con checkbox -->
-    <div v-if="addons.length" class="addons-grid">
-      <div
-        v-for="addon in addons"
-        :key="addon.id"
-        class="addon-card"
-        :class="{ 'addon-card--selected': isAddonSelected(addon.id) }"
-      >
+    <!-- SECCIÓN 1: ADDITIONAL TIME -->
+    <div v-if="additionalTimeAddons.length" class="addons-section mb-5">
+      <div class="section-header">
+        <i class="bi bi-clock-history me-2"></i>
+        <h3 class="section-title">ADDITIONAL TIME</h3>
+      </div>
+      <div class="addons-grid">
+        <div
+          v-for="addon in additionalTimeAddons"
+          :key="addon.id"
+          class="addon-card"
+          :class="{ 'addon-card--selected': isAddonSelected(addon.id) }"
+        >
         <!-- Checkbox (oculto visualmente) -->
         <input
           type="checkbox"
@@ -137,11 +142,91 @@
             </button>
           </div>
         </label>
+        </div>
       </div>
     </div>
 
-    <!-- Mensaje si no hay addons -->
-    <div v-else class="text-muted text-center">
+    <!-- SECCIÓN 2: ADD-ONS & REFERRAL SERVICES -->
+    <div v-if="referralServicesAddons.length" class="addons-section">
+      <div class="section-header">
+        <i class="bi bi-star me-2"></i>
+        <h3 class="section-title">ADD-ONS & REFERRAL SERVICES</h3>
+      </div>
+      <div class="addons-grid">
+        <div
+          v-for="addon in referralServicesAddons"
+          :key="addon.id"
+          class="addon-card"
+          :class="{ 'addon-card--selected': isAddonSelected(addon.id) }"
+        >
+        <!-- Checkbox (oculto visualmente) -->
+        <input
+          type="checkbox"
+          class="addon-checkbox"
+          :id="'addon-' + addon.id"
+          :value="addon"
+          v-model="selectedAddons"
+        />
+
+        <!-- Card clickeable -->
+        <label class="addon-card__container" :for="'addon-' + addon.id">
+          <!-- Imagen -->
+          <div class="addon-card__image-wrapper">
+            <img
+              :src="addon.image || defaultImage"
+              class="addon-card__image"
+              :alt="addon.name"
+              @error="handleImageError"
+            />
+          </div>
+
+          <!-- Contenido -->
+          <div class="addon-card__content">
+            <!-- Título y precio -->
+            <div class="addon-card__header">
+              <h4 class="addon-card__title">{{ addon.name }}</h4>
+              <div class="addon-card__price">
+                <template v-if="addon.is_referral_service">
+                  <span class="referral-badge">Referral Service</span>
+                </template>
+                <template v-else-if="addon.base_price">
+                  <span class="fw-bold">${{ addon.base_price }}</span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Descripción -->
+            <p class="addon-card__description">{{ addon.description }}</p>
+
+            <!-- Botón de checkbox o referral -->
+            <button
+              v-if="addon.is_referral_service"
+              type="button"
+              class="addon-card__button addon-card__button--referral"
+              @click.prevent="handleReferralService(addon)"
+            >
+              <i class="bi bi-telephone-fill me-2"></i>
+              <span>Request Information</span>
+            </button>
+            <button
+              v-else
+              type="button"
+              class="addon-card__button"
+              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
+              @click.prevent="toggleAddon(addon)"
+            >
+              <i v-if="isAddonSelected(addon.id)" class="bi bi-check-square-fill me-2"></i>
+              <i v-else class="bi bi-square me-2"></i>
+              <span>{{ isAddonSelected(addon.id) ? 'Added to booking' : 'Add to booking' }}</span>
+            </button>
+          </div>
+        </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mensaje si no hay addons en ninguna sección -->
+    <div v-if="!additionalTimeAddons.length && !referralServicesAddons.length" class="text-muted text-center">
       <i class="bi bi-info-circle fs-4 mb-2"></i>
       <p>No add-on services available</p>
     </div>
@@ -149,7 +234,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import api from "@/services/axios";
 import { useToast } from "vue-toastification";
 
@@ -186,6 +271,26 @@ const jukeboxOptions = [
   { value: '2h-2p', label: '2 hours, 2 performers', price: 850 },
   { value: '3h+', label: '3+ hours - Custom Quote', price: 0, isCustomQuote: true },
 ];
+
+// Computed properties para dividir addons en secciones
+const additionalTimeAddons = computed(() => {
+  return addons.value.filter(addon => {
+    // Incluir addons de tipo jukebox o que contengan "15 minutes" o "minute" en el nombre
+    return addon.price_type === 'jukebox' ||
+           addon.name?.toLowerCase().includes('minute') ||
+           addon.name?.toLowerCase().includes('15 min');
+  });
+});
+
+const referralServicesAddons = computed(() => {
+  return addons.value.filter(addon => {
+    // Incluir todos los demás addons (referral services y otros)
+    // Excluir los que ya están en additionalTimeAddons
+    return addon.price_type !== 'jukebox' &&
+           !addon.name?.toLowerCase().includes('minute') &&
+           !addon.name?.toLowerCase().includes('15 min');
+  });
+});
 
 async function loadAddons() {
   if (!props.active) return;
@@ -302,6 +407,33 @@ watch(selectedAddons, () => {
 </script>
 
 <style scoped>
+/* Sección de addons */
+.addons-section {
+  margin-bottom: 3rem;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.section-header i {
+  font-size: 1.75rem;
+  color: #FF74B7;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Grid de add-ons */
 .addons-grid {
   display: grid;
