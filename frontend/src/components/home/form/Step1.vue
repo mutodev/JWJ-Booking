@@ -69,6 +69,7 @@
             placement="right"
             effect="dark"
             trigger="focus"
+            :hide-after="30000"
           >
             <el-date-picker
               v-model="form.eventDateTime"
@@ -124,6 +125,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <div>
                 <Multiselect
@@ -152,6 +154,7 @@
             placement="right"
             effect="dark"
             trigger="focus"
+            :hide-after="30000"
           >
             <input
               v-model="form.zipcode"
@@ -180,6 +183,7 @@
             placement="right"
             effect="dark"
             trigger="focus"
+            :hide-after="30000"
           >
             <input
               v-model="form.firstName"
@@ -204,6 +208,7 @@
             placement="right"
             effect="dark"
             trigger="focus"
+            :hide-after="30000"
           >
             <input
               v-model="form.lastName"
@@ -228,6 +233,7 @@
             placement="right"
             effect="dark"
             trigger="focus"
+            :hide-after="30000"
           >
             <input
               v-model="form.email"
@@ -252,6 +258,7 @@
             placement="right"
             effect="dark"
             trigger="focus"
+            :hide-after="30000"
           >
             <input
               v-model="form.phone"

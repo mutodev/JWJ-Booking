@@ -43,6 +43,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <input
                 v-model="form.fullAddress"
@@ -67,6 +68,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <textarea
                 v-model="form.instructions"
@@ -95,6 +97,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <el-time-picker
                 v-model="form.startTime"
@@ -119,6 +122,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <el-time-picker
                 v-model="form.entertainmentStartTime"
@@ -147,6 +151,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <input
                 v-model="form.birthdayChildName"
@@ -171,6 +176,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <input
                 v-model="form.childAge"
@@ -196,6 +202,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <input
                 v-model="form.ageRange"
@@ -220,6 +227,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <textarea
                 v-model="form.songRequests"
@@ -244,6 +252,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
+              :hide-after="30000"
             >
               <select
                 v-model="form.happyBirthdayRequest"
