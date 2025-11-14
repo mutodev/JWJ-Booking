@@ -2,6 +2,37 @@
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-12 col-md-8">
+        <!-- Custom Quote Modal for 25+ kids -->
+        <el-dialog
+          v-model="showCustomQuoteDialog"
+          title="Custom Quote Required"
+          width="650px"
+          :close-on-click-modal="false"
+          center
+          class="custom-quote-modal"
+        >
+          <div class="quote-content">
+            <div class="quote-header">
+              <i class="bi bi-calendar-event fs-1 text-primary mb-3"></i>
+              <p class="quote-message">
+                Since you're expecting more than 25 children, we'll provide a custom quote. Please schedule a call, and a team member will be in touch.
+              </p>
+            </div>
+          </div>
+
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button
+                size="large"
+                class="custom-btn accept-btn"
+                @click="showCustomQuoteDialog = false"
+              >
+                Got it
+              </el-button>
+            </div>
+          </template>
+        </el-dialog>
+
         <!-- Welcome Intro Text -->
         <div class="welcome-section mb-4 text-center">
           <h2 class="mb-3">Welcome to Jam with Jamie!</h2>
@@ -246,7 +277,6 @@ import api from "@/services/axios";
 import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.css";
 import { useToast } from "vue-toastification";
-import { ElMessageBox } from 'element-plus';
 
 const toast = useToast();
 
@@ -254,6 +284,7 @@ const { emit } = getCurrentInstance();
 const listAreas = ref([]);
 const selectedArea = ref(null);
 const exactKidsCount = ref(25);
+const showCustomQuoteDialog = ref(false);
 const form = reactive({
   eventType: "",
   eventDateTime: "",
@@ -311,22 +342,8 @@ function onChildrenRangeChange(value) {
     exactKidsCount.value = 25;
     form.exactChildrenCount = null;
 
-    // Show custom quote message for 25+ kids
-    ElMessageBox.alert(
-      "Since you're expecting more than 25 children, we'll provide a custom quote. Please schedule a call, and a team member will be in touch.",
-      'Custom Quote Required',
-      {
-        confirmButtonText: 'Got it',
-        type: 'info',
-        center: true,
-        customClass: 'custom-quote-dialog',
-        showClose: true,
-        dangerouslyUseHTMLString: false,
-        callback: () => {
-          // User acknowledged, they can continue filling the form
-        }
-      }
-    );
+    // Show custom quote dialog for 25+ kids
+    showCustomQuoteDialog.value = true;
   } else {
     form.exactChildrenCount = null;
     exactKidsCount.value = 25;
@@ -491,46 +508,81 @@ onMounted(() => {
   text-align: left;
 }
 
-/* Custom quote dialog styling */
-:deep(.custom-quote-dialog) {
+/* Custom quote modal styling - similar to privacy policy modal */
+.custom-quote-modal {
+  max-width: 650px;
+}
+
+:deep(.custom-quote-modal .el-dialog) {
   border-radius: 16px;
-  max-width: 500px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-:deep(.custom-quote-dialog .el-message-box__header) {
-  padding-top: 24px;
-  padding-bottom: 16px;
+:deep(.custom-quote-modal .el-dialog__header) {
+  padding: 2rem 2rem 1rem;
+  border-bottom: 2px solid #e5e7eb;
 }
 
-:deep(.custom-quote-dialog .el-message-box__title) {
-  font-size: 1.3rem;
+:deep(.custom-quote-modal .el-dialog__title) {
+  font-size: 1.5rem;
   font-weight: 700;
   color: #1f2937;
 }
 
-:deep(.custom-quote-dialog .el-message-box__message) {
-  font-size: 1rem;
+:deep(.custom-quote-modal .el-dialog__body) {
+  padding: 2rem;
+}
+
+:deep(.custom-quote-modal .el-dialog__footer) {
+  padding: 1.5rem 2rem;
+  border-top: 2px solid #e5e7eb;
+}
+
+.quote-content {
+  color: #374151;
+}
+
+.quote-header {
+  text-align: center;
+}
+
+.quote-message {
+  font-size: 0.95rem;
   line-height: 1.6;
   color: #4b5563;
-  padding: 20px 0;
+  text-align: left;
+  margin: 0;
 }
 
-:deep(.custom-quote-dialog .el-message-box__btns) {
-  padding-bottom: 20px;
+.dialog-footer {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 }
 
-:deep(.custom-quote-dialog .el-button--primary) {
-  background-color: #FF74B7;
-  border-color: #FF74B7;
-  padding: 12px 32px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 8px;
+.custom-btn {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  padding: 12px 24px !important;
+  height: auto !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  font-size: 0.9rem !important;
+  white-space: nowrap;
 }
 
-:deep(.custom-quote-dialog .el-button--primary:hover) {
-  background-color: #ff5da5;
-  border-color: #ff5da5;
+.accept-btn {
+  border: 2px solid #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+}
+
+.accept-btn:hover {
+  border-color: #FF74B7 !important;
+  background: #FF74B7 !important;
+  color: black !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 6px rgba(255, 116, 183, 0.3) !important;
 }
 
 .form-control {
@@ -641,6 +693,16 @@ onMounted(() => {
   .disclaimer-text {
     font-size: 0.85rem;
     padding: 0.85rem 1rem;
+  }
+
+  /* Custom quote modal responsive */
+  :deep(.custom-quote-modal .el-dialog) {
+    width: 95% !important;
+    margin: 5vh auto !important;
+  }
+
+  .custom-btn {
+    width: 100%;
   }
 }
 </style>
