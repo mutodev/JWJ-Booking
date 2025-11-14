@@ -65,7 +65,7 @@
             Date and Time <span class="text-danger">*</span>
           </label>
           <el-tooltip
-            content="We recommend booking at least 4-6 weeks in advance to secure your preferred date and time!"
+            content="We recommend having the entertainment begin at least 30-minutes after the party starts"
             placement="right"
             effect="dark"
             trigger="focus"
