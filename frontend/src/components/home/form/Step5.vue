@@ -79,6 +79,10 @@
             <div v-if="errors.instructions" class="text-danger small mt-1">
               {{ errors.instructions }}
             </div>
+            <div class="parking-note mt-2">
+              <i class="bi bi-info-circle me-1"></i>
+              If there is valet or other parking that costs over $10, the amount will be added to your invoice. If we are informed of these charges after the event, the credit card on file will be charged accordingly.
+            </div>
           </div>
 
           <!-- Event start time -->
@@ -532,6 +536,24 @@ onMounted(() => {
   font-weight: 500;
   color: #374151;
   margin-bottom: 0.5rem;
+}
+
+.parking-note {
+  font-size: 0.85rem;
+  color: #6b7280;
+  background-color: #f9fafb;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid #3b82f6;
+  border-radius: 6px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+}
+
+.parking-note i {
+  color: #3b82f6;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 h2 {
