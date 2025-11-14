@@ -36,6 +36,35 @@
         show-index
         index-column-text="#"
       >
+        <!-- Slot para zone type -->
+        <template #item-zone_type="{ zone_type }">
+          <span
+            class="badge"
+            :class="{
+              'bg-success': zone_type === 'standard',
+              'bg-primary': zone_type === 'travel_fee',
+              'bg-warning text-dark': zone_type === 'minimum_2h',
+              'bg-danger': zone_type === 'not_available'
+            }"
+          >
+            {{ zone_type === 'travel_fee' ? 'Travel Fee' :
+               zone_type === 'minimum_2h' ? 'Min 2h' :
+               zone_type === 'not_available' ? 'Not Available' :
+               'Standard' }}
+          </span>
+        </template>
+
+        <!-- Slot para travel fees -->
+        <template #item-travel_fee_1_performer="{ travel_fee_1_performer }">
+          <span v-if="travel_fee_1_performer">{{ `$${parseFloat(travel_fee_1_performer).toFixed(2)}` }}</span>
+          <span v-else class="text-muted">-</span>
+        </template>
+
+        <template #item-travel_fee_2_performers="{ travel_fee_2_performers }">
+          <span v-if="travel_fee_2_performers">{{ `$${parseFloat(travel_fee_2_performers).toFixed(2)}` }}</span>
+          <span v-else class="text-muted">-</span>
+        </template>
+
         <!-- Slot para el estado -->
         <template #item-is_active="{ id, is_active }">
           <div class="d-flex justify-content-center">
@@ -90,6 +119,9 @@ const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {
     customLabels: {
       name: "Name",
+      zone_type: "Zone Type",
+      travel_fee_1_performer: "Travel Fee (1P)",
+      travel_fee_2_performers: "Travel Fee (2P)",
       is_active: "State",
     },
   });
