@@ -70,6 +70,9 @@
                   {{ promoValidating ? 'Validating...' : 'Apply' }}
                 </button>
               </div>
+              <div class="promo-disclaimer mt-2">
+                <small>*Discounts only apply to the base rate and not to travel fees.</small>
+              </div>
               <div v-if="promoValid" class="valid-feedback d-block">
                 <i class="bi bi-check-circle-fill me-1"></i>
                 Promo code applied successfully!
@@ -469,6 +472,14 @@ watch([promoCodeData, discount], () => {
 .promo-code-section .form-control:focus {
   border-color: #FF74B7;
   box-shadow: 0 0 0 0.25rem rgba(255, 116, 183, 0.1);
+}
+
+/* Promo disclaimer */
+.promo-disclaimer {
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+  text-align: left;
 }
 
 /* Apply button - Matching Next button design */
