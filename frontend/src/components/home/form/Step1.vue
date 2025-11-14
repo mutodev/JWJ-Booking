@@ -8,8 +8,8 @@
           <p class="intro-text">
             We're thrilled to help you bring the party to life!
           </p>
-          <p class="intro-text">
-            Please fill out a few details to get started, and we'll guide you through selecting the perfect music experience for your event. Let's jam!
+          <p class="intro-text disclaimer-text">
+            Please complete this form to submit your reservation request. Submitting the form does not guarantee your booking; it helps us collect the details needed to confirm availability and rates. Once received, our operations staff will coordinate and reach out to process payment and finalize your booking.
           </p>
         </div>
 
@@ -465,6 +465,18 @@ onMounted(() => {
   margin-bottom: 0.5rem;
 }
 
+.disclaimer-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #6b7280;
+  background-color: #f9fafb;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid #FF74B7;
+  border-radius: 8px;
+  margin-top: 1rem;
+  text-align: left;
+}
+
 .form-control {
   border-radius: 8px;
   font-size: 0.95rem;
@@ -568,6 +580,11 @@ onMounted(() => {
 
   .intro-text {
     font-size: 0.95rem;
+  }
+
+  .disclaimer-text {
+    font-size: 0.85rem;
+    padding: 0.85rem 1rem;
   }
 }
 </style>
