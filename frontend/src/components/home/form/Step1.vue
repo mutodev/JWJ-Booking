@@ -114,65 +114,6 @@
           </div>
         </div>
 
-        <!-- Metropolitan Area -->
-        <div class="mb-3">
-          <div class="form-group">
-            <label for="metropolitan-area" class="form-label">
-              Metropolitan Area <span class="text-danger">*</span>
-            </label>
-            <el-tooltip
-              content="Select the metropolitan area where the event will take place"
-              placement="right"
-              effect="dark"
-              trigger="focus"
-              :hide-after="30000"
-            >
-              <div>
-                <Multiselect
-                  id="metropolitan-area"
-                  v-model="selectedArea"
-                  :options="listAreas"
-                  label="name"
-                  track-by="id"
-                  @select="onSelectArea"
-                />
-              </div>
-            </el-tooltip>
-            <div v-if="errors.areaId" class="text-danger small">
-              {{ errors.areaId }}
-            </div>
-          </div>
-        </div>
-
-        <!-- Zipcode -->
-        <div class="mb-3">
-          <label for="zipcode" class="form-label">
-            Zip Code <span class="text-danger">*</span>
-          </label>
-          <el-tooltip
-            content="Enter the zip code for the event location (4-10 digits)"
-            placement="right"
-            effect="dark"
-            trigger="focus"
-            :hide-after="30000"
-          >
-            <input
-              v-model="form.zipcode"
-              type="text"
-              class="form-control"
-              id="zipcode"
-              @blur="validateField('zipcode')"
-              :disabled="!form.areaId"
-            />
-          </el-tooltip>
-          <div v-if="errors.zipcode" class="text-danger small">
-            {{ errors.zipcode }}
-          </div>
-          <div v-if="!form.areaId" class="text-muted small">
-            Please select a metropolitan area first
-          </div>
-        </div>
-
         <!-- First name -->
         <div class="mb-3">
           <label for="firstName" class="form-label">
@@ -270,6 +211,65 @@
           </el-tooltip>
           <div v-if="errors.phone" class="text-danger small">
             {{ errors.phone }}
+          </div>
+        </div>
+
+        <!-- Metropolitan Area -->
+        <div class="mb-3">
+          <div class="form-group">
+            <label for="metropolitan-area" class="form-label">
+              Metropolitan Area <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Select the metropolitan area where the event will take place"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+              :hide-after="30000"
+            >
+              <div>
+                <Multiselect
+                  id="metropolitan-area"
+                  v-model="selectedArea"
+                  :options="listAreas"
+                  label="name"
+                  track-by="id"
+                  @select="onSelectArea"
+                />
+              </div>
+            </el-tooltip>
+            <div v-if="errors.areaId" class="text-danger small">
+              {{ errors.areaId }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Zipcode -->
+        <div class="mb-3">
+          <label for="zipcode" class="form-label">
+            Zip Code <span class="text-danger">*</span>
+          </label>
+          <el-tooltip
+            content="Enter the zip code for the event location (4-10 digits)"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+            :hide-after="30000"
+          >
+            <input
+              v-model="form.zipcode"
+              type="text"
+              class="form-control"
+              id="zipcode"
+              @blur="validateField('zipcode')"
+              :disabled="!form.areaId"
+            />
+          </el-tooltip>
+          <div v-if="errors.zipcode" class="text-danger small">
+            {{ errors.zipcode }}
+          </div>
+          <div v-if="!form.areaId" class="text-muted small">
+            Please select a metropolitan area first
           </div>
         </div>
       </div>

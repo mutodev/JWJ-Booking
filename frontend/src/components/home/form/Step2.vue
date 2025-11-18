@@ -57,7 +57,7 @@
             <div class="service-info-item">
               <i class="bi bi-clock service-info-item__icon"></i>
               <span class="service-info-item__text">
-                1 hour
+                45 minutes
               </span>
             </div>
             <div class="service-info-item">

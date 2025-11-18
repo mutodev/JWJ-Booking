@@ -124,10 +124,11 @@
               v-if="addon.is_referral_service"
               type="button"
               class="addon-card__button addon-card__button--referral"
-              @click.prevent="handleReferralService(addon)"
+              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
+              @click.prevent="toggleAddon(addon)"
             >
               <i class="bi bi-telephone-fill me-2"></i>
-              <span>Request Information</span>
+              <span>{{ isAddonSelected(addon.id) ? 'Referral Pending' : 'Request Information' }}</span>
             </button>
             <button
               v-else
@@ -203,10 +204,11 @@
               v-if="addon.is_referral_service"
               type="button"
               class="addon-card__button addon-card__button--referral"
-              @click.prevent="handleReferralService(addon)"
+              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
+              @click.prevent="toggleAddon(addon)"
             >
               <i class="bi bi-telephone-fill me-2"></i>
-              <span>Request Information</span>
+              <span>{{ isAddonSelected(addon.id) ? 'Referral Pending' : 'Request Information' }}</span>
             </button>
             <button
               v-else

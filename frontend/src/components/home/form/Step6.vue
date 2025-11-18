@@ -5,8 +5,8 @@
       <div class="success-icon mb-4">
         <i class="bi bi-check-circle-fill text-dark"></i>
       </div>
-      <h2 class="text-dark mb-2">Reservation Confirmed!</h2>
-      <p class="text-muted">Thank you for choosing our services. Your reservation has been successfully submitted.</p>
+      <h2 class="text-dark mb-2">Thank you for your reservation!</h2>
+      <p class="text-muted">We will be in touch with you to confirm availability and send a link for payment.</p>
     </div>
 
     <!-- Reservation Details Card -->
