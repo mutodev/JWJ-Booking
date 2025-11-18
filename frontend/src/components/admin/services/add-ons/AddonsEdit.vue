@@ -69,7 +69,7 @@
 
                 <!-- Base price -->
                 <div class="col-md-6 mb-3">
-                  <label for="edit_base_price" class="form-label required">Base Price (USD)</label>
+                  <label for="edit_base_price" class="form-label" :class="{ 'required': !is_referral_service }">Base Price (USD)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -77,9 +77,31 @@
                     id="edit_base_price"
                     v-model="base_price"
                     placeholder="0.00"
-                    required
+                    :required="!is_referral_service"
+                    :disabled="is_referral_service"
                   />
                   <small class="text-danger small">{{ basePriceError }}</small>
+                </div>
+              </div>
+
+              <!-- Is Referral Service -->
+              <div class="row">
+                <div class="col-md-12 mb-3">
+                  <div class="form-check form-switch">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="edit_is_referral_service"
+                      v-model="is_referral_service"
+                    />
+                    <label class="form-check-label" for="edit_is_referral_service">
+                      <strong>{{ is_referral_service ? 'Referral Service' : 'Regular Addon' }}</strong>
+                    </label>
+                  </div>
+                  <small class="form-text text-muted">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Referral services are informational only and don't have a direct price. They show "Referral Pending" in the booking form.
+                  </small>
                 </div>
               </div>
             </div>
@@ -244,13 +266,19 @@ const schema = yup.object({
   base_price: yup
     .number()
     .typeError("Base price must be a number")
-    .required("Base price is required")
-    .min(0, "Price must be >= 0"),
+    .when('is_referral_service', {
+      is: false,
+      then: (schema) => schema.required("Base price is required").min(0, "Price must be >= 0"),
+      otherwise: (schema) => schema.nullable().min(0, "Price must be >= 0"),
+    }),
   estimated_duration_minutes: yup
     .number()
     .typeError("Duration must be a number")
     .required("Duration is required")
     .min(1, "Must be at least 1 minute"),
+  is_referral_service: yup
+    .boolean()
+    .default(false),
 });
 
 // Form setup with validation
@@ -264,6 +292,7 @@ const { value: description, errorMessage: descriptionError } = useField("descrip
 const { value: price_type, errorMessage: priceTypeError } = useField("price_type");
 const { value: base_price, errorMessage: basePriceError } = useField("base_price");
 const { value: estimated_duration_minutes, errorMessage: durationError } = useField("estimated_duration_minutes");
+const { value: is_referral_service } = useField("is_referral_service");
 
 // Additional state management
 const is_active = ref(true);
@@ -346,6 +375,7 @@ watch(
         price_type: newData.price_type || "",
         base_price: newData.base_price || null,
         estimated_duration_minutes: newData.estimated_duration_minutes || null,
+        is_referral_service: newData.is_referral_service || false,
       });
 
       // Cargar campos adicionales

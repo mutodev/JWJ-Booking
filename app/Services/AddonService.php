@@ -263,7 +263,7 @@ class AddonService
         $sanitized = [];
         $allowedFields = [
             'name', 'description', 'price_type', 'base_price',
-            'estimated_duration_minutes', 'is_active'
+            'estimated_duration_minutes', 'is_active', 'is_referral_service'
         ];
 
         foreach ($allowedFields as $field) {
@@ -284,6 +284,7 @@ class AddonService
                         $sanitized[$field] = (float)$value;
                         break;
                     case 'is_active':
+                    case 'is_referral_service':
                         $sanitized[$field] = filter_var($value, FILTER_VALIDATE_BOOLEAN);
                         break;
                     default:
