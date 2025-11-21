@@ -218,10 +218,10 @@
         <div class="mb-3">
           <div class="form-group">
             <label for="metropolitan-area" class="form-label">
-              Metropolitan Area <span class="text-danger">*</span>
+              Location <span class="text-danger">*</span>
             </label>
             <el-tooltip
-              content="Select the metropolitan area where the event will take place"
+              content="Select the location where the event will take place"
               placement="right"
               effect="dark"
               trigger="focus"
