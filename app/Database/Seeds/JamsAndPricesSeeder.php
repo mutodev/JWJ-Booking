@@ -234,6 +234,7 @@ class JamsAndPricesSeeder extends Seeder
                                 'service_id' => $serviceId,
                                 'county_id' => $county->id,
                                 'performers_count' => $performers,
+                                'img' => '/img/default.jpg',
                                 'amount' => $finalAmount,
                                 'is_available' => 1,
                                 'notes' => $notes ?: null,
