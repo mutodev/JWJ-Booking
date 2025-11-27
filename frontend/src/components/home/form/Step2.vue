@@ -27,7 +27,7 @@
         <!-- Imagen -->
         <div class="service-card__image-wrapper">
           <img
-            :src="service.img || '/img/default.jpg'"
+            :src="getImageUrl(service.img)"
             class="service-card__image"
             :alt="service.name"
             @error="handleImageError"
@@ -125,6 +125,14 @@ const services = ref([]);
 const selectedService = ref(null);
 const defaultServiceImage = "/img/default.jpg";
 
+function getImageUrl(img) {
+  if (!img) return defaultServiceImage;
+  // If already has leading slash, return as is
+  if (img.startsWith('/')) return img;
+  // Otherwise add leading slash for proper URL resolution
+  return '/' + img;
+}
+
 // Zone messages based on zipcode zone_type
 const zoneType = computed(() => {
   return props.zipcode?.zone_type || 'standard';
@@ -196,6 +204,7 @@ function emitData() {
 
 function handleImageError(event) {
   event.target.src = defaultServiceImage;
+  event.target.onerror = null; // Prevent infinite loop if default also fails
 }
 
 watch(
