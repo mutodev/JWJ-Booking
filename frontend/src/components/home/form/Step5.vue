@@ -43,8 +43,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <input
                 v-model="form.fullAddress"
                 type="text"
@@ -68,8 +67,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <textarea
                 v-model="form.instructions"
                 class="form-control"
@@ -97,8 +95,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <el-time-picker
                 v-model="form.startTime"
                 placeholder="Start time"
@@ -122,8 +119,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <el-time-picker
                 v-model="form.entertainmentStartTime"
                 placeholder="Start time"
@@ -151,8 +147,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <input
                 v-model="form.birthdayChildName"
                 type="text"
@@ -176,8 +171,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <input
                 v-model="form.childAge"
                 type="text"
@@ -202,8 +196,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <input
                 v-model="form.ageRange"
                 type="text"
@@ -227,8 +220,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <textarea
                 v-model="form.songRequests"
                 class="form-control"
@@ -252,8 +244,7 @@
               placement="right"
               effect="dark"
               trigger="focus"
-              :hide-after="30000"
-            >
+                          >
               <select
                 v-model="form.happyBirthdayRequest"
                 class="form-control"

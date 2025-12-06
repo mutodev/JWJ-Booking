@@ -119,10 +119,12 @@ class ServicePriceRepository
                 service_prices.performers_count,
                 service_prices.img,
                 service_prices.amount,
+                service_prices.travel_fee,
                 service_prices.extra_child_fee,
                 service_prices.range_age,
                 service_prices.notes,
-                services.name
+                services.name,
+                services.description
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->where('service_prices.county_id', $countyId)
@@ -145,11 +147,13 @@ class ServicePriceRepository
                 service_prices.performers_count,
                 service_prices.img,
                 service_prices.amount,
+                service_prices.travel_fee,
                 service_prices.extra_child_fee,
                 service_prices.range_age,
                 service_prices.notes,
                 services.name,
-                services.id as service_id
+                services.id as service_id,
+                services.description
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->join("counties", "counties.id = service_prices.county_id", "left")
@@ -157,6 +161,39 @@ class ServicePriceRepository
             ->where('service_prices.is_available', true)
             ->where('services.is_active', true)
             ->groupBy('service_prices.id')
+            ->findAll();
+    }
+
+    /**
+     * Obtener los precios del servicio por zipcode
+     * Consulta: zipcode -> city -> county -> service_prices
+     *
+     * @return ServicePrice[]
+     */
+    public function getAllByZipcode($zipcodeId)
+    {
+        return $this->model
+            ->select("
+                service_prices.id,
+                service_prices.county_id,
+                service_prices.performers_count,
+                service_prices.img,
+                service_prices.amount,
+                service_prices.travel_fee,
+                service_prices.extra_child_fee,
+                service_prices.range_age,
+                service_prices.notes,
+                services.name,
+                services.id as service_id,
+                services.description
+            ")
+            ->join("services", "services.id = service_prices.service_id", "left")
+            ->join("counties", "counties.id = service_prices.county_id", "left")
+            ->join("cities", "cities.county_id = counties.id", "left")
+            ->join("zipcodes", "zipcodes.city_id = cities.id", "left")
+            ->where('zipcodes.id', $zipcodeId)
+            ->where('service_prices.is_available', true)
+            ->where('services.is_active', true)
             ->findAll();
     }
 }

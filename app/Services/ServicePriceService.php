@@ -49,6 +49,17 @@ class ServicePriceService
     }
 
     /**
+     * Obtiene los precios del servicio por zipcode
+     * Consulta: zipcode -> city -> county -> service_prices
+     * @param string $zipcodeId ID del zipcode
+     * @return array Lista de precios filtrados por county del zipcode
+     */
+    public function getAllByZipcode($zipcodeId)
+    {
+        return $this->repo->getAllByZipcode($zipcodeId);
+    }
+
+    /**
      * Obtiene un precio de servicio por ID
      * @param string $id ID del precio de servicio
      * @return object Precio de servicio encontrado
@@ -219,7 +230,7 @@ class ServicePriceService
         $sanitized = [];
         $allowedFields = [
             'service_id', 'county_id', 'performers_count', 'amount',
-            'is_available', 'notes', 'extra_child_fee', 'range_age'
+            'travel_fee', 'is_available', 'notes', 'extra_child_fee', 'range_age'
         ];
 
         foreach ($allowedFields as $field) {
@@ -237,6 +248,7 @@ class ServicePriceService
                         $sanitized[$field] = (int)$value;
                         break;
                     case 'amount':
+                    case 'travel_fee':
                     case 'extra_child_fee':
                         $sanitized[$field] = (float)$value;
                         break;

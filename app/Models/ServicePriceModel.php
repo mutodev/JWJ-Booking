@@ -19,6 +19,7 @@ class ServicePriceModel extends Model
         'img',
         'performers_count',
         'amount',
+        'travel_fee',
         'min_duration_hours',
         'is_available',
         'notes',

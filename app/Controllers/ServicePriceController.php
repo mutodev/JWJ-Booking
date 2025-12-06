@@ -61,14 +61,15 @@ class ServicePriceController extends ResourceController
     }
 
     /**
-     * Obtener los precios del servicio por metropolitan area
+     * Obtener los precios del servicio por zipcode
+     * Consulta: zipcode -> city -> county -> service_prices
      */
-    public function getAllByMetropolitanArea($metropolitanAreaId)
+    public function getAllByMetropolitanArea($zipcodeId)
     {
         try {
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON($this->service->getAllByMetropolitanArea($metropolitanAreaId));
+                ->setJSON($this->service->getAllByZipcode($zipcodeId));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() ?: 500)

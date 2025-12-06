@@ -49,8 +49,10 @@
               </span>
             </div>
             <div class="service-info-item">
-              <i class="bi bi-cake2 service-info-item__icon"></i>
-              <span class="service-info-item__text">{{ service.age_range || service.range_age || 'All ages' }}</span>
+              <i class="bi bi-car-front-fill service-info-item__icon"></i>
+              <span class="service-info-item__text">
+                Travel Fee: ${{ parseFloat(service.travel_fee || 0).toFixed(2) }}
+              </span>
             </div>
 
             <!-- Fila 2 -->
@@ -66,7 +68,7 @@
             </div>
           </div>
 
-          <!-- Descripción -->
+          <!-- Descripción del servicio -->
           <p class="service-card__description" v-if="service.description || service.notes">
             {{ service.description || service.notes }}
           </p>
@@ -162,7 +164,7 @@ const zoneMessage = computed(() => {
 });
 
 async function loadServices() {
-  if (!props.metropolitanArea) return;
+  if (!props.zipcode?.id) return;
 
   // If zone is not available, don't load services
   if (zoneType.value === 'not_available') {
@@ -172,7 +174,7 @@ async function loadServices() {
   }
 
   try {
-    const response = await api.get(`/home/services/${props.metropolitanArea}`);
+    const response = await api.get(`/home/services/${props.zipcode.id}`);
     const servicesList = Array.isArray(response) ? response : (response?.data || []);
     services.value = servicesList;
 
@@ -208,9 +210,9 @@ function handleImageError(event) {
 }
 
 watch(
-  () => [props.metropolitanArea, props.active],
-  ([metropolitanArea, active]) => {
-    if (active && metropolitanArea) {
+  () => [props.zipcode, props.active],
+  ([zipcode, active]) => {
+    if (active && zipcode?.id) {
       loadServices();
     }
   },

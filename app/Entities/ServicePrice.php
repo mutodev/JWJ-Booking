@@ -15,6 +15,7 @@ class ServicePrice extends Entity
         'img' => 'string',
         'performers_count' => 'integer',
         'amount' => 'float',
+        'travel_fee' => 'float',
         'is_available' => 'boolean',
         'extra_child_fee' => 'float',
         'range_age' => 'string'

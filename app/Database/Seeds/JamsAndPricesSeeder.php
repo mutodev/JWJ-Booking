@@ -7,7 +7,7 @@ use Ramsey\Uuid\Uuid;
 
 /**
  * Seeder para insertar los Jams (Services) y sus precios por county
- * basado en el archivo RESERVAS ONLINE.xlsx
+ * basado en el archivo RESERVAS ONLINE (3).xlsx
  *
  * Este seeder:
  * - Elimina todos los service_prices existentes
@@ -31,11 +31,11 @@ class JamsAndPricesSeeder extends Seeder
         'Big Kids Party' => 'e82a5d2e-8a6f-4bf3-a8a0-539e29478fcd',
     ];
 
-    // Precios base para todos los servicios
+    // Precios base para todos los servicios (amount)
     private array $basePrices = [
         'Classic Jam' => ['performers' => 1, 'base' => 350],
         'Classic Jam Duo' => ['performers' => 2, 'base' => 475],
-        'Junior Jammer Mashup' => ['performers' => 2, 'base' => 525],
+        'Junior Jammer Mashup' => ['performers' => 2, 'base' => 675],
         'Eras Jam' => ['performers' => 2, 'base' => 675],
         'Big Kids Party' => ['performers' => 2, 'base' => 675],
     ];
@@ -112,31 +112,31 @@ class JamsAndPricesSeeder extends Seeder
             [
                 'id' => $this->serviceIds['Classic Jam'],
                 'name' => 'Classic Jam',
-                'description' => 'Classic Jam experience with 1 performer. Perfect for birthday parties and events.',
+                'description' => 'For Ages 0-4. Classic Jam experience with 1 performer. Perfect for birthday parties and events.',
                 'is_active' => true,
             ],
             [
                 'id' => $this->serviceIds['Classic Jam Duo'],
                 'name' => 'Classic Jam Duo',
-                'description' => 'Classic Jam experience with 2 performers for an enhanced experience.',
+                'description' => 'For Ages 0-4. Classic Jam experience with 2 performers for an enhanced experience.',
                 'is_active' => true,
             ],
             [
                 'id' => $this->serviceIds['Junior Jammer Mashup'],
                 'name' => 'Junior Jammer Mashup',
-                'description' => 'Special mashup experience for younger kids with 2 performers.',
+                'description' => 'For Ages 5-6. Special mashup experience for younger kids with 2 performers.',
                 'is_active' => true,
             ],
             [
                 'id' => $this->serviceIds['Eras Jam'],
                 'name' => 'Eras Jam',
-                'description' => 'Journey through different music eras with 2 performers.',
+                'description' => 'For Ages 6-10. Taylor Swift Inspired Set - Journey through different music eras with 2 performers.',
                 'is_active' => true,
             ],
             [
                 'id' => $this->serviceIds['Big Kids Party'],
                 'name' => 'Big Kids Party',
-                'description' => 'High-energy party experience for older kids with 2 performers.',
+                'description' => 'For Ages 7-10. High-energy party experience for older kids with 2 performers.',
                 'is_active' => true,
             ],
         ];
@@ -178,8 +178,6 @@ class JamsAndPricesSeeder extends Seeder
             foreach ($counties as $countyConfig) {
                 $countyNames = $countyConfig['counties'];
                 $fees = $countyConfig['fees'];
-                $minHours = $countyConfig['min_hours'] ?? 1;
-                $isPackage = $countyConfig['is_package'] ?? false;
 
                 foreach ($countyNames as $countyName) {
                     // Buscar el county
@@ -195,7 +193,7 @@ class JamsAndPricesSeeder extends Seeder
 
                     // Insertar precios para cada servicio
                     foreach ($fees as $serviceName => $travelFee) {
-                        if ($travelFee === null || $travelFee === 'no disponible') {
+                        if ($travelFee === null) {
                             continue; // Servicio no disponible en esta zona
                         }
 
@@ -204,9 +202,6 @@ class JamsAndPricesSeeder extends Seeder
 
                         $basePrice = $this->basePrices[$serviceName]['base'];
                         $performers = $this->basePrices[$serviceName]['performers'];
-
-                        // Si es paquete (2hrs mínimo), el precio ya incluye todo
-                        $finalAmount = $isPackage ? $travelFee : ($basePrice + $travelFee);
 
                         try {
                             // Verificar si ya existe
@@ -221,28 +216,22 @@ class JamsAndPricesSeeder extends Seeder
                                 continue;
                             }
 
-                            $notes = '';
-                            if ($minHours > 1) {
-                                $notes = "Mínimo {$minHours} horas de servicio. ";
-                            }
-                            if ($isPackage) {
-                                $notes .= "Precio de paquete completo incluyendo sistema de sonido.";
-                            }
-
                             $this->db->table('service_prices')->insert([
                                 'id' => Uuid::uuid4()->toString(),
                                 'service_id' => $serviceId,
                                 'county_id' => $county->id,
                                 'performers_count' => $performers,
                                 'img' => 'img/default.jpg',
-                                'amount' => $finalAmount,
+                                'amount' => $basePrice,
+                                'travel_fee' => $travelFee,
                                 'is_available' => 1,
-                                'notes' => $notes ?: null,
+                                'notes' => null,
                                 'created_at' => date('Y-m-d H:i:s'),
                             ]);
                             $count++;
                         } catch (\Exception $e) {
                             $this->errors++;
+                            echo "      ⚠️ Error: " . $e->getMessage() . "\n";
                         }
                     }
                 }
@@ -259,6 +248,17 @@ class JamsAndPricesSeeder extends Seeder
             // MIAMI, BOCA AND PALM BEACH
             // =====================
             'MIAMI, BOCA AND PALM BEACH' => [
+                // Palm Beach County - $50/$75 travel fee
+                [
+                    'counties' => ['Palm Beach County'],
+                    'fees' => [
+                        'Classic Jam' => 50,
+                        'Classic Jam Duo' => 75,
+                        'Junior Jammer Mashup' => 75,
+                        'Eras Jam' => 75,
+                        'Big Kids Party' => 75,
+                    ],
+                ],
                 // Broward County - $0 travel fee
                 [
                     'counties' => ['Broward County'],
@@ -281,17 +281,6 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => 0,
                     ],
                 ],
-                // Palm Beach County - $50/$75 travel fee
-                [
-                    'counties' => ['Palm Beach County'],
-                    'fees' => [
-                        'Classic Jam' => 50,
-                        'Classic Jam Duo' => 75,
-                        'Junior Jammer Mashup' => 75,
-                        'Eras Jam' => 75,
-                        'Big Kids Party' => 75,
-                    ],
-                ],
             ],
 
             // =====================
@@ -309,7 +298,7 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => 0,
                     ],
                 ],
-                // Queens, Kings County - $50/$75 travel fee
+                // Queens County, Kings County - $50/$75 travel fee
                 [
                     'counties' => ['Queens County', 'Kings County'],
                     'fees' => [
@@ -320,7 +309,7 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => 75,
                     ],
                 ],
-                // Richmond, Bronx County - $150/$200 travel fee
+                // Richmond County, Bronx County - $150/$200 travel fee
                 [
                     'counties' => ['Richmond County', 'Bronx County'],
                     'fees' => [
@@ -342,17 +331,15 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => 250,
                     ],
                 ],
-                // Orange, Dutchess, Suffolk - 2hrs mínimo (paquete)
+                // Orange, Dutchess, Suffolk - $1075/$1675/$1825 travel fee (2hrs min)
                 [
                     'counties' => ['Orange County', 'Dutchess County', 'Suffolk County'],
-                    'min_hours' => 2,
-                    'is_package' => true,
                     'fees' => [
                         'Classic Jam' => 1075,
                         'Classic Jam Duo' => 1675,
-                        'Junior Jammer Mashup' => null, // No disponible
+                        'Junior Jammer Mashup' => 1675,
                         'Eras Jam' => 1825,
-                        'Big Kids Party' => null, // No disponible
+                        'Big Kids Party' => 1825,
                     ],
                 ],
             ],
@@ -361,7 +348,7 @@ class JamsAndPricesSeeder extends Seeder
             // NEW JERSEY
             // =====================
             'NEW JERSEY' => [
-                // Hudson County (Hoboken, Jersey City, Weehawken) - $150/$200 travel fee
+                // Hudson County - $150/$200 travel fee
                 [
                     'counties' => ['Hudson County'],
                     'fees' => [
@@ -383,17 +370,15 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => 250,
                     ],
                 ],
-                // Burlington, Camden, Hunterdon, Mercer, Morris, Ocean, Somerset - 2hrs mínimo (paquete)
+                // Burlington, Camden, Hunterdon, Mercer, Morris, Ocean, Somerset - $1075/$1675/$1825 travel fee (2hrs min)
                 [
                     'counties' => ['Burlington County', 'Camden County', 'Hunterdon County', 'Mercer County', 'Morris County', 'Ocean County', 'Somerset County'],
-                    'min_hours' => 2,
-                    'is_package' => true,
                     'fees' => [
                         'Classic Jam' => 1075,
                         'Classic Jam Duo' => 1675,
-                        'Junior Jammer Mashup' => null,
+                        'Junior Jammer Mashup' => 1675,
                         'Eras Jam' => 1825,
-                        'Big Kids Party' => null,
+                        'Big Kids Party' => 1825,
                     ],
                 ],
             ],
@@ -413,7 +398,7 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => 0,
                     ],
                 ],
-                // Ventura County - $50/$75 travel fee
+                // Ventura County (21-40 millas) - $50/$75 travel fee
                 [
                     'counties' => ['Ventura County'],
                     'fees' => [
@@ -424,17 +409,15 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => 75,
                     ],
                 ],
-                // Orange County, Riverside - 2hrs mínimo (paquete)
+                // Orange, Riverside (41-90 millas, 2hrs min) - $975/$1575/$1775 travel fee
                 [
                     'counties' => ['Orange County', 'Riverside County'],
-                    'min_hours' => 2,
-                    'is_package' => true,
                     'fees' => [
                         'Classic Jam' => 975,
                         'Classic Jam Duo' => 1575,
-                        'Junior Jammer Mashup' => null,
+                        'Junior Jammer Mashup' => 1575,
                         'Eras Jam' => 1775,
-                        'Big Kids Party' => null,
+                        'Big Kids Party' => 1775,
                     ],
                 ],
             ],
@@ -443,7 +426,7 @@ class JamsAndPricesSeeder extends Seeder
             // WASHINGTON DC
             // =====================
             'WASHINGTON DC' => [
-                // DC, Arlington, Fairfax, Loudoun, Virginia, Maryland - $0 travel fee
+                // DC zones (NW, NE, SW, SE), Virginia, Maryland - $0 travel fee
                 [
                     'counties' => ['Northwest (NW)', 'Northeast (NE)', 'Southwest (SW)', 'Southeast (SE)', 'Virginia', 'Maryland'],
                     'fees' => [
@@ -460,18 +443,18 @@ class JamsAndPricesSeeder extends Seeder
             // CHICAGO
             // =====================
             'CHICAGO' => [
-                // Cook County (Chicago, IL) - $0 travel fee
+                // Chicago, IL (Cook County hasta 13 millas) - $0 travel fee
                 [
                     'counties' => ['Chicago, IL'],
                     'fees' => [
                         'Classic Jam' => 0,
                         'Classic Jam Duo' => 0,
                         'Junior Jammer Mashup' => 0,
-                        'Eras Jam' => null, // No disponible
-                        'Big Kids Party' => null, // No disponible
+                        'Eras Jam' => null,
+                        'Big Kids Party' => null,
                     ],
                 ],
-                // DuPage, Lake, Will - $50/$75 travel fee
+                // DuPage, Lake, Will (15-20 millas) - $50/$75 travel fee
                 [
                     'counties' => ['DuPage County', 'Lake County', 'Will County'],
                     'fees' => [
@@ -482,15 +465,13 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => null,
                     ],
                 ],
-                // Kendall, McHenry, Kane, Grundy, DeKalb, Kankakee - 2hrs mínimo (paquete)
+                // Kendall, McHenry, Kane, Grundy, DeKalb, Kankakee - $975/$1575 travel fee (2hrs min)
                 [
                     'counties' => ['Kendall County', 'McHenry County', 'Kane County', 'Grundy County', 'DeKalb County', 'Kankakee County'],
-                    'min_hours' => 2,
-                    'is_package' => true,
                     'fees' => [
                         'Classic Jam' => 975,
                         'Classic Jam Duo' => 1575,
-                        'Junior Jammer Mashup' => null,
+                        'Junior Jammer Mashup' => 1575,
                         'Eras Jam' => null,
                         'Big Kids Party' => null,
                     ],
@@ -508,8 +489,8 @@ class JamsAndPricesSeeder extends Seeder
                         'Classic Jam' => 0,
                         'Classic Jam Duo' => 0,
                         'Junior Jammer Mashup' => 0,
-                        'Eras Jam' => null, // No disponible
-                        'Big Kids Party' => null, // No disponible
+                        'Eras Jam' => null,
+                        'Big Kids Party' => null,
                     ],
                 ],
                 // Williamson, Rutherford, Wilson, Sumner, Cheatham, Robertson, Dickson, Maury - $50/$75 travel fee
@@ -523,15 +504,13 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => null,
                     ],
                 ],
-                // Trousdale County - 2hrs mínimo (paquete)
+                // Trousdale County - $975/$1575 travel fee (2hrs min)
                 [
                     'counties' => ['Trousdale County'],
-                    'min_hours' => 2,
-                    'is_package' => true,
                     'fees' => [
                         'Classic Jam' => 975,
                         'Classic Jam Duo' => 1575,
-                        'Junior Jammer Mashup' => null,
+                        'Junior Jammer Mashup' => 1575,
                         'Eras Jam' => null,
                         'Big Kids Party' => null,
                     ],
@@ -542,18 +521,18 @@ class JamsAndPricesSeeder extends Seeder
             // SAN FRANCISCO
             // =====================
             'SAN FRANCISCO' => [
-                // San Francisco County, Marin County, Oakland - $0 travel fee (solo Classic Jam)
+                // San Francisco, Marin, Oakland, Alameda - $0 travel fee (solo Classic Jam)
                 [
-                    'counties' => ['San Francisco County', 'Marin County, CA', 'Oakland, CA'],
+                    'counties' => ['San Francisco County', 'Marin County, CA', 'Oakland, CA', 'Alameda, CA'],
                     'fees' => [
                         'Classic Jam' => 0,
-                        'Classic Jam Duo' => null, // No disponible
+                        'Classic Jam Duo' => null,
                         'Junior Jammer Mashup' => null,
                         'Eras Jam' => null,
                         'Big Kids Party' => null,
                     ],
                 ],
-                // San Mateo County - $50 travel fee (solo Classic Jam)
+                // San Mateo - $50 travel fee (solo Classic Jam)
                 [
                     'counties' => ['San Mateo County, CA'],
                     'fees' => [
@@ -564,22 +543,11 @@ class JamsAndPricesSeeder extends Seeder
                         'Big Kids Party' => null,
                     ],
                 ],
-                // Santa Clara County - $150 travel fee (solo Classic Jam)
+                // Santa Clara - $150 travel fee (solo Classic Jam)
                 [
                     'counties' => ['Santa Clara County, CA'],
                     'fees' => [
                         'Classic Jam' => 150,
-                        'Classic Jam Duo' => null,
-                        'Junior Jammer Mashup' => null,
-                        'Eras Jam' => null,
-                        'Big Kids Party' => null,
-                    ],
-                ],
-                // Alameda - $0 travel fee (solo Classic Jam)
-                [
-                    'counties' => ['Alameda, CA'],
-                    'fees' => [
-                        'Classic Jam' => 0,
                         'Classic Jam Duo' => null,
                         'Junior Jammer Mashup' => null,
                         'Eras Jam' => null,

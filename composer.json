@@ -14,6 +14,7 @@
         "codeigniter4/framework": "^4.0",
         "firebase/php-jwt": "^6.11",
         "getbrevo/brevo-php": "^2.0",
+        "phpoffice/phpspreadsheet": "^5.3",
         "ramsey/uuid": "^4.9"
     },
     "require-dev": {
