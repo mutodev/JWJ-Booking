@@ -19,6 +19,7 @@ import PostalCode from "@/components/admin/areas/postal-code/PostalCode.vue";
 import JamTypes from "@/components/admin/services/jam-types/JamTypes.vue";
 import Prices from "@/components/admin/services/prices/Prices.vue";
 import AddOns from "@/components/admin/services/add-ons/AddOns.vue";
+import TypeAddons from "@/components/admin/services/type-addons/TypeAddons.vue";
 import PromoCodes from "@/components/admin/promo-codes/PromoCodes.vue";
 import AbandonedCarts from "@/components/admin/abandoned-carts/AbandonedCarts.vue";
 import NotFound from "@/components/not-found/NotFound.vue";
@@ -65,6 +66,7 @@ const routes = [
         children: [
           { path: "jam-types", component: JamTypes },
           { path: "prices", component: Prices },
+          { path: "type-addons", component: TypeAddons },
           { path: "addons", component: AddOns },
         ],
       },

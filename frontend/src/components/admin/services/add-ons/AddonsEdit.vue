@@ -9,11 +9,28 @@
 
         <div class="modal-body">
           <form @submit.prevent="submitForm">
-            <!-- 📝 BASIC INFO -->
+            <!-- Basic Information -->
             <div class="form-section mb-4">
               <h6 class="section-title">
                 <i class="bi bi-info-circle me-2"></i>Basic Information
               </h6>
+
+              <!-- Type Addon -->
+              <div class="mb-3">
+                <label for="edit_type_addon_id" class="form-label required">Addon Type</label>
+                <select
+                  class="form-select"
+                  id="edit_type_addon_id"
+                  v-model="type_addon_id"
+                  required
+                >
+                  <option value="">Select addon type</option>
+                  <option v-for="type in typeAddons" :key="type.id" :value="type.id">
+                    {{ type.name }}
+                  </option>
+                </select>
+                <small class="text-danger small">{{ typeAddonIdError }}</small>
+              </div>
 
               <!-- Name -->
               <div class="mb-3">
@@ -28,45 +45,15 @@
                 />
                 <small class="text-danger small">{{ nameError }}</small>
               </div>
-
-              <!-- Description -->
-              <div class="mb-3">
-                <label for="edit_description" class="form-label required">Description</label>
-                <textarea
-                  id="edit_description"
-                  class="form-control"
-                  v-model="description"
-                  placeholder="Enter addon description"
-                  rows="3"
-                  required
-                ></textarea>
-                <small class="text-danger small">{{ descriptionError }}</small>
-              </div>
             </div>
 
-            <!-- 💰 PRICING & TYPE -->
+            <!-- Pricing -->
             <div class="form-section mb-4">
               <h6 class="section-title">
-                <i class="bi bi-currency-dollar me-2"></i>Pricing & Type
+                <i class="bi bi-currency-dollar me-2"></i>Pricing
               </h6>
 
               <div class="row">
-                <!-- Price type -->
-                <div class="col-md-6 mb-3">
-                  <label for="edit_price_type" class="form-label required">Price Type</label>
-                  <select
-                    class="form-select"
-                    id="edit_price_type"
-                    v-model="price_type"
-                    required
-                  >
-                    <option value="">Select price type</option>
-                    <option value="standard">Standard</option>
-                    <option value="jukebox">Jukebox</option>
-                  </select>
-                  <small class="text-danger small">{{ priceTypeError }}</small>
-                </div>
-
                 <!-- Base price -->
                 <div class="col-md-6 mb-3">
                   <label for="edit_base_price" class="form-label" :class="{ 'required': !is_referral_service }">Base Price (USD)</label>
@@ -82,11 +69,27 @@
                   />
                   <small class="text-danger small">{{ basePriceError }}</small>
                 </div>
+
+                <!-- Duración estimada -->
+                <div class="col-md-6 mb-3">
+                  <label for="edit_estimated_duration_minutes" class="form-label">
+                    Estimated Duration (minutes)
+                  </label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="edit_estimated_duration_minutes"
+                    v-model="estimated_duration_minutes"
+                    placeholder="Enter duration in minutes"
+                    min="1"
+                  />
+                  <small class="text-danger small">{{ durationError }}</small>
+                </div>
               </div>
 
-              <!-- Is Referral Service -->
               <div class="row">
-                <div class="col-md-12 mb-3">
+                <!-- Is Referral Service -->
+                <div class="col-md-6 mb-3">
                   <div class="form-check form-switch">
                     <input
                       class="form-check-input"
@@ -100,34 +103,8 @@
                   </div>
                   <small class="form-text text-muted">
                     <i class="bi bi-info-circle me-1"></i>
-                    Referral services are informational only and don't have a direct price. They show "Referral Pending" in the booking form.
+                    Referral services don't have a direct price.
                   </small>
-                </div>
-              </div>
-            </div>
-
-            <!-- ⏱️ DURATION & IMAGE -->
-            <div class="form-section mb-4">
-              <h6 class="section-title">
-                <i class="bi bi-clock me-2"></i>Duration & Media
-              </h6>
-
-              <div class="row">
-                <!-- Duración estimada -->
-                <div class="col-md-6 mb-3">
-                  <label for="edit_estimated_duration_minutes" class="form-label required">
-                    Estimated Duration (minutes)
-                  </label>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="edit_estimated_duration_minutes"
-                    v-model="estimated_duration_minutes"
-                    placeholder="Enter duration in minutes"
-                    min="1"
-                    required
-                  />
-                  <small class="text-danger small">{{ durationError }}</small>
                 </div>
 
                 <!-- Active state -->
@@ -141,45 +118,6 @@
                     <option :value="true">Active</option>
                     <option :value="false">Inactive</option>
                   </select>
-                  <small class="text-danger small">{{ isActiveError }}</small>
-                </div>
-              </div>
-
-              <!-- Imagen actual y nueva -->
-              <div class="mb-3">
-                <label for="edit_image" class="form-label">Image</label>
-
-                <!-- Imagen actual -->
-                <div v-if="currentImage" class="mb-2">
-                  <p class="text-muted small">Current image:</p>
-                  <img
-                    :src="currentImage"
-                    alt="Current addon image"
-                    class="img-thumbnail admin-image-preview"
-                  />
-                </div>
-
-                <!-- Input para nueva imagen -->
-                <input
-                  type="file"
-                  class="form-control"
-                  id="edit_image"
-                  @change="onImageSelected"
-                  accept="image/jpeg,image/jpg,image/png,image/gif"
-                />
-                <small class="form-text text-muted">
-                  Optional. Max 2MB. Formats: JPG, PNG, GIF. Leave empty to keep current image.
-                </small>
-                <small class="text-danger small">{{ imageError }}</small>
-
-                <!-- Preview de nueva imagen -->
-                <div v-if="imagePreview" class="mt-2">
-                  <p class="text-muted small">New image preview:</p>
-                  <img
-                    :src="imagePreview"
-                    alt="New image preview"
-                    class="img-thumbnail admin-image-preview"
-                  />
                 </div>
               </div>
             </div>
@@ -212,19 +150,6 @@
 /**
  * Addon Edit Modal Component
  *
- * Modal form for editing existing addons with complete validation and image upload.
- * All fields are required and validated using Yup schema.
- * Supports updating images while preserving existing ones.
- *
- * Features:
- * - Complete form validation with Yup
- * - Image upload with preview and validation
- * - Display current image with option to replace
- * - Organized form sections for better UX
- * - Smart FormData vs JSON submission
- * - Auto-population from existing data
- * - Error handling and user feedback
- *
  * @props show - Boolean to control modal visibility
  * @props data - Existing addon data to edit
  * @emits close - When modal should be closed
@@ -232,7 +157,7 @@
  */
 
 import { useForm, useField } from "vee-validate";
-import { watch, ref } from "vue";
+import { watch, ref, onMounted } from "vue";
 import api from "@/services/axios";
 import * as yup from "yup";
 
@@ -245,24 +170,19 @@ const props = defineProps({
 
 // Loading state
 const loading = ref(false);
+const typeAddons = ref([]);
 
 /**
  * Yup validation schema for addon editing
- * All fields are required when editing addons
  */
 const schema = yup.object({
+  type_addon_id: yup
+    .string()
+    .required("Addon type is required"),
   name: yup
     .string()
     .required("Addon name is required")
     .max(100, "Maximum 100 characters"),
-  description: yup
-    .string()
-    .required("Description is required")
-    .max(255, "Maximum 255 characters"),
-  price_type: yup
-    .string()
-    .required("Price type is required")
-    .oneOf(["standard", "jukebox"], "Price type must be standard or jukebox"),
   base_price: yup
     .number()
     .typeError("Base price must be a number")
@@ -274,7 +194,7 @@ const schema = yup.object({
   estimated_duration_minutes: yup
     .number()
     .typeError("Duration must be a number")
-    .required("Duration is required")
+    .nullable()
     .min(1, "Must be at least 1 minute"),
   is_referral_service: yup
     .boolean()
@@ -287,78 +207,24 @@ const { handleSubmit, setValues, resetForm } = useForm({
 });
 
 // Form fields with validation
+const { value: type_addon_id, errorMessage: typeAddonIdError } = useField("type_addon_id");
 const { value: name, errorMessage: nameError } = useField("name");
-const { value: description, errorMessage: descriptionError } = useField("description");
-const { value: price_type, errorMessage: priceTypeError } = useField("price_type");
 const { value: base_price, errorMessage: basePriceError } = useField("base_price");
 const { value: estimated_duration_minutes, errorMessage: durationError } = useField("estimated_duration_minutes");
 const { value: is_referral_service } = useField("is_referral_service");
 
 // Additional state management
 const is_active = ref(true);
-const selectedImage = ref(null);
-const imagePreview = ref(null);
-const currentImage = ref(null);
-
-// Error handling
-const isActiveError = ref("");
-const imageError = ref("");
 
 /**
- * Maneja la selección de imagen y crea preview
- * @param {Event} event - Evento del input file
+ * Obtiene los tipos de addons del backend
  */
-const onImageSelected = (event) => {
-  const file = event.target.files[0];
-  imageError.value = "";
-
-  if (!file) {
-    selectedImage.value = null;
-    imagePreview.value = null;
-    return;
-  }
-
-  // Validar tipo de archivo
-  const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif"];
-  if (!allowedTypes.includes(file.type)) {
-    imageError.value = "Invalid file type. Only JPEG, PNG and GIF are allowed.";
-    selectedImage.value = null;
-    imagePreview.value = null;
-    event.target.value = "";
-    return;
-  }
-
-  // Validar tamaño (2MB máximo)
-  if (file.size > 2048 * 1024) {
-    imageError.value = "Image too large. Maximum size is 2MB.";
-    selectedImage.value = null;
-    imagePreview.value = null;
-    event.target.value = "";
-    return;
-  }
-
-  selectedImage.value = file;
-
-  // Create preview
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    imagePreview.value = e.target.result;
-  };
-  reader.readAsDataURL(file);
-};
-
-/**
- * Remueve la imagen seleccionada y el preview
- */
-const removeImage = () => {
-  selectedImage.value = null;
-  imagePreview.value = null;
-  imageError.value = "";
-
-  // Limpiar el input file
-  const fileInput = document.getElementById("edit_image");
-  if (fileInput) {
-    fileInput.value = "";
+const fetchTypeAddons = async () => {
+  try {
+    const response = await api.get("/type-addons");
+    typeAddons.value = response.data;
+  } catch (error) {
+    console.error('Error loading type addons:', error);
   }
 };
 
@@ -369,32 +235,19 @@ watch(
   () => props.data,
   (newData) => {
     if (newData) {
+      fetchTypeAddons();
       setValues({
+        type_addon_id: newData.type_addon_id || "",
         name: newData.name || "",
-        description: newData.description || "",
-        price_type: newData.price_type || "",
         base_price: newData.base_price || null,
         estimated_duration_minutes: newData.estimated_duration_minutes || null,
         is_referral_service: newData.is_referral_service || false,
       });
 
-      // Cargar campos adicionales
       is_active.value = newData.is_active !== undefined ? newData.is_active : true;
-      currentImage.value = newData.image || null;
-
-      // Reset new image states
-      selectedImage.value = null;
-      imagePreview.value = null;
-      imageError.value = "";
-      isActiveError.value = "";
     } else {
       resetForm();
       is_active.value = true;
-      currentImage.value = null;
-      selectedImage.value = null;
-      imagePreview.value = null;
-      imageError.value = "";
-      isActiveError.value = "";
     }
   },
   { immediate: true }
@@ -409,57 +262,29 @@ const closeModal = () => {
 
 /**
  * Envía el formulario para actualizar el addon existente
- * Maneja tanto datos JSON como FormData para imágenes
  */
 const submitForm = handleSubmit(async (values) => {
   try {
     loading.value = true;
 
-    // Si hay una nueva imagen, usar FormData
-    if (selectedImage.value) {
-      const formData = new FormData();
+    const updateData = {
+      ...values,
+      is_active: is_active.value
+    };
 
-      // Agregar campos del formulario
-      Object.keys(values).forEach(key => {
-        if (values[key] !== null && values[key] !== undefined && values[key] !== "") {
-          formData.append(key, values[key]);
-        }
-      });
-
-      // Agregar campos adicionales
-      formData.append("is_active", is_active.value);
-
-      // Agregar nueva imagen
-      formData.append("image", selectedImage.value);
-
-      // Enviar usando FormData para soporte de imágenes
-      await api.put(`/addons/${props.data.id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-    } else {
-      // Sin imagen nueva, enviar como JSON
-      const updateData = {
-        ...values,
-        is_active: is_active.value
-      };
-
-      await api.put(`/addons/${props.data.id}`, updateData);
-    }
+    await api.put(`/addons/${props.data.id}`, updateData);
 
     emit("saved");
     closeModal();
   } catch (error) {
     console.error('Error updating addon:', error);
-
-    // Manejar errores de validación del backend
-    if (error.response && error.response.data && error.response.data.message) {
-      console.error('Backend error:', error.response.data.message);
-    }
   } finally {
     loading.value = false;
   }
+});
+
+onMounted(() => {
+  fetchTypeAddons();
 });
 </script>
 

@@ -17,6 +17,7 @@ use App\Controllers\ReservationDraftController;
 use App\Controllers\RoleController;
 use App\Controllers\ServiceController;
 use App\Controllers\ServicePriceController;
+use App\Controllers\TypeAddonController;
 use App\Controllers\UserController;
 use App\Controllers\ZipCodeController;
 use CodeIgniter\Router\RouteCollection;
@@ -141,6 +142,16 @@ $routes->group('api', function ($routes) {
         $routes->post('/', [AddonController::class, 'create']);
         $routes->put('(:segment)', [AddonController::class, 'updateData']);
         $routes->delete('(:segment)', [AddonController::class, 'deleteData']);
+    });
+
+    // Type Addons
+    $routes->group('type-addons', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [TypeAddonController::class, 'getAll']);
+        $routes->get('active', [TypeAddonController::class, 'getAllActive']);
+        $routes->get('(:segment)', [TypeAddonController::class, 'getById']);
+        $routes->post('/', [TypeAddonController::class, 'create']);
+        $routes->put('(:segment)', [TypeAddonController::class, 'updateData']);
+        $routes->delete('(:segment)', [TypeAddonController::class, 'deleteData']);
     });
 
     $routes->group('customers', ['filter' => 'verifyToken'], function ($routes) {

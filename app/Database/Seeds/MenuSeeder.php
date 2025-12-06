@@ -136,7 +136,7 @@ class MenuSeeder extends Seeder
         // Services submenus (CRÍTICO - Aquí está la Tabla de Precios)
         $servicesSubmenus = [
             [
-                'id' => 'sm1f7g8h9-i0j1-2345-klm6-789012345678',
+                'id' => 'sm1f7g8h-i0j1-2345-klm6-789012345678',
                 'name' => 'Jam Types',
                 'uri' => '/admin/services/jam-types',
                 'icon' => 'bi bi-music-note-beamed',
@@ -147,7 +147,7 @@ class MenuSeeder extends Seeder
                 'updated_at' => Time::now()
             ],
             [
-                'id' => 'sm2g8h9i0-j1k2-3456-lmn7-890123456789',
+                'id' => 'sm2g8h9i-j1k2-3456-lmn7-890123456789',
                 'name' => 'Prices',
                 'uri' => '/admin/services/prices',
                 'icon' => 'bi bi-currency-dollar',
@@ -158,11 +158,22 @@ class MenuSeeder extends Seeder
                 'updated_at' => Time::now()
             ],
             [
-                'id' => 'sm3h9i0j1-k2l3-4567-mno8-901234567890',
+                'id' => 'sm2g8h9i-j1k2-3456-lmn7-890123456790',
+                'name' => 'Addon Types',
+                'uri' => '/admin/services/type-addons',
+                'icon' => 'bi bi-tags',
+                'order' => 3,
+                'is_active' => true,
+                'parent_id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234ss1',
+                'created_at' => Time::now(),
+                'updated_at' => Time::now()
+            ],
+            [
+                'id' => 'sm3h9i0j-k2l3-4567-mno8-901234567890',
                 'name' => 'Add-ons',
                 'uri' => '/admin/services/addons',
                 'icon' => 'bi bi-plus-circle',
-                'order' => 3,
+                'order' => 4,
                 'is_active' => true,
                 'parent_id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234ss1',
                 'created_at' => Time::now(),
@@ -173,7 +184,7 @@ class MenuSeeder extends Seeder
         // Configuration submenus
         $configSubmenus = [
             [
-                'id' => 'sm4i0j1k2-l3m4-5678-nop9-012345678901',
+                'id' => 'sm4i0j1k-l3m4-5678-nop9-012345678901',
                 'name' => 'Users',
                 'uri' => '/admin/config/users',
                 'icon' => 'bi bi-person-circle',
@@ -184,7 +195,7 @@ class MenuSeeder extends Seeder
                 'updated_at' => Time::now()
             ],
             [
-                'id' => 'sm5j1k2l3-m4n5-6789-opq0-123456789012',
+                'id' => 'sm5j1k2l-m4n5-6789-opq0-123456789012',
                 'name' => 'Roles',
                 'uri' => '/admin/config/roles',
                 'icon' => 'bi bi-shield-lock',
@@ -196,9 +207,44 @@ class MenuSeeder extends Seeder
             ],
         ];
 
-        $this->db->table('menus')->insertBatch($menus);
-        $this->db->table('menus')->insertBatch($serviceAreasSubmenus);
-        $this->db->table('menus')->insertBatch($servicesSubmenus);
-        $this->db->table('menus')->insertBatch($configSubmenus);
+        // Combinar todos los menús
+        $allMenus = array_merge($menus, $serviceAreasSubmenus, $servicesSubmenus, $configSubmenus);
+
+        // Insertar o actualizar cada menú
+        foreach ($allMenus as $menu) {
+            // Primero buscar por ID (prioridad)
+            $existing = $this->db->table('menus')
+                ->where('id', $menu['id'])
+                ->get()
+                ->getRow();
+
+            if ($existing) {
+                // Actualizar si existe por ID
+                $this->db->table('menus')
+                    ->where('id', $menu['id'])
+                    ->update($menu);
+            } else {
+                // Si no existe por ID, buscar por URI + parent_id (para evitar duplicados)
+                if ($menu['uri'] !== '#') {
+                    $existingByUri = $this->db->table('menus')
+                        ->where('uri', $menu['uri'])
+                        ->where('parent_id', $menu['parent_id'])
+                        ->get()
+                        ->getRow();
+
+                    if ($existingByUri) {
+                        // Ya existe con otra ID, actualizar
+                        unset($menu['id']);
+                        $this->db->table('menus')
+                            ->where('id', $existingByUri->id)
+                            ->update($menu);
+                        continue;
+                    }
+                }
+
+                // Insertar si no existe
+                $this->db->table('menus')->insert($menu);
+            }
+        }
     }
 }

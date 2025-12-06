@@ -8,6 +8,20 @@ use Ramsey\Uuid\Uuid;
 
 class RoleMenuPermissionSeeder extends Seeder
 {
+    /**
+     * Obtiene el ID de un menú por su URI
+     */
+    private function getMenuIdByUri(string $uri): ?string
+    {
+        $menu = $this->db->table('menus')
+            ->where('uri', $uri)
+            ->where('deleted_at', null)
+            ->get()
+            ->getRow();
+
+        return $menu ? $menu->id : null;
+    }
+
     public function run()
     {
         $permissions = [];
@@ -17,56 +31,78 @@ class RoleMenuPermissionSeeder extends Seeder
         $coordRoleId = 'b2c3d4e5-f6g7-8901-bcde-f23456789012';
         $viewerRoleId = 'c3d4e5f6-g7h8-9012-cdef-345678901234';
 
-        // IDs de menús principales (deben coincidir con MenuSeeder)
-        $dashboardMenuId = 'm1a2b3c4-d5e6-7890-fgh1-234567890123';
-        $reservasMenuId = 'm2b3c4d5-e6f7-8901-ghi2-345678901234';
-        $clientesMenuId = 'm3c4d5e6-f7g8-9012-hij3-456789012345';
-        $configMenuId = 'm5e6f7g8-h9i0-1234-jkl5-678901234567';
-        $serviceAreasId = '5758a89e-08ae-40f7-b98c-aafd0fd68627';
-        $servicesMenuId = 'm5e6f7g8-h9i0-1234-jkl5-678901234ss1'; // Menú principal de SERVICIOS
-
-        // IDs de submenús de Service Areas
-        $metropolitanAreas = 'u1a2b3c4-d5e6-7890-fgh1-2345678901s1';
-        $counties = 'u1a2b3c4-d5e6-7890-fgh1-2345678901s2';
-        $cities = 'u1a2b3c4-d5e6-7890-fgh1-2345678901s3';
-        $postalCodes = 'u1a2b3c4-d5e6-7890-fgh1-2345678901s4';
-
-        // IDs de submenús de SERVICIOS (CRÍTICO)
-        $jamTypesMenuId = 'sm1f7g8h9-i0j1-2345-klm6-789012345678';     // Jam Types
-        $priceTableMenuId = 'sm2g8h9i0-j1k2-3456-lmn7-890123456789';   // Price Table
-        $addonsMenuId = 'sm3h9i0j1-k2l3-4567-mno8-901234567890';       // Add-ons
-
-        // IDs de submenús de Configuración
-        $usuariosMenuId = 'sm4i0j1k2-l3m4-5678-nop9-012345678901';     // Users
-        $rolesMenuId = 'sm5j1k2l3-m4n5-6789-opq0-123456789012';        // Roles
-
-        // ===== PERMISOS PARA ADMINISTRADOR (Acceso completo) =====
-        $adminMenus = [
+        // Obtener IDs de menús por URI (más robusto que hardcodear IDs)
+        $menuUris = [
             // Menús principales
-            $dashboardMenuId,
-            $reservasMenuId,
-            $clientesMenuId,
-            $configMenuId,
-            $serviceAreasId,
-            $servicesMenuId,
+            'dashboard' => '/admin/dashboard',
+            'reservations' => '/admin/reservations',
+            'clients' => '/admin/clients',
+            'serviceAreas' => '#',  // Se buscará el correcto por nombre
+            'services' => '#',       // Se buscará el correcto por nombre
+            'config' => '#',         // Se buscará el correcto por nombre
 
             // Submenús de Service Areas
-            $metropolitanAreas,
-            $counties,
-            $cities,
-            $postalCodes,
+            'metropolitanAreas' => '/admin/areas/metropolitan-areas',
+            'counties' => '/admin/areas/counties',
+            'cities' => '/admin/areas/cities',
+            'postalCodes' => '/admin/areas/postal-codes',
 
             // Submenús de SERVICIOS
-            $jamTypesMenuId,
-            $priceTableMenuId,
-            $addonsMenuId,
+            'jamTypes' => '/admin/services/jam-types',
+            'prices' => '/admin/services/prices',
+            'typeAddons' => '/admin/services/type-addons',
+            'addons' => '/admin/services/addons',
 
             // Submenús de Configuración
-            $usuariosMenuId,
-            $rolesMenuId
+            'users' => '/admin/config/users',
+            'roles' => '/admin/config/roles',
+
+            // Otros menús
+            'promoCodes' => '/admin/promo-codes',
+            'abandonedCarts' => '/admin/abandoned-carts',
         ];
 
-        foreach ($adminMenus as $menuId) {
+        // Obtener menús con URI '#' por nombre
+        $serviceAreasMenu = $this->db->table('menus')
+            ->where('name', 'Service Areas')
+            ->where('deleted_at', null)
+            ->get()->getRow();
+
+        $servicesMenu = $this->db->table('menus')
+            ->where('name', 'Services')
+            ->where('deleted_at', null)
+            ->get()->getRow();
+
+        $configMenu = $this->db->table('menus')
+            ->where('name', 'Configuration')
+            ->where('deleted_at', null)
+            ->get()->getRow();
+
+        // Mapeo de URIs a IDs
+        $menuIds = [];
+        foreach ($menuUris as $key => $uri) {
+            if ($uri !== '#') {
+                $menuIds[$key] = $this->getMenuIdByUri($uri);
+            }
+        }
+
+        // Agregar menús con URI '#'
+        $menuIds['serviceAreas'] = $serviceAreasMenu ? $serviceAreasMenu->id : null;
+        $menuIds['services'] = $servicesMenu ? $servicesMenu->id : null;
+        $menuIds['config'] = $configMenu ? $configMenu->id : null;
+
+        // ===== PERMISOS PARA ADMINISTRADOR (Acceso completo) =====
+        $adminMenuKeys = [
+            'dashboard', 'reservations', 'clients', 'config', 'serviceAreas', 'services',
+            'metropolitanAreas', 'counties', 'cities', 'postalCodes',
+            'jamTypes', 'prices', 'typeAddons', 'addons',
+            'users', 'roles', 'promoCodes', 'abandonedCarts'
+        ];
+
+        foreach ($adminMenuKeys as $key) {
+            $menuId = $menuIds[$key] ?? null;
+            if (!$menuId) continue;
+
             $permissions[] = [
                 'id' => Uuid::uuid4()->toString(),
                 'role_id' => $adminRoleId,
@@ -81,60 +117,46 @@ class RoleMenuPermissionSeeder extends Seeder
         }
 
         // ===== PERMISOS PARA COORDINADOR =====
-        $coordMenus = [
-            // Menús principales
-            $dashboardMenuId,
-            $reservasMenuId,
-            $clientesMenuId,
-
-            // Submenús de Service Areas (solo lectura)
-            $serviceAreasId,
-            $metropolitanAreas,
-            $counties,
-            $cities,
-            $postalCodes,
-
-            // Submenús de SERVICIOS (permisos específicos)
-            $servicesMenuId,
-            $jamTypesMenuId,
-            $priceTableMenuId,
-            $addonsMenuId
+        $coordMenuKeys = [
+            'dashboard', 'reservations', 'clients',
+            'serviceAreas', 'metropolitanAreas', 'counties', 'cities', 'postalCodes',
+            'services', 'jamTypes', 'prices', 'typeAddons', 'addons'
         ];
 
-        foreach ($coordMenus as $menuId) {
-            $canCreate = false;
-            $canUpdate = false;
+        // Permisos especiales para coordinador
+        $coordSpecialPermissions = [
+            'reservations' => ['can_create' => true, 'can_update' => true],
+            'prices' => ['can_create' => true, 'can_update' => true],
+            'typeAddons' => ['can_update' => true],
+            'addons' => ['can_update' => true],
+        ];
 
-            // Permisos especiales para Coordinador
-            if ($menuId === $reservasMenuId) {
-                $canCreate = true;
-                $canUpdate = true;
-            } elseif ($menuId === $priceTableMenuId) {
-                $canCreate = true;  // Puede crear entradas en tabla de precios
-                $canUpdate = true;  // Puede actualizar precios
-            } elseif ($menuId === $addonsMenuId) {
-                $canUpdate = true;  // Puede actualizar add-ons existentes
-            }
+        foreach ($coordMenuKeys as $key) {
+            $menuId = $menuIds[$key] ?? null;
+            if (!$menuId) continue;
+
+            $special = $coordSpecialPermissions[$key] ?? [];
 
             $permissions[] = [
                 'id' => Uuid::uuid4()->toString(),
                 'role_id' => $coordRoleId,
                 'menu_id' => $menuId,
                 'can_view' => true,
-                'can_create' => $canCreate,
-                'can_update' => $canUpdate,
-                'can_delete' => false, // Nunca puede eliminar
+                'can_create' => $special['can_create'] ?? false,
+                'can_update' => $special['can_update'] ?? false,
+                'can_delete' => false,
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ];
         }
 
         // ===== PERMISOS PARA VISUALIZADOR (Solo Dashboard) =====
-        $viewerMenus = [
-            $dashboardMenuId
-        ];
+        $viewerMenuKeys = ['dashboard'];
 
-        foreach ($viewerMenus as $menuId) {
+        foreach ($viewerMenuKeys as $key) {
+            $menuId = $menuIds[$key] ?? null;
+            if (!$menuId) continue;
+
             $permissions[] = [
                 'id' => Uuid::uuid4()->toString(),
                 'role_id' => $viewerRoleId,
@@ -148,7 +170,25 @@ class RoleMenuPermissionSeeder extends Seeder
             ];
         }
 
-        // Insertar todos los permisos
-        $this->db->table('role_menu_permissions')->insertBatch($permissions);
+        // Insertar o actualizar permisos
+        foreach ($permissions as $permission) {
+            $existing = $this->db->table('role_menu_permissions')
+                ->where('role_id', $permission['role_id'])
+                ->where('menu_id', $permission['menu_id'])
+                ->get()
+                ->getRow();
+
+            if ($existing) {
+                // Actualizar si existe
+                unset($permission['id']); // No cambiar el ID existente
+                $this->db->table('role_menu_permissions')
+                    ->where('role_id', $existing->role_id)
+                    ->where('menu_id', $existing->menu_id)
+                    ->update($permission);
+            } else {
+                // Insertar si no existe
+                $this->db->table('role_menu_permissions')->insert($permission);
+            }
+        }
     }
 }

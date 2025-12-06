@@ -54,6 +54,11 @@
           {{ formatCurrency(extra_child_fee) }}
         </template>
 
+        <!-- 💵 Mostrar currency en travel_fee -->
+        <template #item-travel_fee="{ travel_fee }">
+          {{ formatCurrency(travel_fee) }}
+        </template>
+
         <!-- Acciones -->
         <template #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
@@ -130,6 +135,7 @@ const headers = ref([
   { text: "County", value: "county_name", sortable: true },
   { text: "Performers", value: "performers_count", sortable: true },
   { text: "Base Price", value: "amount", sortable: true },
+  { text: "Travel Fee", value: "travel_fee", sortable: true },
   { text: "Extra Child Fee", value: "extra_child_fee", sortable: true },
   { text: "Age Range", value: "range_age", sortable: true },
   { text: "Status", value: "is_available", sortable: true },

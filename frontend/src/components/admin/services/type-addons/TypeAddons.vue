@@ -1,5 +1,4 @@
 <template>
-  <!-- Search bar and create button -->
   <div class="row justify-content-end">
     <div class="col-10">
       <div class="input-group">
@@ -10,19 +9,18 @@
           v-model="searchValue"
           type="text"
           class="form-control"
-          placeholder="Search addons..."
+          placeholder="Search..."
         />
       </div>
     </div>
     <div class="col-md-2 pt-1">
       <button class="btn btn-sm btn-primary" @click="openCreateModal">
         <i class="bi bi-plus-lg"></i>
-        New Addon
+        New Type
       </button>
     </div>
   </div>
 
-  <!-- Addons table -->
   <div class="row mt-3">
     <div class="col-md-12">
       <EasyDataTable
@@ -38,37 +36,24 @@
         show-index
         index-column-text="#"
       >
-        <!-- Status badge -->
+        <!-- Estado -->
         <template #item-is_active="{ is_active }">
           <span v-if="is_active" class="badge bg-success">Active</span>
           <span v-else class="badge bg-danger">Inactive</span>
         </template>
 
-        <!-- Type addon name -->
-        <template #item-type_addon_name="{ type_addon_name }">
-          <span>{{ type_addon_name || '-' }}</span>
-        </template>
-
-        <!-- Formatted base price -->
-        <template #item-base_price="{ base_price }">
-          {{ formatCurrency(base_price) }}
-        </template>
-
-        <!-- Is referral service -->
-        <template #item-is_referral_service="{ is_referral_service }">
-          <span v-if="is_referral_service" class="badge bg-info">Referral</span>
-          <span v-else class="badge bg-secondary">Standard</span>
-        </template>
-
-        <!-- Estimated duration -->
-        <template #item-estimated_duration_minutes="{ estimated_duration_minutes }">
-          <span v-if="estimated_duration_minutes">
-            {{ estimated_duration_minutes }} min
+        <!-- Descripción -->
+        <template #item-description="{ description }">
+          <span>
+            {{
+              description && description.length > 50
+                ? description.substring(0, 50) + "..."
+                : description || '-'
+            }}
           </span>
-          <span v-else class="text-muted">-</span>
         </template>
 
-        <!-- Actions -->
+        <!-- Acciones -->
         <template #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="openEditModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
@@ -78,45 +63,31 @@
     </div>
   </div>
 
-  <!-- Modals -->
-  <AddonsEdit
+  <!-- Modales -->
+  <TypeAddonsEdit
     :show="modalEditVisible"
     :data="selectedData"
     @close="closeEditModal"
     @saved="handleModalSaved"
   />
 
-  <AddonsCreate
+  <TypeAddonsCreate
     :show="modalCreateVisible"
     @close="closeCreateModal"
     @saved="handleModalSaved"
   />
+
 </template>
 
 <script setup>
-/**
- * Addons List Component
- *
- * Displays a searchable table of addons with CRUD functionality.
- * Manages create and edit modals for addon operations.
- *
- * Features:
- * - Searchable data table with pagination
- * - Create new addon functionality
- * - Edit existing addon functionality
- * - Currency formatting for prices
- * - Badge styling for status and type
- * - Duration display with units
- */
-
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
-import AddonsEdit from "./AddonsEdit.vue";
-import AddonsCreate from "./AddonsCreate.vue";
+import TypeAddonsEdit from "./TypeAddonsEdit.vue";
+import TypeAddonsCreate from "./TypeAddonsCreate.vue";
 
 // Page header configuration
 const updateHeaderData = inject("updateHeaderData");
-updateHeaderData({ title: "Addons", icon: "bi-plus-circle-dotted" });
+updateHeaderData({ title: "Addon Types", icon: "bi-tags" });
 
 // Table helpers for search functionality
 const tableHelpers = inject("tableHelpers");
@@ -128,94 +99,60 @@ const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const selectedData = ref(null);
 
-/**
- * Table headers configuration
- * Defines the columns displayed in the addons table
- */
+// Table headers configuration
 const headers = ref([
-  { text: "Type", value: "type_addon_name", sortable: true },
   { text: "Name", value: "name", sortable: true },
-  { text: "Base Price", value: "base_price", sortable: true },
-  { text: "Type", value: "is_referral_service", sortable: true },
-  { text: "Duration", value: "estimated_duration_minutes", sortable: true },
+  { text: "Description", value: "description", sortable: true },
   { text: "Status", value: "is_active", sortable: true },
   { text: "Actions", value: "actions", sortable: false },
 ]);
 
-/**
- * Computed search fields for table filtering
- */
+// Computed search fields for table filtering
 const searchField = computed(() => {
   return tableHelpers.generateSearchFields(headers.value);
 });
 
-/**
- * Opens the edit modal with selected addon data
- * @param {Object} item - Addon data to edit
- */
+// Opens the edit modal with selected data
 const openEditModal = (item) => {
   selectedData.value = { ...item };
   modalEditVisible.value = true;
 };
 
-/**
- * Opens the create modal for new addon
- */
+// Opens the create modal
 const openCreateModal = () => {
   modalCreateVisible.value = true;
 };
 
-/**
- * Closes the edit modal
- */
+// Closes the edit modal
 const closeEditModal = () => {
   modalEditVisible.value = false;
   selectedData.value = null;
 };
 
-/**
- * Closes the create modal
- */
+// Closes the create modal
 const closeCreateModal = () => {
   modalCreateVisible.value = false;
 };
 
-/**
- * Fetches addons list from the backend API
- */
-const fetchAddons = async () => {
+// Fetches data from the backend API
+const fetchData = async () => {
   try {
-    const response = await api.get("/addons");
+    const response = await api.get("/type-addons");
     data.value = response.data;
   } catch (error) {
-    console.error('Error loading addons:', error);
+    console.error('Error loading type addons:', error);
   }
 };
 
-/**
- * Handles modal save events and refreshes data
- */
+// Handles modal save events and refreshes data
 const handleModalSaved = () => {
   closeEditModal();
   closeCreateModal();
-  fetchAddons();
-};
-
-/**
- * Formats price value as USD currency
- * @param {number} value - Price value to format
- * @returns {string} Formatted currency string
- */
-const formatCurrency = (value) => {
-  if (!value) return "$0.00";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
+  fetchData();
 };
 
 // Initialize component
 onMounted(() => {
-  fetchAddons();
+  fetchData();
 });
 </script>
