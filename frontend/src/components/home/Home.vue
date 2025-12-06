@@ -66,7 +66,7 @@
       </div>
 
       <!-- Navigation Buttons -->
-      <div class="wizard-actions" v-if="activeStep < 6">
+      <div class="wizard-actions" v-if="activeStep < 5">
         <el-button
           v-if="activeStep > 1"
           @click="previousStep"
@@ -78,7 +78,7 @@
         </el-button>
 
         <el-button
-          v-if="activeStep < 5"
+          v-if="activeStep < 4"
           @click="nextStep"
           size="large"
           :disabled="!canProceed"
@@ -90,7 +90,7 @@
         </el-button>
 
         <el-button
-          v-if="activeStep === 5"
+          v-if="activeStep === 4"
           @click="submitReservation"
           size="large"
           :disabled="!canProceed || isSubmitting"
@@ -145,7 +145,6 @@ import Step1 from "./form/Step1.vue"; // Contact Information + Event Details
 import Step2 from "./form/Step2.vue"; // Choose Service
 import Step3 from "./form/Step3.vue"; // Select Add-ons
 import Step4 from "./form/Step4.vue"; // Subtotal
-import Step5 from "./form/Step5.vue"; // Event Information
 import Step6 from "./form/Step6.vue"; // Confirmation
 import PrivacyPolicyModal from "./PrivacyPolicyModal.vue"; // Privacy Policy
 
@@ -153,7 +152,7 @@ import PrivacyPolicyModal from "./PrivacyPolicyModal.vue"; // Privacy Policy
  * Mapeo de componentes por número de paso
  */
 const stepComponents = {
-  1: Step1, 2: Step2, 3: Step3, 4: Step4, 5: Step5, 6: Step6
+  1: Step1, 2: Step2, 3: Step3, 4: Step4, 5: Step6
 };
 
 /**
@@ -161,13 +160,13 @@ const stepComponents = {
  */
 const steps = ref([
   { title: "Step 1" }, { title: "Step 2" }, { title: "Step 3" },
-  { title: "Step 4" }, { title: "Step 5" }, { title: "Step 6" }
+  { title: "Step 4" }, { title: "Step 5" }
 ]);
 
 /**
  * Wizard reactive state
  */
-const totalSteps = 6;
+const totalSteps = 5;
 const activeStep = ref(1);
 const form = ref({});
 const isProcessing = ref(false);
@@ -187,7 +186,7 @@ const defaultLogoUrl = '/img/logos/JWJ_logo-05.png';
  * Validation states per step
  */
 const stepValidations = ref({
-  1: false, 2: false, 3: false, 4: false, 5: false, 6: true
+  1: false, 2: false, 3: false, 4: false, 5: true
 });
 
 /**
@@ -257,16 +256,7 @@ function getCurrentStepProps() {
       props.customer = form.value?.customer;
       break;
     case 5:
-      // Step 5: Event Information
-      props.active = activeStep.value === 5;
-      props.customer = form.value?.customer;
-      props.information = form.value?.information;
-      props.zipcode = form.value?.zipcode;
-      props.service = form.value?.service;
-      props.addons = form.value?.addons || [];
-      break;
-    case 6:
-      // Step 6: Confirmation
+      // Step 5: Confirmation
       props.reservationData = reservationData.value;
       break;
   }
@@ -353,11 +343,7 @@ function validateCurrentStep() {
       isValid = !!form.value.subtotal && form.value.subtotal.isConfirmed;
       break;
     case 5:
-      // Step 5: Event Information
-      isValid = !!form.value.information && form.value.information.isValid;
-      break;
-    case 6:
-      // Step 6: Confirmation (always valid)
+      // Step 5: Confirmation (always valid)
       isValid = true;
       break;
     default:
@@ -378,7 +364,7 @@ function validateCurrentStep() {
  */
 function handleReservationSuccess(data) {
   reservationData.value = data;
-  activeStep.value = 6;
+  activeStep.value = 5;
 }
 
 /**
@@ -398,6 +384,39 @@ async function submitReservation() {
   isSubmitting.value = true;
 
   try {
+    // Construir objeto information desde los datos del customer y zipcode
+    // ya que el Step5 (Event Information) fue removido del flujo
+    const customer = form.value?.customer;
+    const zipcode = form.value?.zipcode;
+
+    // Extraer fecha y hora del eventDateTime
+    let eventDate = '';
+    let startTime = '';
+    if (customer?.eventDateTime) {
+      const dateTime = new Date(customer.eventDateTime);
+      eventDate = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
+      startTime = dateTime.toTimeString().slice(0, 5); // HH:MM
+    }
+
+    // Construir fullAddress desde los datos del zipcode
+    const fullAddress = zipcode ?
+      `${zipcode.city_name || ''}, ${zipcode.county_name || ''} ${zipcode.zipcode || ''}`.trim() :
+      '';
+
+    const information = {
+      eventDate: eventDate,
+      startTime: startTime,
+      fullAddress: fullAddress || 'To be confirmed',
+      entertainmentStartTime: startTime,
+      birthdayChildName: null, // No se recolecta sin Step5
+      childAge: null, // No se recolecta sin Step5
+      ageRange: customer?.childrenRange || null,
+      songRequests: null, // No se recolecta sin Step5
+      happyBirthdayRequest: 'no',
+      instructions: null, // No se recolecta sin Step5
+      isValid: true
+    };
+
     // Preparar datos para enviar al endpoint
     const reservationData = {
       session_id: sessionId.value, // Include session ID
@@ -406,7 +425,7 @@ async function submitReservation() {
       service: form.value?.service,
       addons: form.value?.addons || [],
       subtotal: form.value?.subtotal,
-      information: form.value?.information
+      information: information
     };
 
     // Enviar al endpoint de creación de reservas
@@ -419,7 +438,11 @@ async function submitReservation() {
 
       const dataToPass = {
         reservation: responseData.reservation || responseData,
-        calculation: responseData.calculation || null
+        calculation: responseData.calculation || null,
+        // Incluir datos del formulario para mostrar en Step6
+        service: form.value?.service || null,
+        addons: form.value?.addons || [],
+        customer: form.value?.customer || null
       };
 
       // Navegar al paso final con los datos de la reserva
@@ -454,7 +477,7 @@ function handleNewReservation() {
   activeStep.value = 1;
 
   Object.keys(stepValidations.value).forEach(key => {
-    stepValidations.value[key] = key === '7';
+    stepValidations.value[key] = key === '5';
   });
 
   // Generate new session ID for new reservation
@@ -534,7 +557,7 @@ async function saveDraft() {
   saveDraftTimer = setTimeout(async () => {
     try {
       // Don't save if on confirmation step or no data
-      if (activeStep.value === 6 || Object.keys(form.value).length === 0) {
+      if (activeStep.value === 5 || Object.keys(form.value).length === 0) {
         return;
       }
 

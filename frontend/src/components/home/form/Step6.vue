@@ -60,35 +60,83 @@
               </div>
             </div>
 
+            <!-- Service Selected -->
+            <div class="row mb-3" v-if="reservationData?.service">
+              <div class="col-sm-4">
+                <strong>Service:</strong>
+              </div>
+              <div class="col-sm-8">
+                {{ reservationData.service.name }}
+                <span class="text-muted">({{ reservationData.service.performers_count }} performer{{ reservationData.service.performers_count > 1 ? 's' : '' }})</span>
+              </div>
+            </div>
+
+            <!-- Add-ons Selected -->
+            <div class="row mb-3" v-if="reservationData?.addons && reservationData.addons.length > 0">
+              <div class="col-sm-4">
+                <strong>Add-ons:</strong>
+              </div>
+              <div class="col-sm-8">
+                <ul class="list-unstyled mb-0">
+                  <li v-for="(addon, index) in reservationData.addons" :key="index">
+                    <i class="bi bi-check-circle-fill text-success me-1"></i>
+                    {{ addon.name }}
+                    <span class="text-muted" v-if="addon.base_price > 0">(+${{ formatPrice(addon.base_price) }})</span>
+                    <span class="badge bg-info ms-1" v-else>Referral</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
             <!-- Price Breakdown -->
             <div class="row mb-3" v-if="reservationData?.calculation">
               <div class="col-12">
                 <strong>Price Breakdown:</strong>
-                <div class="mt-2">
-                  <div class="d-flex justify-content-between">
-                    <span>Service Price:</span>
+                <div class="mt-2 breakdown-list">
+                  <div class="d-flex justify-content-between breakdown-item">
+                    <span>Base Service Rate ({{ reservationData?.service?.name || 'Service' }}):</span>
                     <span>${{ formatPrice(reservationData.calculation.service_price) }}</span>
                   </div>
-                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.addons_total > 0">
-                    <span>Add-ons:</span>
-                    <span>${{ formatPrice(reservationData.calculation.addons_total) }}</span>
-                  </div>
-                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.extra_children_total > 0">
-                    <span>Extra Children:</span>
+                  <!-- Detalle de cada addon -->
+                  <template v-if="reservationData?.addons && reservationData.addons.length > 0">
+                    <div
+                      v-for="(addon, index) in reservationData.addons"
+                      :key="index"
+                      class="d-flex justify-content-between breakdown-item"
+                      v-show="addon.base_price > 0"
+                    >
+                      <span>{{ addon.name }}:</span>
+                      <span>${{ formatPrice(addon.base_price) }}</span>
+                    </div>
+                  </template>
+                  <div class="d-flex justify-content-between breakdown-item" v-if="reservationData.calculation.extra_children_total > 0">
+                    <span>Extra Children ({{ reservationData.calculation.extra_children_count }} kids):</span>
                     <span>${{ formatPrice(reservationData.calculation.extra_children_total) }}</span>
                   </div>
-                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.surcharge_amount > 0">
+                  <div class="d-flex justify-content-between breakdown-item border-top pt-2 mt-2 fw-semibold">
+                    <span>Subtotal (Service + Add-ons):</span>
+                    <span>${{ formatPrice(reservationData.calculation.base_total) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between breakdown-item text-success" v-if="reservationData.calculation.discount > 0">
+                    <span>Discount:</span>
+                    <span>-${{ formatPrice(reservationData.calculation.discount) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between breakdown-item" v-if="reservationData.calculation.travel_fee > 0">
+                    <span>Travel Fee:</span>
+                    <span>${{ formatPrice(reservationData.calculation.travel_fee) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between breakdown-item" v-if="reservationData.calculation.surcharge_amount > 0">
                     <span>Surcharge:</span>
                     <span>${{ formatPrice(reservationData.calculation.surcharge_amount) }}</span>
                   </div>
-                  <div class="d-flex justify-content-between" v-if="reservationData.calculation.total_duration_hours">
+                  <hr class="my-2">
+                  <div class="d-flex justify-content-between fw-bold breakdown-total">
+                    <span>Grand Total:</span>
+                    <span>${{ formatPrice(reservationData.calculation.grand_total) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between breakdown-item text-muted" v-if="reservationData.calculation.total_duration_hours">
                     <span>Total Duration:</span>
                     <span>{{ formatDuration(reservationData.calculation.total_duration_hours) }}</span>
-                  </div>
-                  <hr>
-                  <div class="d-flex justify-content-between fw-bold" style="color: #FF74B7;">
-                    <span>Total Amount:</span>
-                    <span>${{ formatPrice(reservationData.calculation.grand_total) }}</span>
                   </div>
                 </div>
               </div>
@@ -257,6 +305,24 @@ code {
   background-color: #f8f9fa;
   border: 1px solid #dee2e6;
   border-radius: 4px;
+}
+
+/* Breakdown list styles - matching Step4 */
+.breakdown-list {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.breakdown-item {
+  padding: 0.4rem 0;
+  color: #6c757d;
+}
+
+.breakdown-total {
+  font-size: 1.1rem;
+  color: #FF74B7;
 }
 
 /* Custom button styles consistent with home wizard */

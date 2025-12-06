@@ -53,7 +53,7 @@ class ZipCodeRepository
     public function getByMetropolitanAreaAndCode($metropolitanAreaId, $code): ?Zipcode
     {
         return $this->zipCodeModel
-            ->select('zipcodes.*')
+            ->select('zipcodes.*, cities.name as city_name, counties.name as county_name')
             ->join('cities', 'cities.id = zipcodes.city_id')
             ->join('counties', 'counties.id = cities.county_id')
             ->where('zipcodes.zipcode', $code)

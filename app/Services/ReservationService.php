@@ -394,6 +394,9 @@ class ReservationService
                 // Formulario antiguo: calcular usando funciones centralizadas
                 $addonsTotal = $this->calculateAddonsTotal($addons);
 
+                // Obtener travel_fee del servicio
+                $travelFee = floatval($service['travel_fee'] ?? 0);
+
                 // Calcular recargo por niños adicionales
                 $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
                 $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
@@ -404,7 +407,7 @@ class ReservationService
 
                 // Calcular recargo por proximidad de fecha
                 $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDate);
-                $grandTotal = $baseTotal + $surchargeAmount;
+                $grandTotal = $baseTotal + $surchargeAmount + $travelFee;
             }
 
             // Calcular duración total incluyendo addons

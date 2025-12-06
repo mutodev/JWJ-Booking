@@ -136,11 +136,11 @@
               class="bi me-2"
               :class="isConfirmed ? 'bi-check-circle-fill' : 'bi-check-circle'"
             ></i>
-            <span>Confirm Purchase</span>
+            <span>Confirm Reservation</span>
           </label>
         </div>
         <p class="text-muted text-center mt-2 small">
-          Please confirm your purchase to continue
+          Thank you for your reservation! We will be in touch with you to confirm availability and send a link for payment.
         </p>
       </div>
     </div>
@@ -223,12 +223,12 @@ const addonsTotal = computed(() => {
   return total;
 });
 
-// Calcular tarifa de viaje basada en la zona
+// Calcular tarifa de viaje basada en el servicio seleccionado
 const travelFee = computed(() => {
-  if (!props.zipcode) return 0;
+  if (!props.service) return 0;
 
-  // Obtener travel_fee del zipcode
-  return parseFloat(props.zipcode.travel_fee || 0);
+  // Obtener travel_fee del service (service_prices)
+  return parseFloat(props.service.travel_fee || 0);
 });
 
 // Obtener el límite de niños incluidos del servicio
