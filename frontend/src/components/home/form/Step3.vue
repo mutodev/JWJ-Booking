@@ -47,188 +47,71 @@
       <strong>Optional:</strong> Add-ons are completely optional. You can skip this step or select services to enhance your event.
     </div>
 
-    <!-- SECCIÓN 1: ADDITIONAL TIME -->
-    <div v-if="additionalTimeAddons.length" class="addons-section mb-5">
+    <!-- Secciones dinámicas por tipo de addon -->
+    <div
+      v-for="typeAddon in typeAddons"
+      :key="typeAddon.id"
+      class="addons-section mb-5"
+    >
       <div class="section-header">
-        <i class="bi bi-clock-history me-2"></i>
-        <h3 class="section-title">ADDITIONAL TIME</h3>
+        <i class="bi bi-plus-circle me-2"></i>
+        <h3 class="section-title">{{ typeAddon.name }}</h3>
       </div>
       <div class="addons-grid">
-        <div
-          v-for="addon in additionalTimeAddons"
-          :key="addon.id"
-          class="addon-card"
-          :class="{ 'addon-card--selected': isAddonSelected(addon.id) }"
-        >
-        <!-- Checkbox (oculto visualmente) -->
-        <input
-          type="checkbox"
-          class="addon-checkbox"
-          :id="'addon-' + addon.id"
-          :value="addon"
-          v-model="selectedAddons"
-        />
-
-        <!-- Card clickeable -->
-        <label class="addon-card__container" :for="'addon-' + addon.id">
-          <!-- Imagen -->
-          <div class="addon-card__image-wrapper">
-            <img
-              :src="addon.image || defaultImage"
-              class="addon-card__image"
-              :alt="addon.name"
-              @error="handleImageError"
-            />
-          </div>
-
-          <!-- Contenido -->
-          <div class="addon-card__content">
-            <!-- Título y precio -->
-            <div class="addon-card__header">
-              <h4 class="addon-card__title">{{ addon.name }}</h4>
-              <div class="addon-card__price">
-                <template v-if="addon.is_referral_service">
-                  <span class="referral-badge">Referral Service</span>
-                </template>
-                <template v-else-if="addon.base_price">
-                  <span class="fw-bold">${{ addon.base_price }}</span>
-                </template>
-              </div>
+        <div class="addon-card">
+          <!-- Card -->
+          <div class="addon-card__container">
+            <!-- Imagen del tipo -->
+            <div class="addon-card__image-wrapper">
+              <img
+                :src="typeAddon.image || defaultImage"
+                class="addon-card__image"
+                :alt="typeAddon.name"
+                @error="handleImageError"
+              />
             </div>
 
-            <!-- Descripción -->
-            <p class="addon-card__description">{{ addon.description }}</p>
+            <!-- Contenido -->
+            <div class="addon-card__content">
+              <!-- Descripción del tipo -->
+              <p class="addon-card__description">{{ typeAddon.description }}</p>
 
-            <!-- Sub-opciones para Jukebox Live -->
-            <div v-if="addon.price_type === 'jukebox' && isAddonSelected(addon.id)" class="addon-card__suboptions">
-              <p class="addon-card__suboptions-label">Select duration:</p>
-              <div class="addon-card__suboptions-grid">
+              <!-- Radio buttons para addons con precio > 0 -->
+              <div v-if="typeAddon.addons && typeAddon.addons.length && hasAddonsWithPrice(typeAddon)" class="addon-card__radio-options">
                 <div
-                  v-for="option in jukeboxOptions"
-                  :key="option.value"
-                  class="addon-suboption"
-                  :class="{ 'addon-suboption--selected': getAddonSuboption(addon.id) === option.value }"
-                  @click.prevent="setAddonSuboption(addon.id, option.value, option.price)"
+                  v-for="addon in typeAddon.addons"
+                  :key="addon.id"
+                  class="addon-radio-option"
+                  :class="{ 'addon-radio-option--selected': selectedAddonByType[typeAddon.id] === addon.id }"
+                  @click="handleAddonSelect(typeAddon, addon)"
                 >
-                  <span class="addon-suboption__label">{{ option.label }}</span>
-                  <span v-if="!option.isCustomQuote" class="addon-suboption__price">${{ option.price }}</span>
-                  <span v-else class="addon-suboption__custom-quote">
-                    <i class="bi bi-telephone-fill me-1"></i>
-                  </span>
+                  <i :class="selectedAddonByType[typeAddon.id] === addon.id ? 'bi bi-circle-fill' : 'bi bi-circle'" class="addon-radio-option__icon"></i>
+                  <span class="addon-radio-option__label">{{ addon.name }}</span>
+                  <span class="addon-radio-option__price">${{ addon.base_price }}</span>
+                </div>
+              </div>
+
+              <!-- Checkbox para addons referral (precio 0) -->
+              <div v-if="typeAddon.addons && typeAddon.addons.length && !hasAddonsWithPrice(typeAddon)" class="addon-card__radio-options">
+                <div
+                  v-for="addon in typeAddon.addons"
+                  :key="addon.id"
+                  class="addon-radio-option"
+                  :class="{ 'addon-radio-option--selected': isAddonSelected(addon.id) }"
+                  @click="toggleReferralAddon(addon)"
+                >
+                  <i :class="isAddonSelected(addon.id) ? 'bi bi-check-square-fill' : 'bi bi-square'" class="addon-radio-option__icon"></i>
+                  <span class="addon-radio-option__label">{{ addon.name }}</span>
                 </div>
               </div>
             </div>
-
-            <!-- Botón de checkbox o referral -->
-            <button
-              v-if="addon.is_referral_service"
-              type="button"
-              class="addon-card__button addon-card__button--referral"
-              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
-              @click.prevent="toggleAddon(addon)"
-            >
-              <i class="bi bi-telephone-fill me-2"></i>
-              <span>{{ isAddonSelected(addon.id) ? 'Referral Pending' : 'Request Information' }}</span>
-            </button>
-            <button
-              v-else
-              type="button"
-              class="addon-card__button"
-              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
-              @click.prevent="toggleAddon(addon)"
-            >
-              <i v-if="isAddonSelected(addon.id)" class="bi bi-check-square-fill me-2"></i>
-              <i v-else class="bi bi-square me-2"></i>
-              <span>{{ isAddonSelected(addon.id) ? 'Added to booking' : 'Add to booking' }}</span>
-            </button>
           </div>
-        </label>
         </div>
       </div>
     </div>
 
-    <!-- SECCIÓN 2: ADD-ONS & REFERRAL SERVICES -->
-    <div v-if="referralServicesAddons.length" class="addons-section">
-      <div class="section-header">
-        <i class="bi bi-star me-2"></i>
-        <h3 class="section-title">ADD-ONS & REFERRAL SERVICES</h3>
-      </div>
-      <div class="addons-grid">
-        <div
-          v-for="addon in referralServicesAddons"
-          :key="addon.id"
-          class="addon-card"
-          :class="{ 'addon-card--selected': isAddonSelected(addon.id) }"
-        >
-        <!-- Checkbox (oculto visualmente) -->
-        <input
-          type="checkbox"
-          class="addon-checkbox"
-          :id="'addon-' + addon.id"
-          :value="addon"
-          v-model="selectedAddons"
-        />
-
-        <!-- Card clickeable -->
-        <label class="addon-card__container" :for="'addon-' + addon.id">
-          <!-- Imagen -->
-          <div class="addon-card__image-wrapper">
-            <img
-              :src="addon.image || defaultImage"
-              class="addon-card__image"
-              :alt="addon.name"
-              @error="handleImageError"
-            />
-          </div>
-
-          <!-- Contenido -->
-          <div class="addon-card__content">
-            <!-- Título y precio -->
-            <div class="addon-card__header">
-              <h4 class="addon-card__title">{{ addon.name }}</h4>
-              <div class="addon-card__price">
-                <template v-if="addon.is_referral_service">
-                  <span class="referral-badge">Referral Service</span>
-                </template>
-                <template v-else-if="addon.base_price">
-                  <span class="fw-bold">${{ addon.base_price }}</span>
-                </template>
-              </div>
-            </div>
-
-            <!-- Descripción -->
-            <p class="addon-card__description">{{ addon.description }}</p>
-
-            <!-- Botón de checkbox o referral -->
-            <button
-              v-if="addon.is_referral_service"
-              type="button"
-              class="addon-card__button addon-card__button--referral"
-              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
-              @click.prevent="toggleAddon(addon)"
-            >
-              <i class="bi bi-telephone-fill me-2"></i>
-              <span>{{ isAddonSelected(addon.id) ? 'Referral Pending' : 'Request Information' }}</span>
-            </button>
-            <button
-              v-else
-              type="button"
-              class="addon-card__button"
-              :class="{ 'addon-card__button--selected': isAddonSelected(addon.id) }"
-              @click.prevent="toggleAddon(addon)"
-            >
-              <i v-if="isAddonSelected(addon.id)" class="bi bi-check-square-fill me-2"></i>
-              <i v-else class="bi bi-square me-2"></i>
-              <span>{{ isAddonSelected(addon.id) ? 'Added to booking' : 'Add to booking' }}</span>
-            </button>
-          </div>
-        </label>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mensaje si no hay addons en ninguna sección -->
-    <div v-if="!additionalTimeAddons.length && !referralServicesAddons.length" class="text-muted text-center">
+    <!-- Mensaje si no hay addons -->
+    <div v-if="!typeAddons.length" class="text-muted text-center">
       <i class="bi bi-info-circle fs-4 mb-2"></i>
       <p>No add-on services available</p>
     </div>
@@ -236,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch } from "vue";
 import api from "@/services/axios";
 import { useToast } from "vue-toastification";
 
@@ -259,58 +142,44 @@ const props = defineProps({
 
 const emit = defineEmits(["setData", "next"]);
 
-const addons = ref([]);
+const typeAddons = ref([]);
 const selectedAddons = ref([]);
-const addonSuboptions = ref({}); // Para guardar sub-opciones de Jukebox
+const selectedAddonByType = ref({}); // Para guardar addon seleccionado por tipo
 const defaultImage = "/img/default.jpg";
 const showJukeboxCustomQuoteDialog = ref(false);
-
-// Opciones de Jukebox Live
-const jukeboxOptions = [
-  { value: '1h-1p', label: '1 hour, 1 performer', price: 375 },
-  { value: '1h-2p', label: '1 hour, 2 performers', price: 500 },
-  { value: '2h-1p', label: '2 hours, 1 performer', price: 650 },
-  { value: '2h-2p', label: '2 hours, 2 performers', price: 850 },
-  { value: '3h+', label: '3+ hours - Custom Quote', price: 0, isCustomQuote: true },
-];
-
-// Computed properties para dividir addons en secciones
-const additionalTimeAddons = computed(() => {
-  return addons.value.filter(addon => {
-    // Incluir addons de tipo jukebox o que contengan "15 minutes" o "minute" en el nombre
-    return addon.price_type === 'jukebox' ||
-           addon.name?.toLowerCase().includes('minute') ||
-           addon.name?.toLowerCase().includes('15 min');
-  });
-});
-
-const referralServicesAddons = computed(() => {
-  return addons.value.filter(addon => {
-    // Incluir todos los demás addons (referral services y otros)
-    // Excluir los que ya están en additionalTimeAddons
-    return addon.price_type !== 'jukebox' &&
-           !addon.name?.toLowerCase().includes('minute') &&
-           !addon.name?.toLowerCase().includes('15 min');
-  });
-});
 
 async function loadAddons() {
   if (!props.active) return;
 
   try {
     const response = await api.get("/home/addons");
-    const addonsList = Array.isArray(response) ? response : (response?.data || []);
-    addons.value = addonsList;
+    const typeAddonsList = Array.isArray(response) ? response : (response?.data || []);
+
+    // Ordenar: primero los que tienen addons con precio > 0, luego los de precio 0 (referral)
+    typeAddons.value = typeAddonsList.sort((a, b) => {
+      const aHasPrice = a.addons?.some(addon => addon.base_price > 0);
+      const bHasPrice = b.addons?.some(addon => addon.base_price > 0);
+      if (aHasPrice && !bHasPrice) return -1;
+      if (!aHasPrice && bHasPrice) return 1;
+      return 0;
+    });
 
     // Restore selected addons if they exist
     if (props.addons && props.addons.length > 0) {
-      selectedAddons.value = props.addons.filter(savedAddon =>
-        addons.value.some(addon => addon.id === savedAddon.id)
-      );
+      props.addons.forEach(savedAddon => {
+        // Encontrar el tipo de addon correspondiente
+        const typeAddon = typeAddons.value.find(t =>
+          t.addons?.some(a => a.id === savedAddon.id)
+        );
+        if (typeAddon) {
+          selectedAddonByType.value[typeAddon.id] = savedAddon.id;
+          selectedAddons.value.push(savedAddon);
+        }
+      });
     }
   } catch (error) {
     console.error("Error loading addons:", error);
-    addons.value = [];
+    typeAddons.value = [];
   }
 }
 
@@ -318,40 +187,46 @@ function handleImageError(event) {
   event.target.src = defaultImage;
 }
 
+function hasAddonsWithPrice(typeAddon) {
+  return typeAddon.addons?.some(addon => addon.base_price > 0);
+}
+
 function isAddonSelected(addonId) {
   return selectedAddons.value.some(addon => addon.id === addonId);
 }
 
-function toggleAddon(addon) {
+function toggleReferralAddon(addon) {
   const index = selectedAddons.value.findIndex(a => a.id === addon.id);
   if (index > -1) {
     selectedAddons.value.splice(index, 1);
-    // Limpiar sub-opción si existe
-    delete addonSuboptions.value[addon.id];
   } else {
     selectedAddons.value.push({ ...addon });
   }
+  emitAddonsData();
 }
 
-function getAddonSuboption(addonId) {
-  return addonSuboptions.value[addonId];
-}
+function handleAddonSelect(typeAddon, addon) {
+  const currentSelected = selectedAddonByType.value[typeAddon.id];
 
-function setAddonSuboption(addonId, value, price) {
-  // Check if this is the custom quote option (3+ hours)
-  const selectedOption = jukeboxOptions.find(opt => opt.value === value);
-  if (selectedOption?.isCustomQuote) {
-    showJukeboxCustomQuoteDialog.value = true;
-    return;
-  }
+  // Si ya está seleccionado el mismo, deseleccionar
+  if (currentSelected === addon.id) {
+    delete selectedAddonByType.value[typeAddon.id];
+    const index = selectedAddons.value.findIndex(a => a.id === addon.id);
+    if (index > -1) {
+      selectedAddons.value.splice(index, 1);
+    }
+  } else {
+    // Remover addon anterior de este tipo si existe
+    if (currentSelected) {
+      const prevIndex = selectedAddons.value.findIndex(a => a.id === currentSelected);
+      if (prevIndex > -1) {
+        selectedAddons.value.splice(prevIndex, 1);
+      }
+    }
 
-  addonSuboptions.value[addonId] = value;
-
-  // Actualizar el precio del addon en selectedAddons
-  const addon = selectedAddons.value.find(a => a.id === addonId);
-  if (addon) {
-    addon.selectedOption = value;
-    addon.selectedPrice = price;
+    // Seleccionar nuevo addon
+    selectedAddonByType.value[typeAddon.id] = addon.id;
+    selectedAddons.value.push({ ...addon });
   }
 
   emitAddonsData();
@@ -359,10 +234,7 @@ function setAddonSuboption(addonId, value, price) {
 
 function emitAddonsData() {
   const addonsData = {
-    addons: selectedAddons.value.map(addon => ({
-      ...addon,
-      suboption: addonSuboptions.value[addon.id] || null
-    })),
+    addons: selectedAddons.value,
     isValid: true // Los addons no son requeridos
   };
 
@@ -372,7 +244,7 @@ function emitAddonsData() {
 function skipAddons() {
   // Clear all selected addons
   selectedAddons.value = [];
-  addonSuboptions.value = {};
+  selectedAddonByType.value = {};
 
   // Emit empty data and proceed to next step
   emitAddonsData();
@@ -386,12 +258,6 @@ function skipAddons() {
   emit("next");
 }
 
-function handleReferralService(addon) {
-  toast.info(
-    `Please contact us for information about ${addon.name}. We'll be happy to help you arrange this service!`,
-    { timeout: 4000 }
-  );
-}
 
 watch(
   () => props.active,
@@ -560,60 +426,58 @@ watch(selectedAddons, () => {
   flex-grow: 1;
 }
 
-/* Sub-opciones de Jukebox */
-.addon-card__suboptions {
-  margin-bottom: 16px;
-  padding: 12px;
-  background: #f9fafb;
-  border-radius: 8px;
-}
-
-.addon-card__suboptions-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #374151;
-  margin: 0 0 10px 0;
-}
-
-.addon-card__suboptions-grid {
-  display: grid;
-  gap: 8px;
-}
-
-.addon-suboption {
+/* Radio options para Additional Time */
+.addon-card__radio-options {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.addon-radio-option {
+  display: flex;
   align-items: center;
   padding: 10px 12px;
   background: white;
   border: 2px solid #e5e7eb;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.addon-suboption:hover {
+.addon-radio-option:hover {
   border-color: #FF74B7;
   background: #fff5f9;
 }
 
-.addon-suboption--selected {
+.addon-radio-option--selected {
   border-color: #FF74B7;
   background: #fff5f9;
-  box-shadow: 0 0 0 3px rgba(255, 116, 183, 0.1);
 }
 
-.addon-suboption__label {
+.addon-radio-option__icon {
+  font-size: 1rem;
+  color: #d1d5db;
+  margin-right: 10px;
+}
+
+.addon-radio-option--selected .addon-radio-option__icon {
+  color: #FF74B7;
+}
+
+.addon-radio-option__label {
+  flex: 1;
   font-size: 0.9rem;
   color: #374151;
   font-weight: 500;
 }
 
-.addon-suboption__price {
+.addon-radio-option__price {
   font-size: 0.9rem;
   color: #FF74B7;
   font-weight: 600;
 }
+
 
 /* Botón de checkbox */
 .addon-card__button {
@@ -646,30 +510,6 @@ watch(selectedAddons, () => {
 .addon-card__button--selected:hover {
   background: #e662a5;
   border-color: #e662a5;
-}
-
-/* Referral service badge */
-.referral-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #92400e;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-radius: 6px;
-  border: 1px solid #f59e0b;
-}
-
-/* Referral service button */
-.addon-card__button--referral {
-  border-color: #f59e0b;
-  background: white;
-  color: #f59e0b;
-}
-
-.addon-card__button--referral:hover {
-  background: #f59e0b;
-  color: white;
 }
 
 /* SKIP button */
@@ -773,10 +613,4 @@ watch(selectedAddons, () => {
   box-shadow: 0 4px 12px rgba(255, 116, 183, 0.3);
 }
 
-.addon-suboption__custom-quote {
-  display: flex;
-  align-items: center;
-  color: #f59e0b;
-  font-size: 1rem;
-}
 </style>

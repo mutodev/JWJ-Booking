@@ -10,102 +10,187 @@ class AddonSeeder extends Seeder
 {
     public function run()
     {
+        // Limpiar tablas
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 0');
+        $this->db->table('reservation_addons')->truncate();
+        $this->db->table('addons')->truncate();
+        $this->db->table('type_addons')->truncate();
+        $this->db->query('SET FOREIGN_KEY_CHECKS = 1');
+
+        // ===== TIPOS DE ADDONS =====
+        $typeAdditionalTime = Uuid::uuid4()->toString();
+        $typeJukeboxLive = Uuid::uuid4()->toString();
+        $typeCustomSong = Uuid::uuid4()->toString();
+        $typeDecor = Uuid::uuid4()->toString();
+        $typeFacePainting = Uuid::uuid4()->toString();
+
+        $typeAddons = [
+            [
+                'id' => $typeAdditionalTime,
+                'name' => 'Additional Time',
+                'description' => 'Keep the jam going for a full hour! Add 15 minutes to your jam.',
+                'image' => '/img/addons/additional-time.jpg',
+                'is_active' => true,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            [
+                'id' => $typeJukeboxLive,
+                'name' => 'Jukebox Live',
+                'description' => 'Our Jukebox Live option provides family friendly background music to entertain all family and friends! We can split it up as you like around the timing for the interactive set. Enjoy a variety of genres, including pop, rock, showtunes, reggae, and folk. A sound system is included.',
+                'image' => '/img/addons/jukebox-live.jpg',
+                'is_active' => true,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            [
+                'id' => $typeCustomSong,
+                'name' => 'Custom Song',
+                'description' => "This is a song composed specially for your child. We'll be in touch to learn more about your child, and one of our amazing team members will write and record a song for them, also to be performed live at the event!",
+                'image' => '/img/addons/custom-song.jpg',
+                'is_active' => true,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            [
+                'id' => $typeDecor,
+                'name' => 'Decor',
+                'description' => 'We work with the best in the business and are excited to connect you with an exceptional decor artist who will make your event truly unforgettable.',
+                'image' => '/img/addons/decor.jpg',
+                'is_active' => true,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            [
+                'id' => $typeFacePainting,
+                'name' => 'Face Painting, Glitter Tattoos, Balloon Art',
+                'description' => 'Add sparkle and excitement to any event with stunning face and body painting or amazing balloon art! Perfect for birthdays, special occasions, corporate events, and more. We can connect you with a talented artist who will bring creativity and fun to your celebration.',
+                'image' => '/img/addons/face-painting.jpg',
+                'is_active' => true,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+        ];
+
+        $this->db->table('type_addons')->insertBatch($typeAddons);
+        echo "✅ Tipos de addons creados: " . count($typeAddons) . "\n";
+
+        // ===== ADDONS =====
         $addons = [
+            // Additional Time
             [
                 'id' => Uuid::uuid4()->toString(),
-                'name' => 'Glitter Tattoos',
-                'description' => 'Tatuajes temporales con brillantina para niños. Incluye diseño y aplicación.',
-                'base_price' => 75.00,
-                'is_active' => true,
-                'estimated_duration_minutes' => 30,
-                'image' => 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop',
-                'price_type' => 'standard',
-                'created_at' => Time::now(),
-                'updated_at' => Time::now()
-            ],
-            [
-                'id' => Uuid::uuid4()->toString(),
-                'name' => 'Photo Booth',
-                'description' => 'Cabina fotográfica con props divertidos. Incluye 20 fotos impresas y digitales.',
-                'base_price' => 150.00,
-                'is_active' => true,
-                'estimated_duration_minutes' => 60,
-                'image' => 'https://images.unsplash.com/photo-1511578314322-379afb476865?w=400&h=300&fit=crop',
-                'price_type' => 'standard',
-                'created_at' => Time::now(),
-                'updated_at' => Time::now()
-            ],
-            [
-                'id' => Uuid::uuid4()->toString(),
-                'name' => 'Face Painting',
-                'description' => 'Pintura de caras artística para niños. Diseños temáticos disponibles.',
+                'type_addon_id' => $typeAdditionalTime,
+                'name' => '15 minutes (1 performer)',
                 'base_price' => 50.00,
                 'is_active' => true,
-                'estimated_duration_minutes' => 45,
-                'image' => 'https://images.unsplash.com/photo-1560114928-40f1f1eb26a0?w=400&h=300&fit=crop',
-                'price_type' => 'standard',
-                'created_at' => Time::now(),
-                'updated_at' => Time::now()
-            ],
-            [
-                'id' => Uuid::uuid4()->toString(),
-                'name' => 'Custom Backdrop',
-                'description' => 'Fondo personalizado para fotos con tema de la fiesta. Incluye instalación.',
-                'base_price' => 100.00,
-                'is_active' => true,
+                'is_referral_service' => false,
                 'estimated_duration_minutes' => 15,
-                'image' => 'https://images.unsplash.com/photo-1464047736614-af63643285bf?w=400&h=300&fit=crop',
-                'price_type' => 'standard',
                 'created_at' => Time::now(),
-                'updated_at' => Time::now()
+                'updated_at' => Time::now(),
             ],
             [
                 'id' => Uuid::uuid4()->toString(),
-                'name' => 'Balloon Artist',
-                'description' => 'Artista especializado en crear figuras con globos para los niños.',
+                'type_addon_id' => $typeAdditionalTime,
+                'name' => '15 minutes (2 performers)',
                 'base_price' => 80.00,
                 'is_active' => true,
-                'estimated_duration_minutes' => 45,
-                'image' => 'https://images.unsplash.com/photo-1524230507669-5ff97982bb5e?w=400&h=300&fit=crop',
-                'price_type' => 'standard',
+                'is_referral_service' => false,
+                'estimated_duration_minutes' => 15,
                 'created_at' => Time::now(),
-                'updated_at' => Time::now()
+                'updated_at' => Time::now(),
             ],
+            // Jukebox Live
             [
                 'id' => Uuid::uuid4()->toString(),
-                'name' => 'Jukebox 1 Hour',
-                'description' => 'Sistema de música familiar de fondo por 1 hora adicional.',
-                'base_price' => 50.00,
+                'type_addon_id' => $typeJukeboxLive,
+                'name' => '1 hour, 1 performer',
+                'base_price' => 375.00,
                 'is_active' => true,
+                'is_referral_service' => false,
                 'estimated_duration_minutes' => 60,
-                'image' => 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
-                'price_type' => 'jukebox',
                 'created_at' => Time::now(),
-                'updated_at' => Time::now()
+                'updated_at' => Time::now(),
             ],
             [
                 'id' => Uuid::uuid4()->toString(),
-                'name' => 'Jukebox 2 Hours',
-                'description' => 'Sistema de música familiar de fondo por 2 horas adicionales.',
-                'base_price' => 85.00,
+                'type_addon_id' => $typeJukeboxLive,
+                'name' => '1 hour, 2 performers',
+                'base_price' => 500.00,
                 'is_active' => true,
-                'estimated_duration_minutes' => 120,
-                'image' => 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=300&fit=crop',
-                'price_type' => 'jukebox',
+                'is_referral_service' => false,
+                'estimated_duration_minutes' => 60,
                 'created_at' => Time::now(),
-                'updated_at' => Time::now()
-            ]
+                'updated_at' => Time::now(),
+            ],
+            [
+                'id' => Uuid::uuid4()->toString(),
+                'type_addon_id' => $typeJukeboxLive,
+                'name' => '2 hours, 1 performer',
+                'base_price' => 650.00,
+                'is_active' => true,
+                'is_referral_service' => false,
+                'estimated_duration_minutes' => 120,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            [
+                'id' => Uuid::uuid4()->toString(),
+                'type_addon_id' => $typeJukeboxLive,
+                'name' => '2 hours, 2 performers',
+                'base_price' => 850.00,
+                'is_active' => true,
+                'is_referral_service' => false,
+                'estimated_duration_minutes' => 120,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            // Custom Song (referral)
+            [
+                'id' => Uuid::uuid4()->toString(),
+                'type_addon_id' => $typeCustomSong,
+                'name' => 'Custom Song',
+                'base_price' => 0.00,
+                'is_active' => true,
+                'is_referral_service' => true,
+                'estimated_duration_minutes' => null,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            // Decor (referral)
+            [
+                'id' => Uuid::uuid4()->toString(),
+                'type_addon_id' => $typeDecor,
+                'name' => 'Decor',
+                'base_price' => 0.00,
+                'is_active' => true,
+                'is_referral_service' => true,
+                'estimated_duration_minutes' => null,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
+            // Face Painting, Glitter Tattoos, Balloon Art (referral)
+            [
+                'id' => Uuid::uuid4()->toString(),
+                'type_addon_id' => $typeFacePainting,
+                'name' => 'Face Painting, Glitter Tattoos, Balloon Art',
+                'base_price' => 0.00,
+                'is_active' => true,
+                'is_referral_service' => true,
+                'estimated_duration_minutes' => null,
+                'created_at' => Time::now(),
+                'updated_at' => Time::now(),
+            ],
         ];
 
         $this->db->table('addons')->insertBatch($addons);
+        echo "✅ Addons creados: " . count($addons) . "\n";
 
-        echo "✅ Add-ons creados exitosamente: " . count($addons) . " registros\n";
-        echo "   - Glitter Tattoos ($75 - standard)\n";
-        echo "   - Photo Booth ($150 - standard)\n";
-        echo "   - Face Painting ($50 - standard)\n";
-        echo "   - Custom Backdrop ($100 - standard)\n";
-        echo "   - Balloon Artist ($80 - standard)\n";
-        echo "   - Jukebox 1 Hour ($50 - jukebox)\n";
-        echo "   - Jukebox 2 Hours ($85 - jukebox)\n";
+        echo "\n🎉 AddonSeeder completado!\n";
+        echo "   - Additional Time: 2 opciones\n";
+        echo "   - Jukebox Live: 4 opciones\n";
+        echo "   - Custom Song: 1 (referral)\n";
+        echo "   - Decor: 1 (referral)\n";
+        echo "   - Face Painting, Glitter Tattoos, Balloon Art: 1 (referral)\n";
     }
 }

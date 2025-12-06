@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\AddonRepository;
+use App\Repositories\TypeAddonRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 
@@ -27,6 +28,7 @@ use CodeIgniter\HTTP\Response;
 class AddonService
 {
     protected AddonRepository $repository;
+    protected TypeAddonRepository $typeAddonRepository;
 
     /**
      * Constructor - Initialize addon repository
@@ -34,6 +36,7 @@ class AddonService
     public function __construct()
     {
         $this->repository = new AddonRepository();
+        $this->typeAddonRepository = new TypeAddonRepository();
     }
 
     /**
@@ -65,13 +68,40 @@ class AddonService
     }
 
     /**
-     * Get active addons only
+     * Get active addons grouped by type
      *
-     * @return array List of active addons
+     * @return array List of type addons with their addons
      */
     public function getAllActive(): array
     {
-        return $this->repository->getAllActive();
+        // Obtener tipos de addons activos
+        $typeAddons = $this->typeAddonRepository->getAllActive();
+
+        // Obtener todos los addons activos
+        $addons = $this->repository->getAllActive();
+
+        // Agrupar addons por tipo
+        $result = [];
+        foreach ($typeAddons as $type) {
+            $typeData = [
+                'id' => $type->id,
+                'name' => $type->name,
+                'image' => $type->image,
+                'description' => $type->description,
+                'addons' => []
+            ];
+
+            // Filtrar addons de este tipo
+            foreach ($addons as $addon) {
+                if ($addon->type_addon_id === $type->id) {
+                    $typeData['addons'][] = $addon;
+                }
+            }
+
+            $result[] = $typeData;
+        }
+
+        return $result;
     }
 
     /**
@@ -162,13 +192,6 @@ class AddonService
         // Clean and validate fields
         $data = $this->sanitizeFormData($data);
 
-        // Process image if exists
-        $image = $request->getFile('image');
-        if ($image && $image->isValid() && !$image->hasMoved()) {
-            $imagePath = $this->handleImageUpload($image);
-            $data['image'] = $imagePath;
-        }
-
         // Check for duplicate names
         if (isset($data['name'])) {
             $exists = $this->repository->getByName($data['name']);
@@ -202,13 +225,6 @@ class AddonService
 
         // Clean and validate fields
         $data = $this->sanitizeFormData($data);
-
-        // Process image if exists
-        $image = $request->getFile('image');
-        if ($image && $image->isValid() && !$image->hasMoved()) {
-            $imagePath = $this->handleImageUpload($image);
-            $data['image'] = $imagePath;
-        }
 
         return $this->repository->update($id, $data);
     }
@@ -262,7 +278,7 @@ class AddonService
     {
         $sanitized = [];
         $allowedFields = [
-            'name', 'description', 'price_type', 'base_price',
+            'type_addon_id', 'name', 'base_price',
             'estimated_duration_minutes', 'is_active', 'is_referral_service'
         ];
 
@@ -295,66 +311,6 @@ class AddonService
         }
 
         return $sanitized;
-    }
-
-    /**
-     * Handle image upload and validation
-     * Validates type, size and saves file securely
-     *
-     * @param \CodeIgniter\HTTP\Files\UploadedFile $image Image file
-     * @return string Web path of saved image
-     * @throws HTTPException If validation or upload fails
-     */
-    private function handleImageUpload($image): string
-    {
-        // Validate image is valid
-        if (!$image->isValid()) {
-            throw new HTTPException(
-                'Invalid image file: ' . $image->getErrorString(),
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
-        // Validate MIME type
-        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-        if (!in_array($image->getMimeType(), $allowedTypes)) {
-            throw new HTTPException(
-                'Invalid image type. Only JPEG, PNG and GIF are allowed.',
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
-        // Validate size (2MB maximum)
-        if ($image->getSize() > 2048 * 1024) {
-            throw new HTTPException(
-                'Image too large. Maximum size is 2MB.',
-                Response::HTTP_BAD_REQUEST
-            );
-        }
-
-        // Create destination directory if not exists
-        $uploadPath = FCPATH . 'img';
-        if (!is_dir($uploadPath)) {
-            if (!mkdir($uploadPath, 0755, true)) {
-                throw new HTTPException(
-                    'Failed to create upload directory',
-                    Response::HTTP_INTERNAL_SERVER_ERROR
-                );
-            }
-        }
-
-        // Generate unique name and move file
-        $newName = $image->getRandomName();
-        try {
-            $image->move($uploadPath, $newName);
-        } catch (\Exception $e) {
-            throw new HTTPException(
-                'Failed to upload image: ' . $e->getMessage(),
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
-        }
-
-        return '/img/' . $newName;
     }
 
     /**

@@ -14,13 +14,12 @@ class AddonModel extends Model
     protected $useSoftDeletes   = false;
     protected $protectFields    = true;
     protected $allowedFields    = [
+        'type_addon_id',
         'name',
-        'description',
         'base_price',
         'is_active',
+        'is_referral_service',
         'estimated_duration_minutes',
-        'image',
-        'price_type'
     ];
 
     protected bool $allowEmptyInserts = false;
