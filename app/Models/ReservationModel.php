@@ -34,6 +34,7 @@ class ReservationModel extends Model
         'extra_children_fee',
         'discount_amount',
         'promo_code',
+        'payment_url',
         'event_type',
         'performers_count',
         'duration_hours',

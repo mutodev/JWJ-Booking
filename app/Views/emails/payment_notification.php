@@ -13,15 +13,24 @@
         Payment Information for Your Event Reservation
     </h2>
 
-    <p>Dear <?= esc($reservation->customer_name) ?>,</p>
+    <p>Dear <?= esc($reservation->full_name) ?>,</p>
 
-    <p>Thank you for choosing our entertainment services! Here are the details of your reservation:</p>
+    <p>Thank you for choosing our entertainment services! Before proceeding with payment, please complete your event details.</p>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="<?= esc($confirmationUrl) ?>"
+            style="background-color: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px; font-weight: bold;">
+            Continue to Pay
+        </a>
+    </div>
+
+    <p>Here are the details of your reservation:</p>
 
     <h3 style="color: #27ae60; margin-top: 30px;">Reservation Details:</h3>
     <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
         <tr>
             <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">Customer:</td>
-            <td style="padding: 10px; border: 1px solid #dee2e6;"><?= esc($reservation->customer_name) ?></td>
+            <td style="padding: 10px; border: 1px solid #dee2e6;"><?= esc($reservation->full_name) ?></td>
         </tr>
         <tr style="background-color: #f8f9fa;">
             <td style="padding: 10px; border: 1px solid #dee2e6; font-weight: bold;">Service:</td>
@@ -55,19 +64,14 @@
         </tr>
     </table>
 
-    <h3 style="color: #e74c3c; margin-top: 30px;">Payment Information:</h3>
-    <p>To complete your reservation, please proceed with the payment using the following link:</p>
+    <h3 style="color: #e74c3c; margin-top: 30px;">Next Steps:</h3>
+    <ol style="line-height: 2;">
+        <li><strong>Complete Event Details:</strong> Click the blue button above to fill in your event information (address, times, birthday details, etc.)</li>
+        <li><strong>Proceed to Payment:</strong> After completing the details, you'll be automatically redirected to the payment page</li>
+    </ol>
 
-    <div style="text-align: center; margin: 30px 0;">
-        <a href="<?= esc($paymentUrl) ?>"
-            style="background-color: #28a745; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 18px; font-weight: bold;">
-            💳 Pay Now - $<?= esc($totalAmount) ?>
-        </a>
-    </div>
-
-    <p style="margin-top: 20px;">
-        <strong>Payment URL:</strong>
-        <a href="<?= esc($paymentUrl) ?>" style="color: #3498db; word-break: break-all;"><?= esc($paymentUrl) ?></a>
+    <p style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; border-radius: 5px; margin-top: 20px;">
+        <strong>⚠️ Important:</strong> Please complete your event details before the event date to ensure everything is ready for your special day!
     </p>
 
 </body>

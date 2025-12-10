@@ -119,7 +119,61 @@ class ReservationController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment email sent successfully', null));
         } catch (\Throwable $th) {
-            return $this->response->setStatusCode($th->getCode() ?: 500)
+            // Ensure we only use valid HTTP status codes
+            $statusCode = 500;
+            if ($th->getCode() >= 400 && $th->getCode() < 600) {
+                $statusCode = $th->getCode();
+            }
+
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
+     * Update confirmation fields only
+     */
+    public function updateConfirmation($id)
+    {
+        try {
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
+
+            $allowedFields = [
+                'event_address',
+                'arrival_parking_instructions',
+                'event_time',
+                'entertainment_start_time',
+                'birthday_child_name',
+                'birthday_child_age',
+                'children_age_range',
+                'song_requests',
+                'sing_happy_birthday'
+            ];
+
+            $updateData = [];
+            foreach ($allowedFields as $field) {
+                if (isset($data[$field])) {
+                    $updateData[$field] = $data[$field];
+                }
+            }
+
+            if (empty($updateData)) {
+                throw new \Exception('No valid fields to update', 400);
+            }
+
+            $this->service->updateConfirmation($id, $updateData);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Confirmation details updated successfully', null));
+        } catch (\Throwable $th) {
+            // Ensure we only use valid HTTP status codes
+            $statusCode = 500;
+            if ($th->getCode() >= 400 && $th->getCode() < 600) {
+                $statusCode = $th->getCode();
+            }
+
+            return $this->response->setStatusCode($statusCode)
                 ->setJSON(['message' => $th->getMessage()]);
         }
     }

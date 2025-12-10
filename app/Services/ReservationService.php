@@ -731,10 +731,13 @@ class ReservationService
             throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
         }
 
+        // Guardar el payment_url en la reserva
+        $this->repository->update($reservationId, ['payment_url' => $paymentUrl]);
+
         // Crear el contenido del email
         $subject = "Payment Information for Your Event Reservation - ID: {$reservation->id}";
 
-        $htmlContent = $this->buildPaymentEmailContent($reservation, $paymentUrl);
+        $htmlContent = $this->buildPaymentEmailContent($reservation, $paymentUrl, $reservationId);
 
         // Enviar el email
         try {
@@ -745,21 +748,46 @@ class ReservationService
     }
 
     /**
+     * Update only confirmation-related fields
+     *
+     * @param string $id ID de la reserva
+     * @param array $data Datos a actualizar
+     * @return bool True si se actualizó correctamente
+     * @throws HTTPException Si falla la actualización
+     */
+    public function updateConfirmation(string $id, array $data): bool
+    {
+        $updated = $this->repository->update($id, $data);
+
+        if (!$updated) {
+            throw new HTTPException('Failed to update confirmation details', Response::HTTP_BAD_REQUEST);
+        }
+
+        return true;
+    }
+
+    /**
      * Construye el contenido HTML del email de pago
      *
      * @param object $reservation Datos de la reserva
      * @param string $paymentUrl URL de pago
+     * @param string $reservationId ID de la reserva
      * @return string Contenido HTML del email
      */
-    private function buildPaymentEmailContent($reservation, string $paymentUrl): string
+    private function buildPaymentEmailContent($reservation, string $paymentUrl, string $reservationId): string
     {
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
         $totalAmount = number_format($reservation->total_amount, 2);
+
+        // Construir URL de confirmación usando la URL del frontend
+        $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:5173';
+        $confirmationUrl = rtrim($frontendUrl, '/') . '/confirmation/' . $reservationId;
 
         // Preparar datos para la vista
         $data = [
             'reservation' => $reservation,
             'paymentUrl' => $paymentUrl,
+            'confirmationUrl' => $confirmationUrl,
             'eventDate' => $eventDate,
             'totalAmount' => $totalAmount
         ];
