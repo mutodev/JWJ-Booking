@@ -37,7 +37,7 @@ class AddonSeeder extends Seeder
             [
                 'id' => $typeJukeboxLive,
                 'name' => 'Jukebox Live',
-                'description' => 'Our Jukebox Live option provides family friendly background music to entertain all family and friends! We can split it up as you like around the timing for the interactive set. Enjoy a variety of genres, including pop, rock, showtunes, reggae, and folk. A sound system is included.',
+                'description' => 'Want to keep the party going? Add an extra hour of music to keep the dance floor packed! Choose from our curated playlists or request your favorite songs. Perfect for extending the celebration and ensuring non-stop fun for all your guests.',
                 'image' => '/img/addons/jukebox-live.jpg',
                 'is_active' => true,
                 'created_at' => Time::now(),
@@ -46,7 +46,7 @@ class AddonSeeder extends Seeder
             [
                 'id' => $typeCustomSong,
                 'name' => 'Custom Song',
-                'description' => "This is a song composed specially for your child. We'll be in touch to learn more about your child, and one of our amazing team members will write and record a song for them, also to be performed live at the event!",
+                'description' => 'Make your celebration truly unique with a personalized song! Our talented team will create a custom song tailored to your event. This is a referral service - we\'ll connect you with our partner to bring your musical vision to life.',
                 'image' => '/img/addons/custom-song.jpg',
                 'is_active' => true,
                 'created_at' => Time::now(),
@@ -55,7 +55,7 @@ class AddonSeeder extends Seeder
             [
                 'id' => $typeDecor,
                 'name' => 'Decor',
-                'description' => 'We work with the best in the business and are excited to connect you with an exceptional decor artist who will make your event truly unforgettable.',
+                'description' => 'Transform your party space into a magical wonderland! We partner with professional decorators who can bring your theme to life with stunning decorations, backdrops, and more. This is a referral service - we\'ll connect you with our trusted decor partners.',
                 'image' => '/img/addons/decor.jpg',
                 'is_active' => true,
                 'created_at' => Time::now(),
@@ -81,8 +81,8 @@ class AddonSeeder extends Seeder
             [
                 'id' => Uuid::uuid4()->toString(),
                 'type_addon_id' => $typeAdditionalTime,
-                'name' => '15 minutes (1 performer)',
-                'base_price' => 50.00,
+                'name' => 'Additional Time (1 Performer)',
+                'base_price' => 75.00,
                 'is_active' => true,
                 'is_referral_service' => false,
                 'estimated_duration_minutes' => 15,
@@ -92,8 +92,8 @@ class AddonSeeder extends Seeder
             [
                 'id' => Uuid::uuid4()->toString(),
                 'type_addon_id' => $typeAdditionalTime,
-                'name' => '15 minutes (2 performers)',
-                'base_price' => 80.00,
+                'name' => 'Additional Time (2 Performers)',
+                'base_price' => 112.50,
                 'is_active' => true,
                 'is_referral_service' => false,
                 'estimated_duration_minutes' => 15,
