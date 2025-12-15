@@ -117,14 +117,14 @@ class ServicePriceRepository
                 service_prices.id,
                 service_prices.county_id,
                 service_prices.performers_count,
-                service_prices.img,
                 service_prices.amount,
                 service_prices.travel_fee,
                 service_prices.extra_child_fee,
                 service_prices.range_age,
                 service_prices.notes,
                 services.name,
-                services.description
+                services.description,
+                services.img
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->where('service_prices.county_id', $countyId)
@@ -145,7 +145,6 @@ class ServicePriceRepository
                 service_prices.id,
                 service_prices.county_id,
                 service_prices.performers_count,
-                service_prices.img,
                 service_prices.amount,
                 service_prices.travel_fee,
                 service_prices.extra_child_fee,
@@ -153,7 +152,8 @@ class ServicePriceRepository
                 service_prices.notes,
                 services.name,
                 services.id as service_id,
-                services.description
+                services.description,
+                services.img
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->join("counties", "counties.id = service_prices.county_id", "left")
@@ -177,7 +177,6 @@ class ServicePriceRepository
                 service_prices.id,
                 service_prices.county_id,
                 service_prices.performers_count,
-                service_prices.img,
                 service_prices.amount,
                 service_prices.travel_fee,
                 service_prices.extra_child_fee,
@@ -185,7 +184,8 @@ class ServicePriceRepository
                 service_prices.notes,
                 services.name,
                 services.id as service_id,
-                services.description
+                services.description,
+                services.img
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->join("counties", "counties.id = service_prices.county_id", "left")

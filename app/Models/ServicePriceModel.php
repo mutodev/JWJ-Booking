@@ -16,7 +16,6 @@ class ServicePriceModel extends Model
     protected $allowedFields    = [
         'service_id',
         'county_id',
-        'img',
         'performers_count',
         'amount',
         'travel_fee',

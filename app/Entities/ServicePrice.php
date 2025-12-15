@@ -12,7 +12,6 @@ class ServicePrice extends Entity
         'id' => 'string',
         'service_id' => 'string',
         'county_id' => 'string',
-        'img' => 'string',
         'performers_count' => 'integer',
         'amount' => 'float',
         'travel_fee' => 'float',

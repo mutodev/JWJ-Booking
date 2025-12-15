@@ -118,10 +118,11 @@ $routes->group('api', function ($routes) {
     $routes->group('services', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [ServiceController::class, 'getAll']);
         $routes->get('get-all-active', [ServiceController::class, 'getAllActive']);
-        $routes->get('(:any)', [ServiceController::class, 'getById']);
+        $routes->get('(:segment)', [ServiceController::class, 'getById']);
         $routes->post('/', [ServiceController::class, 'create']);
-        $routes->put('(:any)', [ServiceController::class, 'updateData']);
-        $routes->delete('(:any)', [ServiceController::class, 'deleteData']);
+        $routes->post('update/(:segment)', [ServiceController::class, 'updateWithImage']);
+        $routes->put('(:segment)', [ServiceController::class, 'updateData']);
+        $routes->delete('(:segment)', [ServiceController::class, 'deleteData']);
     });
 
     $routes->group('service-prices', ['filter' => 'verifyToken'], function ($routes) {

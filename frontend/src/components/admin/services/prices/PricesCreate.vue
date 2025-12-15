@@ -257,39 +257,12 @@
               </div>
             </div>
 
-            <!-- 🖼️ IMAGE & NOTES -->
+            <!-- 📝 NOTES -->
             <div class="form-section">
               <h6 class="section-title">
-                <i class="bi bi-image me-2"></i>Additional Information
+                <i class="bi bi-card-text me-2"></i>Additional Information
               </h6>
               <div class="row">
-                <div class="col-md-12 mb-3">
-                  <label for="img" class="form-label">Image</label>
-                  <input
-                    type="file"
-                    class="form-control"
-                    id="img"
-                    accept="image/*"
-                    @change="onImageSelected"
-                  />
-                  <small class="text-muted">JPG, PNG, GIF (max 2MB)</small>
-                  <small v-if="errors.img" class="text-danger small d-block">{{ errors.img }}</small>
-
-                  <!-- Image Preview -->
-                  <div v-if="imagePreview" class="image-preview">
-                    <div class="preview-container">
-                      <img :src="imagePreview" alt="Preview" class="preview-image" />
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-danger preview-remove"
-                        @click="removeImage"
-                      >
-                        <i class="bi bi-x"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
                 <div class="col-md-12 mb-3">
                   <label for="notes" class="form-label required">Additional Notes</label>
                   <textarea
@@ -369,7 +342,6 @@ const validationSchema = yup.object().shape({
 const form = ref({
   service_id: "",
   county_id: "",
-  img: "",
   performers_count: 1,
   amount: 0,
   is_available: true,
@@ -384,8 +356,6 @@ const selectedDurations = ref([]);
 const newDuration = ref({ minutes: null });
 const selectedChildrenRanges = ref([]);
 const newChildrenRange = ref({ min_children: null, max_children: null });
-const selectedImageFile = ref(null);
-const imagePreview = ref(null);
 const errors = ref({});
 const loading = ref(false);
 
@@ -408,7 +378,6 @@ const resetForm = () => {
   form.value = {
     service_id: "",
     county_id: "",
-    img: "",
     performers_count: 1,
     amount: 0,
     is_available: true,
@@ -422,8 +391,6 @@ const resetForm = () => {
   newDuration.value = { minutes: null };
   selectedChildrenRanges.value = [];
   newChildrenRange.value = { min_children: null, max_children: null };
-  selectedImageFile.value = null;
-  imagePreview.value = null;
   errors.value = {};
 };
 
@@ -499,54 +466,6 @@ const addChildrenRange = () => {
 const removeChildrenRange = (index) => {
   selectedChildrenRanges.value.splice(index, 1);
 };
-
-/**
- * Maneja la selección de imagen del formulario
- * Valida tipo y tamaño del archivo, crea preview
- * @param {Event} event - Evento del input file
- */
-const onImageSelected = (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  // Validar tipo de archivo
-  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-  if (!allowedTypes.includes(file.type)) {
-    errors.value.img = 'Please select a valid image file (JPG, PNG, GIF)';
-    return;
-  }
-
-  // Validar tamaño (2MB máximo)
-  const maxSize = 2 * 1024 * 1024; // 2MB en bytes
-  if (file.size > maxSize) {
-    errors.value.img = 'Image size must be less than 2MB';
-    return;
-  }
-
-  selectedImageFile.value = file;
-  errors.value.img = '';
-
-  // Create preview
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    imagePreview.value = e.target.result;
-  };
-  reader.readAsDataURL(file);
-};
-
-/**
- * Elimina la imagen seleccionada y limpia el preview
- */
-const removeImage = () => {
-  selectedImageFile.value = null;
-  imagePreview.value = null;
-  form.value.img = "";
-  // Limpiar el input file
-  const fileInput = document.getElementById('img');
-  if (fileInput) fileInput.value = '';
-};
-
-// Función removida - ahora la imagen se envía junto con el formulario
 
 /**
  * Crea las duraciones asociadas al service price
@@ -658,27 +577,8 @@ const submitForm = async () => {
       return;
     }
 
-    // Create FormData to send data and file
-    const formData = new FormData();
-
-    // Agregar todos los campos del formulario
-    Object.keys(form.value).forEach(key => {
-      if (form.value[key] !== null && form.value[key] !== undefined) {
-        formData.append(key, form.value[key]);
-      }
-    });
-
-    // Agregar imagen si existe
-    if (selectedImageFile.value) {
-      formData.append('image', selectedImageFile.value);
-    }
-
-    // Enviar datos como FormData
-    const response = await api.post("/service-prices", formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    // Enviar datos como JSON
+    const response = await api.post("/service-prices", form.value);
 
     // Procesar creación de duraciones y rangos si el service price se creó exitosamente
     if (response.data) {

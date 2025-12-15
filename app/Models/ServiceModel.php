@@ -16,6 +16,7 @@ class ServiceModel extends Model
     protected $allowedFields    = [
         'name',
         'description',
+        'img',
         'is_active'
     ];
 

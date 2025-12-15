@@ -127,4 +127,45 @@ class ServiceService
         }
         return $this->repo->softDelete($id);
     }
+
+    /**
+     * Actualiza un servicio con manejo de imagen
+     */
+    public function updateWithImage(string $id, $request)
+    {
+        $service = $this->repo->getById($id);
+        if (!$service) {
+            throw new HTTPException(
+                lang('Service.notFound'),
+                Response::HTTP_NOT_FOUND
+            );
+        }
+
+        $data = [];
+        $post = $request->getPost();
+
+        if (isset($post['name'])) {
+            $data['name'] = trim($post['name']);
+        }
+        if (isset($post['description'])) {
+            $data['description'] = trim($post['description']);
+        }
+        if (isset($post['is_active'])) {
+            $data['is_active'] = filter_var($post['is_active'], FILTER_VALIDATE_BOOLEAN);
+        }
+
+        // Procesar imagen si existe
+        $image = $request->getFile('image');
+        if ($image && $image->isValid() && !$image->hasMoved()) {
+            $uploadPath = FCPATH . 'img';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+            $newName = $image->getRandomName();
+            $image->move($uploadPath, $newName);
+            $data['img'] = '/img/' . $newName;
+        }
+
+        return $this->repo->update($id, $data);
+    }
 }

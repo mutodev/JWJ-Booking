@@ -126,6 +126,27 @@ class ServiceController extends ResourceController
     }
 
     /**
+     * Actualizar un servicio con imagen
+     */
+    public function updateWithImage(string $id)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(Response::HTTP_OK)
+                ->setJSON(
+                    create_response(
+                        lang('App.service_updated_successfully'),
+                        $this->service->updateWithImage($id, $this->request)
+                    )
+                );
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Eliminar un servicio (soft delete)
      */
     public function deleteData($id)

@@ -37,6 +37,19 @@
               ></textarea>
               <small class="text-danger small">{{ descriptionError }}</small>
             </div>
+
+            <!-- Image -->
+            <div class="mb-3">
+              <label for="serviceImg" class="form-label">Image URL</label>
+              <input
+                type="text"
+                class="form-control"
+                id="serviceImg"
+                v-model="img"
+                placeholder="e.g., img/classic-jam.jpg"
+              />
+              <small class="text-muted">Path to the image file</small>
+            </div>
           </form>
         </div>
 
@@ -80,6 +93,7 @@ const schema = yup.object({
     .min(2, "Minimum 2 characters")
     .max(100, "Maximum 100 characters"),
   description: yup.string().nullable().max(255, "Maximum 255 characters"),
+  img: yup.string().nullable().max(255, "Maximum 255 characters"),
   is_active: yup.boolean(),
 });
 
@@ -90,6 +104,7 @@ const { handleSubmit, resetForm } = useForm({
 const { value: name, errorMessage: nameError } = useField("name");
 const { value: description, errorMessage: descriptionError } =
   useField("description");
+const { value: img } = useField("img");
 const { value: is_active } = useField("is_active");
 
 // Resetear formulario al abrir modal
@@ -101,6 +116,7 @@ watch(
         values: {
           name: "",
           description: "",
+          img: "",
           is_active: true,
         },
       });
@@ -124,10 +140,10 @@ onMounted(() => {
       values: {
         name: "",
         description: "",
+        img: "",
         is_active: true,
       },
     });
   }
 });
 </script>
-
