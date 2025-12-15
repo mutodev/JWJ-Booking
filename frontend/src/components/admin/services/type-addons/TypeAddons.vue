@@ -36,6 +36,18 @@
         show-index
         index-column-text="#"
       >
+        <!-- Image -->
+        <template #item-image="{ image }">
+          <img
+            v-if="image"
+            :src="image"
+            alt="Type addon image"
+            class="img-thumbnail"
+            style="width: 50px; height: 50px; object-fit: cover;"
+          />
+          <span v-else class="text-muted">-</span>
+        </template>
+
         <!-- Estado -->
         <template #item-is_active="{ is_active }">
           <span v-if="is_active" class="badge bg-success">Active</span>
@@ -101,6 +113,7 @@ const selectedData = ref(null);
 
 // Table headers configuration
 const headers = ref([
+  { text: "Image", value: "image", sortable: false },
   { text: "Name", value: "name", sortable: true },
   { text: "Description", value: "description", sortable: true },
   { text: "Status", value: "is_active", sortable: true },

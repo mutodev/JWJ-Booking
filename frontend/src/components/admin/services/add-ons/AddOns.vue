@@ -38,6 +38,18 @@
         show-index
         index-column-text="#"
       >
+        <!-- Type addon image -->
+        <template #item-type_addon_image="{ type_addon_image }">
+          <img
+            v-if="type_addon_image"
+            :src="type_addon_image"
+            alt="Addon type image"
+            class="img-thumbnail"
+            style="width: 50px; height: 50px; object-fit: cover;"
+          />
+          <span v-else class="text-muted">-</span>
+        </template>
+
         <!-- Status badge -->
         <template #item-is_active="{ is_active }">
           <span v-if="is_active" class="badge bg-success">Active</span>
@@ -133,6 +145,7 @@ const selectedData = ref(null);
  * Defines the columns displayed in the addons table
  */
 const headers = ref([
+  { text: "Image", value: "type_addon_image", sortable: false },
   { text: "Type", value: "type_addon_name", sortable: true },
   { text: "Name", value: "name", sortable: true },
   { text: "Base Price", value: "base_price", sortable: true },

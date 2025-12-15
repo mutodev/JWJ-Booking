@@ -18,12 +18,12 @@ class AddonRepository
     }
 
     /**
-     * Obtener todos los addons con el nombre del type_addon
+     * Obtener todos los addons con el nombre e imagen del type_addon
      */
     public function getAll(): array
     {
         return $this->model
-            ->select('addons.*, type_addons.name as type_addon_name')
+            ->select('addons.*, type_addons.name as type_addon_name, type_addons.image as type_addon_image')
             ->join('type_addons', 'type_addons.id = addons.type_addon_id', 'left')
             ->findAll();
     }

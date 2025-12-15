@@ -151,6 +151,7 @@ $routes->group('api', function ($routes) {
         $routes->get('active', [TypeAddonController::class, 'getAllActive']);
         $routes->get('(:segment)', [TypeAddonController::class, 'getById']);
         $routes->post('/', [TypeAddonController::class, 'create']);
+        $routes->post('(:segment)', [TypeAddonController::class, 'updateData']);
         $routes->put('(:segment)', [TypeAddonController::class, 'updateData']);
         $routes->delete('(:segment)', [TypeAddonController::class, 'deleteData']);
     });
