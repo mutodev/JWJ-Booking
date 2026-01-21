@@ -155,12 +155,12 @@
             <i class="bi bi-info-circle me-2"></i>
             What's Next?
           </h6>
-          <ul class="mb-0">
-            <li>You will receive a confirmation email shortly with all the details</li>
-            <li>Our team will contact you within 24 hours to confirm the booking</li>
-            <li>Payment instructions will be included in the confirmation email</li>
-            <li>If you need to make changes, please contact us as soon as possible</li>
-          </ul>
+          <p class="mb-2">
+            You will receive a confirmation email with your reservation request details. Our team will contact you within 48 business hours to let you know if we have confirmed availability and finalize the booking. At that time, we will ask for additional event information and you will have the opportunity to share any special requests and important details. We will then send a link with payment instructions to secure the service.
+          </p>
+          <p class="mb-0">
+            <strong>We operate Monday–Friday, 9:00 a.m. to 5:00 p.m. EST.</strong>
+          </p>
         </div>
       </div>
     </div>
