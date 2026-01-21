@@ -49,10 +49,14 @@
 
     <!-- Secciones dinámicas por tipo de addon -->
     <div
-      v-for="typeAddon in typeAddons"
+      v-for="(typeAddon, index) in typeAddons"
       :key="typeAddon.id"
       class="addons-section mb-5"
     >
+      <hr
+        v-if="isReferralTypeAddon(typeAddon) && index > 0 && !isReferralTypeAddon(typeAddons[index - 1])"
+        class="addons-separator"
+      />
       <div class="section-header">
         <i class="bi bi-plus-circle me-2"></i>
         <h3 class="section-title">{{ typeAddon.name }}</h3>
@@ -64,7 +68,7 @@
             <!-- Imagen del tipo -->
             <div class="addon-card__image-wrapper">
               <img
-                :src="typeAddon.image || defaultImage"
+                :src="getImageUrl(typeAddon.image)"
                 class="addon-card__image"
                 :alt="typeAddon.name"
                 @error="handleImageError"
@@ -91,7 +95,7 @@
                 </div>
               </div>
 
-              <!-- Checkbox para addons referral (precio 0) -->
+              <!-- Checkbox para addons (con o sin precio) -->
               <div v-if="typeAddon.addons && typeAddon.addons.length && !hasAddonsWithPrice(typeAddon)" class="addon-card__radio-options">
                 <div
                   v-for="addon in typeAddon.addons"
@@ -102,6 +106,7 @@
                 >
                   <i :class="isAddonSelected(addon.id) ? 'bi bi-check-square-fill' : 'bi bi-square'" class="addon-radio-option__icon"></i>
                   <span class="addon-radio-option__label">{{ addon.name }}</span>
+                  <span v-if="addon.base_price > 0" class="addon-radio-option__price">${{ addon.base_price }}</span>
                 </div>
               </div>
             </div>
@@ -146,6 +151,14 @@ const typeAddons = ref([]);
 const selectedAddons = ref([]);
 const selectedAddonByType = ref({}); // Para guardar addon seleccionado por tipo
 const defaultImage = "/img/default.jpg";
+
+function getImageUrl(img) {
+  if (!img) return defaultImage;
+  // If already has leading slash, return as is
+  if (img.startsWith('/')) return img;
+  // Otherwise add leading slash for proper URL resolution
+  return '/' + img;
+}
 const showJukeboxCustomQuoteDialog = ref(false);
 
 async function loadAddons() {
@@ -155,12 +168,12 @@ async function loadAddons() {
     const response = await api.get("/home/addons");
     const typeAddonsList = Array.isArray(response) ? response : (response?.data || []);
 
-    // Ordenar: primero los que tienen addons con precio > 0, luego los de precio 0 (referral)
+    // Ordenar: primero los que tienen algún addon con precio > 0, luego los referral (todos precio 0)
     typeAddons.value = typeAddonsList.sort((a, b) => {
-      const aHasPrice = a.addons?.some(addon => addon.base_price > 0);
-      const bHasPrice = b.addons?.some(addon => addon.base_price > 0);
-      if (aHasPrice && !bHasPrice) return -1;
-      if (!aHasPrice && bHasPrice) return 1;
+      const aIsReferral = a.addons?.every(addon => addon.base_price == 0);
+      const bIsReferral = b.addons?.every(addon => addon.base_price == 0);
+      if (!aIsReferral && bIsReferral) return -1;
+      if (aIsReferral && !bIsReferral) return 1;
       return 0;
     });
 
@@ -189,6 +202,11 @@ function handleImageError(event) {
 
 function hasAddonsWithPrice(typeAddon) {
   return typeAddon.addons?.some(addon => addon.base_price > 0);
+}
+
+function isReferralTypeAddon(typeAddon) {
+  // Es referral si TODOS los addons tienen precio = 0
+  return typeAddon.addons?.every(addon => addon.base_price == 0);
 }
 
 function isAddonSelected(addonId) {
@@ -611,6 +629,15 @@ watch(selectedAddons, () => {
   border-color: #e662a5 !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(255, 116, 183, 0.3);
+}
+
+/* Separador entre addons con radio y checkbox */
+.addons-separator {
+  border: none;
+  height: 3px;
+  background-color: #FF74B7;
+  margin: 2rem 0;
+  opacity: 1;
 }
 
 </style>
