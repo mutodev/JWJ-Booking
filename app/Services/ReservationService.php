@@ -802,11 +802,13 @@ class ReservationService
             return true;
         }
 
-        return $this->repository->update($reservationId, [
+        $result = $this->repository->update($reservationId, [
             'is_paid'                   => true,
             'stripe_payment_intent_id'  => $paymentIntentId,
             'paid_at'                   => date('Y-m-d H:i:s'),
         ]);
+
+        return $result !== null;
     }
 
     /**
