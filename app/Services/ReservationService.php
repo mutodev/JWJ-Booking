@@ -35,6 +35,7 @@ use App\Repositories\ReservationRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ReservationAddonRepository;
 use App\Services\BrevoEmailService;
+use App\Services\StripeService;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 
@@ -68,6 +69,12 @@ class ReservationService
     protected $emailService;
 
     /**
+     * Servicio para integración con Stripe
+     * @var StripeService
+     */
+    protected $stripeService;
+
+    /**
      * Constructor del servicio
      * Inicializa todos los repositories necesarios
      */
@@ -77,6 +84,7 @@ class ReservationService
         $this->customerRepository = new CustomerRepository();
         $this->reservationAddonRepository = new ReservationAddonRepository();
         $this->emailService = new BrevoEmailService();
+        $this->stripeService = new StripeService();
     }
 
     /**
@@ -715,14 +723,13 @@ class ReservationService
     }
 
     /**
-     * Envía un correo con la URL de pago y los datos de la reserva
+     * Creates a Stripe Checkout Session and sends the payment email
      *
      * @param string $reservationId ID de la reserva
-     * @param string $paymentUrl URL de pago
-     * @return void
+     * @return array Stripe session data
      * @throws HTTPException Si la reserva no existe o falla el envío del email
      */
-    public function sendPaymentEmail(string $reservationId, string $paymentUrl): void
+    public function sendPaymentEmail(string $reservationId): array
     {
         // Obtener datos completos de la reserva
         $reservation = $this->repository->getById($reservationId);
@@ -731,20 +738,65 @@ class ReservationService
             throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
         }
 
-        // Guardar el payment_url en la reserva
-        $this->repository->update($reservationId, ['payment_url' => $paymentUrl]);
+        // Create Stripe Checkout Session
+        $session = $this->stripeService->createCheckoutSession(
+            (float) $reservation->total_amount,
+            $reservation->email,
+            $reservationId,
+            'Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie')
+        );
 
-        // Crear el contenido del email
+        $paymentUrl = $session->url;
+
+        // Save stripe session id and payment URL
+        $this->repository->update($reservationId, [
+            'payment_url'        => $paymentUrl,
+            'stripe_session_id'  => $session->id,
+        ]);
+
+        // Build and send the email
         $subject = "Payment Information for Your Event Reservation - ID: {$reservation->id}";
-
         $htmlContent = $this->buildPaymentEmailContent($reservation, $paymentUrl, $reservationId);
 
-        // Enviar el email
         try {
             $this->emailService->sendEmail($reservation->email, $subject, $htmlContent);
         } catch (\Throwable $e) {
             throw new HTTPException('Failed to send payment email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+
+        return [
+            'session_id'  => $session->id,
+            'payment_url' => $paymentUrl,
+        ];
+    }
+
+    /**
+     * Handle a completed payment from Stripe webhook
+     *
+     * @param string $reservationId ID de la reserva
+     * @param string $paymentIntentId Stripe Payment Intent ID
+     * @return bool
+     */
+    public function handlePaymentCompleted(string $reservationId, string $paymentIntentId): bool
+    {
+        $reservation = $this->repository->getById($reservationId);
+
+        if (!$reservation) {
+            log_message('error', "Stripe webhook: reservation {$reservationId} not found");
+            return false;
+        }
+
+        // Avoid processing duplicates
+        if ($reservation->is_paid) {
+            log_message('info', "Stripe webhook: reservation {$reservationId} already marked as paid");
+            return true;
+        }
+
+        return $this->repository->update($reservationId, [
+            'is_paid'                   => true,
+            'stripe_payment_intent_id'  => $paymentIntentId,
+            'paid_at'                   => date('Y-m-d H:i:s'),
+        ]);
     }
 
     /**

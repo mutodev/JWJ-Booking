@@ -432,9 +432,11 @@ async function handleSubmit() {
 
     await api.patch(`/reservations/${reservationId}/confirmation`, updateData);
 
-    // Redirect to payment URL
+    // Redirect to payment URL or home
     if (reservation.value.payment_url) {
       window.location.href = reservation.value.payment_url;
+    } else {
+      router.push('/');
     }
 
   } catch (validationErrors) {

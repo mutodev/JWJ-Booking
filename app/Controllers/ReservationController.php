@@ -23,8 +23,6 @@ class ReservationController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response(lang('Reservation.list'), $this->service->getAll()));
         } catch (\Throwable $th) {
-            print_r($th);
-            die();
             return $this->response->setStatusCode($th->getCode() ?: 500)
                 ->setJSON(['message' => $th->getMessage()]);
         }
@@ -114,10 +112,10 @@ class ReservationController extends ResourceController
             $json = $this->request->getBody();
             $data = json_decode($json, true);
 
-            $this->service->sendPaymentEmail($data['reservationId'], $data['paymentUrl']);
+            $result = $this->service->sendPaymentEmail($data['reservationId']);
 
             return $this->response->setStatusCode(200)
-                ->setJSON(create_response('Payment email sent successfully', null));
+                ->setJSON(create_response('Payment email sent successfully', $result));
         } catch (\Throwable $th) {
             // Ensure we only use valid HTTP status codes
             $statusCode = 500;
@@ -127,6 +125,46 @@ class ReservationController extends ResourceController
 
             return $this->response->setStatusCode($statusCode)
                 ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
+     * Handle Stripe webhook events
+     */
+    public function stripeWebhook()
+    {
+        try {
+            $payload = file_get_contents('php://input');
+            $sigHeader = $this->request->getHeaderLine('Stripe-Signature');
+
+            if (empty($sigHeader)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['message' => 'Missing Stripe-Signature header']);
+            }
+
+            $stripeService = new \App\Services\StripeService();
+            $event = $stripeService->verifyWebhookSignature($payload, $sigHeader);
+
+            if ($event->type === 'checkout.session.completed') {
+                $session = $event->data->object;
+                $reservationId = $session->metadata->reservation_id ?? null;
+                $paymentIntentId = $session->payment_intent ?? null;
+
+                if ($reservationId) {
+                    $this->service->handlePaymentCompleted($reservationId, $paymentIntentId);
+                }
+            }
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(['received' => true]);
+        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+            log_message('error', 'Stripe webhook signature verification failed: ' . $e->getMessage());
+            return $this->response->setStatusCode(400)
+                ->setJSON(['message' => 'Invalid signature']);
+        } catch (\Throwable $th) {
+            log_message('error', 'Stripe webhook error: ' . $th->getMessage());
+            return $this->response->setStatusCode(500)
+                ->setJSON(['message' => 'Webhook processing failed']);
         }
     }
 

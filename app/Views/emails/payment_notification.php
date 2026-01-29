@@ -67,7 +67,7 @@
     <h3 style="color: #e74c3c; margin-top: 30px;">Next Steps:</h3>
     <ol style="line-height: 2;">
         <li><strong>Complete Event Details:</strong> Click the blue button above to fill in your event information (address, times, birthday details, etc.)</li>
-        <li><strong>Proceed to Payment:</strong> After completing the details, you'll be automatically redirected to the payment page</li>
+        <li><strong>Proceed to Payment:</strong> After completing the details, you'll be automatically redirected to a secure payment page powered by Stripe</li>
     </ol>
 
     <p style="background-color: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; border-radius: 5px; margin-top: 20px;">
