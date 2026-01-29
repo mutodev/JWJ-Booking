@@ -169,6 +169,34 @@ class ReservationController extends ResourceController
     }
 
     /**
+     * Verify payment status by Stripe session ID
+     */
+    public function verifyPayment()
+    {
+        try {
+            $sessionId = $this->request->getGet('session_id');
+
+            if (empty($sessionId)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['message' => 'session_id is required']);
+            }
+
+            $result = $this->service->verifyPayment($sessionId);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Payment verified', $result));
+        } catch (\Throwable $th) {
+            $statusCode = 500;
+            if ($th->getCode() >= 400 && $th->getCode() < 600) {
+                $statusCode = $th->getCode();
+            }
+
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Update confirmation fields only
      */
     public function updateConfirmation($id)

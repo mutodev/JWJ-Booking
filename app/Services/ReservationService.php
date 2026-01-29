@@ -810,6 +810,33 @@ class ReservationService
     }
 
     /**
+     * Verify a Stripe Checkout Session and mark reservation as paid if completed
+     *
+     * @param string $sessionId Stripe Checkout Session ID
+     * @return array Result with reservation status
+     */
+    public function verifyPayment(string $sessionId): array
+    {
+        $session = $this->getStripeService()->retrieveSession($sessionId);
+
+        $reservationId = $session->metadata->reservation_id ?? null;
+
+        if (!$reservationId) {
+            throw new HTTPException('Reservation not found in session', Response::HTTP_NOT_FOUND);
+        }
+
+        if ($session->payment_status === 'paid') {
+            $this->handlePaymentCompleted($reservationId, $session->payment_intent ?? '');
+        }
+
+        return [
+            'reservation_id' => $reservationId,
+            'payment_status' => $session->payment_status,
+            'is_paid'        => $session->payment_status === 'paid',
+        ];
+    }
+
+    /**
      * Update only confirmation-related fields
      *
      * @param string $id ID de la reserva

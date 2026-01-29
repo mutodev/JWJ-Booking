@@ -177,8 +177,9 @@ $routes->group('api', function ($routes) {
     $routes->get('reservations/(:segment)', [ReservationController::class, 'getById']);
     $routes->patch('reservations/(:segment)/confirmation', [ReservationController::class, 'updateConfirmation/$1']);
 
-    // Stripe webhook (no auth - validated by signature)
+    // Stripe (no auth)
     $routes->post('stripe/webhook', [ReservationController::class, 'stripeWebhook']);
+    $routes->get('stripe/verify-payment', [ReservationController::class, 'verifyPayment']);
 
     $routes->group('reservation-addons', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [ReservationAddonController::class, 'getAll']);
