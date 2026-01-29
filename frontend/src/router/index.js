@@ -23,6 +23,8 @@ import TypeAddons from "@/components/admin/services/type-addons/TypeAddons.vue";
 import PromoCodes from "@/components/admin/promo-codes/PromoCodes.vue";
 import AbandonedCarts from "@/components/admin/abandoned-carts/AbandonedCarts.vue";
 import ConfirmationUpdate from "@/components/home/confirmation/ConfirmationUpdate.vue";
+import PaymentSuccess from "@/components/home/payment/PaymentSuccess.vue";
+import PaymentCancel from "@/components/home/payment/PaymentCancel.vue";
 import NotFound from "@/components/not-found/NotFound.vue";
 
 const routes = [
@@ -34,6 +36,8 @@ const routes = [
   { path: "/login", name: "login", component: Login },
   { path: "/reset-password", name: "reset-password", component: ResetPassword },
   { path: "/confirmation/:id", name: "confirmation-update", component: ConfirmationUpdate },
+  { path: "/payment-success", name: "payment-success", component: PaymentSuccess },
+  { path: "/payment-cancel", name: "payment-cancel", component: PaymentCancel },
   {
     path: "/admin",
     name: "admin",
