@@ -69,10 +69,10 @@ class ReservationService
     protected $emailService;
 
     /**
-     * Servicio para integración con Stripe
-     * @var StripeService
+     * Servicio para integración con Stripe (lazy-loaded)
+     * @var StripeService|null
      */
-    protected $stripeService;
+    protected $stripeService = null;
 
     /**
      * Constructor del servicio
@@ -84,7 +84,17 @@ class ReservationService
         $this->customerRepository = new CustomerRepository();
         $this->reservationAddonRepository = new ReservationAddonRepository();
         $this->emailService = new BrevoEmailService();
-        $this->stripeService = new StripeService();
+    }
+
+    /**
+     * Get StripeService instance (lazy initialization)
+     */
+    protected function getStripeService(): StripeService
+    {
+        if ($this->stripeService === null) {
+            $this->stripeService = new StripeService();
+        }
+        return $this->stripeService;
     }
 
     /**
@@ -739,7 +749,7 @@ class ReservationService
         }
 
         // Create Stripe Checkout Session
-        $session = $this->stripeService->createCheckoutSession(
+        $session = $this->getStripeService()->createCheckoutSession(
             (float) $reservation->total_amount,
             $reservation->email,
             $reservationId,
