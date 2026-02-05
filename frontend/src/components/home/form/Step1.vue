@@ -15,7 +15,7 @@
             <div class="quote-header">
               <i class="bi bi-calendar-event fs-1 text-primary mb-3"></i>
               <p class="quote-message">
-                Since you're expecting more than 25 children, we'll provide a custom quote. Please schedule a call, and a team member will be in touch.
+                Since you're expecting more than 25 children, we'll provide a custom quote. Please submit an inquiry event form on our website, and a team member will be in touch.
               </p>
             </div>
           </div>
@@ -35,12 +35,12 @@
 
         <!-- Welcome Intro Text -->
         <div class="welcome-section mb-4 text-center">
-          <h2 class="mb-3">Welcome to Jam with Jamie!</h2>
+          <h2 class="mb-3">Welcome to Jam with Jamie</h2>
           <p class="intro-text">
-            We're thrilled to help you bring the party to life!
+            We're thrilled to help you bring the party to life
           </p>
           <p class="intro-text disclaimer-text">
-            Please complete this form to submit your reservation request. Submitting the form does not guarantee your booking; it helps us collect the details needed to confirm availability and rates. Once received, our operations staff will coordinate and reach out to process payment and finalize your booking.
+            Please complete this quick form to submit your booking request. This helps us check availability and pricing. Once received, our team will reach out to confirm details, collect payment, and finalize your booking.
           </p>
         </div>
 

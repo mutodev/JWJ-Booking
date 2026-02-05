@@ -240,6 +240,7 @@ function getCurrentStepProps() {
       props.zipcode = form.value?.zipcode;
       props.active = activeStep.value === 2;
       props.service = form.value?.service;
+      props.childrenRange = form.value?.customer?.childrenRange || null;
       break;
     case 3:
       // Step 3: Select Add-ons

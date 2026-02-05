@@ -47,66 +47,108 @@
       <strong>Optional:</strong> Add-ons are completely optional. You can skip this step or select services to enhance your event.
     </div>
 
-    <!-- Secciones dinámicas por tipo de addon -->
-    <div
-      v-for="(typeAddon, index) in typeAddons"
-      :key="typeAddon.id"
-      class="addons-section mb-5"
-    >
-      <hr
-        v-if="isReferralTypeAddon(typeAddon) && index > 0 && !isReferralTypeAddon(typeAddons[index - 1])"
-        class="addons-separator"
-      />
-      <div class="section-header">
+    <!-- ADD-ON SERVICES -->
+    <div v-if="addonServices.length" class="addons-group mb-5">
+      <div class="group-header">
         <i class="bi bi-plus-circle me-2"></i>
-        <h3 class="section-title">{{ typeAddon.name }}</h3>
+        <h2 class="group-title">Add-on Services</h2>
       </div>
-      <div class="addons-grid">
-        <div class="addon-card">
-          <!-- Card -->
-          <div class="addon-card__container">
-            <!-- Imagen del tipo -->
-            <div class="addon-card__image-wrapper">
-              <img
-                :src="getImageUrl(typeAddon.image)"
-                class="addon-card__image"
-                :alt="typeAddon.name"
-                @error="handleImageError"
-              />
-            </div>
 
-            <!-- Contenido -->
-            <div class="addon-card__content">
-              <!-- Descripción del tipo -->
-              <p class="addon-card__description">{{ typeAddon.description }}</p>
-
-              <!-- Radio buttons para addons con precio > 0 -->
-              <div v-if="typeAddon.addons && typeAddon.addons.length && hasAddonsWithPrice(typeAddon)" class="addon-card__radio-options">
-                <div
-                  v-for="addon in typeAddon.addons"
-                  :key="addon.id"
-                  class="addon-radio-option"
-                  :class="{ 'addon-radio-option--selected': selectedAddonByType[typeAddon.id] === addon.id }"
-                  @click="handleAddonSelect(typeAddon, addon)"
-                >
-                  <i :class="selectedAddonByType[typeAddon.id] === addon.id ? 'bi bi-circle-fill' : 'bi bi-circle'" class="addon-radio-option__icon"></i>
-                  <span class="addon-radio-option__label">{{ addon.name }}</span>
-                  <span class="addon-radio-option__price">${{ addon.base_price }}</span>
+      <div
+        v-for="typeAddon in addonServices"
+        :key="typeAddon.id"
+        class="addons-section mb-4"
+      >
+        <div class="section-header">
+          <h3 class="section-title">{{ typeAddon.name }}</h3>
+        </div>
+        <div class="addons-grid">
+          <div class="addon-card">
+            <div class="addon-card__container">
+              <div class="addon-card__image-wrapper">
+                <img
+                  :src="getImageUrl(typeAddon.image)"
+                  class="addon-card__image"
+                  :alt="typeAddon.name"
+                  @error="handleImageError"
+                />
+              </div>
+              <div class="addon-card__content">
+                <p class="addon-card__description">{{ typeAddon.description }}</p>
+                <div v-if="typeAddon.addons && typeAddon.addons.length && hasAddonsWithPrice(typeAddon)" class="addon-card__radio-options">
+                  <div
+                    v-for="addon in typeAddon.addons"
+                    :key="addon.id"
+                    class="addon-radio-option"
+                    :class="{ 'addon-radio-option--selected': selectedAddonByType[typeAddon.id] === addon.id }"
+                    @click="handleAddonSelect(typeAddon, addon)"
+                  >
+                    <i :class="selectedAddonByType[typeAddon.id] === addon.id ? 'bi bi-circle-fill' : 'bi bi-circle'" class="addon-radio-option__icon"></i>
+                    <span class="addon-radio-option__label">{{ addon.name }}</span>
+                    <span class="addon-radio-option__price">${{ addon.base_price }}</span>
+                  </div>
+                </div>
+                <div v-if="typeAddon.addons && typeAddon.addons.length && !hasAddonsWithPrice(typeAddon)" class="addon-card__radio-options">
+                  <div
+                    v-for="addon in typeAddon.addons"
+                    :key="addon.id"
+                    class="addon-radio-option"
+                    :class="{ 'addon-radio-option--selected': isAddonSelected(addon.id) }"
+                    @click="toggleReferralAddon(addon)"
+                  >
+                    <i :class="isAddonSelected(addon.id) ? 'bi bi-check-square-fill' : 'bi bi-square'" class="addon-radio-option__icon"></i>
+                    <span class="addon-radio-option__label">{{ addon.name }}</span>
+                    <span v-if="addon.base_price > 0" class="addon-radio-option__price">${{ addon.base_price }}</span>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-              <!-- Checkbox para addons (con o sin precio) -->
-              <div v-if="typeAddon.addons && typeAddon.addons.length && !hasAddonsWithPrice(typeAddon)" class="addon-card__radio-options">
-                <div
-                  v-for="addon in typeAddon.addons"
-                  :key="addon.id"
-                  class="addon-radio-option"
-                  :class="{ 'addon-radio-option--selected': isAddonSelected(addon.id) }"
-                  @click="toggleReferralAddon(addon)"
-                >
-                  <i :class="isAddonSelected(addon.id) ? 'bi bi-check-square-fill' : 'bi bi-square'" class="addon-radio-option__icon"></i>
-                  <span class="addon-radio-option__label">{{ addon.name }}</span>
-                  <span v-if="addon.base_price > 0" class="addon-radio-option__price">${{ addon.base_price }}</span>
+    <!-- REFERRAL SERVICES -->
+    <div v-if="referralServices.length" class="addons-group mb-5">
+      <hr class="addons-separator" />
+      <div class="group-header">
+        <i class="bi bi-people me-2"></i>
+        <h2 class="group-title">Referral Services</h2>
+      </div>
+
+      <div
+        v-for="typeAddon in referralServices"
+        :key="typeAddon.id"
+        class="addons-section mb-4"
+      >
+        <div class="section-header">
+          <h3 class="section-title">{{ typeAddon.name }}</h3>
+        </div>
+        <div class="addons-grid">
+          <div class="addon-card">
+            <div class="addon-card__container">
+              <div class="addon-card__image-wrapper">
+                <img
+                  :src="getImageUrl(typeAddon.image)"
+                  class="addon-card__image"
+                  :alt="typeAddon.name"
+                  @error="handleImageError"
+                />
+              </div>
+              <div class="addon-card__content">
+                <p class="addon-card__description">{{ typeAddon.description }}</p>
+                <div v-if="typeAddon.addons && typeAddon.addons.length" class="addon-card__radio-options">
+                  <div
+                    v-for="addon in typeAddon.addons"
+                    :key="addon.id"
+                    class="addon-radio-option"
+                    :class="{ 'addon-radio-option--selected': isAddonSelected(addon.id) }"
+                    @click="toggleReferralAddon(addon)"
+                  >
+                    <i :class="isAddonSelected(addon.id) ? 'bi bi-check-square-fill' : 'bi bi-square'" class="addon-radio-option__icon"></i>
+                    <span class="addon-radio-option__label">{{ addon.name }}</span>
+                    <span v-if="addon.base_price > 0" class="addon-radio-option__price">${{ addon.base_price }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -124,7 +166,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import api from "@/services/axios";
 import { useToast } from "vue-toastification";
 
@@ -160,6 +202,15 @@ function getImageUrl(img) {
   return '/' + img;
 }
 const showJukeboxCustomQuoteDialog = ref(false);
+
+// Computed: split type addons into add-on services and referral services
+const addonServices = computed(() => {
+  return typeAddons.value.filter(t => !isReferralTypeAddon(t));
+});
+
+const referralServices = computed(() => {
+  return typeAddons.value.filter(t => isReferralTypeAddon(t));
+});
 
 async function loadAddons() {
   if (!props.active) return;
@@ -298,7 +349,8 @@ watch(selectedAddons, () => {
   margin-bottom: 3rem;
 }
 
-.section-header {
+/* Group header (ADD-ON SERVICES / REFERRAL SERVICES) */
+.group-header {
   display: flex;
   align-items: center;
   margin-bottom: 1.5rem;
@@ -306,18 +358,32 @@ watch(selectedAddons, () => {
   border-bottom: 2px solid #e5e7eb;
 }
 
-.section-header i {
+.group-header i {
   font-size: 1.75rem;
   color: #FF74B7;
 }
 
-.section-title {
+.group-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #1f2937;
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Section header (individual type name as subtitle) */
+.section-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin: 0;
 }
 
 /* Grid de add-ons */

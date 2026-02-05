@@ -16,9 +16,9 @@
     </div>
 
     <!-- Grid de tarjetas -->
-    <div v-if="services.length" class="services-grid">
+    <div v-if="filteredServices.length" class="services-grid">
       <div
-        v-for="service in services"
+        v-for="service in filteredServices"
         :key="service.id"
         class="service-card"
         :class="{ 'service-card--selected': selectedService?.id === service.id }"
@@ -119,6 +119,10 @@ const props = defineProps({
     type: Object,
     default: null,
   },
+  childrenRange: {
+    type: String,
+    default: null,
+  },
 });
 
 const emit = defineEmits(["setData"]);
@@ -126,6 +130,14 @@ const emit = defineEmits(["setData"]);
 const services = ref([]);
 const selectedService = ref(null);
 const defaultServiceImage = "/img/default.jpg";
+
+// Filter out 1-performer services when "11-24 kids" is selected
+const filteredServices = computed(() => {
+  if (props.childrenRange === '11-24 kids') {
+    return services.value.filter(s => s.performers_count > 1);
+  }
+  return services.value;
+});
 
 function getImageUrl(img) {
   if (!img) return defaultServiceImage;
@@ -176,6 +188,16 @@ async function loadServices() {
   try {
     const response = await api.get(`/home/services/${props.zipcode.id}`);
     const servicesList = Array.isArray(response) ? response : (response?.data || []);
+
+    // Sort services in predefined order
+    const serviceOrder = ['Classic Jam', 'Classic Jam Duo', 'Junior Jammer', 'Big Kids Party', 'Eras Jam'];
+    servicesList.sort((a, b) => {
+      const indexA = serviceOrder.indexOf(a.name);
+      const indexB = serviceOrder.indexOf(b.name);
+      // Services not in the list go to the end
+      return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
+    });
+
     services.value = servicesList;
 
     // Restore selected service if it exists in the loaded services
@@ -217,6 +239,17 @@ watch(
     }
   },
   { immediate: true }
+);
+
+// Clear selection if the selected service is no longer in the filtered list
+watch(
+  () => props.childrenRange,
+  () => {
+    if (selectedService.value && !filteredServices.value.find(s => s.id === selectedService.value.id)) {
+      selectedService.value = null;
+      emit("setData", { service: null });
+    }
+  }
 );
 
 // Watch for service prop changes to maintain selection
