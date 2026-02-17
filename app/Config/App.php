@@ -24,7 +24,7 @@ class App extends BaseConfig
 
         // Establecer baseURL según el entorno
         if (ENVIRONMENT === 'production') {
-            $this->baseURL = 'http://72.60.169.233/';
+            $this->baseURL = 'https://bookingjamwithjamie.cloud/';
         } else {
             // development, testing, o cualquier otro entorno usa localhost
             $this->baseURL = 'http://localhost:8080/';
