@@ -12,7 +12,7 @@ const appEnv = window.APP_ENV || "production";
 // 🔹 Definir baseURL según entorno
 const baseURL =
   appEnv === "production"
-    ? "http://72.60.169.233/api"
+    ? "https://bookingjamwithjamie.cloud/api"
     : `${window.location.origin}/api`;
 
 const api = axios.create({
