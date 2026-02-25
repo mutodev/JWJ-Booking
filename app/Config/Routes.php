@@ -20,6 +20,7 @@ use App\Controllers\ServicePriceController;
 use App\Controllers\TypeAddonController;
 use App\Controllers\UserController;
 use App\Controllers\ZipCodeController;
+use App\Controllers\EmailTemplateController;
 use CodeIgniter\Router\RouteCollection;
 
 /**
@@ -222,6 +223,14 @@ $routes->group('api', function ($routes) {
         $routes->get('popular-jam-types', [DashboardController::class, 'getMostPopularJamTypes']);
         $routes->get('cities-most-events', [DashboardController::class, 'getCitiesWithMostEvents']);
         $routes->get('most-popular-addons', [DashboardController::class, 'getMostPopularAddons']);
+    });
+
+    // Email Templates (Admin)
+    $routes->group('email-templates', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [EmailTemplateController::class, 'getAll']);
+        $routes->get('(:segment)', [EmailTemplateController::class, 'getById']);
+        $routes->put('(:segment)', [EmailTemplateController::class, 'updateData']);
+        $routes->post('preview', [EmailTemplateController::class, 'preview']);
     });
 
     // Promo Codes (Admin)

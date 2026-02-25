@@ -6,19 +6,19 @@ use App\Repositories\UserRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 use App\Services\BrevoEmailService as ServicesBrevoEmailService;
-
-use function PHPUnit\Framework\isNull;
+use App\Services\EmailTemplateService;
 
 class LoginService
 {
     protected $userRepository;
     protected $emailService;
-
+    protected $emailTemplateService;
 
     function __construct()
     {
         $this->userRepository = new UserRepository();
         $this->emailService = new ServicesBrevoEmailService();
+        $this->emailTemplateService = new EmailTemplateService();
     }
 
 
@@ -117,10 +117,12 @@ class LoginService
         if (!$updated)
             return true;
 
+        $rendered = $this->emailTemplateService->render('reset_password', ['password' => $newPassword]);
+
         $emailSent = $this->emailService->sendEmail(
             $data['email'],
-            'Password Reset - JamWithJamie',
-            view('emails/reset_password', ['password' => $newPassword]),
+            $rendered['subject'],
+            $rendered['body'],
         );
 
         if (!$emailSent)

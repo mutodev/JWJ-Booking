@@ -22,6 +22,7 @@ import AddOns from "@/components/admin/services/add-ons/AddOns.vue";
 import TypeAddons from "@/components/admin/services/type-addons/TypeAddons.vue";
 import PromoCodes from "@/components/admin/promo-codes/PromoCodes.vue";
 import AbandonedCarts from "@/components/admin/abandoned-carts/AbandonedCarts.vue";
+import EmailTemplates from "@/components/admin/email-templates/EmailTemplates.vue";
 import ConfirmationUpdate from "@/components/home/confirmation/ConfirmationUpdate.vue";
 import PaymentSuccess from "@/components/home/payment/PaymentSuccess.vue";
 import PaymentCancel from "@/components/home/payment/PaymentCancel.vue";
@@ -65,6 +66,7 @@ const routes = [
           { path: "users", component: Users },
           { path: "roles", component: Roles },
           { path: "menus", component: Menu },
+          { path: "email-templates", component: EmailTemplates },
         ],
       },
       {

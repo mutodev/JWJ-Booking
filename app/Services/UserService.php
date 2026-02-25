@@ -6,16 +6,19 @@ use App\Repositories\UserRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 use App\Services\BrevoEmailService as ServicesBrevoEmailService;
+use App\Services\EmailTemplateService;
 
 class UserService
 {
     protected $userRepository;
     protected $emailService;
+    protected $emailTemplateService;
 
     function __construct()
     {
         $this->userRepository = new UserRepository();
         $this->emailService = new ServicesBrevoEmailService();
+        $this->emailTemplateService = new EmailTemplateService();
     }
 
     /**
@@ -52,10 +55,12 @@ class UserService
         if (!$user)
             throw new HTTPException(lang('User.userCreationFailed'), Response::HTTP_BAD_REQUEST);
 
+        $rendered = $this->emailTemplateService->render('welcome', ['password' => $password]);
+
         $email = $this->emailService->sendEmail(
             $data['email'],
-            'Welcome to JamWithJamie',
-            view('emails/welcome', ['password' => $password]),
+            $rendered['subject'],
+            $rendered['body'],
         );
 
         if (!$email)

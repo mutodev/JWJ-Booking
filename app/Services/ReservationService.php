@@ -35,6 +35,7 @@ use App\Repositories\ReservationRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ReservationAddonRepository;
 use App\Services\BrevoEmailService;
+use App\Services\EmailTemplateService;
 use App\Services\StripeService;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
@@ -69,6 +70,12 @@ class ReservationService
     protected $emailService;
 
     /**
+     * Servicio para renderizar templates de email
+     * @var EmailTemplateService
+     */
+    protected $emailTemplateService;
+
+    /**
      * Servicio para integración con Stripe (lazy-loaded)
      * @var StripeService|null
      */
@@ -84,6 +91,7 @@ class ReservationService
         $this->customerRepository = new CustomerRepository();
         $this->reservationAddonRepository = new ReservationAddonRepository();
         $this->emailService = new BrevoEmailService();
+        $this->emailTemplateService = new EmailTemplateService();
     }
 
     /**
@@ -767,12 +775,40 @@ class ReservationService
             'stripe_session_id'  => $session->id,
         ]);
 
-        // Build and send the email
-        $subject = "Payment Information for Your Event Reservation - ID: {$reservation->id}";
-        $htmlContent = $this->buildPaymentEmailContent($reservation, $paymentUrl, $reservationId);
+        // Build and send the email using template service
+        $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:5173';
+        $confirmationUrl = rtrim($frontendUrl, '/') . '/confirmation/' . $reservationId;
+        $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+
+        $descriptionBlock = '';
+        if (!empty($reservation->description)) {
+            $descriptionBlock = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;"><tr><td style="background-color: #FFF9E6; border-left: 4px solid #FFEF81; border-radius: 0 8px 8px 0; padding: 16px 20px;"><p style="margin: 0 0 4px; font-size: 13px; font-weight: 700; color: #1F2937; text-transform: uppercase; letter-spacing: 0.5px;">Event Description</p><p style="margin: 0; font-size: 14px; line-height: 1.6; color: #374151;">' . esc($reservation->description) . '</p></td></tr></table>';
+        }
+
+        $birthdayBlock = '';
+        if (!empty($reservation->birthday_child_name)) {
+            $birthdayBlock = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Birthday Child</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">' . esc($reservation->birthday_child_name) . '</td></tr>';
+        }
+
+        $templateVars = [
+            'customer_name'       => $reservation->full_name ?? '',
+            'reservation_id'      => $reservation->id,
+            'service_name'        => $reservation->service_name ?? '',
+            'event_date'          => $eventDate,
+            'event_time'          => $reservation->event_time ?? '',
+            'event_address'       => $reservation->event_address ?? '',
+            'children_count'      => $reservation->children_count ?? '',
+            'birthday_child_name' => $birthdayBlock,
+            'total_amount'        => number_format($reservation->total_amount, 2),
+            'description'         => $descriptionBlock,
+            'confirmation_url'    => $confirmationUrl,
+            '_reservation'        => $reservation,
+        ];
+
+        $rendered = $this->emailTemplateService->render('payment_notification', $templateVars);
 
         try {
-            $this->emailService->sendEmail($reservation->email, $subject, $htmlContent);
+            $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
         } catch (\Throwable $e) {
             throw new HTTPException('Failed to send payment email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -903,19 +939,23 @@ class ReservationService
         }
 
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
-        $totalAmount = number_format($reservation->total_amount, 2);
 
-        $data = [
-            'reservation' => $reservation,
-            'eventDate' => $eventDate,
-            'totalAmount' => $totalAmount
+        $templateVars = [
+            'customer_name'  => $reservation->full_name ?? '',
+            'reservation_id' => $reservation->id,
+            'service_name'   => $reservation->service_name ?? '',
+            'event_date'     => $eventDate,
+            'event_time'     => $reservation->event_time ?? 'To be confirmed',
+            'event_address'  => $reservation->event_address ?? 'To be confirmed',
+            'children_count' => $reservation->children_count ?? '',
+            'total_amount'   => number_format($reservation->total_amount, 2),
+            '_reservation'   => $reservation,
         ];
 
-        $htmlContent = view('emails/reservation_confirmation', $data);
-        $subject = "Reservation Received - JamWithJamie";
+        $rendered = $this->emailTemplateService->render('reservation_confirmation', $templateVars);
 
         try {
-            $this->emailService->sendEmail($reservation->email, $subject, $htmlContent);
+            $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
         } catch (\Throwable $e) {
             log_message('error', 'Failed to send confirmation email: ' . $e->getMessage());
         }
