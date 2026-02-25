@@ -50,6 +50,7 @@ class ReservationModel extends Model
         'is_paid',
         'customer_notes',
         'internal_notes',
+        'description',
         'created_at',
         'updated_at',
         'deleted_at'

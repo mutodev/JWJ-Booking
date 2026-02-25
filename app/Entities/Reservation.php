@@ -45,6 +45,7 @@ class Reservation extends Entity
         'sing_happy_birthday' => 'boolean',
         'customer_notes' => 'string',
         'internal_notes' => 'string',
+        'description' => 'string',
         'payment_url' => 'string',
         'stripe_session_id' => 'string',
         'stripe_payment_intent_id' => 'string',

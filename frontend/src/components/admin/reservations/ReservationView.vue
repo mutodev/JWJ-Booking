@@ -186,6 +186,10 @@
                 </div>
                 <div class="card-body">
                   <div class="row">
+                    <div class="col-12 mb-3">
+                      <strong><i class="bi bi-card-text me-2"></i>Description</strong>
+                      <div class="mt-1 p-2 bg-light border rounded">{{ data.description || 'None specified' }}</div>
+                    </div>
                     <div class="col-lg-6">
                       <div class="mb-3">
                         <strong><i class="bi bi-music-note me-2"></i>Song Requests</strong>

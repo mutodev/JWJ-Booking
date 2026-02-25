@@ -187,7 +187,8 @@ class ReservationService
             'song_requests' => $data['form']['songRequests'] ?? "-",
             'sing_happy_birthday' => $data['form']['singHappyBirthday'] ?? false,
             'customer_notes' => $data['form']['customerNotes'] ?? null,
-            'internal_notes' => null
+            'internal_notes' => null,
+            'description' => $data['form']['description'] ?? null
         ];
 
         $response = $this->repository->create($reservationData);
@@ -466,7 +467,8 @@ class ReservationService
                 'song_requests' => $information['songRequests'] ?? null,
                 'sing_happy_birthday' => ($information['happyBirthdayRequest'] ?? 'no') === 'yes',
                 'customer_notes' => null,
-                'internal_notes' => null
+                'internal_notes' => null,
+                'description' => $information['description'] ?? null
             ];
 
             // Crear la reserva
