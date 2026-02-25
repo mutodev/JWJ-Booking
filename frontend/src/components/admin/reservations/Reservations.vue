@@ -126,6 +126,7 @@
             <p><strong>Customer:</strong> {{ selectedData?.customer_name || 'N/A' }}</p>
             <p><strong>Email:</strong> {{ selectedData?.email || 'N/A' }}</p>
             <p><strong>Total Amount:</strong> {{ formatCurrency(selectedData?.total_amount) }}</p>
+            <p><strong>Description:</strong> {{ selectedData?.description || 'None specified' }}</p>
             <p class="text-muted small">A Stripe Checkout link will be generated automatically and sent to the customer's email.</p>
           </div>
           <div class="modal-footer">
