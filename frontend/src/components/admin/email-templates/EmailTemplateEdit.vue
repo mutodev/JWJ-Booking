@@ -9,70 +9,184 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
-            Edit Email Template: {{ templateData?.name }}
+            <i class="bi bi-pencil-square me-2"></i>
+            Edit: {{ templateData?.name }}
           </h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
         <div class="modal-body" v-if="templateData">
-          <form @submit.prevent="submitForm">
-            <!-- Subject -->
-            <div class="mb-3">
-              <label for="subject" class="form-label fw-bold">Subject</label>
-              <input
-                type="text"
-                class="form-control"
-                id="subject"
-                v-model="subject"
-                required
-                placeholder="Email subject..."
-              />
-            </div>
+          <!-- Subject -->
+          <div class="mb-3">
+            <label for="subject" class="form-label fw-bold">
+              <i class="bi bi-envelope me-1"></i> Subject
+            </label>
+            <input
+              type="text"
+              class="form-control"
+              :class="{ 'border-warning border-2': activeField === 'subject' }"
+              id="subject"
+              v-model="subject"
+              ref="subjectInput"
+              required
+              placeholder="Email subject..."
+              @focus="activeField = 'subject'"
+              @click="activeField = 'subject'"
+            />
+          </div>
 
-            <!-- Available Variables -->
-            <div class="mb-3">
-              <label class="form-label fw-bold">Available Variables</label>
-              <p class="text-muted small mb-2">
-                Click a variable to insert it at the cursor position in the
-                editor
-              </p>
+          <!-- Available Variables -->
+          <div class="card border-primary mb-3">
+            <div class="card-header bg-primary bg-opacity-10 py-2">
+              <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-braces fs-5 text-primary"></i>
+                  <span class="fw-bold">Variables</span>
+                </div>
+                <span
+                  class="badge"
+                  :class="
+                    activeField === 'subject'
+                      ? 'bg-warning text-dark'
+                      : 'bg-primary'
+                  "
+                >
+                  <i
+                    class="bi"
+                    :class="
+                      activeField === 'subject'
+                        ? 'bi-envelope'
+                        : 'bi-body-text'
+                    "
+                  ></i>
+                  {{
+                    activeField === "subject"
+                      ? "Click to insert in Subject"
+                      : "Click to insert in Body"
+                  }}
+                </span>
+              </div>
+            </div>
+            <div class="card-body py-2">
               <div class="d-flex flex-wrap gap-1">
                 <button
                   v-for="variable in availableVariables"
                   :key="variable"
                   type="button"
-                  class="btn btn-sm btn-outline-primary"
+                  class="btn btn-sm btn-outline-primary variable-chip"
                   @click="insertVariable(variable)"
-                >
-                  {{ "{{" + variable + "}}" }}
-                </button>
+                  :title="'Insert in ' + activeField"
+                  v-text="'{{' + variable + '}}'"
+                ></button>
+              </div>
+              <small class="text-muted d-block mt-1">
+                <i class="bi bi-info-circle"></i>
+                Click Subject or Body first, then click a variable to insert it
+                at the cursor.
+              </small>
+            </div>
+          </div>
+
+          <!-- Body: Tabs Editor / Preview -->
+          <div class="mb-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <label class="form-label fw-bold mb-0">
+                <i class="bi bi-code-slash me-1"></i> Body (HTML)
+              </label>
+              <ul class="nav nav-pills nav-sm">
+                <li class="nav-item">
+                  <button
+                    class="nav-link py-1 px-3"
+                    :class="{ active: viewMode === 'editor' }"
+                    @click="viewMode = 'editor'"
+                  >
+                    <i class="bi bi-code-slash me-1"></i> Editor
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    class="nav-link py-1 px-3"
+                    :class="{ active: viewMode === 'preview' }"
+                    @click="viewMode = 'preview'"
+                  >
+                    <i class="bi bi-eye me-1"></i> Preview
+                  </button>
+                </li>
+                <li class="nav-item">
+                  <button
+                    class="nav-link py-1 px-3"
+                    :class="{ active: viewMode === 'split' }"
+                    @click="viewMode = 'split'"
+                  >
+                    <i class="bi bi-layout-split me-1"></i> Split
+                  </button>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Editor Only -->
+            <div v-if="viewMode === 'editor'">
+              <textarea
+                class="form-control font-monospace source-editor"
+                :class="{ 'border-primary border-2': activeField === 'body' }"
+                v-model="body"
+                rows="20"
+                ref="bodyTextarea"
+                @focus="activeField = 'body'"
+                @click="activeField = 'body'"
+              ></textarea>
+            </div>
+
+            <!-- Preview Only -->
+            <div
+              v-else-if="viewMode === 'preview'"
+              class="border rounded preview-container"
+            >
+              <iframe
+                ref="previewIframe"
+                class="w-100 border-0"
+                style="min-height: 500px"
+                :srcdoc="body"
+              ></iframe>
+            </div>
+
+            <!-- Split View -->
+            <div v-else class="row g-2">
+              <div class="col-6">
+                <textarea
+                  class="form-control font-monospace source-editor"
+                  :class="{
+                    'border-primary border-2': activeField === 'body',
+                  }"
+                  v-model="body"
+                  rows="20"
+                  ref="bodySplitTextarea"
+                  @focus="activeField = 'body'"
+                  @click="activeField = 'body'"
+                ></textarea>
+              </div>
+              <div class="col-6">
+                <div class="border rounded preview-container h-100">
+                  <iframe
+                    class="w-100 h-100 border-0"
+                    style="min-height: 488px"
+                    :srcdoc="body"
+                  ></iframe>
+                </div>
               </div>
             </div>
+          </div>
 
-            <!-- Body Editor -->
-            <div class="mb-3">
-              <label class="form-label fw-bold">Body (HTML)</label>
-              <QuillEditor
-                ref="quillEditor"
-                v-model:content="body"
-                content-type="html"
-                theme="snow"
-                :toolbar="toolbarOptions"
-                style="min-height: 300px"
-              />
-            </div>
-
-            <!-- Active Toggle -->
-            <div class="mb-3 form-check form-switch">
-              <input
-                type="checkbox"
-                class="form-check-input"
-                id="isActive"
-                v-model="isActive"
-              />
-              <label class="form-check-label" for="isActive">Active</label>
-            </div>
-          </form>
+          <!-- Active Toggle -->
+          <div class="mb-3 form-check form-switch">
+            <input
+              type="checkbox"
+              class="form-check-input"
+              id="isActive"
+              v-model="isActive"
+            />
+            <label class="form-check-label" for="isActive">Active</label>
+          </div>
         </div>
 
         <div class="modal-footer">
@@ -96,10 +210,8 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
 import api from "@/services/axios";
-import { QuillEditor } from "@vueup/vue-quill";
-import "@vueup/vue-quill/dist/vue-quill.snow.css";
 
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
@@ -113,34 +225,30 @@ const body = ref("");
 const isActive = ref(true);
 const availableVariables = ref([]);
 const loading = ref(false);
-const quillEditor = ref(null);
 
-const toolbarOptions = [
-  ["bold", "italic", "underline", "strike"],
-  [{ header: [1, 2, 3, false] }],
-  [{ color: [] }, { background: [] }],
-  [{ align: [] }],
-  ["link", "image"],
-  [{ list: "ordered" }, { list: "bullet" }],
-  ["blockquote", "code-block"],
-  ["clean"],
-];
+const subjectInput = ref(null);
+const bodyTextarea = ref(null);
+const bodySplitTextarea = ref(null);
 
-// Watch for templateId changes to fetch fresh data
-watch(
-  () => props.templateId,
-  async (newId) => {
-    if (newId && props.show) {
-      await fetchTemplate(newId);
-    }
-  }
-);
+const activeField = ref("body");
+const viewMode = ref("split");
 
 watch(
   () => props.show,
   async (visible) => {
     if (visible && props.templateId) {
+      activeField.value = "body";
+      viewMode.value = "split";
       await fetchTemplate(props.templateId);
+    }
+  }
+);
+
+watch(
+  () => props.templateId,
+  async (newId) => {
+    if (newId && props.show) {
+      await fetchTemplate(newId);
     }
   }
 );
@@ -151,9 +259,11 @@ const fetchTemplate = async (id) => {
     templateData.value = response.data;
     subject.value = response.data.subject;
     body.value = response.data.body;
-    isActive.value = response.data.is_active;
+    isActive.value =
+      response.data.is_active === true ||
+      response.data.is_active === 1 ||
+      response.data.is_active === "1";
 
-    // Parse available variables from JSON string
     try {
       availableVariables.value = JSON.parse(
         response.data.available_variables || "[]"
@@ -169,19 +279,30 @@ const fetchTemplate = async (id) => {
 const insertVariable = (variable) => {
   const tag = `{{${variable}}}`;
 
-  // Try to insert at Quill cursor position
-  if (quillEditor.value) {
-    const quill = quillEditor.value.getQuill();
-    const range = quill.getSelection();
-    if (range) {
-      quill.insertText(range.index, tag);
-      quill.setSelection(range.index + tag.length);
-      return;
-    }
+  if (activeField.value === "subject") {
+    insertAtCursor(subjectInput, subject, tag);
+  } else {
+    const textarea = viewMode.value === "split" ? bodySplitTextarea : bodyTextarea;
+    insertAtCursor(textarea, body, tag);
   }
+};
 
-  // Fallback: append to subject
-  subject.value += tag;
+const insertAtCursor = (inputRef, modelRef, tag) => {
+  const el = inputRef.value;
+  if (el) {
+    const start = el.selectionStart ?? modelRef.value.length;
+    const end = el.selectionEnd ?? start;
+    const text = modelRef.value;
+    modelRef.value = text.substring(0, start) + tag + text.substring(end);
+    nextTick(() => {
+      const newPos = start + tag.length;
+      el.selectionStart = newPos;
+      el.selectionEnd = newPos;
+      el.focus();
+    });
+  } else {
+    modelRef.value += tag;
+  }
 };
 
 const closeModal = () => {
@@ -208,20 +329,36 @@ const submitForm = async () => {
 </script>
 
 <style scoped>
-:deep(.ql-container) {
-  min-height: 250px;
-  font-size: 14px;
+.variable-chip {
+  font-family: monospace;
+  font-size: 0.8rem;
+  transition: all 0.15s ease;
 }
 
-:deep(.ql-editor) {
-  min-height: 250px;
+.variable-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
-:deep(.ql-toolbar) {
-  border-radius: 0.375rem 0.375rem 0 0;
+.source-editor {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  tab-size: 2;
+  resize: vertical;
+  white-space: pre;
 }
 
-:deep(.ql-container) {
-  border-radius: 0 0 0.375rem 0.375rem;
+.preview-container {
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.nav-pills .nav-link {
+  font-size: 0.85rem;
+  border-radius: 0.375rem;
+}
+
+.nav-pills .nav-link:not(.active) {
+  color: var(--bs-body-color);
 }
 </style>

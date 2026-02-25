@@ -67,7 +67,21 @@ class EmailTemplateSeeder extends Seeder
             ],
         ];
 
-        $this->db->table('email_templates')->insertBatch($data);
+        foreach ($data as $template) {
+            $existing = $this->db->table('email_templates')
+                ->where('slug', $template['slug'])
+                ->get()
+                ->getRow();
+
+            if ($existing) {
+                unset($template['id'], $template['created_at']);
+                $this->db->table('email_templates')
+                    ->where('slug', $existing->slug)
+                    ->update($template);
+            } else {
+                $this->db->table('email_templates')->insert($template);
+            }
+        }
     }
 
     private function getPaymentNotificationBody(): string

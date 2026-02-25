@@ -205,6 +205,17 @@ class MenuSeeder extends Seeder
                 'created_at' => Time::now(),
                 'updated_at' => Time::now()
             ],
+            [
+                'id' => 'sm6k2l3m-n5o6-7890-pqr1-emailtmpl001',
+                'name' => 'Email Templates',
+                'uri' => '/admin/config/email-templates',
+                'icon' => 'bi bi-envelope-paper',
+                'order' => 3,
+                'is_active' => true,
+                'parent_id' => 'm5e6f7g8-h9i0-1234-jkl5-678901234567',
+                'created_at' => Time::now(),
+                'updated_at' => Time::now()
+            ],
         ];
 
         // Combinar todos los menús

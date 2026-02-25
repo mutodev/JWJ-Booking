@@ -56,6 +56,7 @@ class RoleMenuPermissionSeeder extends Seeder
             // Submenús de Configuración
             'users' => '/admin/config/users',
             'roles' => '/admin/config/roles',
+            'emailTemplates' => '/admin/config/email-templates',
 
             // Otros menús
             'promoCodes' => '/admin/promo-codes',
@@ -96,7 +97,7 @@ class RoleMenuPermissionSeeder extends Seeder
             'dashboard', 'reservations', 'clients', 'config', 'serviceAreas', 'services',
             'metropolitanAreas', 'counties', 'cities', 'postalCodes',
             'jamTypes', 'prices', 'typeAddons', 'addons',
-            'users', 'roles', 'promoCodes', 'abandonedCarts'
+            'users', 'roles', 'emailTemplates', 'promoCodes', 'abandonedCarts'
         ];
 
         foreach ($adminMenuKeys as $key) {
@@ -120,7 +121,8 @@ class RoleMenuPermissionSeeder extends Seeder
         $coordMenuKeys = [
             'dashboard', 'reservations', 'clients',
             'serviceAreas', 'metropolitanAreas', 'counties', 'cities', 'postalCodes',
-            'services', 'jamTypes', 'prices', 'typeAddons', 'addons'
+            'services', 'jamTypes', 'prices', 'typeAddons', 'addons',
+            'emailTemplates'
         ];
 
         // Permisos especiales para coordinador
@@ -129,6 +131,7 @@ class RoleMenuPermissionSeeder extends Seeder
             'prices' => ['can_create' => true, 'can_update' => true],
             'typeAddons' => ['can_update' => true],
             'addons' => ['can_update' => true],
+            'emailTemplates' => ['can_update' => true],
         ];
 
         foreach ($coordMenuKeys as $key) {

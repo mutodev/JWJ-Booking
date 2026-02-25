@@ -109,7 +109,11 @@ class EmailTemplateService
         $allVariables = array_merge($this->getGlobalVariables(), $variables);
 
         foreach ($allVariables as $key => $value) {
-            $content = str_replace('{{' . $key . '}}', (string) $value, $content);
+            // Skip non-scalar values (objects, arrays) used only by fallback views
+            if (!is_scalar($value) && $value !== null) {
+                continue;
+            }
+            $content = str_replace('{{' . $key . '}}', (string) ($value ?? ''), $content);
         }
         return $content;
     }
