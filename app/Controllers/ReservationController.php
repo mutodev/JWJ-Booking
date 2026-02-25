@@ -112,6 +112,13 @@ class ReservationController extends ResourceController
             $json = $this->request->getBody();
             $data = json_decode($json, true);
 
+            // Save description if provided
+            if (isset($data['description'])) {
+                $this->service->update($data['reservationId'], [
+                    'description' => $data['description'],
+                ]);
+            }
+
             $result = $this->service->sendPaymentEmail($data['reservationId']);
 
             return $this->response->setStatusCode(200)

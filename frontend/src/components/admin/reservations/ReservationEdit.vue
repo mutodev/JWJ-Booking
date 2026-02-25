@@ -209,15 +209,6 @@
                     placeholder="Internal team notes"
                   ></textarea>
                 </div>
-                <div class="col-12">
-                  <label class="form-label">Description</label>
-                  <textarea
-                    v-model="editData.description"
-                    class="form-control"
-                    rows="3"
-                    placeholder="General description of the event"
-                  ></textarea>
-                </div>
               </div>
             </div>
 
@@ -352,7 +343,6 @@ const saveReservation = async () => {
       song_requests: editData.value.song_requests,
       customer_notes: editData.value.customer_notes,
       internal_notes: editData.value.internal_notes,
-      description: editData.value.description,
     };
 
     await api.put(`/reservations/${editData.value.id}`, dataToSave);

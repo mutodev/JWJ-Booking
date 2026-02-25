@@ -167,18 +167,6 @@
         placeholder="Optional (up to 3 songs)"
       ></textarea>
     </div>
-
-    <!-- Description -->
-    <div class="col-10">
-      <label for="description" class="form-label">Description</label>
-      <textarea
-        id="description"
-        class="form-control"
-        v-model="description"
-        rows="3"
-        placeholder="General description of the event (optional)"
-      ></textarea>
-    </div>
   </div>
 </template>
 
@@ -201,7 +189,6 @@ const birthdayChildName = ref("");
 const childAge = ref("");
 const happyBirthdayRequest = ref("");
 const songRequests = ref("");
-const description = ref("");
 
 // Validation schema
 const schema = yup.object({
@@ -247,7 +234,6 @@ const validateAndEmit = async () => {
       childAge: childAge.value,
       happyBirthdayRequest: happyBirthdayRequest.value,
       songRequests: songRequests.value,
-      description: description.value,
     };
 
     await schema.validate(values, { abortEarly: false });
@@ -277,7 +263,6 @@ watch(
     childAge,
     happyBirthdayRequest,
     songRequests,
-    description,
   ],
   () => {
     validateAndEmit();

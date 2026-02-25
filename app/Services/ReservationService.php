@@ -187,8 +187,7 @@ class ReservationService
             'song_requests' => $data['form']['songRequests'] ?? "-",
             'sing_happy_birthday' => $data['form']['singHappyBirthday'] ?? false,
             'customer_notes' => $data['form']['customerNotes'] ?? null,
-            'internal_notes' => null,
-            'description' => $data['form']['description'] ?? null
+            'internal_notes' => null
         ];
 
         $response = $this->repository->create($reservationData);
@@ -467,8 +466,7 @@ class ReservationService
                 'song_requests' => $information['songRequests'] ?? null,
                 'sing_happy_birthday' => ($information['happyBirthdayRequest'] ?? 'no') === 'yes',
                 'customer_notes' => null,
-                'internal_notes' => null,
-                'description' => $information['description'] ?? null
+                'internal_notes' => null
             ];
 
             // Crear la reserva
@@ -505,6 +503,9 @@ class ReservationService
             if ($db->transStatus() === false) {
                 throw new HTTPException('Transaction failed', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
+
+            // Enviar email de confirmación al cliente
+            $this->sendConfirmationEmail($reservation);
 
             return [
                 'reservation' => $reservation,
@@ -887,5 +888,36 @@ class ReservationService
 
         // Cargar la vista y capturar el output
         return view('emails/payment_notification', $data);
+    }
+
+    /**
+     * Envía email de confirmación al cliente cuando se crea una reserva desde el Home
+     *
+     * @param object $reservation Reserva creada (con JOINs: full_name, email, service_name)
+     * @return void
+     */
+    public function sendConfirmationEmail($reservation): void
+    {
+        if (empty($reservation->email)) {
+            return;
+        }
+
+        $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+        $totalAmount = number_format($reservation->total_amount, 2);
+
+        $data = [
+            'reservation' => $reservation,
+            'eventDate' => $eventDate,
+            'totalAmount' => $totalAmount
+        ];
+
+        $htmlContent = view('emails/reservation_confirmation', $data);
+        $subject = "Reservation Received - JamWithJamie";
+
+        try {
+            $this->emailService->sendEmail($reservation->email, $subject, $htmlContent);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to send confirmation email: ' . $e->getMessage());
+        }
     }
 }

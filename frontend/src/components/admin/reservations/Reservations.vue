@@ -126,7 +126,15 @@
             <p><strong>Customer:</strong> {{ selectedData?.customer_name || 'N/A' }}</p>
             <p><strong>Email:</strong> {{ selectedData?.email || 'N/A' }}</p>
             <p><strong>Total Amount:</strong> {{ formatCurrency(selectedData?.total_amount) }}</p>
-            <p><strong>Description:</strong> {{ selectedData?.description || 'None specified' }}</p>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Description</label>
+              <textarea
+                v-model="paymentDescription"
+                class="form-control"
+                rows="3"
+                placeholder="Add a description for this payment (optional)"
+              ></textarea>
+            </div>
             <p class="text-muted small">A Stripe Checkout link will be generated automatically and sent to the customer's email.</p>
           </div>
           <div class="modal-footer">
@@ -172,6 +180,7 @@ const modalViewVisible = ref(false);
 const modalPaymentUrlVisible = ref(false);
 const selectedData = ref(null);
 const sendingEmail = ref(false);
+const paymentDescription = ref("");
 
 const editModal = (item) => {
   selectedData.value = { ...item };
@@ -187,6 +196,7 @@ const viewModal = (item) => {
 
 const paymentUrlModal = (item) => {
   selectedData.value = { ...item };
+  paymentDescription.value = item.description || "";
   modalPaymentUrlVisible.value = true;
 };
 
@@ -269,6 +279,7 @@ const sendPaymentEmail = async () => {
 
     const requestData = {
       reservationId: selectedData.value.id,
+      description: paymentDescription.value,
     };
 
     await api.post('/reservations/send-payment-email', requestData);
