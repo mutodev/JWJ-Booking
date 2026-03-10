@@ -256,7 +256,7 @@ const getSelectData = async () => {
     customers.value = resCustomers.data;
     areas.value = resAreas.data;
     services.value = resServices.data;
-    addons.value = resAddons.data;
+    addons.value = (resAddons.data || []).flatMap(group => group.addons || []);
   } catch (error) {
     console.error(error);
   }

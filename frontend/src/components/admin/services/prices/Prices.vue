@@ -1,7 +1,7 @@
 <template>
   <!-- 🔍 Search + create button -->
   <div class="row justify-content-end">
-    <div class="col-10">
+    <div class="col-9">
       <div class="input-group">
         <span class="input-group-text">
           <i class="bi bi-search"></i>
@@ -14,7 +14,11 @@
         />
       </div>
     </div>
-    <div class="col-md-2 pt-1">
+    <div class="col-md-3 pt-1 d-flex gap-2">
+      <button class="btn btn-sm btn-warning" @click="bulkUpdateModal = true" title="Update base price for all counties of a Jam">
+        <i class="bi bi-pencil-square"></i>
+        Base Price
+      </button>
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New Price
@@ -85,6 +89,13 @@
     @close="modalEditVisible = false"
     @saved="handle"
   />
+  <PricesBulkUpdateAmount
+    :show="bulkUpdateModal"
+    :services="services"
+    :allPrices="data"
+    @close="bulkUpdateModal = false"
+    @saved="getData"
+  />
 </template>
 
 <script setup>
@@ -94,6 +105,7 @@ import api from "@/services/axios";
 // 🟢 Importar modal de creación
 import PricesCreate from "./PricesCreate.vue";
 import PricesEdit from "./PricesEdit.vue";
+import PricesBulkUpdateAmount from "./PricesBulkUpdateAmount.vue";
 
 // 🏷️ Header dinámico
 const updateHeaderData = inject("updateHeaderData");
@@ -110,6 +122,7 @@ const searchValue = ref("");
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const modalDeleteVisible = ref(false);
+const bulkUpdateModal = ref(false);
 const selectedData = ref(null);
 
 // ✏️ Edit

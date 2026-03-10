@@ -190,6 +190,37 @@ class ServicePriceController extends ResourceController
     }
 
     /**
+     * Actualizar el precio base de todos los counties de un servicio.
+     */
+    public function updateBasePriceByService()
+    {
+        try {
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
+
+            $serviceId = $data['service_id'] ?? null;
+            $amount    = $data['amount'] ?? null;
+
+            if (!$serviceId || $amount === null) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON(['message' => 'service_id and amount are required']);
+            }
+
+            $updated = $this->service->updateBasePriceByService($serviceId, (float)$amount);
+
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response("Base price updated for {$updated} counties", ['updated' => $updated]));
+
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Eliminar (soft delete) un precio de servicio.
      */
     public function deleteDelete($id)

@@ -131,6 +131,7 @@ $routes->group('api', function ($routes) {
         $routes->get('get-by-service-and-county/(:segment)/(:segment)', [ServicePriceController::class, 'getByServiceAndCounty']);
         $routes->get('(:segment)', [ServicePriceController::class, 'getById']);
         $routes->post('', [ServicePriceController::class, 'createData']);
+        $routes->put('bulk-update-base-price', [ServicePriceController::class, 'updateBasePriceByService']);
         $routes->put('(:segment)', [ServicePriceController::class, 'updateData']);
         $routes->post('update/(:segment)', [ServicePriceController::class, 'updateWithImage']);
         $routes->delete('(:segment)', [ServicePriceController::class, 'delete']);

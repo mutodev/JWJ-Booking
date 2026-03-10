@@ -135,6 +135,17 @@ class ServicePriceService
     }
 
     /**
+     * Actualiza el precio base de todos los counties de un servicio
+     * @param string $serviceId ID del servicio (Jam)
+     * @param float $amount Nuevo precio base
+     * @return int Número de registros actualizados
+     */
+    public function updateBasePriceByService(string $serviceId, float $amount): int
+    {
+        return $this->repo->updateBasePriceByService($serviceId, $amount);
+    }
+
+    /**
      * Elimina un precio de servicio (soft delete)
      * @param string $id ID del precio de servicio
      * @return bool Resultado de la eliminación

@@ -151,17 +151,27 @@ class ReservationService
         // Calcular totales usando funciones centralizadas
         $addonsTotal = $this->calculateAddonsTotal($addons);
 
-        // Calcular niños extra usando límite fijo de 40 niños
-        $selectedKids = intval($data['form']['selectedKids'] ?? $data['kids']['count'] ?? $data['kids']['selectedKids'] ?? 0);
-        $maxKidsIncluded = 40; // Límite fijo: solo se cobran extras después de 40 niños
-        $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
+        // Calcular niños extra
+        // Admin form envía form.extraChildren directamente; customer form envía selectedKids (total - 40)
+        if (isset($data['form']['extraChildren'])) {
+            $extraChildren = max(0, intval($data['form']['extraChildren']));
+            $selectedKids = $extraChildren; // children_count
+        } else {
+            $selectedKids = intval($data['form']['selectedKids'] ?? $data['kids']['count'] ?? $data['kids']['selectedKids'] ?? 0);
+            $extraChildren = max(0, $selectedKids - 40);
+        }
         $extraChildFee = floatval($data['price']['extra_child_fee'] ?? 0);
         $extraChildrenTotal = $extraChildren * $extraChildFee;
         $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
 
         $eventDateStr = $bookingDate ? $bookingDate->format('Y-m-d') : null;
         $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDateStr);
-        $grandTotal = $baseTotal + $surchargeAmount;
+
+        // Descuento de promo code (solo aplica al baseTotal, no al surcharge)
+        $discountAmount = floatval($data['promoCode']['discount_amount'] ?? 0);
+        $promoCodeUsed = $data['promoCode']['code'] ?? null;
+
+        $grandTotal = $baseTotal + $surchargeAmount - $discountAmount;
 
         // Calcular duración total incluyendo addons
         $baseDurationHours = floatval($data['price']['min_duration_hours'] ?? 1);
@@ -183,17 +193,19 @@ class ReservationService
             'addons_total' => $addonsTotal,
             'expedition_fee' => 0,
             'extra_children_fee' => $extraChildrenTotal,
+            'discount_amount' => $discountAmount,
+            'promo_code' => $promoCodeUsed,
             'total_amount' => $grandTotal,
             'status' => 'new',
             'is_invoiced' => false,
             'is_paid' => false,
             'arrival_parking_instructions' => $data['form']['arrivalParkingInstructions'] ?? "-",
-            'entertainment_start_time' => $data['form']['startTime'],
+            'entertainment_start_time' => $data['form']['entertainmentStartTime'] ?? $data['form']['startTime'],
             'birthday_child_name' => $data['form']['birthdayChildName'] ?? null,
-            'birthday_child_age' => $data['form']['birthdayChildAge'] ?? null,
+            'birthday_child_age' => $data['form']['childAge'] ?? $data['form']['birthdayChildAge'] ?? null,
             'children_age_range' => $data['form']['childrenAgeRange'] ?? "-",
             'song_requests' => $data['form']['songRequests'] ?? "-",
-            'sing_happy_birthday' => $data['form']['singHappyBirthday'] ?? false,
+            'sing_happy_birthday' => ($data['form']['happyBirthdayRequest'] ?? $data['form']['singHappyBirthday'] ?? '') === 'yes',
             'customer_notes' => $data['form']['customerNotes'] ?? null,
             'internal_notes' => null
         ];

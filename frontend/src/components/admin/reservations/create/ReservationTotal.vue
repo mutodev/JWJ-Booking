@@ -57,6 +57,16 @@
             <td>-</td>
             <td class="text-danger">{{ formatCurrency(surcharge.amount) }}</td>
           </tr>
+
+          <!-- Discount -->
+          <tr v-if="discountAmount > 0">
+            <td class="text-start text-success fw-medium">
+              Discount ({{ data.promoCode?.code }})
+            </td>
+            <td>-</td>
+            <td>-</td>
+            <td class="text-success">-{{ formatCurrency(discountAmount) }}</td>
+          </tr>
         </tbody>
 
         <tfoot class="border-top">
@@ -87,47 +97,39 @@ watch(
   { immediate: true }
 );
 
-// Formatear moneda
 const formatCurrency = (value) => {
-  if (!value) return "$0.00";
+  const num = parseFloat(value);
+  if (isNaN(num)) return "$0.00";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(value);
+  }).format(num);
 };
 
-// Calcula recargo basado en fecha
 const surcharge = computed(() => {
   if (!data.value?.form?.date) return { amount: 0, percent: 0 };
-
   const today = new Date();
   const bookingDate = new Date(data.value.form.date);
-  const diffTime = bookingDate - today;
-  const diffDays = diffTime / (1000 * 60 * 60 * 24);
-
+  const diffDays = (bookingDate - today) / (1000 * 60 * 60 * 24);
   if (diffDays < 2) return { amount: totalBase.value * 0.2, percent: 20 };
   if (diffDays <= 7) return { amount: totalBase.value * 0.1, percent: 10 };
   return { amount: 0, percent: 0 };
 });
 
-// Total base sin recargo
 const totalBase = computed(() => {
-  let sum = data.value.price?.amount || 0;
-
+  let sum = parseFloat(data.value.price?.amount) || 0;
   if (data.value.addons?.length) {
-    sum += data.value.addons.reduce((acc, a) => acc + (a.base_price || 0), 0);
+    sum += data.value.addons.reduce((acc, a) => acc + (parseFloat(a.base_price) || 0), 0);
   }
-
   const extraChildrenQty = data.value.form?.extraChildren || 0;
-  const extraChildFee = data.value.price?.extra_child_fee || 0;
+  const extraChildFee = parseFloat(data.value.price?.extra_child_fee) || 0;
   sum += extraChildrenQty * extraChildFee;
-
   return sum;
 });
 
-// Total final incluyendo recargo
+const discountAmount = computed(() => parseFloat(data.value.promoCode?.discount_amount) || 0);
+
 const total = computed(() => {
-  return formatCurrency(totalBase.value + surcharge.value.amount);
+  return formatCurrency(totalBase.value + surcharge.value.amount - discountAmount.value);
 });
 </script>
-

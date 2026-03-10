@@ -106,6 +106,20 @@ class ServicePriceRepository
     }
 
     /**
+     * Actualizar el precio base de todos los counties de un servicio.
+     */
+    public function updateBasePriceByService(string $serviceId, float $amount): int
+    {
+        $db = \Config\Database::connect();
+        $db->table('service_prices')
+            ->where('service_id', $serviceId)
+            ->where('deleted_at IS NULL')
+            ->update(['amount' => $amount, 'updated_at' => date('Y-m-d H:i:s')]);
+
+        return $db->affectedRows();
+    }
+
+    /**
      * Obtener los precios del servicio por condado
      *
      * @return ServicePrice[]
