@@ -15,6 +15,7 @@ class EmailTemplate extends Entity
         'subject'             => 'string',
         'body'                => 'string',
         'available_variables' => 'string',
+        'content'             => 'string',
         'is_active'           => 'boolean',
     ];
 }

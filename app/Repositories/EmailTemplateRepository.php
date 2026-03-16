@@ -10,7 +10,7 @@ class EmailTemplateRepository
     protected EmailTemplateModel $model;
 
     protected $allowedFields = [
-        'subject', 'body', 'available_variables', 'is_active',
+        'subject', 'body', 'available_variables', 'content', 'is_active',
     ];
 
     public function __construct()

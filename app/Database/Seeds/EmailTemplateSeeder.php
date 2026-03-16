@@ -24,6 +24,12 @@ class EmailTemplateSeeder extends Seeder
                     'children_count', 'birthday_child_name',
                     'total_amount', 'description', 'confirmation_url'
                 ]),
+                'content'     => json_encode([
+                    'greeting_title' => 'Hi {{customer_name}}!',
+                    'intro'          => 'Thank you for choosing JamWithJamie for your event! Please complete your event details and proceed to payment.',
+                    'button_text'    => 'Continue to Pay',
+                    'important_note' => 'Please complete your event details before the event date to ensure everything is ready for your special day!',
+                ]),
                 'is_active'   => true,
                 'created_at'  => $now,
                 'updated_at'  => $now,
@@ -39,6 +45,11 @@ class EmailTemplateSeeder extends Seeder
                     'event_date', 'event_time', 'event_address',
                     'children_count', 'total_amount'
                 ]),
+                'content'     => json_encode([
+                    'title'         => 'Reservation Received!',
+                    'intro'         => 'Hi {{customer_name}}, thank you for booking with JamWithJamie! We\'ve received your reservation and our team will be in touch shortly.',
+                    'question_note' => 'Feel free to reply to this email or contact us anytime. We\'re happy to help make your event special!',
+                ]),
                 'is_active'   => true,
                 'created_at'  => $now,
                 'updated_at'  => $now,
@@ -50,6 +61,11 @@ class EmailTemplateSeeder extends Seeder
                 'subject'             => 'Welcome to JamWithJamie',
                 'body'                => $this->getWelcomeBody(),
                 'available_variables' => json_encode(['password']),
+                'content'     => json_encode([
+                    'title'             => 'Welcome aboard!',
+                    'intro'             => 'Your account has been created successfully. We\'re thrilled to have you as part of the JamWithJamie team.',
+                    'security_reminder' => 'Please change your password after your first login to keep your account secure.',
+                ]),
                 'is_active'   => true,
                 'created_at'  => $now,
                 'updated_at'  => $now,
@@ -61,6 +77,11 @@ class EmailTemplateSeeder extends Seeder
                 'subject'             => 'Password Reset - JamWithJamie',
                 'body'                => $this->getResetPasswordBody(),
                 'available_variables' => json_encode(['password']),
+                'content'     => json_encode([
+                    'title'             => 'Password Reset',
+                    'intro'             => 'Your password has been successfully reset. Use the temporary password below to log in to your account.',
+                    'security_reminder' => 'Please change this password immediately after logging in. If you didn\'t request this reset, contact our support team right away.',
+                ]),
                 'is_active'   => true,
                 'created_at'  => $now,
                 'updated_at'  => $now,
@@ -105,8 +126,8 @@ class EmailTemplateSeeder extends Seeder
                     </tr>
                     <tr>
                         <td style="padding: 40px 40px 20px;">
-                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">Hi {{customer_name}}!</h1>
-                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280;">Thank you for choosing JamWithJamie for your event! Please complete your event details and proceed to payment.</p>
+                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">{{content_greeting_title}}</h1>
+                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280;">{{content_intro}}</p>
 
                             {{description}}
 
@@ -114,7 +135,7 @@ class EmailTemplateSeeder extends Seeder
                                 <tr>
                                     <td align="center">
                                         <a href="{{confirmation_url}}" style="display: inline-block; background-color: #FF74B7; color: #000000; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px;">
-                                            Continue to Pay
+                                            {{content_button_text}}
                                         </a>
                                     </td>
                                 </tr>
@@ -178,7 +199,7 @@ class EmailTemplateSeeder extends Seeder
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
                                 <tr>
                                     <td style="background-color: #FFF9E6; border-left: 4px solid #FFEF81; border-radius: 0 8px 8px 0; padding: 14px 18px;">
-                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Important:</strong> Please complete your event details before the event date to ensure everything is ready for your special day!</p>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Important:</strong> {{content_important_note}}</p>
                                     </td>
                                 </tr>
                             </table>
@@ -224,8 +245,8 @@ class EmailTemplateSeeder extends Seeder
                     </tr>
                     <tr>
                         <td style="padding: 40px 40px 20px;">
-                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">Reservation Received!</h1>
-                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280;">Hi {{customer_name}}, thank you for booking with JamWithJamie! We\'ve received your reservation and our team will be in touch shortly.</p>
+                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">{{content_title}}</h1>
+                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280;">{{content_intro}}</p>
 
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                                 <tr>
@@ -292,7 +313,7 @@ class EmailTemplateSeeder extends Seeder
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 8px;">
                                 <tr>
                                     <td style="background-color: #FFF9E6; border-left: 4px solid #FFEF81; border-radius: 0 8px 8px 0; padding: 14px 18px;">
-                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Questions?</strong> Feel free to reply to this email or contact us anytime. We\'re happy to help make your event special!</p>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Questions?</strong> {{content_question_note}}</p>
                                     </td>
                                 </tr>
                             </table>
@@ -338,8 +359,8 @@ class EmailTemplateSeeder extends Seeder
                     </tr>
                     <tr>
                         <td style="padding: 40px 40px 20px;">
-                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">Welcome aboard!</h1>
-                            <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #6b7280;">Your account has been created successfully. We\'re thrilled to have you as part of the JamWithJamie team.</p>
+                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">{{content_title}}</h1>
+                            <p style="margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #6b7280;">{{content_intro}}</p>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                                 <tr>
                                     <td style="background-color: #f0f0ff; border: 1px solid #e0e0f5; border-radius: 8px; padding: 20px 24px;">
@@ -351,7 +372,7 @@ class EmailTemplateSeeder extends Seeder
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                                 <tr>
                                     <td style="background-color: #fef3cd; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 14px 18px;">
-                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Security Reminder:</strong> Please change your password after your first login to keep your account secure.</p>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Security Reminder:</strong> {{content_security_reminder}}</p>
                                     </td>
                                 </tr>
                             </table>
@@ -404,8 +425,8 @@ class EmailTemplateSeeder extends Seeder
                                     </td>
                                 </tr>
                             </table>
-                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937; text-align: center;">Password Reset</h1>
-                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280; text-align: center;">Your password has been successfully reset. Use the temporary password below to log in to your account.</p>
+                            <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937; text-align: center;">{{content_title}}</h1>
+                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280; text-align: center;">{{content_intro}}</p>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                                 <tr>
                                     <td style="background-color: #f0f0ff; border: 1px solid #e0e0f5; border-radius: 8px; padding: 20px 24px; text-align: center;">
@@ -417,7 +438,7 @@ class EmailTemplateSeeder extends Seeder
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
                                 <tr>
                                     <td style="background-color: #fef3cd; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0; padding: 14px 18px;">
-                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Security Reminder:</strong> Please change this password immediately after logging in. If you didn\'t request this reset, contact our support team right away.</p>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #92400e;"><strong>Security Reminder:</strong> {{content_security_reminder}}</p>
                                     </td>
                                 </tr>
                             </table>

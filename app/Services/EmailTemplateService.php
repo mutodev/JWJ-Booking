@@ -61,8 +61,15 @@ class EmailTemplateService
             return $this->fallback($slug, $variables);
         }
 
-        $subject = $this->replacePlaceholders($template->subject, $variables);
-        $body    = $this->replacePlaceholders($template->body, $variables);
+        $contentVars = $this->getContentVars($template);
+
+        // Pass 1: inject editable content vars ({{content_*}} placeholders)
+        $subject = $this->replaceOnly($template->subject, $contentVars);
+        $body    = $this->replaceOnly($template->body, $contentVars);
+
+        // Pass 2: inject runtime vars + global vars
+        $subject = $this->replacePlaceholders($subject, $variables);
+        $body    = $this->replacePlaceholders($body, $variables);
 
         return [
             'subject' => $subject,
@@ -80,13 +87,49 @@ class EmailTemplateService
             throw new HTTPException('Email template not found', Response::HTTP_NOT_FOUND);
         }
 
-        $subject = $this->replacePlaceholders($template->subject, $variables);
-        $body    = $this->replacePlaceholders($template->body, $variables);
+        $contentVars = $this->getContentVars($template);
+
+        $subject = $this->replaceOnly($template->subject, $contentVars);
+        $body    = $this->replaceOnly($template->body, $contentVars);
+
+        $subject = $this->replacePlaceholders($subject, $variables);
+        $body    = $this->replacePlaceholders($body, $variables);
 
         return [
             'subject' => $subject,
             'body'    => $body,
         ];
+    }
+
+    /**
+     * Extract content variables (prefixed with content_) from the template's content JSON.
+     */
+    private function getContentVars(\App\Entities\EmailTemplate $template): array
+    {
+        if (empty($template->content)) {
+            return [];
+        }
+
+        $content = json_decode($template->content, true) ?? [];
+        $vars = [];
+        foreach ($content as $key => $value) {
+            $vars['content_' . $key] = (string) ($value ?? '');
+        }
+        return $vars;
+    }
+
+    /**
+     * Replace {{key}} placeholders without injecting global variables.
+     */
+    private function replaceOnly(string $content, array $variables): string
+    {
+        foreach ($variables as $key => $value) {
+            if (!is_scalar($value) && $value !== null) {
+                continue;
+            }
+            $content = str_replace('{{' . $key . '}}', (string) ($value ?? ''), $content);
+        }
+        return $content;
     }
 
     /**
