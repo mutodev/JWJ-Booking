@@ -51,7 +51,7 @@
             <div class="service-info-item">
               <i class="bi bi-car-front-fill service-info-item__icon"></i>
               <span class="service-info-item__text">
-                Travel Fee: ${{ parseFloat(service.travel_fee || 0).toFixed(2) }}
+                Travel Fee: ${{ getDisplayTravelFee(service).toFixed(2) }}
               </span>
             </div>
 
@@ -205,6 +205,8 @@ async function loadServices() {
       const foundService = servicesList.find(s => s.id === props.service.id);
       if (foundService) {
         selectedService.value = foundService;
+        // Re-emit to recalculate effective_travel_fee with current zipcode
+        emitData();
       }
     }
   } catch (error) {
@@ -223,7 +225,31 @@ function emitData() {
     return;
   }
 
-  emit("setData", { service: selectedService.value });
+  // Inyectar el travel fee efectivo (zipcode override si aplica)
+  const serviceData = { ...selectedService.value };
+  const effectiveFee = getDisplayTravelFee(serviceData);
+  serviceData.effective_travel_fee = effectiveFee;
+
+  emit("setData", { service: serviceData });
+}
+
+/**
+ * Obtiene el travel fee a mostrar para un servicio.
+ * Prioridad: zipcode travel fee (por performers) > service_prices.travel_fee
+ */
+function getDisplayTravelFee(service) {
+  // Si el zipcode tiene travel fees específicos, usarlos
+  if (props.zipcode?.zone_type === 'travel_fee') {
+    const performers = parseInt(service.performers_count || 1);
+    if (performers === 1 && props.zipcode.travel_fee_1_performer) {
+      return parseFloat(props.zipcode.travel_fee_1_performer);
+    }
+    if (performers >= 2 && props.zipcode.travel_fee_2_performers) {
+      return parseFloat(props.zipcode.travel_fee_2_performers);
+    }
+  }
+  // Fallback: travel fee del service_price (por county)
+  return parseFloat(service.travel_fee || 0);
 }
 
 function handleImageError(event) {

@@ -224,10 +224,27 @@ const addonsTotal = computed(() => {
 });
 
 // Calcular tarifa de viaje basada en el servicio seleccionado
+// Prioridad: effective_travel_fee (zipcode override) > service_prices.travel_fee
 const travelFee = computed(() => {
   if (!props.service) return 0;
 
-  // Obtener travel_fee del service (service_prices)
+  // Usar el travel fee efectivo calculado en Step2 (incluye zipcode override)
+  if (props.service.effective_travel_fee !== undefined) {
+    return parseFloat(props.service.effective_travel_fee);
+  }
+
+  // Fallback: zipcode travel fees directos
+  if (props.zipcode?.zone_type === 'travel_fee') {
+    const performers = parseInt(props.service.performers_count || 1);
+    if (performers === 1 && props.zipcode.travel_fee_1_performer) {
+      return parseFloat(props.zipcode.travel_fee_1_performer);
+    }
+    if (performers >= 2 && props.zipcode.travel_fee_2_performers) {
+      return parseFloat(props.zipcode.travel_fee_2_performers);
+    }
+  }
+
+  // Fallback final: travel_fee del service_price
   return parseFloat(props.service.travel_fee || 0);
 });
 

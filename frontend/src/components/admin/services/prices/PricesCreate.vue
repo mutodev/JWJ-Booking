@@ -72,6 +72,21 @@
                 </div>
 
                 <div class="col-md-6 mb-3">
+                  <label for="travel_fee" class="form-label required">Travel Fee (USD)</label>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="travel_fee"
+                    v-model.number="form.travel_fee"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    required
+                  />
+                  <small class="text-danger small">{{ errors.travel_fee }}</small>
+                </div>
+
+                <div class="col-md-6 mb-3">
                   <label for="extra_child_fee" class="form-label required">Extra Child Fee (USD)</label>
                   <input
                     type="number"
@@ -328,6 +343,9 @@ const validationSchema = yup.object().shape({
   amount: yup.number()
     .required("Base price is required")
     .min(0.01, "Price must be greater than 0"),
+  travel_fee: yup.number()
+    .required("Travel fee is required")
+    .min(0, "Fee cannot be negative"),
   extra_child_fee: yup.number()
     .required("Extra child fee is required")
     .min(0, "Fee cannot be negative"),
@@ -344,6 +362,7 @@ const form = ref({
   county_id: "",
   performers_count: 1,
   amount: 0,
+  travel_fee: 0,
   is_available: true,
   notes: "",
   extra_child_fee: 0,
@@ -380,6 +399,7 @@ const resetForm = () => {
     county_id: "",
     performers_count: 1,
     amount: 0,
+    travel_fee: 0,
     is_available: true,
     notes: "",
     extra_child_fee: 0,
