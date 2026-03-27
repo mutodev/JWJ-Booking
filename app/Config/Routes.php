@@ -197,10 +197,10 @@ $routes->group('api', function ($routes) {
         $routes->get('by-service-price/(:any)', [DurationController::class, 'getByServicePriceId']);
         $routes->get('(:any)', [DurationController::class, 'getById']);
         $routes->post('/', [DurationController::class, 'create']);
-        $routes->put('(:any)', [DurationController::class, 'update']);
         $routes->put('activate/(:any)', [DurationController::class, 'activate']);
-        $routes->put('deactivate/(:any)', [DurationController::class, 'deactivate']);
         $routes->put('deactivate-all/(:any)', [DurationController::class, 'deactivateAllByServicePrice']);
+        $routes->put('deactivate/(:any)', [DurationController::class, 'deactivate']);
+        $routes->put('(:any)', [DurationController::class, 'update']);
         $routes->delete('(:any)', [DurationController::class, 'delete']);
     });
 
@@ -209,10 +209,10 @@ $routes->group('api', function ($routes) {
         $routes->get('by-service-price/(:any)', [ChildrenAgeRangeController::class, 'getByServicePriceId']);
         $routes->get('(:any)', [ChildrenAgeRangeController::class, 'getById']);
         $routes->post('/', [ChildrenAgeRangeController::class, 'create']);
-        $routes->put('(:any)', [ChildrenAgeRangeController::class, 'update']);
         $routes->put('activate/(:any)', [ChildrenAgeRangeController::class, 'activate']);
-        $routes->put('deactivate/(:any)', [ChildrenAgeRangeController::class, 'deactivate']);
         $routes->put('deactivate-all/(:any)', [ChildrenAgeRangeController::class, 'deactivateAllByServicePrice']);
+        $routes->put('deactivate/(:any)', [ChildrenAgeRangeController::class, 'deactivate']);
+        $routes->put('(:any)', [ChildrenAgeRangeController::class, 'update']);
         $routes->delete('(:any)', [ChildrenAgeRangeController::class, 'delete']);
     });
 
