@@ -26,7 +26,7 @@ class EmailTemplateSeeder extends Seeder
                 ]),
                 'content'     => json_encode([
                     'greeting_title' => 'Hi {{customer_name}}!',
-                    'intro'          => 'Thank you for choosing JamWithJamie for your event! Please complete your event details and proceed to payment.',
+                    'intro'          => 'Thank you for choosing Jam with Jamie for your event! Please complete your event details and proceed to payment.',
                     'button_text'    => 'Continue to Pay',
                     'steps_heading'  => 'Next Steps',
                     'step1'          => '<strong>Complete Event Details</strong> &mdash; Click the button above to fill in your event information',
@@ -41,7 +41,7 @@ class EmailTemplateSeeder extends Seeder
                 'id'                  => 'et-reservation-confirm-00000000002',
                 'slug'                => 'reservation_confirmation',
                 'name'                => 'Reservation Confirmation',
-                'subject'             => 'Reservation Received - JamWithJamie',
+                'subject'             => 'Reservation Received - Jam with Jamie',
                 'body'                => $this->getReservationConfirmationBody(),
                 'available_variables' => json_encode([
                     'customer_name', 'reservation_id', 'service_name',
@@ -50,7 +50,7 @@ class EmailTemplateSeeder extends Seeder
                 ]),
                 'content'     => json_encode([
                     'title'          => 'Reservation Received!',
-                    'intro'          => 'Hi {{customer_name}}, thank you for booking with JamWithJamie! We\'ve received your reservation and our team will be in touch shortly.',
+                    'intro'          => 'Hi {{customer_name}}, thank you for booking with Jam with Jamie! We\'ve received your reservation and our team will be in touch shortly.',
                     'steps_heading'  => 'What\'s Next?',
                     'step1'          => '<strong>Our team reviews your reservation</strong> &mdash; We\'ll confirm availability and prepare everything for your event',
                     'step2'          => '<strong>You\'ll receive a payment link</strong> &mdash; Once confirmed, we\'ll send you a secure payment link via email',
@@ -65,12 +65,12 @@ class EmailTemplateSeeder extends Seeder
                 'id'                  => 'et-welcome-000000000000000000003',
                 'slug'                => 'welcome',
                 'name'                => 'Welcome',
-                'subject'             => 'Welcome to JamWithJamie',
+                'subject'             => 'Welcome to Jam with Jamie',
                 'body'                => $this->getWelcomeBody(),
                 'available_variables' => json_encode(['password']),
                 'content'     => json_encode([
                     'title'             => 'Welcome aboard!',
-                    'intro'             => 'Your account has been created successfully. We\'re thrilled to have you as part of the JamWithJamie team.',
+                    'intro'             => 'Your account has been created successfully. We\'re thrilled to have you as part of the Jam with Jamie team.',
                     'security_reminder' => 'Please change your password after your first login to keep your account secure.',
                 ]),
                 'is_active'   => true,
@@ -81,7 +81,7 @@ class EmailTemplateSeeder extends Seeder
                 'id'                  => 'et-reset-password-0000000000000004',
                 'slug'                => 'reset_password',
                 'name'                => 'Reset Password',
-                'subject'             => 'Password Reset - JamWithJamie',
+                'subject'             => 'Password Reset - Jam with Jamie',
                 'body'                => $this->getResetPasswordBody(),
                 'available_variables' => json_encode(['password']),
                 'content'     => json_encode([
@@ -128,7 +128,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);">
                     <tr>
                         <td style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 3px solid #FF74B7;">
-                            <img src="{{logo_url}}" alt="JamWithJamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
                         </td>
                     </tr>
                     <tr>
@@ -215,12 +215,12 @@ class EmailTemplateSeeder extends Seeder
                     <tr>
                         <td style="padding: 24px 40px 32px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 0 0 4px; font-size: 14px; color: #1F2937;">Best regards,</p>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #FF74B7;">The JamWithJamie Team</p>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #FF74B7;">The Jam with Jamie Team</p>
                         </td>
                     </tr>
                     <tr>
                         <td style="background-color: #FF74B7; padding: 16px 40px; text-align: center;">
-                            <p style="margin: 0; font-size: 12px; color: rgba(0, 0, 0, 0.6);">&copy; {{current_year}} JamWithJamie. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 12px; color: rgba(0, 0, 0, 0.6);">&copy; {{current_year}} Jam with Jamie LLC. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -247,7 +247,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);">
                     <tr>
                         <td style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 3px solid #FF74B7;">
-                            <img src="{{logo_url}}" alt="JamWithJamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
                         </td>
                     </tr>
                     <tr>
@@ -329,12 +329,12 @@ class EmailTemplateSeeder extends Seeder
                     <tr>
                         <td style="padding: 24px 40px 32px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 0 0 4px; font-size: 14px; color: #1F2937;">Best regards,</p>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #FF74B7;">The JamWithJamie Team</p>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #FF74B7;">The Jam with Jamie Team</p>
                         </td>
                     </tr>
                     <tr>
                         <td style="background-color: #FF74B7; padding: 16px 40px; text-align: center;">
-                            <p style="margin: 0; font-size: 12px; color: rgba(0, 0, 0, 0.6);">&copy; {{current_year}} JamWithJamie. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 12px; color: rgba(0, 0, 0, 0.6);">&copy; {{current_year}} Jam with Jamie LLC. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -352,7 +352,7 @@ class EmailTemplateSeeder extends Seeder
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to JamWithJamie</title>
+    <title>Welcome to Jam with Jamie</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: Arial, \'Helvetica Neue\', Helvetica, sans-serif; -webkit-font-smoothing: antialiased;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7; padding: 40px 20px;">
@@ -361,7 +361,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 36px 40px; text-align: center;">
-                            <img src="{{logo_url}}" alt="JamWithJamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
                         </td>
                     </tr>
                     <tr>
@@ -388,12 +388,12 @@ class EmailTemplateSeeder extends Seeder
                     <tr>
                         <td style="padding: 24px 40px 32px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 0 0 4px; font-size: 14px; color: #1F2937;">Best regards,</p>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #667eea;">The JamWithJamie Team</p>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #667eea;">The Jam with Jamie Team</p>
                         </td>
                     </tr>
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 40px; text-align: center;">
-                            <p style="margin: 0; font-size: 12px; color: rgba(255, 255, 255, 0.8);">&copy; {{current_year}} JamWithJamie. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 12px; color: rgba(255, 255, 255, 0.8);">&copy; {{current_year}} Jam with Jamie LLC. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
@@ -411,7 +411,7 @@ class EmailTemplateSeeder extends Seeder
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset - JamWithJamie</title>
+    <title>Password Reset - Jam with Jamie</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: Arial, \'Helvetica Neue\', Helvetica, sans-serif; -webkit-font-smoothing: antialiased;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f5f7; padding: 40px 20px;">
@@ -420,7 +420,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 36px 40px; text-align: center;">
-                            <img src="{{logo_url}}" alt="JamWithJamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
                         </td>
                     </tr>
                     <tr>
@@ -454,12 +454,12 @@ class EmailTemplateSeeder extends Seeder
                     <tr>
                         <td style="padding: 24px 40px 32px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 0 0 4px; font-size: 14px; color: #1F2937;">Best regards,</p>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #667eea;">The JamWithJamie Team</p>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #667eea;">The Jam with Jamie Team</p>
                         </td>
                     </tr>
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 40px; text-align: center;">
-                            <p style="margin: 0; font-size: 12px; color: rgba(255, 255, 255, 0.8);">&copy; {{current_year}} JamWithJamie. All rights reserved.</p>
+                            <p style="margin: 0; font-size: 12px; color: rgba(255, 255, 255, 0.8);">&copy; {{current_year}} Jam with Jamie LLC. All rights reserved.</p>
                         </td>
                     </tr>
                 </table>
