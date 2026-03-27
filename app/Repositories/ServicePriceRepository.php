@@ -208,6 +208,7 @@ class ServicePriceRepository
             ->where('zipcodes.id', $zipcodeId)
             ->where('service_prices.is_available', true)
             ->where('services.is_active', true)
+            ->groupBy('service_prices.id')
             ->findAll();
     }
 }

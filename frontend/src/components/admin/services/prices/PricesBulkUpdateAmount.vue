@@ -137,7 +137,7 @@ const submit = async () => {
       amount: amount.value,
     });
 
-    const updated = response.data?.data?.updated ?? 0;
+    const updated = response.data?.updated ?? 0;
     successMessage.value = `Done! Base price updated for ${updated} counties.`;
     emit("saved");
   } catch (error) {
