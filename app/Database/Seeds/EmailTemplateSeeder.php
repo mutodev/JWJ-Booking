@@ -28,6 +28,9 @@ class EmailTemplateSeeder extends Seeder
                     'greeting_title' => 'Hi {{customer_name}}!',
                     'intro'          => 'Thank you for choosing JamWithJamie for your event! Please complete your event details and proceed to payment.',
                     'button_text'    => 'Continue to Pay',
+                    'steps_heading'  => 'Next Steps',
+                    'step1'          => '<strong>Complete Event Details</strong> &mdash; Click the button above to fill in your event information',
+                    'step2'          => '<strong>Proceed to Payment</strong> &mdash; After completing the details, you\'ll be redirected to a secure payment page powered by Stripe',
                     'important_note' => 'Please complete your event details before the event date to ensure everything is ready for your special day!',
                 ]),
                 'is_active'   => true,
@@ -178,14 +181,14 @@ class EmailTemplateSeeder extends Seeder
                                 </tr>
                             </table>
 
-                            <h2 style="margin: 0 0 14px; font-size: 17px; font-weight: 700; color: #1F2937;">Next Steps</h2>
+                            <h2 style="margin: 0 0 14px; font-size: 17px; font-weight: 700; color: #1F2937;">{{content_steps_heading}}</h2>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
                                 <tr>
                                     <td width="36" valign="top">
                                         <div style="width: 28px; height: 28px; background-color: #FFEF81; border: 2px solid #000000; border-radius: 50%; color: #000000; font-size: 14px; font-weight: 700; text-align: center; line-height: 28px;">1</div>
                                     </td>
                                     <td style="padding-left: 8px;">
-                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;"><strong>Complete Event Details</strong> &mdash; Click the button above to fill in your event information</p>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;">{{content_step1}}</p>
                                     </td>
                                 </tr>
                             </table>
@@ -195,7 +198,7 @@ class EmailTemplateSeeder extends Seeder
                                         <div style="width: 28px; height: 28px; background-color: #FFEF81; border: 2px solid #000000; border-radius: 50%; color: #000000; font-size: 14px; font-weight: 700; text-align: center; line-height: 28px;">2</div>
                                     </td>
                                     <td style="padding-left: 8px;">
-                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;"><strong>Proceed to Payment</strong> &mdash; After completing the details, you\'ll be redirected to a secure payment page powered by Stripe</p>
+                                        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;">{{content_step2}}</p>
                                     </td>
                                 </tr>
                             </table>
