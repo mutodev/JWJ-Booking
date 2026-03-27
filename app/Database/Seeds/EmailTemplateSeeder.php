@@ -46,9 +46,13 @@ class EmailTemplateSeeder extends Seeder
                     'children_count', 'total_amount'
                 ]),
                 'content'     => json_encode([
-                    'title'         => 'Reservation Received!',
-                    'intro'         => 'Hi {{customer_name}}, thank you for booking with JamWithJamie! We\'ve received your reservation and our team will be in touch shortly.',
-                    'question_note' => 'Feel free to reply to this email or contact us anytime. We\'re happy to help make your event special!',
+                    'title'          => 'Reservation Received!',
+                    'intro'          => 'Hi {{customer_name}}, thank you for booking with JamWithJamie! We\'ve received your reservation and our team will be in touch shortly.',
+                    'steps_heading'  => 'What\'s Next?',
+                    'step1'          => '<strong>Our team reviews your reservation</strong> &mdash; We\'ll confirm availability and prepare everything for your event',
+                    'step2'          => '<strong>You\'ll receive a payment link</strong> &mdash; Once confirmed, we\'ll send you a secure payment link via email',
+                    'step3'          => '<strong>Get ready to party!</strong> &mdash; After payment, your event is fully booked and we\'ll see you there!',
+                    'question_note'  => 'Feel free to reply to this email or contact us anytime. We\'re happy to help make your event special!',
                 ]),
                 'is_active'   => true,
                 'created_at'  => $now,
@@ -290,23 +294,23 @@ class EmailTemplateSeeder extends Seeder
                                 </tr>
                             </table>
 
-                            <h2 style="margin: 0 0 14px; font-size: 17px; font-weight: 700; color: #1F2937;">What\'s Next?</h2>
+                            <h2 style="margin: 0 0 14px; font-size: 17px; font-weight: 700; color: #1F2937;">{{content_steps_heading}}</h2>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
                                 <tr>
                                     <td width="36" valign="top"><div style="width: 28px; height: 28px; background-color: #FFEF81; border: 2px solid #000000; border-radius: 50%; color: #000000; font-size: 14px; font-weight: 700; text-align: center; line-height: 28px;">1</div></td>
-                                    <td style="padding-left: 8px;"><p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;"><strong>Our team reviews your reservation</strong> &mdash; We\'ll confirm availability and prepare everything for your event</p></td>
+                                    <td style="padding-left: 8px;"><p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;">{{content_step1}}</p></td>
                                 </tr>
                             </table>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 12px;">
                                 <tr>
                                     <td width="36" valign="top"><div style="width: 28px; height: 28px; background-color: #FFEF81; border: 2px solid #000000; border-radius: 50%; color: #000000; font-size: 14px; font-weight: 700; text-align: center; line-height: 28px;">2</div></td>
-                                    <td style="padding-left: 8px;"><p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;"><strong>You\'ll receive a payment link</strong> &mdash; Once confirmed, we\'ll send you a secure payment link via email</p></td>
+                                    <td style="padding-left: 8px;"><p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;">{{content_step2}}</p></td>
                                 </tr>
                             </table>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
                                 <tr>
                                     <td width="36" valign="top"><div style="width: 28px; height: 28px; background-color: #FFEF81; border: 2px solid #000000; border-radius: 50%; color: #000000; font-size: 14px; font-weight: 700; text-align: center; line-height: 28px;">3</div></td>
-                                    <td style="padding-left: 8px;"><p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;"><strong>Get ready to party!</strong> &mdash; After payment, your event is fully booked and we\'ll see you there!</p></td>
+                                    <td style="padding-left: 8px;"><p style="margin: 0; font-size: 14px; line-height: 1.5; color: #374151;">{{content_step3}}</p></td>
                                 </tr>
                             </table>
 
