@@ -97,7 +97,7 @@
 
             <!-- Travel fee -->
             <div class="breakdown-item d-flex justify-content-between mt-2" v-if="travelFee > 0">
-              <span>Travel Fee ({{ getZoneName() }}):</span>
+              <span>Travel Fee:</span>
               <span>${{ travelFee.toFixed(2) }}</span>
             </div>
 

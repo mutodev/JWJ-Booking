@@ -170,6 +170,11 @@
           </div>
         </div>
 
+        <!-- Error message -->
+        <div v-if="errorMsg" class="alert alert-danger mx-3 mb-0 py-2 small">
+          <i class="bi bi-exclamation-circle me-1"></i>{{ errorMsg }}
+        </div>
+
         <!-- Footer -->
         <div class="modal-footer border-top">
           <button type="button" class="btn btn-light px-4" @click="closeModal">
@@ -456,6 +461,8 @@ const loading            = ref(false);
 const subjectInput = ref(null);
 const fieldRefs    = ref({});
 const activeField  = ref("subject");
+const successMsg   = ref("");
+const errorMsg     = ref("");
 
 // ── Computed ───────────────────────────────────────────────────────────────
 const contentSchema = computed(() => {
@@ -474,21 +481,12 @@ const previewBody = computed(() => {
 
 // ── Watchers ───────────────────────────────────────────────────────────────
 watch(
-  () => props.show,
-  async (visible) => {
-    if (visible && props.templateId) {
+  [() => props.show, () => props.templateId],
+  async ([visible, id]) => {
+    if (visible && id) {
       activeField.value = "subject";
       fieldRefs.value   = {};
-      await fetchTemplate(props.templateId);
-    }
-  }
-);
-
-watch(
-  () => props.templateId,
-  async (newId) => {
-    if (newId && props.show) {
-      await fetchTemplate(newId);
+      await fetchTemplate(id);
     }
   }
 );
@@ -496,13 +494,14 @@ watch(
 // ── Methods ────────────────────────────────────────────────────────────────
 const fetchTemplate = async (id) => {
   try {
+    errorMsg.value   = "";
+    successMsg.value = "";
     const response = await api.get(`/email-templates/${id}`);
     const data = response.data;
 
-    templateData.value = data;
-    subject.value      = data.subject;
-    body.value         = data.body;
-    isActive.value     = data.is_active === true || data.is_active === 1 || data.is_active === "1";
+    subject.value  = data.subject ?? "";
+    body.value     = data.body ?? "";
+    isActive.value = data.is_active === true || data.is_active === 1 || data.is_active === "1";
 
     try {
       availableVariables.value = JSON.parse(data.available_variables || "[]");
@@ -525,7 +524,11 @@ const fetchTemplate = async (id) => {
       built[field.key] = savedContent[field.key] ?? "";
     }
     content.value = built;
+
+    // Set templateData LAST so v-if="templateData" shows the form only when everything is ready
+    templateData.value = data;
   } catch (error) {
+    errorMsg.value = "Error loading template";
     console.error("Error fetching template:", error);
   }
 };
@@ -593,13 +596,23 @@ const insertIntoField = (key, variable) => {
 };
 
 const closeModal = () => {
-  templateData.value = null;
-  fieldRefs.value    = {};
+  templateData.value       = null;
+  subject.value            = "";
+  body.value               = "";
+  content.value            = {};
+  isActive.value           = true;
+  availableVariables.value = [];
+  fieldRefs.value          = {};
+  activeField.value        = "subject";
+  successMsg.value         = "";
+  errorMsg.value           = "";
   emit("close");
 };
 
 const submitForm = async () => {
-  loading.value = true;
+  loading.value  = true;
+  errorMsg.value = "";
+  successMsg.value = "";
   try {
     await api.put(`/email-templates/${props.templateId}`, {
       subject:   subject.value,
@@ -609,7 +622,7 @@ const submitForm = async () => {
     emit("saved");
     closeModal();
   } catch (error) {
-    console.error("Error updating template:", error);
+    errorMsg.value = error.response?.data?.message || "An error occurred while saving";
   } finally {
     loading.value = false;
   }

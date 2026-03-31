@@ -17,7 +17,11 @@
     <div class="col-md-3 pt-1 d-flex gap-2">
       <button class="btn btn-sm btn-warning" @click="bulkUpdateModal = true" title="Update base price for all counties of a Jam">
         <i class="bi bi-pencil-square"></i>
-        Base Price
+        By Jam
+      </button>
+      <button class="btn btn-sm btn-warning" @click="bulkUpdateByCountyModal = true" title="Update prices for all Jams of a County">
+        <i class="bi bi-pencil-square"></i>
+        By County
       </button>
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
@@ -96,6 +100,11 @@
     @close="bulkUpdateModal = false"
     @saved="getData"
   />
+  <PricesBulkUpdateByCounty
+    :show="bulkUpdateByCountyModal"
+    @close="bulkUpdateByCountyModal = false"
+    @saved="getData"
+  />
 </template>
 
 <script setup>
@@ -106,6 +115,7 @@ import api from "@/services/axios";
 import PricesCreate from "./PricesCreate.vue";
 import PricesEdit from "./PricesEdit.vue";
 import PricesBulkUpdateAmount from "./PricesBulkUpdateAmount.vue";
+import PricesBulkUpdateByCounty from "./PricesBulkUpdateByCounty.vue";
 
 // 🏷️ Header dinámico
 const updateHeaderData = inject("updateHeaderData");
@@ -123,6 +133,7 @@ const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const modalDeleteVisible = ref(false);
 const bulkUpdateModal = ref(false);
+const bulkUpdateByCountyModal = ref(false);
 const selectedData = ref(null);
 
 // ✏️ Edit
@@ -145,6 +156,7 @@ const deleteModal = (item) => {
 // 📝 Cabeceras de tabla - solo campos importantes
 const headers = ref([
   { text: "Service", value: "service_name", sortable: true },
+  { text: "Area", value: "area_name", sortable: true },
   { text: "County", value: "county_name", sortable: true },
   { text: "Performers", value: "performers_count", sortable: true },
   { text: "Base Price", value: "amount", sortable: true },

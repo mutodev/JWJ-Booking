@@ -79,6 +79,20 @@ class CityRepository
     }
 
     /**
+     * Obtiene ciudades activas por área metropolitana (a través de counties).
+     */
+    public function getByMetropolitanArea(string $metropolitanAreaId): array
+    {
+        return $this->cityModel
+            ->select('cities.*, counties.name AS county_name')
+            ->join('counties', 'counties.id = cities.county_id')
+            ->where('counties.metropolitan_area_id', $metropolitanAreaId)
+            ->where('cities.is_active', true)
+            ->orderBy('cities.name')
+            ->findAll();
+    }
+
+    /**
      * Creación
      * @param array $data
      * @return string|false El ID del usuario creado o false en caso de error

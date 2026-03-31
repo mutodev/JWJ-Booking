@@ -25,10 +25,12 @@ class ServicePriceRepository
             ->select("
                 service_prices.*,
                 services.name as service_name,
-                counties.name as county_name
+                counties.name as county_name,
+                metropolitan_areas.name as area_name
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->join("counties", "counties.id = service_prices.county_id", "left")
+            ->join("metropolitan_areas", "metropolitan_areas.id = counties.metropolitan_area_id", "left")
             ->findAll();
     }
 
@@ -115,6 +117,20 @@ class ServicePriceRepository
             ->where('service_id', $serviceId)
             ->where('deleted_at IS NULL')
             ->update(['amount' => $amount, 'updated_at' => date('Y-m-d H:i:s')]);
+
+        return $db->affectedRows();
+    }
+
+    /**
+     * Actualizar travel fee de todos los service prices de un county.
+     */
+    public function updateTravelFeeByCounty(string $countyId, float $travelFee): int
+    {
+        $db = \Config\Database::connect();
+        $db->table('service_prices')
+            ->where('county_id', $countyId)
+            ->where('deleted_at IS NULL')
+            ->update(['travel_fee' => $travelFee, 'updated_at' => date('Y-m-d H:i:s')]);
 
         return $db->affectedRows();
     }

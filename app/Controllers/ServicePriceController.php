@@ -221,6 +221,39 @@ class ServicePriceController extends ResourceController
     }
 
     /**
+     * Actualizar travel fee de todos los service prices de un county.
+     */
+    public function updateTravelFeeByArea()
+    {
+        try {
+            $json = $this->request->getBody();
+            $data = json_decode($json, true);
+
+            $countyId  = $data['county_id'] ?? null;
+            $travelFee = $data['travel_fee'] ?? null;
+
+            if (!$countyId || $travelFee === null) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON(['message' => 'county_id and travel_fee are required']);
+            }
+
+            $updated = $this->service->updateTravelFeeByCounty($countyId, (float)$travelFee);
+
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response("Travel fee updated for {$updated} records", ['updated' => $updated]));
+
+        } catch (\Throwable $th) {
+            $code = $th->getCode();
+            $httpCode = ($code >= 400 && $code < 600) ? $code : 500;
+            return $this->response
+                ->setStatusCode($httpCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Eliminar (soft delete) un precio de servicio.
      */
     public function deleteDelete($id)

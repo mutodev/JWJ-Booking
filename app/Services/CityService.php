@@ -62,6 +62,14 @@ class CityService
     }
 
     /**
+     * Obtener ciudades por área metropolitana
+     */
+    public function getByMetropolitanArea(string $metropolitanAreaId): array
+    {
+        return $this->repository->getByMetropolitanArea($metropolitanAreaId);
+    }
+
+    /**
      * Crear nueva ciudad
      */
     public function create(array $data): string

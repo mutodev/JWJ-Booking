@@ -79,6 +79,19 @@ class CityController extends ResourceController
         }
     }
 
+    public function getByMetropolitanArea($id)
+    {
+        try {
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Cities by area', $this->service->getByMetropolitanArea($id)));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function create()
     {
         try {

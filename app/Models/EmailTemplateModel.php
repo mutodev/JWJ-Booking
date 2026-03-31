@@ -23,8 +23,6 @@ class EmailTemplateModel extends Model
         'is_active',
     ];
 
-    protected bool $updateOnlyChanged = true;
-
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';

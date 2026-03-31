@@ -99,6 +99,7 @@ $routes->group('api', function ($routes) {
         $routes->get('get-all-and-county', [CityController::class, 'getAllAndCounty']);
         $routes->get('get-all-active', [CityController::class, 'getAllActive']);
         $routes->get('get-by-county/(:any)', [CityController::class, 'getByCounty']);
+        $routes->get('get-by-area/(:any)', [CityController::class, 'getByMetropolitanArea']);
         $routes->get('(:any)', [CityController::class, 'getById']);
         $routes->post('', [CityController::class, 'create']);
         $routes->put('(:any)', [CityController::class, 'updateData']);
@@ -132,6 +133,7 @@ $routes->group('api', function ($routes) {
         $routes->get('(:segment)', [ServicePriceController::class, 'getById']);
         $routes->post('', [ServicePriceController::class, 'createData']);
         $routes->put('bulk-update-base-price', [ServicePriceController::class, 'updateBasePriceByService']);
+        $routes->put('bulk-update-by-area', [ServicePriceController::class, 'updateTravelFeeByArea']);
         $routes->put('(:segment)', [ServicePriceController::class, 'updateData']);
         $routes->post('update/(:segment)', [ServicePriceController::class, 'updateWithImage']);
         $routes->delete('(:segment)', [ServicePriceController::class, 'delete']);

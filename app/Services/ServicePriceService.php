@@ -145,6 +145,11 @@ class ServicePriceService
         return $this->repo->updateBasePriceByService($serviceId, $amount);
     }
 
+    public function updateTravelFeeByCounty(string $countyId, float $travelFee): int
+    {
+        return $this->repo->updateTravelFeeByCounty($countyId, $travelFee);
+    }
+
     /**
      * Elimina un precio de servicio (soft delete)
      * @param string $id ID del precio de servicio
