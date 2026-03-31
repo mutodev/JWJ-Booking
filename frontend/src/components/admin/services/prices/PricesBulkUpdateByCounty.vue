@@ -11,7 +11,7 @@
 
         <div class="modal-body">
           <p class="text-muted small mb-3">
-            Updates the <strong>Travel Fee</strong> for all Jams in the selected city's county.
+            Updates the <strong>Travel Fee</strong> for all Jams in the selected county.
           </p>
 
           <!-- Area -->
@@ -30,37 +30,41 @@
             />
           </div>
 
-          <!-- City (dependent on Area) -->
+          <!-- County (dependent on Area) -->
           <div class="mb-3">
-            <label class="form-label required">City</label>
+            <label class="form-label required">County</label>
             <Multiselect
-              v-model="selectedCity"
-              :options="cities"
+              v-model="selectedCounty"
+              :options="counties"
               label="name"
               track-by="id"
-              placeholder="Choose a City..."
+              placeholder="Choose a County..."
               :searchable="true"
               :show-labels="false"
               :allow-empty="false"
               :disabled="!selectedArea"
-              @select="onSelectCity"
+              @select="onSelectCounty"
             />
-            <small class="text-danger small">{{ errors.city }}</small>
+            <small class="text-danger small">{{ errors.county }}</small>
           </div>
 
           <!-- Travel Fee -->
           <div class="mb-3">
-            <label for="areaTravelFee" class="form-label required">New Travel Fee (USD)</label>
+            <label for="countyTravelFee" class="form-label required">New Travel Fee (USD)</label>
             <input
               type="number"
               class="form-control"
-              id="areaTravelFee"
+              id="countyTravelFee"
               v-model.number="travelFee"
               min="0"
               step="0.01"
               placeholder="0.00"
             />
             <small class="text-danger small">{{ errors.travel_fee }}</small>
+          </div>
+
+          <div v-if="selectedCounty && recordsAffected > 0" class="form-text text-muted mb-3">
+            Affects <strong>{{ recordsAffected }}</strong> price records
           </div>
 
           <div v-if="successMessage" class="alert alert-success py-2 small mb-0">
@@ -75,7 +79,7 @@
           <button type="button" class="btn btn-light" @click="close">
             <i class="bi bi-arrow-90deg-down"></i> Cancel
           </button>
-          <button type="button" class="btn btn-primary" @click="submit" :disabled="loading || !selectedCity">
+          <button type="button" class="btn btn-primary" @click="submit" :disabled="loading || !selectedCounty">
             <i class="bi bi-save"></i> Update
             <span v-if="loading" class="spinner-border spinner-border-sm ms-2"></span>
           </button>
@@ -98,10 +102,11 @@ const props = defineProps({
 });
 
 const areas = ref([]);
-const cities = ref([]);
+const counties = ref([]);
 const selectedArea = ref(null);
-const selectedCity = ref(null);
+const selectedCounty = ref(null);
 const travelFee = ref(null);
+const recordsAffected = ref(0);
 const errors = ref({});
 const loading = ref(false);
 const successMessage = ref("");
@@ -115,12 +120,12 @@ const fetchAreas = async () => {
   }
 };
 
-const fetchCities = async (areaId) => {
+const fetchCounties = async (areaId) => {
   try {
-    const response = await api.get(`/cities/get-by-area/${areaId}`);
-    cities.value = response.data;
+    const response = await api.get(`/counties/get-by-metropolitan/${areaId}`);
+    counties.value = response.data;
   } catch (error) {
-    cities.value = [];
+    counties.value = [];
   }
 };
 
@@ -129,25 +134,38 @@ watch(() => props.show, (val) => {
 });
 
 const onSelectArea = (area) => {
-  selectedCity.value = null;
+  selectedCounty.value = null;
   travelFee.value = null;
-  cities.value = [];
+  recordsAffected.value = 0;
+  counties.value = [];
   successMessage.value = "";
   errors.value = {};
-  fetchCities(area.id);
+  fetchCounties(area.id);
 };
 
-const onSelectCity = () => {
+const fetchCountByCounty = async (countyId) => {
+  try {
+    const response = await api.get(`/service-prices/count-by-county/${countyId}`);
+    recordsAffected.value = response.data?.count ?? 0;
+  } catch (error) {
+    recordsAffected.value = 0;
+  }
+};
+
+const onSelectCounty = (county) => {
+  recordsAffected.value = 0;
   travelFee.value = null;
   successMessage.value = "";
   errors.value = {};
+  fetchCountByCounty(county.id);
 };
 
 const close = () => {
   selectedArea.value = null;
-  selectedCity.value = null;
-  cities.value = [];
+  selectedCounty.value = null;
+  counties.value = [];
   travelFee.value = null;
+  recordsAffected.value = 0;
   successMessage.value = "";
   errors.value = {};
   emit("close");
@@ -157,8 +175,8 @@ const submit = async () => {
   errors.value = {};
   successMessage.value = "";
 
-  if (!selectedCity.value) {
-    errors.value.city = "Select a City";
+  if (!selectedCounty.value) {
+    errors.value.county = "Select a County";
     return;
   }
   if (travelFee.value === null || travelFee.value === "" || isNaN(travelFee.value) || travelFee.value < 0) {
@@ -169,7 +187,7 @@ const submit = async () => {
   try {
     loading.value = true;
     const response = await api.put("/service-prices/bulk-update-by-area", {
-      county_id: selectedCity.value.county_id,
+      county_id: selectedCounty.value.id,
       travel_fee: travelFee.value,
     });
 

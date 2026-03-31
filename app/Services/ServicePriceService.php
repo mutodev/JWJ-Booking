@@ -145,6 +145,11 @@ class ServicePriceService
         return $this->repo->updateBasePriceByService($serviceId, $amount);
     }
 
+    public function countByCounty(string $countyId): int
+    {
+        return $this->repo->countByCounty($countyId);
+    }
+
     public function updateTravelFeeByCounty(string $countyId, float $travelFee): int
     {
         return $this->repo->updateTravelFeeByCounty($countyId, $travelFee);

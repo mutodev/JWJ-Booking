@@ -221,6 +221,25 @@ class ServicePriceController extends ResourceController
     }
 
     /**
+     * Contar service prices de un county.
+     */
+    public function countByCounty($countyId)
+    {
+        try {
+            $count = $this->service->countByCounty($countyId);
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response("Count retrieved", ['count' => $count]));
+        } catch (\Throwable $th) {
+            $code = $th->getCode();
+            $httpCode = ($code >= 400 && $code < 600) ? $code : 500;
+            return $this->response
+                ->setStatusCode($httpCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Actualizar travel fee de todos los service prices de un county.
      */
     public function updateTravelFeeByArea()

@@ -130,6 +130,7 @@ $routes->group('api', function ($routes) {
     $routes->group('service-prices', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('', [ServicePriceController::class, 'getAll']);
         $routes->get('get-by-service-and-county/(:segment)/(:segment)', [ServicePriceController::class, 'getByServiceAndCounty']);
+        $routes->get('count-by-county/(:segment)', [ServicePriceController::class, 'countByCounty']);
         $routes->get('(:segment)', [ServicePriceController::class, 'getById']);
         $routes->post('', [ServicePriceController::class, 'createData']);
         $routes->put('bulk-update-base-price', [ServicePriceController::class, 'updateBasePriceByService']);

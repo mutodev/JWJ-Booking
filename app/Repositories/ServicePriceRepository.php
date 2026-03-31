@@ -122,6 +122,17 @@ class ServicePriceRepository
     }
 
     /**
+     * Contar service prices activos de un county.
+     */
+    public function countByCounty(string $countyId): int
+    {
+        return $this->model
+            ->where('county_id', $countyId)
+            ->where('deleted_at IS NULL')
+            ->countAllResults();
+    }
+
+    /**
      * Actualizar travel fee de todos los service prices de un county.
      */
     public function updateTravelFeeByCounty(string $countyId, float $travelFee): int
