@@ -20,7 +20,7 @@
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 3px solid #FF74B7;">
-                            <img src="<?= base_url('img/logos/JWJ_logo-05.png') ?>" alt="JamWithJamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
+                            <img src="<?= base_url('img/logos/JWJ_logo-05.png') ?>" alt="Jam with Jamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
                         </td>
                     </tr>
 
@@ -30,7 +30,7 @@
 
                             <!-- Greeting -->
                             <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">Hi <?= esc($reservation->full_name) ?>!</h1>
-                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280;">Thank you for choosing JamWithJamie for your event! Please complete your event details and proceed to payment.</p>
+                            <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280;">Thank you for choosing Jam with Jamie for your event! Please complete your event details and proceed to payment.</p>
 
                             <!-- Description -->
                             <?php if (!empty($reservation->description)): ?>
@@ -144,7 +144,7 @@
                     <tr>
                         <td style="padding: 24px 40px 32px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 0 0 4px; font-size: 14px; color: #1F2937;">Best regards,</p>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #FF74B7;">The JamWithJamie Team</p>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #FF74B7;">The Jam with Jamie Team</p>
                         </td>
                     </tr>
 
@@ -152,7 +152,7 @@
                     <tr>
                         <td style="background-color: #FF74B7; padding: 16px 40px; text-align: center;">
                             <p style="margin: 0; font-size: 12px; color: rgba(0, 0, 0, 0.6);">
-                                &copy; <?= date('Y') ?> JamWithJamie. All rights reserved.
+                                &copy; <?= date('Y') ?> Jam with Jamie. All rights reserved.
                             </p>
                         </td>
                     </tr>

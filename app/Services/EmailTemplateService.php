@@ -190,7 +190,7 @@ class EmailTemplateService
                 break;
 
             case 'reservation_confirmation':
-                $subject = "Reservation Received - JamWithJamie";
+                $subject = "Reservation Received - Jam with Jamie";
                 $body = view($viewMap[$slug], [
                     'reservation' => $variables['_reservation'] ?? (object) $variables,
                     'eventDate'   => $variables['event_date'] ?? 'TBD',
@@ -199,14 +199,14 @@ class EmailTemplateService
                 break;
 
             case 'welcome':
-                $subject = "Welcome to JamWithJamie";
+                $subject = "Welcome to Jam with Jamie";
                 $body = view($viewMap[$slug], [
                     'password' => $variables['password'] ?? '',
                 ]);
                 break;
 
             case 'reset_password':
-                $subject = "Password Reset - JamWithJamie";
+                $subject = "Password Reset - Jam with Jamie";
                 $body = view($viewMap[$slug], [
                     'password' => $variables['password'] ?? '',
                 ]);

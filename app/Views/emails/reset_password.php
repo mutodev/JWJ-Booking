@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Password Reset - JamWithJamie</title>
+    <title>Password Reset - Jam with Jamie</title>
 </head>
 
 <body style="margin: 0; padding: 0; background-color: #f4f5f7; font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif; -webkit-font-smoothing: antialiased;">
@@ -20,7 +20,7 @@
                     <!-- Header -->
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 36px 40px; text-align: center;">
-                            <img src="<?= base_url('img/logos/JWJ_logo-05.png') ?>" alt="JamWithJamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
+                            <img src="<?= base_url('img/logos/JWJ_logo-05.png') ?>" alt="Jam with Jamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
                         </td>
                     </tr>
 
@@ -69,7 +69,7 @@
                     <tr>
                         <td style="padding: 24px 40px 32px; border-top: 1px solid #f0f0f0;">
                             <p style="margin: 0 0 4px; font-size: 14px; color: #1F2937;">Best regards,</p>
-                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #667eea;">The JamWithJamie Team</p>
+                            <p style="margin: 0; font-size: 14px; font-weight: 600; color: #667eea;">The Jam with Jamie Team</p>
                         </td>
                     </tr>
 
@@ -77,7 +77,7 @@
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 16px 40px; text-align: center;">
                             <p style="margin: 0; font-size: 12px; color: rgba(255, 255, 255, 0.8);">
-                                &copy; <?= date('Y') ?> JamWithJamie. All rights reserved.
+                                &copy; <?= date('Y') ?> Jam with Jamie. All rights reserved.
                             </p>
                         </td>
                     </tr>
