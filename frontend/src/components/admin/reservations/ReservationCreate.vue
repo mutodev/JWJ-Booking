@@ -18,6 +18,7 @@
             v-if="dataForm?.areas?.zipcode"
             :services="services"
             :county="dataForm?.areas?.county ?? {}"
+            :zipcode="dataForm?.areas?.zipcode ?? {}"
             @setData="setData"
           />
           <ReservationAddons

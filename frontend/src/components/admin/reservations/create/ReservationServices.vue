@@ -69,6 +69,10 @@
               ></i>
               {{ price.performers_count ?? "-" }} performers
             </li>
+            <li v-if="getTravelFee(price) > 0" class="mb-1 d-flex align-items-center">
+              <i class="bi bi-car-front-fill text-primary me-2" aria-hidden="true"></i>
+              Travel Fee: {{ formatCurrency(getTravelFee(price)) }}
+            </li>
 
             <!-- Icono para "Up to X children" -->
             <li
@@ -108,6 +112,7 @@ import api from "@/services/axios";
 const props = defineProps({
   services: { type: Array, default: () => [] },
   county: Object,
+  zipcode: Object,
 });
 
 const emit = defineEmits(["setData"]);
@@ -162,6 +167,20 @@ const formatCurrency = (value) => {
     currency: "USD",
     maximumFractionDigits: 2,
   }).format(Number(value));
+};
+
+// Calcular travel fee según zipcode y performers
+const getTravelFee = (price) => {
+  const performers = parseInt(price.performers_count || 1);
+  if (props.zipcode) {
+    if (performers >= 2 && props.zipcode.travel_fee_2_performers) {
+      return parseFloat(props.zipcode.travel_fee_2_performers);
+    }
+    if (props.zipcode.travel_fee_1_performer) {
+      return parseFloat(props.zipcode.travel_fee_1_performer);
+    }
+  }
+  return parseFloat(price.travel_fee || 0);
 };
 
 // Truncar texto con máximo de caracteres
