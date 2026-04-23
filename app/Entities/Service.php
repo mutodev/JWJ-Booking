@@ -13,6 +13,7 @@ class Service extends Entity
         'name' => 'string',
         'description' => 'string',
         'img' => 'string',
+        'duration_hours' => 'float',
         'is_active' => 'boolean'
     ];
 }
