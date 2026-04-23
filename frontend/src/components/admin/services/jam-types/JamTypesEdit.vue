@@ -40,18 +40,18 @@
 
             <!-- Duration -->
             <div class="mb-3">
-              <label for="serviceDuration" class="form-label">Duration (hours)</label>
+              <label for="serviceDuration" class="form-label">Duration (minutes)</label>
               <input
                 type="number"
                 class="form-control"
                 id="serviceDuration"
-                v-model.number="duration_hours"
-                placeholder="e.g., 0.75, 1, 1.5, 2"
-                step="0.25"
-                min="0.25"
+                v-model.number="duration_minutes"
+                placeholder="e.g., 45, 60, 90, 120"
+                step="1"
+                min="15"
               />
-              <small class="text-muted">Use decimals: 0.75 = 45 min, 1.5 = 1h 30min</small>
-              <small class="text-danger small d-block">{{ durationHoursError }}</small>
+              <small class="text-muted">Examples: 45 = 45 min, 60 = 1 hour, 90 = 1h 30min</small>
+              <small class="text-danger small d-block">{{ durationMinutesError }}</small>
             </div>
 
             <!-- Image -->
@@ -138,7 +138,7 @@ const schema = yup.object({
     .min(3, "Minimum 3 characters")
     .max(100, "Maximum 100 characters"),
   description: yup.string().nullable().max(255, "Maximum 255 characters"),
-  duration_hours: yup.number().required("Duration is required").min(0.25, "Minimum 15 minutes").max(10, "Maximum 10 hours"),
+  duration_minutes: yup.number().required("Duration is required").min(15, "Minimum 15 minutes").max(600, "Maximum 10 hours"),
   is_active: yup.boolean(),
 });
 
@@ -149,7 +149,7 @@ const { handleSubmit, setValues, resetForm } = useForm({
 const { value: name, errorMessage: nameError } = useField("name");
 const { value: description, errorMessage: descriptionError } =
   useField("description");
-const { value: duration_hours, errorMessage: durationHoursError } = useField("duration_hours");
+const { value: duration_minutes, errorMessage: durationMinutesError } = useField("duration_minutes");
 const { value: is_active } = useField("is_active");
 
 // Image handling
@@ -202,7 +202,7 @@ watch(
       setValues({
         name: newData.name,
         description: newData.description,
-        duration_hours: parseFloat(newData.duration_hours) || 1.0,
+        duration_minutes: Math.round((parseFloat(newData.duration_hours) || 1.0) * 60),
         is_active: newData.is_active,
       });
       if (newData.img) {
@@ -230,7 +230,7 @@ const submitForm = handleSubmit(async (values) => {
     const formData = new FormData();
     formData.append('name', values.name);
     formData.append('description', values.description || '');
-    formData.append('duration_hours', values.duration_hours);
+    formData.append('duration_hours', values.duration_minutes / 60);
     formData.append('is_active', values.is_active ? '1' : '0');
 
     if (selectedImageFile.value) {
