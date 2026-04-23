@@ -209,6 +209,32 @@
           </div>
         </div>
 
+        <!-- Full Address -->
+        <div class="mb-3">
+          <label for="fullAddress" class="form-label">
+            Full Address <span class="text-danger">*</span>
+          </label>
+          <el-tooltip
+            content="Enter the complete address where the event will take place"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <input
+              v-model="form.fullAddress"
+              type="text"
+              class="form-control"
+              id="fullAddress"
+              placeholder="123 Main St, City, State"
+              autocomplete="street-address"
+              @blur="validateField('fullAddress')"
+            />
+          </el-tooltip>
+          <div v-if="errors.fullAddress" class="text-danger small">
+            {{ errors.fullAddress }}
+          </div>
+        </div>
+
         <!-- Metropolitan Area -->
         <div class="mb-3">
           <div class="form-group">
@@ -290,6 +316,7 @@ const form = reactive({
   eventDateTime: "",
   childrenRange: "",
   exactChildrenCount: null,
+  fullAddress: "",
   areaId: "",
   zipcode: "",
   firstName: "",
@@ -304,6 +331,7 @@ const schema = yup.object({
   eventType: yup.string().required("Event type is required"),
   eventDateTime: yup.string().required("Date and time are required"),
   childrenRange: yup.string().required("Number of children is required"),
+  fullAddress: yup.string().required("Full address is required"),
   areaId: yup.string().required("Metropolitan area is required"),
   zipcode: yup
     .string()
@@ -367,6 +395,7 @@ function areAllFieldsFilled() {
     form.eventType.trim() !== "" &&
     form.eventDateTime !== "" &&
     form.childrenRange.trim() !== "" &&
+    form.fullAddress.trim() !== "" &&
     form.areaId !== "" &&
     form.zipcode.trim() !== "" &&
     form.firstName.trim() !== "" &&

@@ -399,15 +399,10 @@ async function submitReservation() {
       startTime = dateTime.toTimeString().slice(0, 5); // HH:MM
     }
 
-    // Construir fullAddress desde los datos del zipcode
-    const fullAddress = zipcode ?
-      `${zipcode.city_name || ''}, ${zipcode.county_name || ''} ${zipcode.zipcode || ''}`.trim() :
-      '';
-
     const information = {
       eventDate: eventDate,
       startTime: startTime,
-      fullAddress: fullAddress || 'To be confirmed',
+      fullAddress: customer?.fullAddress || 'To be confirmed',
       entertainmentStartTime: startTime,
       birthdayChildName: null, // No se recolecta sin Step5
       childAge: null, // No se recolecta sin Step5
