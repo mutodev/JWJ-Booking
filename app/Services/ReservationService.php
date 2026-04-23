@@ -167,11 +167,26 @@ class ReservationService
         $eventDateStr = $bookingDate ? $bookingDate->format('Y-m-d') : null;
         $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDateStr);
 
+        // Calcular travel fee del zipcode
+        $travelFee = 0;
+        $zipcode = $data['areas']['zipcode'] ?? null;
+        $performers = intval($data['price']['performers_count'] ?? 1);
+        if ($zipcode) {
+            if ($performers >= 2 && !empty($zipcode['travel_fee_2_performers'])) {
+                $travelFee = floatval($zipcode['travel_fee_2_performers']);
+            } elseif (!empty($zipcode['travel_fee_1_performer'])) {
+                $travelFee = floatval($zipcode['travel_fee_1_performer']);
+            }
+        }
+        if ($travelFee == 0) {
+            $travelFee = floatval($data['price']['travel_fee'] ?? 0);
+        }
+
         // Descuento de promo code (solo aplica al baseTotal, no al surcharge)
         $discountAmount = floatval($data['promoCode']['discount_amount'] ?? 0);
         $promoCodeUsed = $data['promoCode']['code'] ?? null;
 
-        $grandTotal = $baseTotal + $surchargeAmount - $discountAmount;
+        $grandTotal = $baseTotal + $travelFee + $surchargeAmount - $discountAmount;
 
         // Calcular duración total incluyendo addons
         $baseDurationHours = floatval($data['price']['min_duration_hours'] ?? 1);
@@ -191,7 +206,7 @@ class ReservationService
             'price_type' => $this->determinePriceType($data['addons'] ?? []),
             'base_price' => $servicePrice,
             'addons_total' => $addonsTotal,
-            'expedition_fee' => 0,
+            'expedition_fee' => $travelFee + $surchargeAmount,
             'extra_children_fee' => $extraChildrenTotal,
             'discount_amount' => $discountAmount,
             'promo_code' => $promoCodeUsed,

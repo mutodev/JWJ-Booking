@@ -48,6 +48,14 @@
             </td>
           </tr>
 
+          <!-- Travel Fee -->
+          <tr v-if="travelFee > 0">
+            <td class="text-start fw-medium">Travel Fee</td>
+            <td>{{ formatCurrency(travelFee) }}</td>
+            <td>1</td>
+            <td>{{ formatCurrency(travelFee) }}</td>
+          </tr>
+
           <!-- Surcharge -->
           <tr v-if="surcharge.amount > 0">
             <td class="text-start text-danger fw-medium">
@@ -106,6 +114,20 @@ const formatCurrency = (value) => {
   }).format(num);
 };
 
+const travelFee = computed(() => {
+  const zipcode = data.value?.areas?.zipcode;
+  const performers = parseInt(data.value?.price?.performers_count || 1);
+  if (zipcode) {
+    if (performers >= 2 && zipcode.travel_fee_2_performers) {
+      return parseFloat(zipcode.travel_fee_2_performers);
+    }
+    if (zipcode.travel_fee_1_performer) {
+      return parseFloat(zipcode.travel_fee_1_performer);
+    }
+  }
+  return parseFloat(data.value?.price?.travel_fee || 0);
+});
+
 const surcharge = computed(() => {
   if (!data.value?.form?.date) return { amount: 0, percent: 0 };
   const today = new Date();
@@ -130,6 +152,6 @@ const totalBase = computed(() => {
 const discountAmount = computed(() => parseFloat(data.value.promoCode?.discount_amount) || 0);
 
 const total = computed(() => {
-  return formatCurrency(totalBase.value + surcharge.value.amount - discountAmount.value);
+  return formatCurrency(totalBase.value + travelFee.value + surcharge.value.amount - discountAmount.value);
 });
 </script>
