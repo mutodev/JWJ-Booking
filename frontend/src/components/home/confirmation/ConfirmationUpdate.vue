@@ -70,7 +70,7 @@
             <!-- Arrival, parking, and additional instructions -->
             <div class="mb-3">
               <label for="instructions" class="form-label">
-                Arrival, parking, and additional instructions
+                Provide with full address, arrival and parking instructions
               </label>
               <el-tooltip
                 content="Provide details about parking, access, or any special instructions for arrival (optional)"

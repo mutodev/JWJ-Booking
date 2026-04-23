@@ -597,6 +597,28 @@ class ReservationService
     }
 
     /**
+     * Elimina (soft delete) todas las reservas con event_date <= al domingo pasado
+     *
+     * @return array Resultado con la cantidad eliminada y la fecha de corte usada
+     */
+    public function deleteOldReservations(): array
+    {
+        // Calcular el domingo pasado
+        $today = new \DateTime();
+        $dayOfWeek = (int) $today->format('w'); // 0=domingo, 1=lunes, ...
+        $daysBack = $dayOfWeek === 0 ? 7 : $dayOfWeek;
+        $lastSunday = (clone $today)->modify("-{$daysBack} days");
+        $cutoffDate = $lastSunday->format('Y-m-d');
+
+        $deletedCount = $this->repository->deleteBeforeDate($cutoffDate);
+
+        return [
+            'deleted_count' => $deletedCount,
+            'cutoff_date'   => $cutoffDate,
+        ];
+    }
+
+    /**
      * Determina el tipo de precio basado en los addons seleccionados
      *
      * Los servicios pueden tener pricing especial cuando incluyen addons de tipo 'jukebox'.

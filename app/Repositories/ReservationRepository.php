@@ -92,4 +92,26 @@ class ReservationRepository
     {
         return $this->model->delete($id);
     }
+
+    /**
+     * Eliminar reservas con event_date anterior o igual a una fecha dada (soft delete)
+     *
+     * @param string $cutoffDate Fecha límite en formato Y-m-d
+     * @return int Cantidad de reservas eliminadas
+     */
+    public function deleteBeforeDate(string $cutoffDate): int
+    {
+        $reservations = $this->model
+            ->where('event_date <=', $cutoffDate)
+            ->findAll();
+
+        $count = 0;
+        foreach ($reservations as $reservation) {
+            if ($this->model->delete($reservation->id)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
 }

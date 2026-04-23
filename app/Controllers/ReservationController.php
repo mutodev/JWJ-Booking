@@ -106,6 +106,19 @@ class ReservationController extends ResourceController
         }
     }
 
+    public function deleteOldReservations()
+    {
+        try {
+            $result = $this->service->deleteOldReservations();
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Old reservations deleted successfully', $result));
+        } catch (\Throwable $th) {
+            return $this->response->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function sendPaymentEmail()
     {
         try {

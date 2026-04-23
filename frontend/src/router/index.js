@@ -26,6 +26,7 @@ import EmailTemplates from "@/components/admin/email-templates/EmailTemplates.vu
 import ConfirmationUpdate from "@/components/home/confirmation/ConfirmationUpdate.vue";
 import PaymentSuccess from "@/components/home/payment/PaymentSuccess.vue";
 import PaymentCancel from "@/components/home/payment/PaymentCancel.vue";
+import CleanReservations from "@/components/admin/maintenance/CleanReservations.vue";
 import NotFound from "@/components/not-found/NotFound.vue";
 
 const routes = [
@@ -80,6 +81,7 @@ const routes = [
       },
       { path: "promo-codes", component: PromoCodes },
       { path: "abandoned-carts", component: AbandonedCarts },
+      { path: "maintenance/clean-reservations", component: CleanReservations },
     ],
   },
 
