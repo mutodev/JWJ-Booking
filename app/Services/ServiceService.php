@@ -153,6 +153,9 @@ class ServiceService
         if (isset($post['is_active'])) {
             $data['is_active'] = filter_var($post['is_active'], FILTER_VALIDATE_BOOLEAN);
         }
+        if (isset($post['duration_hours'])) {
+            $data['duration_hours'] = floatval($post['duration_hours']);
+        }
 
         // Procesar imagen si existe
         $image = $request->getFile('image');

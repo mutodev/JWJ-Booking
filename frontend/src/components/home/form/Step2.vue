@@ -59,7 +59,7 @@
             <div class="service-info-item">
               <i class="bi bi-clock service-info-item__icon"></i>
               <span class="service-info-item__text">
-                45 minutes
+                {{ formatDuration(service.duration_hours) }}
               </span>
             </div>
             <div class="service-info-item">
@@ -250,6 +250,21 @@ function getDisplayTravelFee(service) {
   }
   // Fallback: travel fee del service_price (por county)
   return parseFloat(service.travel_fee || 0);
+}
+
+function formatDuration(hours) {
+  if (!hours) return '1 hour';
+  const totalHours = parseFloat(hours);
+  const wholeHours = Math.floor(totalHours);
+  const minutes = Math.round((totalHours - wholeHours) * 60);
+
+  if (minutes === 0) {
+    return `${wholeHours} hour${wholeHours !== 1 ? 's' : ''}`;
+  } else if (wholeHours === 0) {
+    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  } else {
+    return `${wholeHours} hour${wholeHours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
+  }
 }
 
 function handleImageError(event) {

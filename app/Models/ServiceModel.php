@@ -17,6 +17,7 @@ class ServiceModel extends Model
         'name',
         'description',
         'img',
+        'duration_hours',
         'is_active'
     ];
 

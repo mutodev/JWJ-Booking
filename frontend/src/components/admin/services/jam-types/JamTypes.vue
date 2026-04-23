@@ -42,6 +42,11 @@
           <span v-else class="badge bg-danger">Inactive</span>
         </template>
 
+        <!-- Duration -->
+        <template #item-duration_hours="{ duration_hours }">
+          <span>{{ formatDuration(duration_hours) }}</span>
+        </template>
+
         <!-- Descripción -->
         <template #item-description="{ description }">
           <span>
@@ -101,10 +106,21 @@ const headers = computed(() => {
     customLabels: {
       name: "Name",
       description: "Description",
+      duration_hours: "Duration",
       is_active: "State",
     },
   });
 });
+
+const formatDuration = (hours) => {
+  if (!hours) return '1 hour';
+  const totalHours = parseFloat(hours);
+  const wholeHours = Math.floor(totalHours);
+  const minutes = Math.round((totalHours - wholeHours) * 60);
+  if (minutes === 0) return `${wholeHours} hour${wholeHours !== 1 ? 's' : ''}`;
+  if (wholeHours === 0) return `${minutes} min`;
+  return `${wholeHours}h ${minutes}min`;
+};
 
 const searchField = computed(() => {
   return tableHelpers.generateSearchFields(headers.value);

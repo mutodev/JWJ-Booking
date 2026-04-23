@@ -226,7 +226,8 @@ class ServicePriceRepository
                 services.name,
                 services.id as service_id,
                 services.description,
-                services.img
+                services.img,
+                services.duration_hours
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->join("counties", "counties.id = service_prices.county_id", "left")
