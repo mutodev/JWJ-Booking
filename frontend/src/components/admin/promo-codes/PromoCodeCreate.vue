@@ -37,7 +37,7 @@
               <div class="col-md-6">
                 <label class="form-label">Discount % <span class="text-danger">*</span></label>
                 <input
-                  v-model.number="formData.discount_percentage"
+                  v-model.number="formData.discount_value"
                   type="number"
                   class="form-control"
                   min="1"
@@ -139,7 +139,8 @@ const props = defineProps({
 
 const formData = ref({
   code: "",
-  discount_percentage: "",
+  discount_type: "percentage",
+  discount_value: "",
   valid_from: "",
   valid_until: "",
   max_uses: null,
@@ -170,7 +171,8 @@ const save = async () => {
 const resetForm = () => {
   formData.value = {
     code: "",
-    discount_percentage: "",
+    discount_type: "percentage",
+    discount_value: "",
     valid_from: "",
     valid_until: "",
     max_uses: null,

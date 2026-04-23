@@ -36,7 +36,7 @@
               <div class="col-md-6">
                 <label class="form-label">Discount % <span class="text-danger">*</span></label>
                 <input
-                  v-model.number="editData.discount_percentage"
+                  v-model.number="editData.discount_value"
                   type="number"
                   class="form-control"
                   min="1"
