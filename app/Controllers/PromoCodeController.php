@@ -29,24 +29,12 @@ class PromoCodeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(
-                    create_response(
-                        true,
-                        $promoCodes,
-                        'Promo codes retrieved successfully'
-                    )
-                );
+                ->setJSON(create_response('Promo codes retrieved successfully', $promoCodes));
         } catch (\Exception $e) {
             log_message('error', 'Error getting promo codes: ' . $e->getMessage());
             return $this->response
                 ->setStatusCode(500)
-                ->setJSON(
-                    create_response(
-                        false,
-                        null,
-                        'An error occurred while retrieving promo codes'
-                    )
-                );
+                ->setJSON(['message' => 'An error occurred while retrieving promo codes']);
         }
     }
 
@@ -63,24 +51,12 @@ class PromoCodeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(201)
-                ->setJSON(
-                    create_response(
-                        true,
-                        $promoCode,
-                        'Promo code created successfully'
-                    )
-                );
+                ->setJSON(create_response('Promo code created successfully', $promoCode));
         } catch (\Exception $e) {
             log_message('error', 'Error creating promo code: ' . $e->getMessage());
             return $this->response
                 ->setStatusCode(500)
-                ->setJSON(
-                    create_response(
-                        false,
-                        null,
-                        $e->getMessage()
-                    )
-                );
+                ->setJSON(['message' => $e->getMessage()]);
         }
     }
 
@@ -94,13 +70,7 @@ class PromoCodeController extends ResourceController
             if (!$id) {
                 return $this->response
                     ->setStatusCode(400)
-                    ->setJSON(
-                        create_response(
-                            false,
-                            null,
-                            'Promo code ID is required'
-                        )
-                    );
+                    ->setJSON(['message' => 'Promo code ID is required']);
             }
 
             $data = $this->request->getJSON(true);
@@ -109,24 +79,12 @@ class PromoCodeController extends ResourceController
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(
-                    create_response(
-                        true,
-                        $promoCode,
-                        'Promo code updated successfully'
-                    )
-                );
+                ->setJSON(create_response('Promo code updated successfully', $promoCode));
         } catch (\Exception $e) {
             log_message('error', 'Error updating promo code: ' . $e->getMessage());
             return $this->response
                 ->setStatusCode(500)
-                ->setJSON(
-                    create_response(
-                        false,
-                        null,
-                        $e->getMessage()
-                    )
-                );
+                ->setJSON(['message' => $e->getMessage()]);
         }
     }
 
@@ -140,37 +98,19 @@ class PromoCodeController extends ResourceController
             if (!$id) {
                 return $this->response
                     ->setStatusCode(400)
-                    ->setJSON(
-                        create_response(
-                            false,
-                            null,
-                            'Promo code ID is required'
-                        )
-                    );
+                    ->setJSON(['message' => 'Promo code ID is required']);
             }
 
             $this->service->deletePromoCode($id);
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(
-                    create_response(
-                        true,
-                        null,
-                        'Promo code deleted successfully'
-                    )
-                );
+                ->setJSON(create_response('Promo code deleted successfully', null));
         } catch (\Exception $e) {
             log_message('error', 'Error deleting promo code: ' . $e->getMessage());
             return $this->response
                 ->setStatusCode(500)
-                ->setJSON(
-                    create_response(
-                        false,
-                        null,
-                        $e->getMessage()
-                    )
-                );
+                ->setJSON(['message' => $e->getMessage()]);
         }
     }
 
@@ -184,13 +124,7 @@ class PromoCodeController extends ResourceController
             if (!$code) {
                 return $this->response
                     ->setStatusCode(400)
-                    ->setJSON(
-                        create_response(
-                            false,
-                            null,
-                            'Promo code is required'
-                        )
-                    );
+                    ->setJSON(['message' => 'Promo code is required']);
             }
 
             $result = $this->service->validatePromoCode($code);
@@ -198,35 +132,17 @@ class PromoCodeController extends ResourceController
             if ($result['is_valid']) {
                 return $this->response
                     ->setStatusCode(200)
-                    ->setJSON(
-                        create_response(
-                            true,
-                            $result,
-                            'Promo code is valid'
-                        )
-                    );
+                    ->setJSON(create_response('Promo code is valid', $result));
             } else {
                 return $this->response
                     ->setStatusCode(404)
-                    ->setJSON(
-                        create_response(
-                            false,
-                            null,
-                            $result['message'] ?? 'Invalid or expired promo code'
-                        )
-                    );
+                    ->setJSON(['message' => $result['message'] ?? 'Invalid or expired promo code']);
             }
         } catch (\Exception $e) {
             log_message('error', 'Error validating promo code: ' . $e->getMessage());
             return $this->response
                 ->setStatusCode(500)
-                ->setJSON(
-                    create_response(
-                        false,
-                        null,
-                        'An error occurred while validating the promo code'
-                    )
-                );
+                ->setJSON(['message' => 'An error occurred while validating the promo code']);
         }
     }
 }
