@@ -461,7 +461,7 @@ class ReservationService
                 'event_type' => $customer['eventType'] ?? null, // Type of Event from Step 1
                 'service_price_id' => $service['id'] ?? null,
                 'zipcode_id' => $zipcode['id'] ?? null,
-                'event_address' => $information['fullAddress'] ?? null,
+                'event_address' => $information['fullAddress'] ?? 'To be confirmed',
                 'event_date' => $eventDate,
                 'event_time' => $information['startTime'] ?? null,
                 'children_count' => $selectedKids,
