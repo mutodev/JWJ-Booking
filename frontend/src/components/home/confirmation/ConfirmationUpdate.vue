@@ -383,9 +383,10 @@ async function fetchReservation() {
       reservation.value.children_age_range;
 
     if (confirmationFieldsFilled) {
-      // Already paid → redirect to home
+      // Already paid → redirect to payment success page
       if (reservation.value.is_paid) {
-        router.push('/');
+        const sessionId = reservation.value.stripe_session_id;
+        router.push(sessionId ? `/payment-success?session_id=${sessionId}` : '/payment-success');
         return;
       }
 
