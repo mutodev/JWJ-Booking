@@ -126,7 +126,7 @@
                     <span>${{ formatPrice(reservationData.calculation.travel_fee) }}</span>
                   </div>
                   <div class="d-flex justify-content-between breakdown-item" v-if="reservationData.calculation.surcharge_amount > 0">
-                    <span>Surcharge:</span>
+                    <span>Expedite Fee:</span>
                     <span>${{ formatPrice(reservationData.calculation.surcharge_amount) }}</span>
                   </div>
                   <hr class="my-2">

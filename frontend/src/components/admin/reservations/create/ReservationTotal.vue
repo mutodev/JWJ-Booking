@@ -134,7 +134,7 @@ const surcharge = computed(() => {
   today.setHours(0, 0, 0, 0);
   const bookingDate = new Date(data.value.form.date + 'T00:00:00');
   const diffDays = Math.floor((bookingDate - today) / (1000 * 60 * 60 * 24));
-  if (diffDays <= 3) return { amount: 50, label: 'Short Notice Fee' };
+  if (diffDays <= 3) return { amount: 50, label: 'Expedite Fee - Short Notice Request' };
   return { amount: 0, label: '' };
 });
 
