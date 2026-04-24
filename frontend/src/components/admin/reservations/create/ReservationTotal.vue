@@ -59,7 +59,7 @@
           <!-- Surcharge -->
           <tr v-if="surcharge.amount > 0">
             <td class="text-start text-danger fw-medium">
-              Surcharge ({{ surcharge.percent }}%)
+              {{ surcharge.label }}
             </td>
             <td>-</td>
             <td>-</td>
@@ -129,13 +129,13 @@ const travelFee = computed(() => {
 });
 
 const surcharge = computed(() => {
-  if (!data.value?.form?.date) return { amount: 0, percent: 0 };
+  if (!data.value?.form?.date) return { amount: 0, label: '' };
   const today = new Date();
-  const bookingDate = new Date(data.value.form.date);
-  const diffDays = (bookingDate - today) / (1000 * 60 * 60 * 24);
-  if (diffDays < 2) return { amount: totalBase.value * 0.2, percent: 20 };
-  if (diffDays <= 7) return { amount: totalBase.value * 0.1, percent: 10 };
-  return { amount: 0, percent: 0 };
+  today.setHours(0, 0, 0, 0);
+  const bookingDate = new Date(data.value.form.date + 'T00:00:00');
+  const diffDays = Math.floor((bookingDate - today) / (1000 * 60 * 60 * 24));
+  if (diffDays <= 3) return { amount: 50, label: 'Short Notice Fee' };
+  return { amount: 0, label: '' };
 });
 
 const totalBase = computed(() => {

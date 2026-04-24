@@ -776,17 +776,16 @@ class ReservationService
         }
 
         $bookingDate = new \DateTime($eventDate);
-        $bookingDate->setTime(0, 0, 0); // Establecer a medianoche
+        $bookingDate->setTime(0, 0, 0);
 
-        $today = new \DateTime('today'); // Ya es medianoche por defecto
+        $today = new \DateTime('today');
         $diffDays = (int)$today->diff($bookingDate)->format("%r%a");
 
         if ($diffDays < 0) $diffDays = 0;
 
-        if ($diffDays < 2) {
-            return $baseTotal * 0.2; // 20% recargo
-        } elseif ($diffDays <= 7) {
-            return $baseTotal * 0.1; // 10% recargo
+        // $50 flat surcharge for bookings with 3 days or less notice
+        if ($diffDays <= 3) {
+            return 50.0;
         }
 
         return 0;
