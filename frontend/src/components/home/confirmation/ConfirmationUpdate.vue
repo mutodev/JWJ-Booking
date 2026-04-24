@@ -383,8 +383,31 @@ async function fetchReservation() {
       reservation.value.children_age_range;
 
     if (confirmationFieldsFilled) {
-      // Redirect to home if confirmation is already completed
-      router.push('/');
+      // Already paid → redirect to home
+      if (reservation.value.is_paid) {
+        router.push('/');
+        return;
+      }
+
+      // Cancelled → show error
+      if (reservation.value.status === 'cancelled') {
+        error.value = 'This reservation has been cancelled.';
+        return;
+      }
+
+      // Not paid, data filled → regenerate Stripe session and redirect to payment
+      try {
+        const paymentResponse = await api.post(`/reservations/${reservationId}/regenerate-payment`);
+        const paymentData = paymentResponse.data?.data || paymentResponse.data;
+        if (paymentData?.payment_url) {
+          window.location.href = paymentData.payment_url;
+        } else {
+          error.value = 'Unable to generate payment link. Please contact support.';
+        }
+      } catch (paymentErr) {
+        console.error('Error regenerating payment:', paymentErr);
+        error.value = 'Unable to process payment. Please contact support.';
+      }
       return;
     }
 

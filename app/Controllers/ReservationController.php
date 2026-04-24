@@ -149,6 +149,27 @@ class ReservationController extends ResourceController
     }
 
     /**
+     * Regenerate Stripe payment session (public, no email)
+     */
+    public function regeneratePayment($id)
+    {
+        try {
+            $result = $this->service->regeneratePaymentSession($id);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Payment session regenerated', $result));
+        } catch (\Throwable $th) {
+            $statusCode = 500;
+            if ($th->getCode() >= 400 && $th->getCode() < 600) {
+                $statusCode = $th->getCode();
+            }
+
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Handle Stripe webhook events
      */
     public function stripeWebhook()

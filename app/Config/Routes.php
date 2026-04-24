@@ -182,6 +182,7 @@ $routes->group('api', function ($routes) {
     // Public routes for reservations (no auth required)
     $routes->get('reservations/(:segment)', [ReservationController::class, 'getById']);
     $routes->patch('reservations/(:segment)/confirmation', [ReservationController::class, 'updateConfirmation/$1']);
+    $routes->post('reservations/(:segment)/regenerate-payment', [ReservationController::class, 'regeneratePayment/$1']);
 
     // Stripe (no auth)
     $routes->post('stripe/webhook', [ReservationController::class, 'stripeWebhook']);

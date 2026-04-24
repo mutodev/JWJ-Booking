@@ -868,6 +868,51 @@ class ReservationService
     }
 
     /**
+     * Regenerates a Stripe Checkout Session for an unpaid reservation (no email sent)
+     *
+     * @param string $reservationId ID de la reserva
+     * @return array Stripe session data with payment_url
+     * @throws HTTPException Si la reserva no existe, ya está pagada o está cancelada
+     */
+    public function regeneratePaymentSession(string $reservationId): array
+    {
+        $reservation = $this->repository->getById($reservationId);
+
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        if ($reservation->is_paid) {
+            throw new HTTPException('Reservation is already paid', Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($reservation->status === 'cancelled') {
+            throw new HTTPException('Reservation is cancelled', Response::HTTP_BAD_REQUEST);
+        }
+
+        // Create new Stripe Checkout Session
+        $session = $this->getStripeService()->createCheckoutSession(
+            (float) $reservation->total_amount,
+            $reservation->email,
+            $reservationId,
+            'Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie')
+        );
+
+        $paymentUrl = $session->url;
+
+        // Update stripe session id and payment URL
+        $this->repository->update($reservationId, [
+            'payment_url'        => $paymentUrl,
+            'stripe_session_id'  => $session->id,
+        ]);
+
+        return [
+            'session_id'  => $session->id,
+            'payment_url' => $paymentUrl,
+        ];
+    }
+
+    /**
      * Handle a completed payment from Stripe webhook
      *
      * @param string $reservationId ID de la reserva
