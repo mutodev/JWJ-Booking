@@ -171,6 +171,7 @@ class EmailTemplateService
             'reservation_confirmation' => 'emails/reservation_confirmation',
             'welcome'                 => 'emails/welcome',
             'reset_password'          => 'emails/reset_password',
+            'payment_confirmation'    => 'emails/payment_confirmation',
         ];
 
         if (!isset($viewMap[$slug])) {
@@ -209,6 +210,15 @@ class EmailTemplateService
                 $subject = "Password Reset - Jam with Jamie";
                 $body = view($viewMap[$slug], [
                     'password' => $variables['password'] ?? '',
+                ]);
+                break;
+
+            case 'payment_confirmation':
+                $subject = "Payment Confirmed - Jam with Jamie Reservation #" . ($variables['reservation_id'] ?? '');
+                $body = view($viewMap[$slug], [
+                    'reservation' => $variables['_reservation'] ?? (object) $variables,
+                    'eventDate'   => $variables['event_date'] ?? 'TBD',
+                    'totalAmount' => $variables['total_amount'] ?? '0.00',
                 ]);
                 break;
 

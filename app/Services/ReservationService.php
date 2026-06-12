@@ -963,7 +963,12 @@ class ReservationService
             'paid_at'                   => date('Y-m-d H:i:s'),
         ]);
 
-        return $result !== null;
+        if ($result !== null) {
+            $this->sendPaymentConfirmationEmail($result);
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1048,6 +1053,35 @@ class ReservationService
      * @param object $reservation Reserva creada (con JOINs: full_name, email, service_name)
      * @return void
      */
+    public function sendPaymentConfirmationEmail($reservation): void
+    {
+        if (empty($reservation->email)) {
+            return;
+        }
+
+        $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+
+        $templateVars = [
+            'customer_name'  => $reservation->full_name ?? '',
+            'reservation_id' => $reservation->id,
+            'service_name'   => $reservation->service_name ?? '',
+            'event_date'     => $eventDate,
+            'event_time'     => $reservation->event_time ?? 'To be confirmed',
+            'event_address'  => $reservation->event_address ?? 'To be confirmed',
+            'children_count' => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
+            'total_amount'   => number_format($reservation->total_amount, 2),
+            '_reservation'   => $reservation,
+        ];
+
+        $rendered = $this->emailTemplateService->render('payment_confirmation', $templateVars);
+
+        try {
+            $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to send payment confirmation email: ' . $e->getMessage());
+        }
+    }
+
     public function sendConfirmationEmail($reservation): void
     {
         if (empty($reservation->email)) {

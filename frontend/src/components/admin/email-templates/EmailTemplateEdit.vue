@@ -429,6 +429,40 @@ const CONTENT_SCHEMAS = {
       placeholder: "Write a security reminder...",
     },
   ],
+  payment_confirmation: [
+    {
+      key: "title",
+      label: "Email Title",
+      hint: "Main heading shown at the top of the email",
+      icon: "bi bi-type-h1",
+      iconBg: "bg-primary-subtle",
+      iconColor: "text-primary",
+      multiline: false,
+      placeholder: "e.g. Payment Confirmed!",
+    },
+    {
+      key: "intro",
+      label: "Introduction",
+      hint: "Opening paragraph confirming payment and celebrating the booking",
+      icon: "bi bi-paragraph",
+      iconBg: "bg-info-subtle",
+      iconColor: "text-info",
+      multiline: true,
+      rows: 3,
+      placeholder: "e.g. Hi {{customer_name}}, your payment has been received...",
+    },
+    {
+      key: "closing_note",
+      label: "Closing Note",
+      hint: "Message shown in the yellow box at the bottom",
+      icon: "bi bi-chat-heart-fill",
+      iconBg: "bg-warning-subtle",
+      iconColor: "text-warning",
+      multiline: true,
+      rows: 2,
+      placeholder: "e.g. If you have any questions before your event, feel free to reply...",
+    },
+  ],
 };
 
 // ── Friendly labels for dynamic variables ──────────────────────────────────
