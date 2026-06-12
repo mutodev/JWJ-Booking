@@ -845,7 +845,7 @@ class ReservationService
             'event_date'          => $eventDate,
             'event_time'          => $reservation->event_time ?? '',
             'event_address'       => $reservation->event_address ?? '',
-            'children_count'      => $reservation->children_count ?? '',
+            'children_count'      => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'birthday_child_name' => $birthdayBlock,
             'total_amount'        => number_format($reservation->total_amount, 2),
             'description'         => $descriptionBlock,
@@ -1040,7 +1040,7 @@ class ReservationService
             'event_date'     => $eventDate,
             'event_time'     => $reservation->event_time ?? 'To be confirmed',
             'event_address'  => $reservation->event_address ?? 'To be confirmed',
-            'children_count' => $reservation->children_count ?? '',
+            'children_count' => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'total_amount'   => number_format($reservation->total_amount, 2),
             '_reservation'   => $reservation,
         ];

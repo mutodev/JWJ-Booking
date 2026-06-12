@@ -82,7 +82,7 @@
                                 </tr>
                                 <tr>
                                     <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Number of Children</td>
-                                    <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><?= esc($reservation->children_count) ?></td>
+                                    <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><?= esc($reservation->children_age_range ?: $reservation->children_count) ?></td>
                                 </tr>
                                 <?php if (!empty($reservation->birthday_child_name)): ?>
                                     <tr>
