@@ -100,17 +100,6 @@
             {{ errors.childrenRange }}
           </div>
 
-          <!-- Input para 25+ kids -->
-          <div v-if="form.childrenRange === '25+ kids'" class="mt-3">
-            <label class="form-label">Exact number of children:</label>
-            <el-input-number
-              v-model="exactKidsCount"
-              :min="25"
-              :max="200"
-              class="w-100"
-              @change="confirmKidsCount"
-            />
-          </div>
         </div>
 
         <!-- First name -->
@@ -302,20 +291,15 @@ import * as yup from "yup";
 import api from "@/services/axios";
 import Multiselect from "vue-multiselect";
 import "vue-multiselect/dist/vue-multiselect.css";
-import { useToast } from "vue-toastification";
-
-const toast = useToast();
 
 const { emit } = getCurrentInstance();
 const listAreas = ref([]);
 const selectedArea = ref(null);
-const exactKidsCount = ref(25);
 const showCustomQuoteDialog = ref(false);
 const form = reactive({
   eventType: "",
   eventDateTime: "",
   childrenRange: "",
-  exactChildrenCount: null,
   fullAddress: "",
   areaId: "",
   zipcode: "",
@@ -367,27 +351,9 @@ async function validateField(field) {
 
 function onChildrenRangeChange(value) {
   if (value === "25+ kids") {
-    exactKidsCount.value = 25;
-    form.exactChildrenCount = null;
-
-    // Show custom quote dialog for 25+ kids
     showCustomQuoteDialog.value = true;
-  } else {
-    form.exactChildrenCount = null;
-    exactKidsCount.value = 25;
   }
   emitData();
-}
-
-function confirmKidsCount(value) {
-  if (value >= 25) {
-    form.exactChildrenCount = value;
-    toast.success(
-      `Confirmed: ${value} children`,
-      { timeout: 2000 }
-    );
-    emitData();
-  }
 }
 
 function areAllFieldsFilled() {
@@ -403,11 +369,6 @@ function areAllFieldsFilled() {
     form.email.trim() !== "" &&
     form.phone.trim() !== "" &&
     zipcodeData.value !== null;
-
-  // If "25+ kids" is selected, also check exactChildrenCount
-  if (form.childrenRange === "25+ kids") {
-    return baseFieldsFilled && form.exactChildrenCount !== null;
-  }
 
   return baseFieldsFilled;
 }
