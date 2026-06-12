@@ -200,10 +200,10 @@
             <!-- Age range of children attending -->
             <div class="mb-3">
               <label for="ageRange" class="form-label">
-                Age range of children attending <span class="text-danger">*</span>
+                Number of expected children <small class="text-muted">(Please include all children attending)</small> <span class="text-danger">*</span>
               </label>
               <el-tooltip
-                content="Enter the age range of children attending (e.g., 5-10 years)"
+                content="Please include all children attending (e.g., 5-10 years)"
                 placement="right"
                 effect="dark"
                 trigger="focus"
