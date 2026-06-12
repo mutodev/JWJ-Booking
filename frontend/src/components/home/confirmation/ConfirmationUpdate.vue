@@ -427,14 +427,25 @@ async function validateField(field) {
 
 // Submit form
 async function handleSubmit() {
+  // Step 1: validate — yup errors stay here, don't reach the API calls
   try {
-    // Validate all fields
     await schema.validate(form, { abortEarly: false });
+  } catch (validationErrors) {
     Object.keys(errors).forEach((key) => (errors[key] = ""));
+    if (validationErrors?.inner) {
+      validationErrors.inner.forEach((err) => {
+        errors[err.path] = err.message;
+      });
+    }
+    return;
+  }
 
-    submitting.value = true;
-    const reservationId = route.params.id;
+  Object.keys(errors).forEach((key) => (errors[key] = ""));
+  submitting.value = true;
+  const reservationId = route.params.id;
 
+  // Step 2: save confirmation data + get fresh Stripe session
+  try {
     const updateData = {
       event_address: form.fullAddress,
       arrival_parking_instructions: form.instructions || null,
@@ -449,20 +460,17 @@ async function handleSubmit() {
 
     await api.patch(`/reservations/${reservationId}/confirmation`, updateData);
 
-    // Redirect to payment URL or home
-    if (reservation.value.payment_url) {
-      window.location.href = reservation.value.payment_url;
+    // Always regenerate a fresh Stripe session — stored payment_url may be expired
+    const paymentResponse = await api.post(`/reservations/${reservationId}/regenerate-payment`);
+    const paymentData = paymentResponse.data?.data || paymentResponse.data;
+    if (paymentData?.payment_url) {
+      window.location.href = paymentData.payment_url;
     } else {
-      router.push('/');
+      error.value = 'Unable to generate payment link. Please contact support.';
     }
-
-  } catch (validationErrors) {
-    Object.keys(errors).forEach((key) => (errors[key] = ""));
-    if (validationErrors?.inner) {
-      validationErrors.inner.forEach((err) => {
-        errors[err.path] = err.message;
-      });
-    }
+  } catch (err) {
+    console.error('Submission error:', err);
+    error.value = 'An error occurred while saving. Please try again or contact support.';
   } finally {
     submitting.value = false;
   }
