@@ -391,10 +391,39 @@ class FixEmailTemplateBodiesSeeder extends Seeder
 </body>
 </html>';
 
-        $this->db->table('email_templates')
+        $existing = $this->db->table('email_templates')
             ->where('slug', 'payment_confirmation')
-            ->update(['body' => $body]);
+            ->get()
+            ->getRow();
 
-        echo "payment_confirmation body updated.\n";
+        if ($existing) {
+            $this->db->table('email_templates')
+                ->where('slug', 'payment_confirmation')
+                ->update(['body' => $body]);
+            echo "payment_confirmation body updated.\n";
+        } else {
+            $now = date('Y-m-d H:i:s');
+            $this->db->table('email_templates')->insert([
+                'id'                  => 'et-payment-confirm-000000000005',
+                'slug'                => 'payment_confirmation',
+                'name'                => 'Payment Confirmation',
+                'subject'             => 'Payment Confirmed - Jam with Jamie Reservation #{{reservation_id}}',
+                'body'                => $body,
+                'available_variables' => json_encode([
+                    'customer_name', 'reservation_id', 'service_name',
+                    'event_date', 'event_time', 'event_address',
+                    'children_count', 'total_duration_row', 'total_amount',
+                ]),
+                'content'    => json_encode([
+                    'title'        => 'Payment Confirmed!',
+                    'intro'        => "Hi {{customer_name}}, your payment has been received and your event is officially booked. We're so excited to celebrate with you!",
+                    'closing_note' => "If you have any questions before your event, feel free to reply to this email. We can't wait to see you!",
+                ]),
+                'is_active'  => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+            echo "payment_confirmation template inserted.\n";
+        }
     }
 }
