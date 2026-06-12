@@ -2,10 +2,10 @@
   <div class="container py-5">
     <div class="row justify-content-center">
       <div class="col-12 col-md-8">
-        <!-- Custom Quote Modal for 25+ kids -->
+        <!-- Custom Quote Modal for 31+ kids -->
         <el-dialog
           v-model="showCustomQuoteDialog"
-          title="Custom Quote Required"
+          title="Large Group Inquiry"
           width="650px"
           :close-on-click-modal="false"
           center
@@ -13,21 +13,32 @@
         >
           <div class="quote-content">
             <div class="quote-header">
-              <i class="bi bi-calendar-event fs-1 text-primary mb-3"></i>
+              <i class="bi bi-people fs-1 text-primary mb-3"></i>
               <p class="quote-message">
-                Since you're expecting more than 25 children, we'll provide a custom quote. Please submit an inquiry event form on our website, and a team member will be in touch.
+                For groups of 31 or more children, we handle bookings through our inquiry form. A team member will be in touch with a custom quote for your event.
               </p>
             </div>
           </div>
 
           <template #footer>
-            <div class="dialog-footer">
+            <div class="dialog-footer d-flex gap-2 justify-content-center">
               <el-button
                 size="large"
-                class="custom-btn accept-btn"
+                class="custom-btn"
                 @click="showCustomQuoteDialog = false"
               >
-                Got it
+                Go Back
+              </el-button>
+              <el-button
+                size="large"
+                type="primary"
+                class="custom-btn accept-btn"
+                tag="a"
+                href="https://www.jamwithjamie.com/form-events/"
+                target="_blank"
+                @click="showCustomQuoteDialog = false"
+              >
+                Complete Inquiry Form
               </el-button>
             </div>
           </template>
