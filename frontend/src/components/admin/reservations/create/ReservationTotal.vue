@@ -35,7 +35,7 @@
 
           <!-- Extra Children -->
           <tr v-if="data?.form">
-            <td class="text-start">Extra Children</td>
+            <td class="text-start">Number of Children</td>
             <td>{{ formatCurrency(data.price?.extra_child_fee) }}</td>
             <td>{{ data?.form?.extraChildren || 0 }}</td>
             <td>

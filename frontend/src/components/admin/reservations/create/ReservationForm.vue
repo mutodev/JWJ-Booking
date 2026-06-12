@@ -31,7 +31,7 @@
 
     <!-- Extra Children -->
     <div class="col-5">
-      <label for="extra_children" class="form-label">Extra Children</label>
+      <label for="extra_children" class="form-label">Number of Children</label>
       <input
         id="extra_children"
         type="number"

@@ -137,7 +137,7 @@
                     <div class="col-6">{{ data.children_age_range || 'Not specified' }}</div>
                   </div>
                   <div class="row mb-2" v-if="getExtraChildren() > 0">
-                    <div class="col-6"><strong>Extra Children:</strong></div>
+                    <div class="col-6"><strong>Number of Children:</strong></div>
                     <div class="col-6 fw-bold">{{ getExtraChildren() }} over 40</div>
                   </div>
                 </div>
@@ -159,7 +159,7 @@
                     <strong>{{ formatCurrency(data.addons_total) }}</strong>
                   </div>
                   <div class="d-flex justify-content-between mb-1" v-if="data.extra_children_fee > 0">
-                    <span>Extra Children:</span>
+                    <span>Number of Children:</span>
                     <strong>{{ formatCurrency(data.extra_children_fee) }}</strong>
                   </div>
                   <div class="d-flex justify-content-between mb-1" v-if="data.expedition_fee > 0">

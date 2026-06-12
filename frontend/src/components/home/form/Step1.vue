@@ -37,10 +37,10 @@
         <div class="welcome-section mb-4 text-center">
           <h2 class="mb-3">Welcome to Jam with Jamie</h2>
           <p class="intro-text">
-            We're thrilled to help you bring the party to life
+            We're thrilled to help you bring the party to life!
           </p>
           <p class="intro-text disclaimer-text">
-            Please complete this quick form to submit your booking request. This helps us check availability and pricing. Once received, our team will reach out to confirm details, collect payment, and finalize your booking.
+            Please complete this form to submit your booking request. Once received, our team will check availability and reach out to confirm pricing, details, collect payment, and finalize your booking.
           </p>
         </div>
 

@@ -50,7 +50,7 @@
           <div class="text-center small mb-2">
             <span class="text-danger d-inline-flex align-items-center gap-1">
               <i class="bi bi-coin" aria-hidden="true"></i>
-              {{ formatCurrency(price.extra_child_fee) }} extra children
+              {{ formatCurrency(price.extra_child_fee) }} per additional child
             </span>
           </div>
 

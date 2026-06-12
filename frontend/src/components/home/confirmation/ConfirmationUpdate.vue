@@ -51,8 +51,9 @@
             <!-- Full address -->
             <div class="mb-3">
               <label for="fullAddress" class="form-label">
-                Full address <span class="text-danger">*</span>
+                Address <span class="text-danger">*</span>
               </label>
+              <p class="text-muted small mb-1">If unknown at this time, please list an address for reference, and ensure the zip code below is correct.</p>
               <input
                 v-model="form.fullAddress"
                 type="text"
@@ -70,7 +71,7 @@
             <!-- Arrival, parking, and additional instructions -->
             <div class="mb-3">
               <label for="instructions" class="form-label">
-                Provide with full address, arrival and parking instructions
+                Provide detailed arrival and parking instructions
               </label>
               <el-tooltip
                 content="Provide details about parking, access, or any special instructions for arrival (optional)"
