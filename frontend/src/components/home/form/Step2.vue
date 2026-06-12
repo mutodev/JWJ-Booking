@@ -161,8 +161,8 @@ const zoneMessage = computed(() => {
       text: 'We\'re happy to offer the services below in your area! For your zip code, an additional travel fee applies. Travel fees begin at an additional $50 to the rates listed below, and depend on the distance and number of performers booked. You will be informed of the final rate based on your selections.'
     },
     'minimum_2h': {
-      title: 'Service Available - Minimum Booking Required',
-      text: 'We\'re happy to offer the services below in your area! A minimum booking of two hours is required for your location. Please select the services that interest you, and we will be in touch to share the final rate based on your selections.'
+      title: 'Service Available',
+      text: 'We\'re happy to offer the services below in your area! There is a 2-hour minimum booking for this location. This includes the 45-minute interactive jam and 1-hour Jukebox time: live, family friendly background music.'
     },
     'not_available': {
       title: 'Service Not Available',
