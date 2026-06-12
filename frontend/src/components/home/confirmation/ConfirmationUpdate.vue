@@ -375,28 +375,21 @@ async function fetchReservation() {
 
     console.log('Reservation data:', reservation.value);
 
-    // Check if confirmation fields are already filled
-    const confirmationFieldsFilled =
-      reservation.value.event_address &&
-      reservation.value.birthday_child_name &&
-      reservation.value.event_time &&
-      reservation.value.children_age_range;
+    // Already paid → redirect to payment success page (always, regardless of confirmation status)
+    if (reservation.value.is_paid) {
+      const sessionId = reservation.value.stripe_session_id;
+      router.push(sessionId ? `/payment-success?session_id=${sessionId}` : '/payment-success');
+      return;
+    }
 
-    if (confirmationFieldsFilled) {
-      // Already paid → redirect to payment success page
-      if (reservation.value.is_paid) {
-        const sessionId = reservation.value.stripe_session_id;
-        router.push(sessionId ? `/payment-success?session_id=${sessionId}` : '/payment-success');
-        return;
-      }
+    // Cancelled → show error
+    if (reservation.value.status === 'cancelled') {
+      error.value = 'This reservation has been cancelled.';
+      return;
+    }
 
-      // Cancelled → show error
-      if (reservation.value.status === 'cancelled') {
-        error.value = 'This reservation has been cancelled.';
-        return;
-      }
-
-      // Not paid, data filled → regenerate Stripe session and redirect to payment
+    // Customer already submitted the confirmation form → skip to payment
+    if (reservation.value.customer_confirmed) {
       try {
         const paymentResponse = await api.post(`/reservations/${reservationId}/regenerate-payment`);
         const paymentData = paymentResponse.data?.data || paymentResponse.data;

@@ -269,6 +269,8 @@ class ReservationController extends ResourceController
                 throw new \Exception('No valid fields to update', 400);
             }
 
+            $updateData['customer_confirmed'] = true;
+
             $this->service->updateConfirmation($id, $updateData);
 
             return $this->response->setStatusCode(200)

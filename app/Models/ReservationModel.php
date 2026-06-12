@@ -48,6 +48,7 @@ class ReservationModel extends Model
         'status',
         'is_invoiced',
         'is_paid',
+        'customer_confirmed',
         'customer_notes',
         'internal_notes',
         'description',
