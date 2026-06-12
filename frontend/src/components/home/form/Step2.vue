@@ -153,11 +153,9 @@ const zoneType = computed(() => {
 });
 
 const zoneMessage = computed(() => {
+  if (!zoneType.value || zoneType.value === 'standard') return null;
+
   const messages = {
-    'standard': {
-      title: 'Service Available!',
-      text: 'We\'re happy to offer the services below in your area!'
-    },
     'travel_fee': {
       title: 'Service Available with Travel Fee',
       text: 'We\'re happy to offer the services below in your area! For your zip code, an additional travel fee applies. Travel fees begin at an additional $50 to the rates listed below, and depend on the distance and number of performers booked. You will be informed of the final rate based on your selections.'
@@ -172,7 +170,7 @@ const zoneMessage = computed(() => {
     }
   };
 
-  return messages[zoneType.value] || messages['standard'];
+  return messages[zoneType.value] ?? null;
 });
 
 async function loadServices() {
