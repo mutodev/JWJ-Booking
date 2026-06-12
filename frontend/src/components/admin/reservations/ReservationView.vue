@@ -166,6 +166,14 @@
                     <span>Expedition Fee:</span>
                     <strong>{{ formatCurrency(data.expedition_fee) }}</strong>
                   </div>
+                  <div class="d-flex justify-content-between mb-1" v-if="data.discount_amount > 0">
+                    <span>
+                      Discount
+                      <span v-if="data.promo_code" class="badge bg-success ms-1">{{ data.promo_code }}</span>
+                      :
+                    </span>
+                    <strong class="text-success">-{{ formatCurrency(data.discount_amount) }}</strong>
+                  </div>
                   <hr class="my-2">
                   <div class="d-flex justify-content-between">
                     <strong>Total Amount:</strong>
