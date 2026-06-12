@@ -113,7 +113,11 @@ class EmailTemplateService
         $content = json_decode($template->content, true) ?? [];
         $vars = [];
         foreach ($content as $key => $value) {
-            $vars['content_' . $key] = nl2br((string) ($value ?? ''));
+            $stringVal = (string) ($value ?? '');
+            // HTML from Quill editor is output as-is; legacy plain text gets nl2br
+            $vars['content_' . $key] = strip_tags($stringVal) !== $stringVal
+                ? $stringVal
+                : nl2br($stringVal);
         }
         return $vars;
     }

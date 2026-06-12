@@ -83,16 +83,20 @@
                   </div>
                 </div>
 
-                <textarea
+                <!-- Rich text editor for multiline fields -->
+                <QuillEditor
                   v-if="field.multiline"
-                  class="form-control mt-2"
-                  :rows="field.rows || 3"
-                  v-model="content[field.key]"
+                  :ref="el => { if (el) quillRefs[field.key] = el }"
+                  v-model:content="content[field.key]"
+                  contentType="html"
+                  theme="snow"
+                  :options="QUILL_OPTIONS"
                   @focus="activeField = field.key"
-                  @click="activeField = field.key"
-                  :ref="el => { if (el) fieldRefs[field.key] = el }"
-                  :placeholder="field.placeholder || ''"
-                ></textarea>
+                  @selection-change="(range) => { if (range) quillLastSelection[field.key] = range }"
+                  class="quill-editor-field mt-2"
+                />
+
+                <!-- Plain input for single-line fields -->
                 <input
                   v-else
                   type="text"
@@ -111,7 +115,7 @@
                     v-for="v in availableVariables"
                     :key="v"
                     class="var-chip"
-                    @click="insertIntoField(field.key, v)"
+                    @mousedown.prevent="insertIntoField(field.key, v, field.multiline)"
                     :title="'Inserts the actual ' + getVarLabel(v) + ' when the email is sent'"
                   >
                     {{ getVarLabel(v) }}
@@ -203,6 +207,8 @@
 
 <script setup>
 import { ref, computed, watch, nextTick } from "vue";
+import { QuillEditor } from "@vueup/vue-quill";
+import "@vueup/vue-quill/dist/vue-quill.snow.css";
 import api from "@/services/axios";
 
 const emit = defineEmits(["close", "saved"]);
@@ -210,6 +216,18 @@ const props = defineProps({
   show: Boolean,
   templateId: String,
 });
+
+// ── Quill configuration ────────────────────────────────────────────────────
+const QUILL_OPTIONS = {
+  modules: {
+    toolbar: [
+      ["bold", "italic", "underline"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link"],
+      ["clean"],
+    ],
+  },
+};
 
 // ── Content schemas per template slug ──────────────────────────────────────
 const CONTENT_SCHEMAS = {
@@ -232,7 +250,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-info-subtle",
       iconColor: "text-info",
       multiline: true,
-      rows: 3,
       placeholder: "Write the opening message...",
     },
     {
@@ -283,7 +300,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-warning-subtle",
       iconColor: "text-warning",
       multiline: true,
-      rows: 2,
       placeholder: "Write a note for the customer...",
     },
   ],
@@ -306,7 +322,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-info-subtle",
       iconColor: "text-info",
       multiline: true,
-      rows: 3,
       placeholder: "Write the opening message...",
     },
     {
@@ -357,7 +372,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-warning-subtle",
       iconColor: "text-warning",
       multiline: true,
-      rows: 2,
       placeholder: "Write a helpful message...",
     },
   ],
@@ -380,7 +394,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-info-subtle",
       iconColor: "text-info",
       multiline: true,
-      rows: 3,
       placeholder: "Write a welcome message...",
     },
     {
@@ -391,7 +404,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-danger-subtle",
       iconColor: "text-danger",
       multiline: true,
-      rows: 2,
       placeholder: "Write a security reminder...",
     },
   ],
@@ -414,7 +426,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-info-subtle",
       iconColor: "text-info",
       multiline: true,
-      rows: 3,
       placeholder: "Write the main message...",
     },
     {
@@ -425,7 +436,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-danger-subtle",
       iconColor: "text-danger",
       multiline: true,
-      rows: 2,
       placeholder: "Write a security reminder...",
     },
   ],
@@ -448,7 +458,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-info-subtle",
       iconColor: "text-info",
       multiline: true,
-      rows: 3,
       placeholder: "e.g. Hi {{customer_name}}, your payment has been received...",
     },
     {
@@ -459,7 +468,6 @@ const CONTENT_SCHEMAS = {
       iconBg: "bg-warning-subtle",
       iconColor: "text-warning",
       multiline: true,
-      rows: 2,
       placeholder: "e.g. If you have any questions before your event, feel free to reply...",
     },
   ],
@@ -492,11 +500,13 @@ const isActive           = ref(true);
 const availableVariables = ref([]);
 const loading            = ref(false);
 
-const subjectInput = ref(null);
-const fieldRefs    = ref({});
-const activeField  = ref("subject");
-const successMsg   = ref("");
-const errorMsg     = ref("");
+const subjectInput      = ref(null);
+const fieldRefs         = ref({});
+const quillRefs         = ref({});
+const quillLastSelection = ref({});
+const activeField       = ref("subject");
+const successMsg        = ref("");
+const errorMsg          = ref("");
 
 // ── Computed ───────────────────────────────────────────────────────────────
 const contentSchema = computed(() => {
@@ -507,9 +517,12 @@ const contentSchema = computed(() => {
 // Replace {{content_*}} placeholders with current values for live preview
 const previewBody = computed(() => {
   let html = body.value;
-  for (const [key, val] of Object.entries(content.value)) {
-    const displayed = (val ?? "").replace(/\n/g, "<br>");
-    html = html.replaceAll(`{{content_${key}}}`, displayed);
+  for (const field of contentSchema.value) {
+    const val = content.value[field.key] ?? "";
+    // Multiline fields use Quill (HTML) — output as-is
+    // Single-line fields are plain text — convert newlines for safety
+    const displayed = field.multiline ? val : val.replace(/\n/g, "<br>");
+    html = html.replaceAll(`{{content_${field.key}}}`, displayed);
   }
   return html;
 });
@@ -519,8 +532,10 @@ watch(
   [() => props.show, () => props.templateId],
   async ([visible, id]) => {
     if (visible && id) {
-      activeField.value = "subject";
-      fieldRefs.value   = {};
+      activeField.value        = "subject";
+      fieldRefs.value          = {};
+      quillRefs.value          = {};
+      quillLastSelection.value = {};
       await fetchTemplate(id);
     }
   }
@@ -544,7 +559,6 @@ const fetchTemplate = async (id) => {
       availableVariables.value = [];
     }
 
-    // Load saved content; fall back to empty strings for missing keys
     let savedContent = {};
     try {
       savedContent = JSON.parse(data.content || "{}");
@@ -560,7 +574,6 @@ const fetchTemplate = async (id) => {
     }
     content.value = built;
 
-    // Set templateData LAST so v-if="templateData" shows the form only when everything is ready
     templateData.value = data;
   } catch (error) {
     errorMsg.value = "Error loading template";
@@ -585,7 +598,7 @@ const extractSchemaFromBody = (html) => {
         icon:      "bi bi-pencil",
         iconBg:    "bg-secondary-subtle",
         iconColor: "text-secondary",
-        multiline: ["intro", "important_note", "question_note", "security_reminder"].includes(key),
+        multiline: ["intro", "important_note", "question_note", "security_reminder", "closing_note"].includes(key),
         rows:      3,
       });
     }
@@ -611,22 +624,39 @@ const insertIntoSubject = (variable) => {
   }
 };
 
-const insertIntoField = (key, variable) => {
+const insertIntoField = (key, variable, isMultiline) => {
   const tag = `{{${variable}}}`;
-  const el  = fieldRefs.value[key];
-  if (el) {
-    const start = el.selectionStart ?? (content.value[key]?.length ?? 0);
-    const end   = el.selectionEnd ?? start;
-    const text  = content.value[key] || "";
-    content.value[key] = text.substring(0, start) + tag + text.substring(end);
-    nextTick(() => {
-      const pos = start + tag.length;
-      el.selectionStart = pos;
-      el.selectionEnd   = pos;
-      el.focus();
-    });
+
+  if (isMultiline) {
+    // Insert into Quill editor using saved selection position
+    const quillComponent = quillRefs.value[key];
+    if (quillComponent) {
+      const quill = quillComponent.getQuill();
+      const saved = quillLastSelection.value[key];
+      const index = saved?.index ?? (quill.getLength() - 1);
+      quill.insertText(index, tag, "user");
+      quill.setSelection(index + tag.length);
+      quill.focus();
+    } else {
+      content.value[key] = (content.value[key] || "") + tag;
+    }
   } else {
-    content.value[key] = (content.value[key] || "") + tag;
+    // Insert into plain input at cursor position
+    const el = fieldRefs.value[key];
+    if (el) {
+      const start = el.selectionStart ?? (content.value[key]?.length ?? 0);
+      const end   = el.selectionEnd ?? start;
+      const text  = content.value[key] || "";
+      content.value[key] = text.substring(0, start) + tag + text.substring(end);
+      nextTick(() => {
+        const pos = start + tag.length;
+        el.selectionStart = pos;
+        el.selectionEnd   = pos;
+        el.focus();
+      });
+    } else {
+      content.value[key] = (content.value[key] || "") + tag;
+    }
   }
 };
 
@@ -638,6 +668,8 @@ const closeModal = () => {
   isActive.value           = true;
   availableVariables.value = [];
   fieldRefs.value          = {};
+  quillRefs.value          = {};
+  quillLastSelection.value = {};
   activeField.value        = "subject";
   successMsg.value         = "";
   errorMsg.value           = "";
@@ -645,8 +677,8 @@ const closeModal = () => {
 };
 
 const submitForm = async () => {
-  loading.value  = true;
-  errorMsg.value = "";
+  loading.value    = true;
+  errorMsg.value   = "";
   successMsg.value = "";
   try {
     await api.put(`/email-templates/${props.templateId}`, {
@@ -763,5 +795,67 @@ const submitForm = async () => {
 
 .preview-subject {
   font-size: 0.85rem;
+}
+
+/* ── Quill Rich Text Editor ── */
+:deep(.quill-editor-field .ql-toolbar.ql-snow) {
+  border-color: #dee2e6;
+  border-radius: 6px 6px 0 0;
+  padding: 6px 8px;
+  background: #f8f9fa;
+  font-family: inherit;
+}
+
+:deep(.quill-editor-field .ql-container.ql-snow) {
+  border-color: #dee2e6;
+  border-radius: 0 0 6px 6px;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 0.875rem;
+}
+
+:deep(.quill-editor-field .ql-editor) {
+  min-height: 100px;
+  padding: 8px 12px;
+  color: #212529;
+  line-height: 1.6;
+}
+
+:deep(.quill-editor-field .ql-editor.ql-blank::before) {
+  font-style: normal;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+:deep(.quill-editor-field .ql-editor p) {
+  margin-bottom: 0.4em;
+}
+
+/* Active state border for Quill */
+.field-card--active :deep(.ql-toolbar.ql-snow),
+.field-card--active :deep(.ql-container.ql-snow) {
+  border-color: #0d6efd;
+}
+
+/* Quill toolbar button styling */
+:deep(.ql-toolbar .ql-stroke) {
+  stroke: #495057;
+}
+
+:deep(.ql-toolbar .ql-fill) {
+  fill: #495057;
+}
+
+:deep(.ql-toolbar button:hover .ql-stroke),
+:deep(.ql-toolbar button.ql-active .ql-stroke) {
+  stroke: #0d6efd;
+}
+
+:deep(.ql-toolbar button:hover .ql-fill),
+:deep(.ql-toolbar button.ql-active .ql-fill) {
+  fill: #0d6efd;
+}
+
+:deep(.ql-toolbar .ql-picker-label) {
+  color: #495057;
 }
 </style>
