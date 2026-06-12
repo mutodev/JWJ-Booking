@@ -207,8 +207,9 @@ class ServicePriceRepository
     }
 
     /**
-     * Obtener los precios del servicio por zipcode
-     * Consulta: zipcode -> city -> county -> service_prices
+     * Obtener los precios del servicio por zipcode.
+     * Si el zipcode tiene override_county_id, usa ese condado para el pricing
+     * en vez del condado real derivado de city -> county.
      *
      * @return ServicePrice[]
      */
@@ -235,6 +236,10 @@ class ServicePriceRepository
             ->join("cities", "cities.county_id = counties.id", "left")
             ->join("zipcodes", "zipcodes.city_id = cities.id", "left")
             ->where('zipcodes.id', $zipcodeId)
+            ->where("service_prices.county_id = COALESCE(
+                (SELECT override_county_id FROM zipcodes WHERE id = " . $this->model->db->escape($zipcodeId) . " LIMIT 1),
+                cities.county_id
+            )")
             ->where('counties.is_active', true)
             ->where('service_prices.is_available', true)
             ->where('services.is_active', true)

@@ -65,6 +65,14 @@
           <span v-else class="text-muted">-</span>
         </template>
 
+        <!-- Slot para override county -->
+        <template #item-override_county_id="{ override_county_id }">
+          <span v-if="override_county_id" class="badge bg-info text-dark">
+            {{ counties.find(c => c.id === override_county_id)?.name ?? override_county_id }}
+          </span>
+          <span v-else class="text-muted">—</span>
+        </template>
+
         <!-- Slot para el estado -->
         <template #item-is_active="{ id, is_active }">
           <div class="d-flex justify-content-center">
@@ -85,6 +93,15 @@
           </div>
         </template>
 
+        <!-- Slot para acciones -->
+        <template #item-actions="item">
+          <div class="d-flex gap-1 justify-content-center">
+            <button class="btn btn-sm btn-warning" @click="editModal(item)">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+          </div>
+        </template>
+
       </EasyDataTable>
     </div>
   </div>
@@ -92,7 +109,17 @@
   <PostalCodeCreate
     :show="modalCreateVisible"
     :cities="cities"
+    :counties="counties"
     @close="modalCreateVisible = false"
+    @saved="handle"
+  />
+
+  <PostalCodeEdit
+    :show="modalEditVisible"
+    :zipcode="selectedData"
+    :cities="cities"
+    :counties="counties"
+    @close="modalEditVisible = false"
     @saved="handle"
   />
 
@@ -102,6 +129,7 @@
 import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import PostalCodeCreate from "./PostalCodeCreate.vue";
+import PostalCodeEdit from "./PostalCodeEdit.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Postal codes", icon: "bi-pin" });
@@ -110,6 +138,7 @@ const tableHelpers = inject("tableHelpers");
 const data = ref([]);
 const searchValue = ref("");
 const cities = ref([]);
+const counties = ref([]);
 
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
@@ -117,12 +146,15 @@ const selectedData = ref(null);
 
 const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {
+    excludeColumns: ["city_id", "id", "deleted_at", "created_at", "updated_at"],
     customLabels: {
-      name: "Name",
+      zipcode: "Zipcode",
       zone_type: "Zone Type",
+      override_county_id: "Price Override",
       travel_fee_1_performer: "Travel Fee (1P)",
       travel_fee_2_performers: "Travel Fee (2P)",
       is_active: "State",
+      actions: "Actions",
     },
   });
 });
@@ -133,6 +165,11 @@ const searchField = computed(() => {
 
 const createModal = () => {
   modalCreateVisible.value = true;
+};
+
+const editModal = (item) => {
+  selectedData.value = item;
+  modalEditVisible.value = true;
 };
 
 
@@ -149,6 +186,15 @@ const getCities = async () => {
   try {
     const response = await api.get("cities/get-all-active");
     cities.value = response.data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const getCounties = async () => {
+  try {
+    const response = await api.get("counties");
+    counties.value = response.data;
   } catch (error) {
     console.error(error);
   }
@@ -176,6 +222,7 @@ const toggleActive = async (id) => {
 onMounted(() => {
   getData();
   getCities();
+  getCounties();
 });
 </script>
 

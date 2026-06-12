@@ -17,6 +17,7 @@ class ZipCodeModel extends Model
         'city_id',
         'zipcode',
         'zone_type',
+        'override_county_id',
         'travel_fee_1_performer',
         'travel_fee_2_performers',
         'is_active'

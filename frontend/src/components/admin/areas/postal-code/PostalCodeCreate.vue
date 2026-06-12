@@ -94,6 +94,19 @@
               </div>
               <small class="text-danger small">{{ travel_fee_2_performers_error }}</small>
             </div>
+
+            <div class="mb-3">
+              <label for="override_county_id" class="form-label">
+                Price Override County
+                <span class="text-muted small">(optional)</span>
+              </label>
+              <select class="form-select" id="override_county_id" v-model="override_county_id">
+                <option value="">No override — use real county pricing</option>
+                <option v-for="item in props.counties" :key="item.id" :value="item.id">
+                  {{ item.name }}
+                </option>
+              </select>
+            </div>
           </form>
         </div>
 
@@ -121,17 +134,15 @@
 
 <script setup>
 import { useForm, useField } from "vee-validate";
-import { watch, ref, onMounted } from "vue";
+import { watch, ref, onMounted, toRefs } from "vue";
 import api from "@/services/axios";
 import * as yup from "yup";
 
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
   show: Boolean,
-  cities: {
-    type: Array,
-    default: () => [],
-  },
+  cities: { type: Array, default: () => [] },
+  counties: { type: Array, default: () => [] },
 });
 
 const dataCities = ref([]);
@@ -189,6 +200,7 @@ const { value: city_id, errorMessage: city_id_error } = useField("city_id");
 const { value: zone_type, errorMessage: zone_type_error } = useField("zone_type");
 const { value: travel_fee_1_performer, errorMessage: travel_fee_1_performer_error } = useField("travel_fee_1_performer");
 const { value: travel_fee_2_performers, errorMessage: travel_fee_2_performers_error } = useField("travel_fee_2_performers");
+const override_county_id = ref("");
 
 watch(
   () => props.show,
@@ -223,7 +235,10 @@ const closeModal = () => {
 const submitForm = handleSubmit(async (values) => {
   loading.value = true;
   try {
-    await api.post(`/zipcodes`, values);
+    await api.post(`/zipcodes`, {
+      ...values,
+      override_county_id: override_county_id.value || null,
+    });
     emit("saved", true);
     closeModal();
   } finally {
