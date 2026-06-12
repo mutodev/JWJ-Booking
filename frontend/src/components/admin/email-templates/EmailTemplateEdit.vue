@@ -474,7 +474,8 @@ const contentSchema = computed(() => {
 const previewBody = computed(() => {
   let html = body.value;
   for (const [key, val] of Object.entries(content.value)) {
-    html = html.replaceAll(`{{content_${key}}}`, val ?? "");
+    const displayed = (val ?? "").replace(/\n/g, "<br>");
+    html = html.replaceAll(`{{content_${key}}}`, displayed);
   }
   return html;
 });

@@ -113,7 +113,7 @@ class EmailTemplateService
         $content = json_decode($template->content, true) ?? [];
         $vars = [];
         foreach ($content as $key => $value) {
-            $vars['content_' . $key] = (string) ($value ?? '');
+            $vars['content_' . $key] = nl2br((string) ($value ?? ''));
         }
         return $vars;
     }
