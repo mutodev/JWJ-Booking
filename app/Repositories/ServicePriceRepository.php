@@ -215,6 +215,23 @@ class ServicePriceRepository
      */
     public function getAllByZipcode($zipcodeId)
     {
+        $db = \Config\Database::connect();
+
+        // Resolve effective county: override if set, otherwise follow city → county
+        $row = $db->query("
+            SELECT COALESCE(z.override_county_id, ci.county_id) AS effective_county_id
+            FROM zipcodes z
+            JOIN cities ci ON ci.id = z.city_id
+            WHERE z.id = ?
+            LIMIT 1
+        ", [$zipcodeId])->getRow();
+
+        if (!$row || empty($row->effective_county_id)) {
+            return [];
+        }
+
+        $effectiveCountyId = $row->effective_county_id;
+
         return $this->model
             ->select("
                 service_prices.id,
@@ -233,13 +250,7 @@ class ServicePriceRepository
             ")
             ->join("services", "services.id = service_prices.service_id", "left")
             ->join("counties", "counties.id = service_prices.county_id", "left")
-            ->join("cities", "cities.county_id = counties.id", "left")
-            ->join("zipcodes", "zipcodes.city_id = cities.id", "left")
-            ->where('zipcodes.id', $zipcodeId)
-            ->where("service_prices.county_id = COALESCE(
-                (SELECT override_county_id FROM zipcodes WHERE id = " . $this->model->db->escape($zipcodeId) . " LIMIT 1),
-                cities.county_id
-            )")
+            ->where('service_prices.county_id', $effectiveCountyId)
             ->where('counties.is_active', true)
             ->where('service_prices.is_available', true)
             ->where('services.is_active', true)

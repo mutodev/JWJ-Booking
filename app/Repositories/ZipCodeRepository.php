@@ -97,6 +97,10 @@ class ZipCodeRepository
                 zipcodes.zipcode,
                 zipcodes.is_active,
                 zipcodes.city_id,
+                zipcodes.zone_type,
+                zipcodes.override_county_id,
+                zipcodes.travel_fee_1_performer,
+                zipcodes.travel_fee_2_performers,
                 cities.name AS city_name
             ')
             ->join('cities', 'cities.id = zipcodes.city_id')
