@@ -379,10 +379,10 @@ class ReservationService
         if (isset($customer['childrenRange'])) {
             $childrenRange = $customer['childrenRange'];
 
-            if ($childrenRange === '25+ kids' && isset($customer['exactChildrenCount'])) {
+            if ($childrenRange === '31+ kids' && isset($customer['exactChildrenCount'])) {
                 $selectedKids = intval($customer['exactChildrenCount']);
-            } elseif ($childrenRange === '11-24 kids') {
-                $selectedKids = 17; // Punto medio del rango
+            } elseif ($childrenRange === '11-30 kids') {
+                $selectedKids = 20; // Punto medio del rango
             } elseif ($childrenRange === '1-10 kids') {
                 $selectedKids = 5; // Punto medio del rango
             }
