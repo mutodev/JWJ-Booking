@@ -863,7 +863,7 @@ class ReservationService
         }
 
         $templateVars = [
-            'customer_name'       => $reservation->full_name ?? '',
+            'customer_name'       => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id'      => $reservation->id,
             'service_name'        => $reservation->service_name ?? '',
             'event_date'          => $eventDate,
@@ -1063,7 +1063,7 @@ class ReservationService
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
 
         $templateVars = [
-            'customer_name'  => $reservation->full_name ?? '',
+            'customer_name'  => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id' => $reservation->id,
             'service_name'   => $reservation->service_name ?? '',
             'event_date'     => $eventDate,
@@ -1092,7 +1092,7 @@ class ReservationService
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
 
         $templateVars = [
-            'customer_name'  => $reservation->full_name ?? '',
+            'customer_name'  => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id' => $reservation->id,
             'service_name'   => $reservation->service_name ?? '',
             'event_date'     => $eventDate,

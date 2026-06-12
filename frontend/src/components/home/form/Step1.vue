@@ -93,8 +93,8 @@
           </label>
           <el-radio-group v-model="form.childrenRange" class="children-radio-group" @change="onChildrenRangeChange">
             <el-radio label="1-10 kids" class="children-range-radio mb-3">1-10 kids</el-radio>
-            <el-radio label="11-24 kids" class="children-range-radio mb-3">11-24 kids</el-radio>
-            <el-radio label="25+ kids" class="children-range-radio mb-3">25+ kids</el-radio>
+            <el-radio label="11-30 kids" class="children-range-radio mb-3">11-30 kids</el-radio>
+            <el-radio label="31+ kids" class="children-range-radio mb-3">31+ kids</el-radio>
           </el-radio-group>
           <div v-if="errors.childrenRange" class="text-danger small mt-2">
             {{ errors.childrenRange }}
@@ -350,7 +350,7 @@ async function validateField(field) {
 }
 
 function onChildrenRangeChange(value) {
-  if (value === "25+ kids") {
+  if (value === "31+ kids") {
     showCustomQuoteDialog.value = true;
   }
   emitData();
