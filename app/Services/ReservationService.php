@@ -34,6 +34,7 @@ namespace App\Services;
 use App\Repositories\ReservationRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ReservationAddonRepository;
+use App\Repositories\PromoCodeRepository;
 use App\Services\BrevoEmailService;
 use App\Services\EmailTemplateService;
 use App\Services\StripeService;
@@ -76,6 +77,12 @@ class ReservationService
     protected $emailTemplateService;
 
     /**
+     * Repository para operaciones de promo codes
+     * @var PromoCodeRepository
+     */
+    protected $promoCodeRepository;
+
+    /**
      * Servicio para integración con Stripe (lazy-loaded)
      * @var StripeService|null
      */
@@ -90,6 +97,7 @@ class ReservationService
         $this->repository = new ReservationRepository();
         $this->customerRepository = new CustomerRepository();
         $this->reservationAddonRepository = new ReservationAddonRepository();
+        $this->promoCodeRepository = new PromoCodeRepository();
         $this->emailService = new BrevoEmailService();
         $this->emailTemplateService = new EmailTemplateService();
     }
@@ -229,6 +237,13 @@ class ReservationService
 
         if (!$response) {
             throw new HTTPException(lang('Reservation.createFailed'), Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($promoCodeUsed) {
+            $promoCode = $this->promoCodeRepository->findByCode($promoCodeUsed);
+            if ($promoCode) {
+                $this->promoCodeRepository->incrementUsage($promoCode['id']);
+            }
         }
 
         return $response;
@@ -537,6 +552,14 @@ class ReservationService
 
             if ($db->transStatus() === false) {
                 throw new HTTPException('Transaction failed', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $promoCodeStr = $subtotal['promoCode'] ?? null;
+            if ($promoCodeStr) {
+                $promoCode = $this->promoCodeRepository->findByCode((string) $promoCodeStr);
+                if ($promoCode) {
+                    $this->promoCodeRepository->incrementUsage($promoCode['id']);
+                }
             }
 
             // Enviar email de confirmación al cliente

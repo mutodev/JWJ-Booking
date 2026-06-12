@@ -130,7 +130,7 @@ const headers = computed(() => {
       is_active: "Status",
       valid_from: "Valid From",
       valid_until: "Valid Until",
-      usage_count: "Times Used",
+      times_used: "Times Used",
       max_uses: "Max Uses",
     },
   });
