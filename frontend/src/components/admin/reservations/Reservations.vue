@@ -14,9 +14,12 @@
           />
         </div>
       </div>
-      <div class="col-md-2 pt-1">
+      <div class="col-md-2 pt-1 d-flex gap-2">
+        <button class="btn btn-sm btn-success" @click="exportCSV" title="Export to CSV">
+          <i class="bi bi-download"></i> Export
+        </button>
         <button class="btn btn-sm btn-primary" @click="createModal()">
-          <i class="bi bi-plus-lg"></i> New Reservation
+          <i class="bi bi-plus-lg"></i> New
         </button>
       </div>
     </div>
@@ -316,6 +319,57 @@ const sendPaymentEmail = async () => {
   } finally {
     sendingEmail.value = false;
   }
+};
+
+const exportCSV = () => {
+  const columns = [
+    { label: 'Customer',           key: (r) => r.full_name || '' },
+    { label: 'Email',              key: (r) => r.email || '' },
+    { label: 'Phone',              key: (r) => r.phone || '' },
+    { label: 'Service',            key: (r) => r.service_name || '' },
+    { label: 'Event Date',         key: (r) => r.event_date ? new Date(r.event_date).toLocaleDateString('en-US') : '' },
+    { label: 'Event Time',         key: (r) => r.event_time || '' },
+    { label: 'Address',            key: (r) => r.event_address || '' },
+    { label: 'City',               key: (r) => r.city_name || '' },
+    { label: 'County',             key: (r) => r.county_name || '' },
+    { label: 'Zipcode',            key: (r) => r.zipcode || '' },
+    { label: 'Children Count',     key: (r) => r.children_count ?? '' },
+    { label: 'Children Range',     key: (r) => r.children_age_range || '' },
+    { label: 'Duration (hrs)',     key: (r) => r.duration_hours ?? '' },
+    { label: 'Performers',         key: (r) => r.performers_count ?? '' },
+    { label: 'Status',             key: (r) => r.status || '' },
+    { label: 'Paid',               key: (r) => r.is_paid ? 'Yes' : 'No' },
+    { label: 'Base Price',         key: (r) => parseFloat(r.base_price || 0).toFixed(2) },
+    { label: 'Addons Total',       key: (r) => parseFloat(r.addons_total || 0).toFixed(2) },
+    { label: 'Expedition Fee',     key: (r) => parseFloat(r.expedition_fee || 0).toFixed(2) },
+    { label: 'Extra Children Fee', key: (r) => parseFloat(r.extra_children_fee || 0).toFixed(2) },
+    { label: 'Promo Code',         key: (r) => r.promo_code || '' },
+    { label: 'Discount',           key: (r) => parseFloat(r.discount_amount || 0).toFixed(2) },
+    { label: 'Total Amount',       key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
+    { label: 'Birthday Child',     key: (r) => r.birthday_child_name || '' },
+    { label: 'Internal Notes',     key: (r) => r.internal_notes || '' },
+    { label: 'Created At',         key: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString('en-US') : '' },
+  ];
+
+  const escape = (val) => {
+    const str = String(val).replace(/"/g, '""');
+    return `"${str}"`;
+  };
+
+  const header = columns.map((c) => escape(c.label)).join(',');
+  const rows = data.value.map((r) =>
+    columns.map((c) => escape(c.key(r))).join(',')
+  );
+
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  link.href = url;
+  link.download = `reservations_${date}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
 };
 
 onMounted(() => {
