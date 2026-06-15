@@ -209,13 +209,14 @@
           </div>
         </div>
 
-        <!-- Full Address -->
+        <!-- Address -->
         <div class="mb-3">
           <label for="fullAddress" class="form-label">
-            Full Address <span class="text-danger">*</span>
+            Address <span class="text-danger">*</span>
           </label>
+          <p class="text-muted small mb-1">If unknown at this time, please list an address for reference, and ensure the zip code below is correct.</p>
           <el-tooltip
-            content="Enter the complete address where the event will take place"
+            content="Enter the address where the event will take place"
             placement="right"
             effect="dark"
             trigger="focus"

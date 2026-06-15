@@ -59,7 +59,7 @@
             <div class="service-info-item">
               <i class="bi bi-clock service-info-item__icon"></i>
               <span class="service-info-item__text">
-                {{ formatDuration(service.duration_hours) }}
+                {{ zoneType === 'minimum_2h' ? '2 hours' : formatDuration(service.duration_hours) }}
               </span>
             </div>
             <div class="service-info-item">

@@ -258,18 +258,14 @@ function getMaxKidsIncluded() {
 const extraChildrenTotal = computed(() => {
   if (!props.customer) return 0;
 
-  // Obtener cantidad de niños del customer data
   let selectedKids = 0;
 
-  // Si seleccionaron "25+ kids", usar exactChildrenCount
-  if (props.customer.childrenRange === "25+ kids" && props.customer.exactChildrenCount) {
-    selectedKids = parseInt(props.customer.exactChildrenCount);
-  } else if (props.customer.childrenRange === "11-24 kids") {
-    // Para 11-24, usar el punto medio (17) o no cobrar extra si está dentro del límite
-    selectedKids = 17;
+  if (props.customer.childrenRange === "11-30 kids") {
+    selectedKids = 20;
   } else if (props.customer.childrenRange === "1-10 kids") {
-    selectedKids = 5; // Punto medio
+    selectedKids = 5;
   }
+  // 31+ kids va al formulario de inquiry, no se calcula precio aquí
 
   // Límite de niños incluidos en el servicio
   const maxKidsIncluded = getMaxKidsIncluded();
@@ -309,10 +305,8 @@ function getExtraChildrenCount() {
 
   let selectedKids = 0;
 
-  if (props.customer.childrenRange === "25+ kids" && props.customer.exactChildrenCount) {
-    selectedKids = parseInt(props.customer.exactChildrenCount);
-  } else if (props.customer.childrenRange === "11-24 kids") {
-    selectedKids = 17;
+  if (props.customer.childrenRange === "11-30 kids") {
+    selectedKids = 20;
   } else if (props.customer.childrenRange === "1-10 kids") {
     selectedKids = 5;
   }
