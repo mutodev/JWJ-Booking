@@ -364,12 +364,21 @@ const sendPaymentEmail = async () => {
   }
 };
 
+// PHP devuelve fechas como objeto { date: "2026-06-15 12:00:00.000000", ... } o como string
+const parseDate = (val) => {
+  if (!val) return null;
+  const str = val?.date ?? val;
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+};
+const fmtDate = (val) => parseDate(val)?.toLocaleDateString('en-US') ?? '';
+
 const CSV_COLUMNS = [
   { label: 'Customer',           key: (r) => r.full_name || '' },
   { label: 'Email',              key: (r) => r.email || '' },
   { label: 'Phone',              key: (r) => r.phone || '' },
   { label: 'Service',            key: (r) => r.service_name || '' },
-  { label: 'Event Date',         key: (r) => r.event_date ? new Date(r.event_date).toLocaleDateString('en-US') : '' },
+  { label: 'Event Date',         key: (r) => fmtDate(r.event_date) },
   { label: 'Event Time',         key: (r) => r.event_time || '' },
   { label: 'Address',            key: (r) => r.event_address || '' },
   { label: 'City',               key: (r) => r.city_name || '' },
@@ -390,7 +399,7 @@ const CSV_COLUMNS = [
   { label: 'Total Amount',       key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
   { label: 'Birthday Child',     key: (r) => r.birthday_child_name || '' },
   { label: 'Internal Notes',     key: (r) => r.internal_notes || '' },
-  { label: 'Created At',         key: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString('en-US') : '' },
+  { label: 'Created At',         key: (r) => fmtDate(r.created_at) },
 ];
 
 const getFilteredForExport = () => {
@@ -398,8 +407,8 @@ const getFilteredForExport = () => {
   const to   = exportDateTo.value   ? new Date(exportDateTo.value)   : null;
   if (to) to.setHours(23, 59, 59, 999);
   return data.value.filter((r) => {
-    if (!r.event_date) return false;
-    const d = new Date(r.event_date);
+    const d = parseDate(r.event_date);
+    if (!d) return false;
     if (from && d < from) return false;
     if (to   && d > to)   return false;
     return true;
