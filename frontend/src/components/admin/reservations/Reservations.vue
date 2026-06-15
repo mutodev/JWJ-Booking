@@ -15,7 +15,7 @@
         </div>
       </div>
       <div class="col-md-2 pt-1 d-flex gap-2">
-        <button class="btn btn-sm btn-success" @click="exportCSV" title="Export to CSV">
+        <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export to CSV">
           <i class="bi bi-download"></i> Export
         </button>
         <button class="btn btn-sm btn-primary" @click="createModal()">
@@ -169,11 +169,49 @@
       </div>
       <div class="modal-backdrop fade show" style="z-index: 1054;" @click="modalPaymentUrlVisible = false"></div>
     </div>
+
+    <!-- Export CSV Modal -->
+    <div v-if="exportModalVisible" class="modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
+      <div class="modal-dialog modal-sm" role="document" style="z-index: 1056;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-download me-2 text-success"></i>Export Reservations
+            </h5>
+            <button type="button" class="btn-close" @click="closeExportModal"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">Select a date range to export. Both fields are required.</p>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">From <span class="text-danger">*</span></label>
+              <input v-model="exportDateFrom" type="date" class="form-control" />
+            </div>
+            <div class="mb-2">
+              <label class="form-label fw-semibold">To <span class="text-danger">*</span></label>
+              <input v-model="exportDateTo" type="date" class="form-control" />
+            </div>
+            <div v-if="exportError" class="mt-2 text-danger small">
+              <i class="bi bi-exclamation-circle me-1"></i>{{ exportError }}
+            </div>
+            <div v-if="exportPreviewCount !== null" class="mt-2 text-success small">
+              <i class="bi bi-check-circle me-1"></i>{{ exportPreviewCount }} reservation(s) found in range.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-sm" @click="closeExportModal">Cancel</button>
+            <button type="button" class="btn btn-success btn-sm" @click="exportCSV">
+              <i class="bi bi-file-earmark-spreadsheet me-1"></i>Download CSV
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show" style="z-index: 1054;" @click="closeExportModal"></div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { inject, ref, onMounted, computed } from "vue";
+import { inject, ref, watch, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import ReservationCreate from "./ReservationCreate.vue";
 import ReservationEdit from "./ReservationEdit.vue";
@@ -197,6 +235,11 @@ const modalViewVisible = ref(false);
 const modalPaymentUrlVisible = ref(false);
 const composeEmailVisible = ref(false);
 const composeLockedRecipient = ref(null);
+const exportModalVisible = ref(false);
+const exportDateFrom = ref('');
+const exportDateTo = ref('');
+const exportError = ref('');
+const exportPreviewCount = ref(null);
 const selectedData = ref(null);
 const sendingEmail = ref(false);
 const paymentDescription = ref("");
@@ -321,55 +364,95 @@ const sendPaymentEmail = async () => {
   }
 };
 
+const CSV_COLUMNS = [
+  { label: 'Customer',           key: (r) => r.full_name || '' },
+  { label: 'Email',              key: (r) => r.email || '' },
+  { label: 'Phone',              key: (r) => r.phone || '' },
+  { label: 'Service',            key: (r) => r.service_name || '' },
+  { label: 'Event Date',         key: (r) => r.event_date ? new Date(r.event_date).toLocaleDateString('en-US') : '' },
+  { label: 'Event Time',         key: (r) => r.event_time || '' },
+  { label: 'Address',            key: (r) => r.event_address || '' },
+  { label: 'City',               key: (r) => r.city_name || '' },
+  { label: 'County',             key: (r) => r.county_name || '' },
+  { label: 'Zipcode',            key: (r) => r.zipcode || '' },
+  { label: 'Children Count',     key: (r) => r.children_count ?? '' },
+  { label: 'Children Range',     key: (r) => r.children_age_range || '' },
+  { label: 'Duration (hrs)',     key: (r) => r.duration_hours ?? '' },
+  { label: 'Performers',         key: (r) => r.performers_count ?? '' },
+  { label: 'Status',             key: (r) => r.status || '' },
+  { label: 'Paid',               key: (r) => r.is_paid ? 'Yes' : 'No' },
+  { label: 'Base Price',         key: (r) => parseFloat(r.base_price || 0).toFixed(2) },
+  { label: 'Addons Total',       key: (r) => parseFloat(r.addons_total || 0).toFixed(2) },
+  { label: 'Expedition Fee',     key: (r) => parseFloat(r.expedition_fee || 0).toFixed(2) },
+  { label: 'Extra Children Fee', key: (r) => parseFloat(r.extra_children_fee || 0).toFixed(2) },
+  { label: 'Promo Code',         key: (r) => r.promo_code || '' },
+  { label: 'Discount',           key: (r) => parseFloat(r.discount_amount || 0).toFixed(2) },
+  { label: 'Total Amount',       key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
+  { label: 'Birthday Child',     key: (r) => r.birthday_child_name || '' },
+  { label: 'Internal Notes',     key: (r) => r.internal_notes || '' },
+  { label: 'Created At',         key: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString('en-US') : '' },
+];
+
+const getFilteredForExport = () => {
+  const from = exportDateFrom.value ? new Date(exportDateFrom.value) : null;
+  const to   = exportDateTo.value   ? new Date(exportDateTo.value)   : null;
+  if (to) to.setHours(23, 59, 59, 999);
+  return data.value.filter((r) => {
+    if (!r.event_date) return false;
+    const d = new Date(r.event_date);
+    if (from && d < from) return false;
+    if (to   && d > to)   return false;
+    return true;
+  });
+};
+
+watch([exportDateFrom, exportDateTo], () => {
+  exportError.value = '';
+  if (exportDateFrom.value && exportDateTo.value) {
+    exportPreviewCount.value = getFilteredForExport().length;
+  } else {
+    exportPreviewCount.value = null;
+  }
+});
+
+const closeExportModal = () => {
+  exportModalVisible.value = false;
+  exportDateFrom.value = '';
+  exportDateTo.value = '';
+  exportError.value = '';
+  exportPreviewCount.value = null;
+};
+
 const exportCSV = () => {
-  const columns = [
-    { label: 'Customer',           key: (r) => r.full_name || '' },
-    { label: 'Email',              key: (r) => r.email || '' },
-    { label: 'Phone',              key: (r) => r.phone || '' },
-    { label: 'Service',            key: (r) => r.service_name || '' },
-    { label: 'Event Date',         key: (r) => r.event_date ? new Date(r.event_date).toLocaleDateString('en-US') : '' },
-    { label: 'Event Time',         key: (r) => r.event_time || '' },
-    { label: 'Address',            key: (r) => r.event_address || '' },
-    { label: 'City',               key: (r) => r.city_name || '' },
-    { label: 'County',             key: (r) => r.county_name || '' },
-    { label: 'Zipcode',            key: (r) => r.zipcode || '' },
-    { label: 'Children Count',     key: (r) => r.children_count ?? '' },
-    { label: 'Children Range',     key: (r) => r.children_age_range || '' },
-    { label: 'Duration (hrs)',     key: (r) => r.duration_hours ?? '' },
-    { label: 'Performers',         key: (r) => r.performers_count ?? '' },
-    { label: 'Status',             key: (r) => r.status || '' },
-    { label: 'Paid',               key: (r) => r.is_paid ? 'Yes' : 'No' },
-    { label: 'Base Price',         key: (r) => parseFloat(r.base_price || 0).toFixed(2) },
-    { label: 'Addons Total',       key: (r) => parseFloat(r.addons_total || 0).toFixed(2) },
-    { label: 'Expedition Fee',     key: (r) => parseFloat(r.expedition_fee || 0).toFixed(2) },
-    { label: 'Extra Children Fee', key: (r) => parseFloat(r.extra_children_fee || 0).toFixed(2) },
-    { label: 'Promo Code',         key: (r) => r.promo_code || '' },
-    { label: 'Discount',           key: (r) => parseFloat(r.discount_amount || 0).toFixed(2) },
-    { label: 'Total Amount',       key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
-    { label: 'Birthday Child',     key: (r) => r.birthday_child_name || '' },
-    { label: 'Internal Notes',     key: (r) => r.internal_notes || '' },
-    { label: 'Created At',         key: (r) => r.created_at ? new Date(r.created_at).toLocaleDateString('en-US') : '' },
-  ];
+  exportError.value = '';
+  if (!exportDateFrom.value || !exportDateTo.value) {
+    exportError.value = 'Both dates are required.';
+    return;
+  }
+  if (exportDateFrom.value > exportDateTo.value) {
+    exportError.value = '"From" date must be before "To" date.';
+    return;
+  }
 
-  const escape = (val) => {
-    const str = String(val).replace(/"/g, '""');
-    return `"${str}"`;
-  };
+  const filtered = getFilteredForExport();
+  if (filtered.length === 0) {
+    exportError.value = 'No reservations found in this date range.';
+    return;
+  }
 
-  const header = columns.map((c) => escape(c.label)).join(',');
-  const rows = data.value.map((r) =>
-    columns.map((c) => escape(c.key(r))).join(',')
-  );
+  const escape = (val) => `"${String(val).replace(/"/g, '""')}"`;
+  const header = CSV_COLUMNS.map((c) => escape(c.label)).join(',');
+  const rows   = filtered.map((r) => CSV_COLUMNS.map((c) => escape(c.key(r))).join(','));
 
-  const csv = [header, ...rows].join('\n');
+  const csv  = [header, ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
+  const url  = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  const date = new Date().toISOString().slice(0, 10);
-  link.href = url;
-  link.download = `reservations_${date}.csv`;
+  link.href     = url;
+  link.download = `reservations_${exportDateFrom.value}_${exportDateTo.value}.csv`;
   link.click();
   URL.revokeObjectURL(url);
+  closeExportModal();
 };
 
 onMounted(() => {
