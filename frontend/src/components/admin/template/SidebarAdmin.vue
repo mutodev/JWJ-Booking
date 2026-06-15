@@ -1,111 +1,106 @@
 <template>
-  <nav
-    class="admin-sidebar sidebar bg-dark text-white position-fixed h-100 shadow-sm"
-    :class="{ collapsed: isCollapsed }"
-  >
-    <ul class="nav flex-column pt-5 mt-3">
-      <li class="nav-item mb-2" v-for="value in access" :key="value.id">
-        <!-- Si tiene hijos -->
-        <div v-if="value.children && value.children.length > 0">
-          <button
-            class="nav-link text-white d-flex align-items-center sidebar-link w-100"
-            @click="toggleCollapse(value.id)"
-            :title="value.name"
-            :data-bs-toggle="isCollapsed ? 'tooltip' : ''"
+  <aside class="jwj-sidebar" :class="{ 'is-collapsed': isCollapsed }">
+    <!-- Brand header -->
+    <div class="jwj-sidebar__brand">
+      <div class="jwj-sidebar__brand-icon">
+        <i class="bi bi-music-note-beamed"></i>
+      </div>
+      <span class="jwj-sidebar__brand-name">JWJ Admin</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="jwj-sidebar__nav">
+      <ul class="jwj-sidebar__list">
+        <li v-for="item in access" :key="item.id" class="jwj-sidebar__item">
+          <!-- Parent with children -->
+          <template v-if="item.children && item.children.length > 0">
+            <button
+              class="jwj-sidebar__link jwj-sidebar__link--parent"
+              :class="{ 'is-open': isOpen(item.id) }"
+              @click="toggleCollapse(item.id)"
+              :title="isCollapsed ? item.name : undefined"
+              :data-bs-toggle="isCollapsed ? 'tooltip' : undefined"
+              data-bs-placement="right"
+            >
+              <i :class="[item.icon, 'jwj-sidebar__link-icon']"></i>
+              <span class="jwj-sidebar__link-label">{{ item.name }}</span>
+              <i class="bi bi-chevron-right jwj-sidebar__chevron"></i>
+            </button>
+            <ul class="jwj-sidebar__submenu" :class="{ 'is-open': isOpen(item.id) }">
+              <li v-for="child in item.children" :key="child.id">
+                <router-link
+                  :to="child.uri"
+                  class="jwj-sidebar__link jwj-sidebar__link--child"
+                  :title="isCollapsed ? child.name : undefined"
+                  :data-bs-toggle="isCollapsed ? 'tooltip' : undefined"
+                  data-bs-placement="right"
+                >
+                  <i :class="[child.icon, 'jwj-sidebar__link-icon']"></i>
+                  <span class="jwj-sidebar__link-label">{{ child.name }}</span>
+                </router-link>
+              </li>
+            </ul>
+          </template>
+
+          <!-- Simple link -->
+          <router-link
+            v-else
+            :to="item.uri"
+            class="jwj-sidebar__link"
+            :title="isCollapsed ? item.name : undefined"
+            :data-bs-toggle="isCollapsed ? 'tooltip' : undefined"
             data-bs-placement="right"
           >
-            <i :class="value.icon + ' me-2'"></i>
-            <span class="link-text">{{ value.name }}</span>
-            <i
-              class="bi bi-caret-down ms-auto"
-              :class="{ 'rotate-180': isOpen(value.id) }"
-            ></i>
-          </button>
+            <i :class="[item.icon, 'jwj-sidebar__link-icon']"></i>
+            <span class="jwj-sidebar__link-label">{{ item.name }}</span>
+          </router-link>
+        </li>
+      </ul>
+    </nav>
 
-          <ul class="collapse ps-4" :class="{ show: isOpen(value.id) }">
-            <li
-              class="nav-item mb-1"
-              v-for="child in value.children"
-              :key="child.id"
-            >
-              <router-link
-                :to="child.uri"
-                class="nav-link text-white d-flex align-items-center sidebar-link"
-                :title="child.name"
-                :data-bs-toggle="isCollapsed ? 'tooltip' : ''"
-                data-bs-placement="right"
-              >
-                <i :class="child.icon + ' me-2'"></i>
-                <span class="link-text">{{ child.name }}</span>
-              </router-link>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Si no tiene hijos -->
-        <router-link
-          v-else
-          :to="value.uri"
-          class="nav-link text-white d-flex align-items-center sidebar-link"
-          :title="value.name"
-          :data-bs-toggle="isCollapsed ? 'tooltip' : ''"
-          data-bs-placement="right"
-        >
-          <i :class="value.icon + ' me-2'"></i>
-          <span class="link-text">{{ value.name }}</span>
-        </router-link>
-      </li>
-    </ul>
-  </nav>
+    <!-- Collapse toggle button -->
+    <button class="jwj-sidebar__toggle" @click="manualToggle" :title="isCollapsed ? 'Expand' : 'Collapse'">
+      <i :class="isCollapsed ? 'bi bi-layout-sidebar' : 'bi bi-layout-sidebar-inset'"></i>
+      <span class="jwj-sidebar__link-label">Collapse</span>
+    </button>
+  </aside>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
-// Styles moved to admin-consolidated.css
+import { ref, onMounted, onUnmounted } from "vue";
 
 const access = ref(JSON.parse(localStorage.getItem("access") || "[]"));
-
-// Collapsible state
 const openMenus = ref({});
-
-// Collapsed sidebar state (screen size only)
 const isCollapsed = ref(false);
+const manualOverride = ref(false);
 
-// Toggle del collapse de menús
 const toggleCollapse = (id) => {
   openMenus.value[id] = !openMenus.value[id];
 };
 
-// Saber si un collapse está abierto
 const isOpen = (id) => !!openMenus.value[id];
 
-// Detectar cambio de tamaño de pantalla
-const handleResize = () => {
-  const wasCollapsed = isCollapsed.value;
-  isCollapsed.value = window.innerWidth <= 991;
+const manualToggle = () => {
+  manualOverride.value = true;
+  isCollapsed.value = !isCollapsed.value;
+  updateTooltips();
+};
 
-  if (wasCollapsed !== isCollapsed.value) {
+const handleResize = () => {
+  if (!manualOverride.value) {
+    isCollapsed.value = window.innerWidth <= 991;
     updateTooltips();
   }
 };
 
-// Inicializar y actualizar tooltips
 const updateTooltips = () => {
   setTimeout(() => {
-    const existingTooltips = document.querySelectorAll(
-      '[data-bs-toggle="tooltip"]'
-    );
-    existingTooltips.forEach((el) => {
-      const tooltip = window.bootstrap?.Tooltip?.getInstance(el);
-      if (tooltip) tooltip.dispose();
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+      window.bootstrap?.Tooltip?.getInstance(el)?.dispose();
     });
-
     if (isCollapsed.value && window.bootstrap) {
-      const tooltipTriggerList = document.querySelectorAll(
-        '[data-bs-toggle="tooltip"]'
-      );
-      tooltipTriggerList.forEach((tooltipTriggerEl) => {
-        new window.bootstrap.Tooltip(tooltipTriggerEl);
+      document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((el) => {
+        new window.bootstrap.Tooltip(el);
       });
     }
   }, 50);
@@ -114,8 +109,9 @@ const updateTooltips = () => {
 onMounted(() => {
   handleResize();
   window.addEventListener("resize", handleResize);
-  updateTooltips();
 });
 
-watch(isCollapsed, updateTooltips);
+onUnmounted(() => {
+  window.removeEventListener("resize", handleResize);
+});
 </script>

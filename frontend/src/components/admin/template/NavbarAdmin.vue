@@ -1,56 +1,39 @@
 <template>
-  <header class="admin-navbar navbar sticky-top navbar-light bg-white shadow-sm py-2">
-    <div
-      class="container-fluid d-flex align-items-center justify-content-between"
-    >
-      <!-- Logo or title -->
-      <span class="navbar-brand mb-0 h4 text-dark">Admin JWJ</span>
-      <span class="navbar-brand mb-0 h4 text-dark">
-        <i :class="headerData.icon"></i> {{ headerData.title }}</span
-      >
+  <header class="jwj-navbar">
+    <!-- Left: page info -->
+    <div class="jwj-navbar__left">
+      <div class="jwj-navbar__page">
+        <span class="jwj-navbar__page-icon">
+          <i :class="headerData.icon"></i>
+        </span>
+        <span class="jwj-navbar__page-title">{{ headerData.title }}</span>
+      </div>
+    </div>
 
-      <!-- User information and dropdown -->
-      <div class="d-flex align-items-center">
-        <!-- Name and role (desktop) -->
-        <div class="d-none d-lg-flex flex-column text-end me-3">
-          <span class="fw-semibold">{{ user.name }}</span>
-          <small class="text-muted">{{ user.role }}</small>
+    <!-- Right: user -->
+    <div class="jwj-navbar__right">
+      <div class="jwj-navbar__user" ref="dropdownEl" @click="toggleDropdown">
+        <div class="jwj-navbar__avatar">{{ initials }}</div>
+        <div class="d-none d-md-flex flex-column jwj-navbar__user-info">
+          <span class="jwj-navbar__user-name">{{ user.name }}</span>
+          <span class="jwj-navbar__user-role">{{ user.role }}</span>
         </div>
+        <i class="bi bi-chevron-down jwj-navbar__chevron" :class="{ rotated: dropdownOpen }"></i>
 
-        <!-- User dropdown -->
-        <div class="dropdown" ref="dropdownElement">
-          <button
-            class="btn p-0 border-0 bg-transparent d-flex align-items-center"
-            type="button"
-            @click="toggleDropdown"
-            :aria-expanded="dropdownOpen"
-          >
-            <i class="bi bi-person-circle fs-3"></i>
+        <!-- Dropdown -->
+        <div class="jwj-navbar__dropdown" :class="{ 'is-open': dropdownOpen }">
+          <div class="jwj-navbar__dropdown-header">
+            <strong>{{ user.name }}</strong>
+            <small>{{ user.role }}</small>
+          </div>
+          <div class="jwj-navbar__dropdown-divider"></div>
+          <router-link class="jwj-navbar__dropdown-item" to="/admin/profile" @click="closeDropdown">
+            <i class="bi bi-person-circle"></i> Profile
+          </router-link>
+          <div class="jwj-navbar__dropdown-divider"></div>
+          <button class="jwj-navbar__dropdown-item jwj-navbar__dropdown-item--danger" @click="closeSession">
+            <i class="bi bi-box-arrow-right"></i> Sign out
           </button>
-          <ul
-            class="dropdown-menu dropdown-menu-end shadow"
-            :class="{ show: dropdownOpen }"
-          >
-            <li>
-              <router-link
-                class="dropdown-item"
-                to="/admin/profile"
-                @click="closeDropdown"
-              >
-                <i class="bi bi-person-fill me-2"></i>
-                Profile
-              </router-link>
-            </li>
-            <li>
-              <button
-                class="dropdown-item text-danger"
-                @click="closeSession"
-              >
-                <i class="bi bi-box-arrow-right me-2"></i>
-                Log out
-              </button>
-            </li>
-          </ul>
         </div>
       </div>
     </div>
@@ -58,50 +41,37 @@
 </template>
 
 <script setup>
-import { inject, ref, onMounted, onUnmounted } from "vue";
+import { inject, ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+const headerData = inject("headerData");
 
 const user = ref({
-  name:
-    localStorage.getItem("first_name") +
-    " " +
-    localStorage.getItem("last_name"),
-  role: localStorage.getItem("role_name"),
+  name: `${localStorage.getItem("first_name") || ""} ${localStorage.getItem("last_name") || ""}`.trim(),
+  role: localStorage.getItem("role_name") || "",
+});
+
+const initials = computed(() => {
+  const parts = user.value.name.split(" ").filter(Boolean);
+  return parts.slice(0, 2).map((p) => p[0].toUpperCase()).join("");
 });
 
 const dropdownOpen = ref(false);
-const dropdownElement = ref(null);
+const dropdownEl = ref(null);
 
-const toggleDropdown = () => {
-  dropdownOpen.value = !dropdownOpen.value;
-};
-
-const closeDropdown = () => {
-  dropdownOpen.value = false;
-};
+const toggleDropdown = () => { dropdownOpen.value = !dropdownOpen.value; };
+const closeDropdown = () => { dropdownOpen.value = false; };
 
 const closeSession = () => {
   localStorage.clear();
   router.replace("/login");
 };
 
-const handleClickOutside = (event) => {
-  if (dropdownElement.value && !dropdownElement.value.contains(event.target)) {
-    closeDropdown();
-  }
+const handleClickOutside = (e) => {
+  if (dropdownEl.value && !dropdownEl.value.contains(e.target)) closeDropdown();
 };
 
-onMounted(() => {
-  document.addEventListener("click", handleClickOutside);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("click", handleClickOutside);
-});
-
-const headerData = inject("headerData");
+onMounted(() => document.addEventListener("click", handleClickOutside));
+onUnmounted(() => document.removeEventListener("click", handleClickOutside));
 </script>
-
-<!-- Styles moved to admin-consolidated.css -->
