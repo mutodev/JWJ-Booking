@@ -723,6 +723,22 @@ class ReservationService
         return true;
     }
 
+    public function bulkDelete(array $ids): array
+    {
+        if (empty($ids)) {
+            throw new \Exception('No IDs provided', 400);
+        }
+
+        $deleted = 0;
+        foreach ($ids as $id) {
+            if ($this->repository->delete((string) $id)) {
+                $deleted++;
+            }
+        }
+
+        return ['deleted' => $deleted, 'total' => count($ids)];
+    }
+
     /**
      * Elimina (soft delete) todas las reservas con event_date <= al domingo pasado
      *
