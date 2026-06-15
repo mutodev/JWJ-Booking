@@ -950,6 +950,13 @@ class ReservationService
             $birthdayBlock = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Birthday Child</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">' . esc($reservation->birthday_child_name) . '</td></tr>';
         }
 
+        $promoBlock    = '';
+        $discountBlock = '';
+        if (!empty($reservation->promo_code)) {
+            $promoBlock    = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Promo Code</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><span style="background-color: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 13px;">' . esc($reservation->promo_code) . '</span></td></tr>';
+            $discountBlock = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
+        }
+
         $templateVars = [
             'customer_name'       => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id'      => $reservation->id,
@@ -959,6 +966,8 @@ class ReservationService
             'event_address'       => $reservation->event_address ?? '',
             'children_count'      => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'birthday_child_name' => $birthdayBlock,
+            'promo_code_row'      => $promoBlock,
+            'discount_row'        => $discountBlock,
             'total_amount'        => number_format($reservation->total_amount, 2),
             'description'         => $descriptionBlock,
             'confirmation_url'    => $confirmationUrl,
@@ -1155,6 +1164,13 @@ class ReservationService
             ? '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Total Duration</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">' . $durationHours . ' ' . ($durationHours === 1 ? 'hour' : 'hours') . '</td></tr>'
             : '';
 
+        $promoBlockPc    = '';
+        $discountBlockPc = '';
+        if (!empty($reservation->promo_code)) {
+            $promoBlockPc    = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Promo Code</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><span style="background-color: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 13px;">' . esc($reservation->promo_code) . '</span></td></tr>';
+            $discountBlockPc = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
+        }
+
         $templateVars = [
             'customer_name'      => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id'     => $reservation->id,
@@ -1164,6 +1180,8 @@ class ReservationService
             'event_address'      => $reservation->event_address ?? 'To be confirmed',
             'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'total_duration_row' => $totalDurationRow,
+            'promo_code_row'     => $promoBlockPc,
+            'discount_row'       => $discountBlockPc,
             'total_amount'       => number_format($reservation->total_amount, 2),
             '_reservation'       => $reservation,
         ];
@@ -1185,6 +1203,13 @@ class ReservationService
 
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
 
+        $promoBlockRc    = '';
+        $discountBlockRc = '';
+        if (!empty($reservation->promo_code)) {
+            $promoBlockRc    = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Promo Code</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><span style="background-color: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 13px;">' . esc($reservation->promo_code) . '</span></td></tr>';
+            $discountBlockRc = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
+        }
+
         $templateVars = [
             'customer_name'  => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id' => $reservation->id,
@@ -1193,6 +1218,8 @@ class ReservationService
             'event_time'     => $reservation->event_time ?? 'To be confirmed',
             'event_address'  => $reservation->event_address ?? 'To be confirmed',
             'children_count' => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
+            'promo_code_row' => $promoBlockRc,
+            'discount_row'   => $discountBlockRc,
             'total_amount'   => number_format($reservation->total_amount, 2),
             '_reservation'   => $reservation,
         ];
