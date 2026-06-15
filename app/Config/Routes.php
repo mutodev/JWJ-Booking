@@ -237,6 +237,7 @@ $routes->group('api', function ($routes) {
         $routes->get('(:segment)', [EmailTemplateController::class, 'getById']);
         $routes->put('(:segment)', [EmailTemplateController::class, 'updateData']);
         $routes->post('preview', [EmailTemplateController::class, 'preview']);
+        $routes->post('send', [EmailTemplateController::class, 'sendCustomEmail']);
     });
 
     // Promo Codes (Admin)

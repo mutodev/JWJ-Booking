@@ -11,6 +11,12 @@
       </div>
     </div>
 
+    <div class="col-2 mb-3 d-flex justify-content-end">
+      <button class="btn btn-sm btn-primary" @click="composeModalVisible = true">
+        <i class="bi bi-envelope-plus me-1"></i> New Email
+      </button>
+    </div>
+
     <div class="col-md-12">
       <EasyDataTable
         :headers="headers"
@@ -56,6 +62,11 @@
     :template-id="previewTemplateId"
     @close="previewModalVisible = false"
   />
+
+  <ComposeEmailModal
+    :show="composeModalVisible"
+    @close="composeModalVisible = false"
+  />
 </template>
 
 <script setup>
@@ -63,6 +74,7 @@ import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import EmailTemplateEdit from "./EmailTemplateEdit.vue";
 import EmailTemplatePreview from "./EmailTemplatePreview.vue";
+import ComposeEmailModal from "./ComposeEmailModal.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Email Templates", icon: "bi bi-envelope-paper" });
@@ -73,6 +85,7 @@ const data = ref([]);
 const searchValue = ref("");
 const editModalVisible = ref(false);
 const previewModalVisible = ref(false);
+const composeModalVisible = ref(false);
 const selectedTemplateId = ref(null);
 const previewTemplateId = ref(null);
 

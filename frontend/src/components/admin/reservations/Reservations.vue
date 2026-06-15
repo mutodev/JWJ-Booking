@@ -80,11 +80,18 @@
               <i class="bi bi-eye"></i> View
             </button>
             <button
-              class="btn btn-sm btn-success"
+              class="btn btn-sm btn-success me-2"
               @click="paymentUrlModal(item)"
               :disabled="item.is_paid"
             >
               <i class="bi bi-credit-card"></i> Send Payment
+            </button>
+            <button
+              class="btn btn-sm btn-primary"
+              @click="openComposeModal(item)"
+              title="Send email to this customer"
+            >
+              <i class="bi bi-envelope"></i>
             </button>
           </template>
         </EasyDataTable>
@@ -112,6 +119,12 @@
       :show="modalViewVisible"
       :data="selectedData"
       @close="modalViewVisible = false"
+    />
+
+    <ComposeEmailModal
+      :show="composeEmailVisible"
+      :locked-recipient="composeLockedRecipient"
+      @close="composeEmailVisible = false"
     />
 
     <!-- Send Payment Modal -->
@@ -162,6 +175,7 @@ import api from "@/services/axios";
 import ReservationCreate from "./ReservationCreate.vue";
 import ReservationEdit from "./ReservationEdit.vue";
 import ReservationView from "./ReservationView.vue";
+import ComposeEmailModal from "@/components/admin/email-templates/ComposeEmailModal.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Reservations", icon: "bi-calendar-event" });
@@ -178,6 +192,8 @@ const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const modalViewVisible = ref(false);
 const modalPaymentUrlVisible = ref(false);
+const composeEmailVisible = ref(false);
+const composeLockedRecipient = ref(null);
 const selectedData = ref(null);
 const sendingEmail = ref(false);
 const paymentDescription = ref("");
@@ -198,6 +214,15 @@ const paymentUrlModal = (item) => {
   selectedData.value = { ...item };
   paymentDescription.value = item.description || "";
   modalPaymentUrlVisible.value = true;
+};
+
+const openComposeModal = (item) => {
+  composeLockedRecipient.value = {
+    id: item.customer_id,
+    full_name: item.full_name || item.customer_name || 'Customer',
+    email: item.email,
+  };
+  composeEmailVisible.value = true;
 };
 
 // Encabezados principales

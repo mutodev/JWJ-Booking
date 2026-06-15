@@ -41,6 +41,15 @@ class CustomerRepository
     }
 
     /**
+     * Obtener clientes por array de IDs
+     */
+    public function findByIds(array $ids): array
+    {
+        if (empty($ids)) return [];
+        return $this->model->whereIn('id', $ids)->findAll();
+    }
+
+    /**
      * Obtener cliente por email
      */
     public function getByEmail(string $email): ?Customer
