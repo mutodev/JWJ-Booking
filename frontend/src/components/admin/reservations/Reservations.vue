@@ -441,8 +441,8 @@ const exportCSV = () => {
   }
 
   const escape = (val) => `"${String(val).replace(/"/g, '""')}"`;
-  const header = CSV_COLUMNS.map((c) => escape(c.label)).join(',');
-  const rows   = filtered.map((r) => CSV_COLUMNS.map((c) => escape(c.key(r))).join(','));
+  const header = CSV_COLUMNS.map((c) => escape(c.label)).join(';');
+  const rows   = filtered.map((r) => CSV_COLUMNS.map((c) => escape(c.key(r))).join(';'));
 
   const csv  = [header, ...rows].join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
