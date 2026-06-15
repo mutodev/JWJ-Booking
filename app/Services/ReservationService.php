@@ -495,6 +495,7 @@ class ReservationService
                 'event_date' => $eventDate,
                 'event_time' => $information['startTime'] ?? null,
                 'children_count' => $selectedKids,
+                'children_age_range' => $customer['childrenRange'] ?? null,
                 'performers_count' => intval($service['performers_count'] ?? 1),
                 'duration_hours' => $totalDurationHours,
                 'price_type' => $this->determinePriceType($addons),
