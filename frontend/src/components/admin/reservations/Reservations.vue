@@ -122,37 +122,43 @@
     />
 
     <!-- Send Payment Modal -->
-    <div v-if="modalPaymentUrlVisible" class="modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
+    <div v-if="modalPaymentUrlVisible" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
       <div class="modal-dialog modal-md" role="document" style="z-index: 1056;">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title"><i class="bi bi-credit-card"></i> Send Payment</h5>
+            <h5 class="modal-title"><i class="bi bi-credit-card"></i> Send Payment Link</h5>
             <button type="button" class="btn-close" @click="modalPaymentUrlVisible = false"></button>
           </div>
           <div class="modal-body">
-            <p><strong>Customer:</strong> {{ selectedData?.customer_name || 'N/A' }}</p>
-            <p><strong>Email:</strong> {{ selectedData?.email || 'N/A' }}</p>
-            <p><strong>Total Amount:</strong> {{ formatCurrency(selectedData?.total_amount) }}</p>
-            <div class="mb-3">
-              <label class="form-label fw-bold">Description</label>
-              <textarea
-                v-model="paymentDescription"
-                class="form-control"
-                rows="3"
-                placeholder="Add a description for this payment (optional)"
-              ></textarea>
+            <div class="card mb-3">
+              <div class="card-body">
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted" style="font-size:0.78rem">Customer</span>
+                  <strong style="font-size:0.83rem">{{ selectedData?.customer_name || 'N/A' }}</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                  <span class="text-muted" style="font-size:0.78rem">Email</span>
+                  <span style="font-size:0.83rem">{{ selectedData?.email || 'N/A' }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted" style="font-size:0.78rem">Total Amount</span>
+                  <strong style="font-size:0.9rem; color:#0f172a">{{ formatCurrency(selectedData?.total_amount) }}</strong>
+                </div>
+              </div>
             </div>
-            <p class="text-muted small">A Stripe Checkout link will be generated automatically and sent to the customer's email.</p>
+            <div class="mb-2">
+              <label class="form-label">Description <span class="text-muted fw-normal">(optional)</span></label>
+              <textarea v-model="paymentDescription" class="form-control" rows="2" placeholder="Add a note for this payment..."></textarea>
+            </div>
+            <small class="text-muted"><i class="bi bi-stripe me-1"></i>A Stripe Checkout link will be generated and sent to the customer's email.</small>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="modalPaymentUrlVisible = false">Cancel</button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              @click="sendPaymentEmail"
-              :disabled="sendingEmail"
-            >
-              <span v-if="sendingEmail" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            <button type="button" class="btn btn-light" @click="modalPaymentUrlVisible = false">
+              <i class="bi bi-x-circle"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-primary" @click="sendPaymentEmail" :disabled="sendingEmail">
+              <span v-if="sendingEmail" class="spinner-border spinner-border-sm me-1" role="status"></span>
+              <i v-else class="bi bi-send"></i>
               {{ sendingEmail ? 'Sending...' : 'Send Payment' }}
             </button>
           </div>
@@ -162,7 +168,7 @@
     </div>
 
     <!-- Export CSV Modal -->
-    <div v-if="exportModalVisible" class="modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
+    <div v-if="exportModalVisible" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
       <div class="modal-dialog modal-sm" role="document" style="z-index: 1056;">
         <div class="modal-content">
           <div class="modal-header">
