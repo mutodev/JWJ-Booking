@@ -175,6 +175,7 @@ $routes->group('api', function ($routes) {
         $routes->post('/', [ReservationController::class, 'create']);
         $routes->post('send-payment-email', [ReservationController::class, 'sendPaymentEmail']);
         $routes->delete('old', [ReservationController::class, 'deleteOldReservations']);
+        $routes->post('(:segment)/promo', [ReservationController::class, 'applyPromoCode/$1']);
         $routes->put('(:segment)', [ReservationController::class, 'updateData']);
         $routes->delete('(:segment)', [ReservationController::class, 'deleteData']);
     });

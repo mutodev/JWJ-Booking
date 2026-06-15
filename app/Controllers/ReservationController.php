@@ -95,6 +95,20 @@ class ReservationController extends ResourceController
         }
     }
 
+    public function applyPromoCode($id)
+    {
+        try {
+            $data = json_decode($this->request->getBody(), true);
+            $code = trim($data['promo_code'] ?? '');
+            $result = $this->service->applyPromoCode($id, $code ?: null);
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Promo code updated', $result));
+        } catch (\Throwable $th) {
+            return $this->response->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function deleteData($id)
     {
         try {

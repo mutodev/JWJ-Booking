@@ -619,6 +619,93 @@ class ReservationService
     }
 
     /**
+     * Aplica o quita un promo code en una reservación existente.
+     * Recalcula discount_amount y total_amount usando los montos ya guardados.
+     * Si $code es null o vacío, quita el código y restaura el total original.
+     */
+    public function applyPromoCode(string $id, ?string $code): array
+    {
+        $reservation = $this->repository->getById($id);
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $basePrice        = floatval($reservation['base_price'] ?? 0);
+        $addonsTotal      = floatval($reservation['addons_total'] ?? 0);
+        $extraChildrenFee = floatval($reservation['extra_children_fee'] ?? 0);
+        $expeditionFee    = floatval($reservation['expedition_fee'] ?? 0);
+        $grossTotal       = $basePrice + $addonsTotal + $extraChildrenFee + $expeditionFee;
+
+        if (!$code) {
+            // Quitar promo code: restaurar total original
+            $this->repository->update($id, [
+                'promo_code'      => null,
+                'discount_amount' => 0,
+                'total_amount'    => $grossTotal,
+            ]);
+            return [
+                'promo_code'      => null,
+                'discount_amount' => 0,
+                'total_amount'    => $grossTotal,
+            ];
+        }
+
+        // Validar el código
+        $validation = $this->promoCodeRepository->findByCode($code);
+        if (!$validation) {
+            throw new HTTPException('Promo code not found', Response::HTTP_BAD_REQUEST);
+        }
+        if (!$validation['is_active']) {
+            throw new HTTPException('Promo code is inactive', Response::HTTP_BAD_REQUEST);
+        }
+        if (!empty($validation['valid_until']) && strtotime($validation['valid_until']) < time()) {
+            throw new HTTPException('Promo code has expired', Response::HTTP_BAD_REQUEST);
+        }
+        if (!empty($validation['valid_from']) && strtotime($validation['valid_from']) > time()) {
+            throw new HTTPException('Promo code is not yet valid', Response::HTTP_BAD_REQUEST);
+        }
+        if ($validation['max_uses'] !== null && ($validation['times_used'] ?? 0) >= $validation['max_uses']) {
+            throw new HTTPException('Promo code usage limit reached', Response::HTTP_BAD_REQUEST);
+        }
+
+        // Calcular descuento
+        $discountBase = $basePrice + $addonsTotal + $extraChildrenFee;
+        if ($validation['applies_to_travel_fee']) {
+            $discountBase += $expeditionFee;
+        }
+
+        if ($validation['discount_type'] === 'percentage') {
+            $discountAmount = $discountBase * floatval($validation['discount_value']) / 100;
+        } else {
+            $discountAmount = min(floatval($validation['discount_value']), $discountBase);
+        }
+
+        $newTotal = $grossTotal - $discountAmount;
+
+        // Si la reservación ya tenía este mismo código no incrementamos el uso de nuevo
+        $previousCode = $reservation['promo_code'] ?? null;
+        $isNewCode    = strtoupper(trim($previousCode ?? '')) !== strtoupper(trim($code));
+
+        $this->repository->update($id, [
+            'promo_code'      => strtoupper($code),
+            'discount_amount' => $discountAmount,
+            'total_amount'    => $newTotal,
+        ]);
+
+        if ($isNewCode) {
+            $this->promoCodeRepository->incrementUsage($validation['id']);
+        }
+
+        return [
+            'promo_code'      => strtoupper($code),
+            'discount_amount' => $discountAmount,
+            'total_amount'    => $newTotal,
+            'discount_type'   => $validation['discount_type'],
+            'discount_value'  => $validation['discount_value'],
+        ];
+    }
+
+    /**
      * Elimina una reserva (soft delete)
      *
      * @param string $id ID de la reserva a eliminar

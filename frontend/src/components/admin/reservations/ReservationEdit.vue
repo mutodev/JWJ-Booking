@@ -212,25 +212,62 @@
               </div>
             </div>
 
-            <!-- Read-only Information -->
+            <!-- Segment: Promo Code -->
             <div class="segment mb-3">
-              <h6 class="segment-title">Read-Only Information</h6>
-              <div class="row g-3">
-                <div class="col-md-3">
-                  <label class="form-label">Customer</label>
-                  <input
-                    :value="editData.customer_name || editData.full_name || 'N/A'"
-                    type="text"
-                    class="form-control"
-                    readonly
-                  />
+              <h6 class="segment-title">Promo Code</h6>
+              <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                  <label class="form-label">Promo Code</label>
+                  <div class="input-group">
+                    <input
+                      v-model="promoCodeInput"
+                      type="text"
+                      class="form-control text-uppercase"
+                      placeholder="Enter code..."
+                      :disabled="applyingPromo"
+                      @keyup.enter="applyPromoCode"
+                    />
+                    <button
+                      class="btn btn-outline-primary"
+                      type="button"
+                      @click="applyPromoCode"
+                      :disabled="applyingPromo || !promoCodeInput.trim()"
+                    >
+                      <span v-if="applyingPromo" class="spinner-border spinner-border-sm"></span>
+                      <span v-else>Apply</span>
+                    </button>
+                  </div>
+                  <!-- Feedback -->
+                  <div v-if="promoMessage" class="mt-1 small" :class="promoSuccess ? 'text-success' : 'text-danger'">
+                    <i :class="promoSuccess ? 'bi bi-check-circle' : 'bi bi-x-circle'"></i>
+                    {{ promoMessage }}
+                  </div>
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Service</label>
+                  <label class="form-label">Current Code</label>
+                  <div class="d-flex align-items-center gap-2">
+                    <span v-if="editData.promo_code" class="badge bg-success fs-6 px-3 py-2">
+                      {{ editData.promo_code }}
+                    </span>
+                    <span v-else class="text-muted small">None applied</span>
+                    <button
+                      v-if="editData.promo_code"
+                      class="btn btn-sm btn-outline-danger"
+                      type="button"
+                      @click="removePromoCode"
+                      :disabled="applyingPromo"
+                      title="Remove promo code"
+                    >
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Discount</label>
                   <input
-                    :value="editData.service_name || 'N/A'"
+                    :value="editData.discount_amount > 0 ? '-' + formatCurrency(editData.discount_amount) : '$0.00'"
                     type="text"
-                    class="form-control"
+                    class="form-control text-success fw-bold"
                     readonly
                   />
                 </div>
@@ -239,11 +276,36 @@
                   <input
                     :value="formatCurrency(editData.total_amount)"
                     type="text"
+                    class="form-control fw-bold"
+                    readonly
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Read-only Information -->
+            <div class="segment mb-3">
+              <h6 class="segment-title">Read-Only Information</h6>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Customer</label>
+                  <input
+                    :value="editData.customer_name || editData.full_name || 'N/A'"
+                    type="text"
                     class="form-control"
                     readonly
                   />
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
+                  <label class="form-label">Service</label>
+                  <input
+                    :value="editData.service_name || 'N/A'"
+                    type="text"
+                    class="form-control"
+                    readonly
+                  />
+                </div>
+                <div class="col-md-4">
                   <label class="form-label">Location</label>
                   <input
                     :value="editData.location || `${editData.city_name || ''}, ${editData.county_name || ''}` || 'N/A'"
@@ -281,6 +343,10 @@ import api from "@/services/axios";
 const editData = ref({});
 const saving = ref(false);
 const statusChangedByPayment = ref(false);
+const promoCodeInput = ref('');
+const applyingPromo = ref(false);
+const promoMessage = ref('');
+const promoSuccess = ref(false);
 
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
@@ -295,8 +361,9 @@ watch(
   () => props.data,
   (newData) => {
     editData.value = { ...newData };
-    statusChangedByPayment.value = false; // Reset notification
-    // Convert date format if needed
+    statusChangedByPayment.value = false;
+    promoCodeInput.value = '';
+    promoMessage.value = '';
     if (editData.value.event_date && typeof editData.value.event_date === 'object') {
       const date = new Date(editData.value.event_date);
       editData.value.event_date = date.toISOString().split('T')[0];
@@ -362,6 +429,49 @@ const formatCurrency = (amount) => {
     style: "currency",
     currency: "USD"
   });
+};
+
+const applyPromoCode = async () => {
+  const code = promoCodeInput.value.trim().toUpperCase();
+  if (!code) return;
+  applyingPromo.value = true;
+  promoMessage.value = '';
+  try {
+    const res = await api.post(`/reservations/${editData.value.id}/promo`, { promo_code: code });
+    const result = res.data?.data ?? res.data;
+    editData.value.promo_code      = result.promo_code;
+    editData.value.discount_amount = result.discount_amount;
+    editData.value.total_amount    = result.total_amount;
+    promoCodeInput.value = '';
+    promoSuccess.value = true;
+    promoMessage.value = `Code applied! Discount: ${formatCurrency(result.discount_amount)}`;
+    setTimeout(() => { promoMessage.value = ''; }, 4000);
+  } catch (err) {
+    promoSuccess.value = false;
+    promoMessage.value = err?.response?.data?.message ?? 'Invalid promo code';
+  } finally {
+    applyingPromo.value = false;
+  }
+};
+
+const removePromoCode = async () => {
+  applyingPromo.value = true;
+  promoMessage.value = '';
+  try {
+    const res = await api.post(`/reservations/${editData.value.id}/promo`, { promo_code: '' });
+    const result = res.data?.data ?? res.data;
+    editData.value.promo_code      = null;
+    editData.value.discount_amount = 0;
+    editData.value.total_amount    = result.total_amount;
+    promoSuccess.value = true;
+    promoMessage.value = 'Promo code removed.';
+    setTimeout(() => { promoMessage.value = ''; }, 3000);
+  } catch (err) {
+    promoSuccess.value = false;
+    promoMessage.value = err?.response?.data?.message ?? 'Error removing promo code';
+  } finally {
+    applyingPromo.value = false;
+  }
 };
 </script>
 
