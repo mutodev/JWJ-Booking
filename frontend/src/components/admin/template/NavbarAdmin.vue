@@ -1,7 +1,11 @@
 <template>
   <header class="jwj-navbar">
-    <!-- Left: page info -->
+    <!-- Left: toggle + page info -->
     <div class="jwj-navbar__left">
+      <button class="jwj-navbar__sidebar-toggle" @click="toggleSidebar" :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+        <i class="bi" :class="sidebarCollapsed ? 'bi-layout-sidebar' : 'bi-layout-sidebar-inset'"></i>
+      </button>
+      <div class="jwj-navbar__divider"></div>
       <div class="jwj-navbar__page">
         <span class="jwj-navbar__page-icon">
           <i :class="headerData.icon"></i>
@@ -10,17 +14,17 @@
       </div>
     </div>
 
-    <!-- Right: user -->
+    <!-- Right: user dropdown -->
     <div class="jwj-navbar__right">
       <div class="jwj-navbar__user" ref="dropdownEl" @click="toggleDropdown">
         <div class="jwj-navbar__avatar">{{ initials }}</div>
-        <div class="d-none d-md-flex flex-column jwj-navbar__user-info">
+        <div class="jwj-navbar__user-info d-none d-md-flex">
           <span class="jwj-navbar__user-name">{{ user.name }}</span>
           <span class="jwj-navbar__user-role">{{ user.role }}</span>
         </div>
         <i class="bi bi-chevron-down jwj-navbar__chevron" :class="{ rotated: dropdownOpen }"></i>
 
-        <!-- Dropdown -->
+        <!-- Dropdown menu -->
         <div class="jwj-navbar__dropdown" :class="{ 'is-open': dropdownOpen }">
           <div class="jwj-navbar__dropdown-header">
             <strong>{{ user.name }}</strong>
@@ -44,8 +48,13 @@
 import { inject, ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 
-const router = useRouter();
+const router     = useRouter();
 const headerData = inject("headerData");
+const sidebarCollapsed = inject("sidebarCollapsed");
+
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value;
+};
 
 const user = ref({
   name: `${localStorage.getItem("first_name") || ""} ${localStorage.getItem("last_name") || ""}`.trim(),
@@ -58,10 +67,10 @@ const initials = computed(() => {
 });
 
 const dropdownOpen = ref(false);
-const dropdownEl = ref(null);
+const dropdownEl   = ref(null);
 
 const toggleDropdown = () => { dropdownOpen.value = !dropdownOpen.value; };
-const closeDropdown = () => { dropdownOpen.value = false; };
+const closeDropdown  = () => { dropdownOpen.value = false; };
 
 const closeSession = () => {
   localStorage.clear();

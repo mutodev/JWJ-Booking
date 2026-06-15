@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Edit Service Price</h5>
+          <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Service Price</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 

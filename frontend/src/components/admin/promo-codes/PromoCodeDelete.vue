@@ -7,32 +7,35 @@
   >
     <div class="modal-dialog" role="document">
       <div class="modal-content">
-        <div class="modal-header bg-danger text-white">
-          <h5 class="modal-title">Delete Promo Code</h5>
-          <button
-            type="button"
-            class="btn-close btn-close-white"
-            @click="closeModal"
-          ></button>
+        <div class="modal-header bg-danger">
+          <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Delete Promo Code</h5>
+          <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
         <div class="modal-body">
-          <div class="alert alert-warning">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <strong>Warning!</strong> This action cannot be undone.
+          <div class="modal-delete-warning">
+            <i class="bi bi-shield-exclamation"></i>
+            <p>This action <strong>cannot be undone</strong>. The following promo code will be permanently deleted.</p>
           </div>
-
-          <p>Are you sure you want to delete this promo code?</p>
-
           <div class="card">
             <div class="card-body">
-              <p class="mb-1"><strong>Code:</strong> <span class="badge bg-primary">{{ data.code }}</span></p>
-              <p class="mb-1"><strong>Discount:</strong> {{ data.discount_percentage }}%</p>
-              <p class="mb-1"><strong>Times Used:</strong> {{ data.usage_count || 0 }}</p>
-              <p class="mb-0"><strong>Status:</strong>
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted" style="font-size:0.78rem">Code</span>
+                <span class="badge bg-primary">{{ data.code }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted" style="font-size:0.78rem">Discount</span>
+                <strong>{{ data.discount_percentage }}%</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted" style="font-size:0.78rem">Times Used</span>
+                <strong>{{ data.usage_count || 0 }}</strong>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-muted" style="font-size:0.78rem">Status</span>
                 <span v-if="data.is_active" class="badge bg-success">Active</span>
                 <span v-else class="badge bg-secondary">Inactive</span>
-              </p>
+              </div>
             </div>
           </div>
         </div>
@@ -42,8 +45,7 @@
             <i class="bi bi-x-circle"></i> Cancel
           </button>
           <button type="button" class="btn btn-danger" @click="deleteItem" :disabled="deleting">
-            <i class="bi bi-trash"></i>
-            {{ deleting ? 'Deleting...' : 'Delete Promo Code' }}
+            <i class="bi bi-trash"></i> {{ deleting ? 'Deleting...' : 'Delete Promo Code' }}
           </button>
         </div>
       </div>

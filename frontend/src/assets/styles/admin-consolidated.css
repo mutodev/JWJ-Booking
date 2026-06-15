@@ -733,6 +733,175 @@
 .admin-image-preview  { max-width: 140px; max-height: 140px; border-radius: 8px; }
 
 /* ================================================================
+   MODALS — Admin design system overrides
+   Cubre TODOS los admin-modal independiente de clases Bootstrap
+   ================================================================ */
+
+.admin-modal .modal-content {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.14), 0 4px 16px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+
+/* Header — siempre oscuro, anula bg-primary / bg-danger de Bootstrap */
+.admin-modal .modal-header {
+  background: #0f172a !important;
+  border-bottom: none !important;
+  padding: 1rem 1.25rem;
+  align-items: center;
+}
+
+/* Variante danger (delete modals) */
+.admin-modal .modal-header.bg-danger {
+  background: #3b0a0a !important;
+}
+
+.admin-modal .modal-title {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: #f1f5f9 !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.admin-modal .modal-title i {
+  font-size: 1rem;
+  color: #FF74B7;
+  flex-shrink: 0;
+}
+
+.admin-modal .modal-header.bg-danger .modal-title i {
+  color: #f87171;
+}
+
+/* btn-close siempre blanco en header oscuro */
+.admin-modal .btn-close,
+.admin-modal .btn-close-white {
+  filter: brightness(0) invert(1) !important;
+  opacity: 0.55;
+  margin: 0;
+}
+.admin-modal .btn-close:hover { opacity: 1; }
+
+/* Body */
+.admin-modal .modal-body {
+  padding: 1.25rem 1.5rem;
+  background: #fff;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+/* Footer */
+.admin-modal .modal-footer {
+  background: #fafafa !important;
+  border-top: 1px solid #f1f5f9 !important;
+  padding: 0.75rem 1.25rem;
+  gap: 8px;
+}
+
+/* Botón cancelar/volver */
+.admin-modal .btn-light {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+.admin-modal .btn-light:hover { background: #e2e8f0; color: #334155; }
+
+/* Caja de advertencia en delete modals */
+.admin-modal .modal-delete-warning {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.admin-modal .modal-delete-warning i {
+  color: #ef4444;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.admin-modal .modal-delete-warning p {
+  margin: 0;
+  font-size: 0.83rem;
+  color: #7f1d1d;
+  line-height: 1.5;
+}
+
+/* Form labels */
+.admin-modal .form-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.3rem;
+}
+
+.admin-modal .form-control:focus,
+.admin-modal .form-select:focus {
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 3px rgba(255,116,183,0.12);
+}
+
+.admin-modal .form-text,
+.admin-modal small.text-muted { font-size: 0.74rem; color: #94a3b8 !important; }
+
+/* Cards dentro de modales */
+.admin-modal .card {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  overflow: hidden;
+}
+.admin-modal .card-header {
+  background: #f8fafc !important;
+  border-bottom: 1px solid #f1f5f9 !important;
+  padding: 0.65rem 1rem !important;
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #1e293b !important;
+}
+.admin-modal .card-body {
+  padding: 0.875rem 1rem !important;
+  font-size: 0.83rem;
+  color: #475569;
+}
+
+/* Alert dentro de modales */
+.admin-modal .alert {
+  border-radius: 8px;
+  font-size: 0.83rem;
+  padding: 0.75rem 1rem;
+}
+.admin-modal .alert-warning {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+.admin-modal .alert-light {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #374151;
+}
+
+/* Badges dentro de modales */
+.admin-modal .badge.bg-primary { background: #1e293b !important; }
+.admin-modal .badge.bg-success { background: #15803d !important; }
+.admin-modal .badge.bg-secondary { background: #64748b !important; }
+
+/* Separador horizontal */
+.admin-modal hr { border-color: #f1f5f9; margin: 0.75rem 0; }
+
+/* Texto pequeño de footer del modal */
+.admin-modal .modal-footer small { font-size: 0.74rem; color: #94a3b8; }
+
+/* ================================================================
    BOOTSTRAP OVERRIDES — aplican a todos los componentes del admin
    sin tener que cambiar clases en cada .vue
    ================================================================ */

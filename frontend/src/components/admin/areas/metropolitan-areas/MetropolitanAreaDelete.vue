@@ -2,45 +2,31 @@
   <div v-if="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Delete Metropolitan Areaa</h5>
+        <div class="modal-header bg-danger">
+          <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Delete Metropolitan Area</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 
         <div class="modal-body">
+          <div class="modal-delete-warning">
+            <i class="bi bi-shield-exclamation"></i>
+            <p>This action <strong>cannot be undone</strong>. Type <strong>{{ data.name }}</strong> below to confirm.</p>
+          </div>
           <form @submit.prevent="submitForm">
-            <div class="mb-3">
-              <label for="name" class="form-label">Name</label>
-              <input
-                type="text"
-                class="form-control"
-                id="name"
-                v-model="name"
-                required
-                placeholder="Enter name"
-              />
-              <span class="text-ligth ">
-                Write the name <b>{{ data.name }}</b> to perform the deletion.
-              </span>
-              <br />
-              <small class="text-danger small">{{ name_error }}</small>
+            <div class="mb-1">
+              <label for="name" class="form-label">Confirm name</label>
+              <input type="text" class="form-control" id="name" v-model="name" placeholder="Type name to confirm" />
+              <small class="text-danger mt-1 d-block">{{ name_error }}</small>
             </div>
           </form>
         </div>
 
         <div class="modal-footer">
           <button type="button" class="btn btn-light" @click="closeModal">
-            <i class="bi bi-arrow-90deg-down"></i>
-            Back
+            <i class="bi bi-x-circle"></i> Cancel
           </button>
-          <button
-            type="button"
-            class="btn btn-danger"
-            @click="submitForm"
-            :disabled="loading"
-          >
-            <i class="bi bi-trash"></i>
-            Delete
+          <button type="button" class="btn btn-danger" @click="submitForm" :disabled="loading">
+            <i class="bi bi-trash"></i> Delete
           </button>
         </div>
       </div>

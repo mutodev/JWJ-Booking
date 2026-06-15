@@ -3,7 +3,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Create Metropolitan Areaa</h5>
+          <h5 class="modal-title"><i class="bi bi-map"></i> Create Metropolitan Area</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 

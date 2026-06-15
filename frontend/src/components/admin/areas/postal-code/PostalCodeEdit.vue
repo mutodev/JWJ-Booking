@@ -3,7 +3,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Edit Zip code</h5>
+          <h5 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Zip Code</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 

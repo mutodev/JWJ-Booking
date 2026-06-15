@@ -1,10 +1,7 @@
 <template>
-  <div class="admin-layout d-flex">
-    <!-- Sidebar fijo -->
+  <div class="admin-layout" :class="{ 'sidebar-collapsed': sidebarCollapsed }">
     <SidebarAdmin />
-
-    <!-- Contenido principal -->
-    <div class="flex-grow-1 d-flex flex-column min-vh-100 bg-light">
+    <div class="admin-main">
       <NavbarAdmin />
       <main class="admin-content p-4">
         <router-view />
@@ -20,17 +17,12 @@ import { provide, ref } from "vue";
 
 import '@/assets/styles/admin-consolidated.css';
 
-const headerData = ref({
-  title: "Dashboard",
-  icon: "bi-speedometer2",
-});
+const headerData = ref({ title: "Dashboard", icon: "bi-speedometer2" });
+const updateHeaderData = (newData) => { headerData.value = { ...headerData.value, ...newData }; };
 
-const updateHeaderData = (newData) => {
-  headerData.value = { ...headerData.value, ...newData }
-}
+const sidebarCollapsed = ref(false);
 
-provide('headerData', headerData)
-provide('updateHeaderData', updateHeaderData)
+provide('headerData', headerData);
+provide('updateHeaderData', updateHeaderData);
+provide('sidebarCollapsed', sidebarCollapsed);
 </script>
-
-<!-- Styles moved to admin-consolidated.css -->

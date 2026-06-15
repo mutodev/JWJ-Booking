@@ -7,8 +7,8 @@
   >
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
-          <h5 class="modal-title">Create Promo Code</h5>
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-tag"></i> Create Promo Code</h5>
           <button
             type="button"
             class="btn-close btn-close-white"

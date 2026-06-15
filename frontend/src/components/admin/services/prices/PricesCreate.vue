@@ -3,7 +3,7 @@
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Create Service Price</h5>
+          <h5 class="modal-title"><i class="bi bi-currency-dollar"></i> Create Service Price</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 

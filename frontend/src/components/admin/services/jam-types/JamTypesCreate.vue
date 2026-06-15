@@ -3,7 +3,7 @@
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Create Jam Types</h5>
+          <h5 class="modal-title"><i class="bi bi-music-note-beamed"></i> Create Jam Type</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 

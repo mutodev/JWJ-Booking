@@ -3,8 +3,8 @@
     <div class="modal-dialog modal-xl" role="document">
       <div class="modal-content">
         <!-- Header -->
-        <div class="modal-header bg-warning text-dark">
-          <h5 class="modal-title">Edit Reservation</h5>
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-calendar-check"></i> Edit Reservation</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 

@@ -4,7 +4,7 @@
       <div class="modal-content">
         <!-- Header -->
         <div class="modal-header">
-          <h5 class="modal-title">Create Client</h5>
+          <h5 class="modal-title"><i class="bi bi-person-plus"></i> Create Client</h5>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
 

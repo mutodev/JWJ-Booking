@@ -126,7 +126,7 @@
       <div class="modal-dialog modal-md" role="document" style="z-index: 1056;">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Send Payment</h5>
+            <h5 class="modal-title"><i class="bi bi-credit-card"></i> Send Payment</h5>
             <button type="button" class="btn-close" @click="modalPaymentUrlVisible = false"></button>
           </div>
           <div class="modal-body">
