@@ -95,6 +95,27 @@ class ReservationController extends ResourceController
         }
     }
 
+    public function bulkDelete()
+    {
+        try {
+            $data = json_decode($this->request->getBody(), true);
+            $ids  = $data['ids'] ?? [];
+
+            if (empty($ids) || !is_array($ids)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['message' => 'No IDs provided']);
+            }
+
+            $result = $this->service->bulkDelete($ids);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Reservations deleted successfully', $result));
+        } catch (\Throwable $th) {
+            return $this->response->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function applyPromoCode($id)
     {
         try {

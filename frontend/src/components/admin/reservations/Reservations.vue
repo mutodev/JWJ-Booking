@@ -14,7 +14,18 @@
           />
         </div>
       </div>
-      <div class="col-md-2 pt-1 d-flex gap-2">
+      <div class="col-md-2 pt-1 d-flex gap-2 flex-wrap">
+        <button
+          v-if="itemsSelected.length > 0"
+          class="btn btn-sm btn-danger"
+          @click="bulkDelete"
+          :disabled="deletingBulk"
+          title="Delete selected reservations"
+        >
+          <span v-if="deletingBulk" class="spinner-border spinner-border-sm me-1"></span>
+          <i v-else class="bi bi-trash"></i>
+          Delete ({{ itemsSelected.length }})
+        </button>
         <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export to CSV">
           <i class="bi bi-download"></i> Export
         </button>
@@ -27,6 +38,7 @@
     <div class="row">
       <div class="col-md-12">
         <EasyDataTable
+          v-model:items-selected="itemsSelected"
           :headers="headers"
           :items="dataProcessed"
           :search-field="searchField"
@@ -240,6 +252,8 @@ const exportDateFrom = ref('');
 const exportDateTo = ref('');
 const exportError = ref('');
 const exportPreviewCount = ref(null);
+const itemsSelected = ref([]);
+const deletingBulk = ref(false);
 const selectedData = ref(null);
 const sendingEmail = ref(false);
 const paymentDescription = ref("");
@@ -337,6 +351,25 @@ const handle = () => {
   modalCreateVisible.value = false;
   modalEditVisible.value = false;
   getData();
+};
+
+const bulkDelete = async () => {
+  const count = itemsSelected.value.length;
+  if (!count) return;
+  if (!confirm(`Delete ${count} reservation(s)? This action cannot be undone.`)) return;
+
+  deletingBulk.value = true;
+  try {
+    const ids = itemsSelected.value.map((item) => item.id);
+    await api.post('/reservations/bulk-delete', { ids });
+    itemsSelected.value = [];
+    await getData();
+  } catch (error) {
+    console.error('Error deleting reservations:', error);
+    alert('Error deleting reservations. Please try again.');
+  } finally {
+    deletingBulk.value = false;
+  }
 };
 
 const formatCurrency = (amount) => {
