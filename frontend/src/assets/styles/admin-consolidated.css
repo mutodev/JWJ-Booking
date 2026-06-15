@@ -732,6 +732,162 @@
 .admin-text-muted     { font-size: 0.72rem; color: #94a3b8; }
 .admin-image-preview  { max-width: 140px; max-height: 140px; border-radius: 8px; }
 
+/* ================================================================
+   BOOTSTRAP OVERRIDES — aplican a todos los componentes del admin
+   sin tener que cambiar clases en cada .vue
+   ================================================================ */
+
+/* --- Tabla Bootstrap dentro del admin --- */
+.admin-content .table {
+  font-size: 0.83rem;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-content .table thead th {
+  background: #0f172a !important;
+  color: #94a3b8 !important;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 0.75rem 1rem;
+  border: none !important;
+  white-space: nowrap;
+}
+
+.admin-content .table tbody td {
+  padding: 0.7rem 1rem;
+  vertical-align: middle;
+  border-color: #f1f5f9;
+  color: #475569;
+  font-size: 0.82rem;
+}
+
+.admin-content .table-hover tbody tr:hover td {
+  background: #f8fafc;
+}
+
+/* Contenedor EasyDataTable */
+.admin-content .vue3-easy-data-table {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.admin-content .easy-data-table__rows-per-page,
+.admin-content .easy-data-table__pagination {
+  padding: 0.6rem 1rem;
+  background: #fafafa;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.78rem;
+}
+
+.admin-content .easy-data-table__pagination .pagination .page-link {
+  border: none;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 0.8rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.admin-content .easy-data-table__pagination .pagination .page-item.active .page-link {
+  background: #0f172a;
+  color: white;
+}
+
+/* --- Botones Bootstrap dentro del admin --- */
+.admin-content .btn {
+  font-size: 0.8rem;
+  font-weight: 500;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s;
+}
+
+.admin-content .btn-sm {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+}
+
+/* Botones de acción (icon-only en tablas) */
+.admin-content .btn-action-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  justify-content: center;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+
+.admin-content .btn-primary {
+  background: #0f172a;
+  border-color: #0f172a;
+}
+.admin-content .btn-primary:hover {
+  background: #1e293b;
+  border-color: #1e293b;
+}
+
+.admin-content .btn-success {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+/* --- Inputs y form-controls --- */
+.admin-content .form-control:focus,
+.admin-content .form-select:focus {
+  border-color: #FF74B7;
+  box-shadow: 0 0 0 3px rgba(255,116,183,0.15);
+}
+
+.admin-content .input-group .form-control {
+  font-size: 0.85rem;
+}
+
+.admin-content .input-group-text {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+/* --- Toolbar de filtros encima de la tabla --- */
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.admin-toolbar .input-group {
+  max-width: 320px;
+  min-width: 180px;
+  flex: 1;
+}
+
+.admin-toolbar .toolbar-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* --- Badges Bootstrap --- */
+.admin-content .badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .admin-content { padding: 16px; }

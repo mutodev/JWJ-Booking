@@ -1,35 +1,26 @@
 <template>
   <div>
-    <div class="row justify-content-end mb-3">
-      <div class="col-10">
-        <div class="input-group">
-          <span class="input-group-text">
-            <i class="bi bi-search"></i>
-          </span>
-          <input
-            v-model="searchValue"
-            type="text"
-            class="form-control"
-            placeholder="Search reservations..."
-          />
-        </div>
+    <div class="admin-toolbar">
+      <div class="input-group">
+        <span class="input-group-text"><i class="bi bi-search"></i></span>
+        <input v-model="searchValue" type="text" class="form-control" placeholder="Search reservations..." />
       </div>
-      <div class="col-md-2 pt-1 d-flex gap-2 flex-wrap">
+      <div class="toolbar-actions">
         <button
           v-if="itemsSelected.length > 0"
           class="btn btn-sm btn-danger"
           @click="bulkDelete"
           :disabled="deletingBulk"
-          title="Delete selected reservations"
+          :title="`Delete ${itemsSelected.length} selected`"
         >
-          <span v-if="deletingBulk" class="spinner-border spinner-border-sm me-1"></span>
+          <span v-if="deletingBulk" class="spinner-border spinner-border-sm"></span>
           <i v-else class="bi bi-trash"></i>
-          Delete ({{ itemsSelected.length }})
+          ({{ itemsSelected.length }})
         </button>
-        <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export to CSV">
+        <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export CSV">
           <i class="bi bi-download"></i> Export
         </button>
-        <button class="btn btn-sm btn-primary" @click="createModal()">
+        <button class="btn btn-sm btn-primary" @click="createModal()" title="New reservation">
           <i class="bi bi-plus-lg"></i> New
         </button>
       </div>
@@ -82,32 +73,20 @@
           </template>
 
           <template #item-actions="item">
-            <button
-              class="btn btn-sm btn-warning me-2"
-              @click="editModal(item)"
-            >
-              <i class="bi bi-pencil-square"></i> Edit
-            </button>
-            <button
-              class="btn btn-sm btn-secondary me-2"
-              @click="viewModal(item)"
-            >
-              <i class="bi bi-eye"></i> View
-            </button>
-            <button
-              class="btn btn-sm btn-success me-2"
-              @click="paymentUrlModal(item)"
-              :disabled="item.is_paid"
-            >
-              <i class="bi bi-credit-card"></i> Send Payment
-            </button>
-            <button
-              class="btn btn-sm btn-primary"
-              @click="openComposeModal(item)"
-              title="Send email to this customer"
-            >
-              <i class="bi bi-envelope"></i>
-            </button>
+            <div class="d-flex gap-1 justify-content-center">
+              <button class="btn btn-sm btn-action-icon btn-warning" @click="editModal(item)" title="Edit reservation">
+                <i class="bi bi-pencil-square"></i>
+              </button>
+              <button class="btn btn-sm btn-action-icon btn-secondary" @click="viewModal(item)" title="View details">
+                <i class="bi bi-eye"></i>
+              </button>
+              <button class="btn btn-sm btn-action-icon btn-success" @click="paymentUrlModal(item)" :disabled="item.is_paid" title="Send payment link">
+                <i class="bi bi-credit-card"></i>
+              </button>
+              <button class="btn btn-sm btn-action-icon btn-primary" @click="openComposeModal(item)" title="Send email">
+                <i class="bi bi-envelope"></i>
+              </button>
+            </div>
           </template>
         </EasyDataTable>
       </div>
