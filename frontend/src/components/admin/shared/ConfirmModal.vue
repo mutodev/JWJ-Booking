@@ -11,7 +11,7 @@
         <div class="modal-body">
           <div class="modal-delete-warning">
             <i class="bi bi-shield-exclamation"></i>
-            <p>{{ message }}</p>
+            <p v-html="message"></p>
           </div>
           <div class="form-check mt-3">
             <input

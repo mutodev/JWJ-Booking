@@ -19,7 +19,6 @@ class CustomerModel extends Model
         'full_name',
         'billing_address',
         'segment',
-        'deleted_at',
     ];
 
     protected bool $allowEmptyInserts = false;
