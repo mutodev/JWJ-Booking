@@ -184,6 +184,25 @@ class ReservationController extends ResourceController
     }
 
     /**
+     * Save gratuity amount before Stripe redirect
+     * PATCH /reservations/{id}/gratuity
+     */
+    public function updateGratuity($id)
+    {
+        try {
+            $amount = (float) ($this->request->getJSON(true)['amount'] ?? 0);
+            $this->service->updateGratuity($id, $amount);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response(true, ['gratuity_amount' => $amount], 'Gratuity saved'));
+        } catch (\Throwable $th) {
+            $statusCode = ($th->getCode() >= 400 && $th->getCode() < 600) ? $th->getCode() : 500;
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
      * Regenerate Stripe payment session (public, no email)
      */
     public function regeneratePayment($id)

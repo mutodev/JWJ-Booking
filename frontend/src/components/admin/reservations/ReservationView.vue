@@ -174,10 +174,14 @@
                     </span>
                     <strong class="text-success">-{{ formatCurrency(data.discount_amount) }}</strong>
                   </div>
+                  <div class="d-flex justify-content-between mb-1" v-if="data.gratuity_amount > 0">
+                    <span>Gratuity / Tip:</span>
+                    <strong class="text-success">{{ formatCurrency(data.gratuity_amount) }}</strong>
+                  </div>
                   <hr class="my-2">
                   <div class="d-flex justify-content-between">
                     <strong>Total Amount:</strong>
-                    <strong>{{ formatCurrency(data.total_amount) }}</strong>
+                    <strong>{{ formatCurrency((parseFloat(data.total_amount) || 0) + (parseFloat(data.gratuity_amount) || 0)) }}</strong>
                   </div>
                 </div>
               </div>

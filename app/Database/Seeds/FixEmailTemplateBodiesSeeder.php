@@ -358,9 +358,10 @@ class FixEmailTemplateBodiesSeeder extends Seeder
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">{{children_count}}</td>
                                 </tr>
                                 {{total_duration_row}}
+                                {{gratuity_row}}
                                 <tr>
                                     <td style="padding: 14px 16px; font-size: 16px; font-weight: 700; color: #1F2937; background-color: #FFF0F6; border-bottom: none;">Amount Paid</td>
-                                    <td style="padding: 14px 16px; font-size: 20px; font-weight: 700; color: #FF74B7; background-color: #FFF0F6; border-bottom: none;">${{total_amount}}</td>
+                                    <td style="padding: 14px 16px; font-size: 20px; font-weight: 700; color: #FF74B7; background-color: #FFF0F6; border-bottom: none;">${{total_paid}}</td>
                                 </tr>
                             </table>
 

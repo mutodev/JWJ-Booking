@@ -35,29 +35,39 @@ class StripeService
         float $amount,
         string $customerEmail,
         string $reservationId,
-        string $description = 'Event Reservation'
+        string $description = 'Event Reservation',
+        float $gratuity = 0.0
     ): Session {
         $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:8080';
 
-        $session = Session::create([
-            'payment_method_types' => ['card'],
-            'mode' => 'payment',
-            'customer_email' => $customerEmail,
-            'line_items' => [[
+        $lineItems = [[
+            'price_data' => [
+                'currency'     => $this->currency,
+                'unit_amount'  => (int) round($amount * 100),
+                'product_data' => ['name' => $description],
+            ],
+            'quantity' => 1,
+        ]];
+
+        if ($gratuity > 0) {
+            $lineItems[] = [
                 'price_data' => [
-                    'currency' => $this->currency,
-                    'unit_amount' => (int) round($amount * 100), // Convert to cents
-                    'product_data' => [
-                        'name' => $description,
-                    ],
+                    'currency'     => $this->currency,
+                    'unit_amount'  => (int) round($gratuity * 100),
+                    'product_data' => ['name' => 'Gratuity / Tip'],
                 ],
                 'quantity' => 1,
-            ]],
-            'metadata' => [
-                'reservation_id' => $reservationId,
-            ],
-            'success_url' => rtrim($frontendUrl, '/') . '/payment-success?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url'  => rtrim($frontendUrl, '/') . '/payment-cancel?reservation_id=' . $reservationId,
+            ];
+        }
+
+        $session = Session::create([
+            'payment_method_types' => ['card'],
+            'mode'           => 'payment',
+            'customer_email' => $customerEmail,
+            'line_items'     => $lineItems,
+            'metadata'       => ['reservation_id' => $reservationId],
+            'success_url'    => rtrim($frontendUrl, '/') . '/payment-success?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url'     => rtrim($frontendUrl, '/') . '/payment-cancel?reservation_id=' . $reservationId,
         ]);
 
         return $session;

@@ -13,6 +13,57 @@
       {{ error }}
     </div>
 
+    <!-- Already confirmed: show only tip selection + pay button -->
+    <div v-else-if="confirmedAlready" class="py-4">
+      <div class="d-flex align-items-center mb-4">
+        <i class="bi bi-check-circle-fill fs-3 me-2 text-success"></i>
+        <h2 class="mb-0">Ready to Pay</h2>
+      </div>
+      <p class="text-muted mb-4">Your event details are confirmed. Add a gratuity for your performer(s) below, then proceed to payment.</p>
+
+      <div class="tip-section mb-4">
+        <h5 class="tip-title">Add a Gratuity <span class="text-muted small fw-normal">(optional)</span></h5>
+        <p class="text-muted small mb-3">100% goes to your performer(s).</p>
+        <div class="tip-options d-flex flex-wrap gap-2 mb-3">
+          <button
+            v-for="opt in tipOptions"
+            :key="opt.label"
+            type="button"
+            class="btn tip-btn"
+            :class="selectedTip === opt.value ? 'btn-primary' : 'btn-outline-secondary'"
+            @click="selectTip(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        </div>
+        <div v-if="selectedTip === 'custom'" class="input-group mb-2" style="max-width: 200px;">
+          <span class="input-group-text">$</span>
+          <input
+            v-model.number="customTipAmount"
+            type="number"
+            min="0"
+            step="0.01"
+            class="form-control"
+            placeholder="0.00"
+          />
+        </div>
+        <div v-if="computedTip > 0" class="tip-amount-display">
+          Gratuity: <strong>${{ computedTip.toFixed(2) }}</strong>
+        </div>
+      </div>
+
+      <div class="text-center">
+        <button
+          class="btn btn-success btn-lg"
+          :disabled="submitting"
+          @click="handlePayOnly"
+        >
+          <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
+          {{ submitting ? 'Redirecting...' : 'Proceed to Payment' }}
+        </button>
+      </div>
+    </div>
+
     <!-- Form -->
     <div v-else>
       <!-- Título -->
@@ -274,6 +325,38 @@
           </div>
         </div>
 
+        <!-- Gratuity / Tip Selection -->
+        <div class="tip-section mt-4">
+          <h5 class="tip-title">Add a Gratuity <span class="text-muted small fw-normal">(optional)</span></h5>
+          <p class="text-muted small mb-3">100% goes to your performer(s).</p>
+          <div class="tip-options d-flex flex-wrap gap-2 mb-3">
+            <button
+              v-for="opt in tipOptions"
+              :key="opt.label"
+              type="button"
+              class="btn tip-btn"
+              :class="selectedTip === opt.value ? 'btn-primary' : 'btn-outline-secondary'"
+              @click="selectTip(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          </div>
+          <div v-if="selectedTip === 'custom'" class="input-group mb-2" style="max-width: 200px;">
+            <span class="input-group-text">$</span>
+            <input
+              v-model.number="customTipAmount"
+              type="number"
+              min="0"
+              step="0.01"
+              class="form-control"
+              placeholder="0.00"
+            />
+          </div>
+          <div v-if="computedTip > 0" class="tip-amount-display">
+            Gratuity: <strong>${{ computedTip.toFixed(2) }}</strong>
+          </div>
+        </div>
+
         <!-- Submit Button -->
         <div class="text-center mt-4">
           <button
@@ -291,7 +374,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "@/services/axios";
 import * as yup from "yup";
@@ -303,6 +386,7 @@ const loading = ref(true);
 const error = ref(null);
 const submitting = ref(false);
 const reservation = ref({});
+const confirmedAlready = ref(false);
 
 const form = reactive({
   fullAddress: "",
@@ -317,6 +401,41 @@ const form = reactive({
 });
 
 const errors = reactive({});
+
+// Tip / Gratuity
+const selectedTip = ref(null);
+const customTipAmount = ref(0);
+const tipOptions = [
+  { label: 'No tip', value: 0 },
+  { label: '10%',    value: 0.10 },
+  { label: '15%',    value: 0.15 },
+  { label: '20%',    value: 0.20 },
+  { label: 'Custom', value: 'custom' },
+];
+
+const computedTip = computed(() => {
+  if (selectedTip.value === null || selectedTip.value === 0) return 0;
+  if (selectedTip.value === 'custom') return Math.max(0, customTipAmount.value || 0);
+  const base = parseFloat(reservation.value.total_amount || 0);
+  return Math.round(base * selectedTip.value * 100) / 100;
+});
+
+const selectTip = (value) => {
+  selectedTip.value = value;
+};
+
+const saveGratuityAndRedirect = async (reservationId) => {
+  if (computedTip.value > 0) {
+    await api.patch(`/reservations/${reservationId}/gratuity`, { amount: computedTip.value });
+  }
+  const paymentResponse = await api.post(`/reservations/${reservationId}/regenerate-payment`);
+  const paymentData = paymentResponse.data?.data || paymentResponse.data;
+  if (paymentData?.payment_url) {
+    window.location.href = paymentData.payment_url;
+  } else {
+    error.value = 'Unable to generate payment link. Please contact support.';
+  }
+};
 
 // Computed
 const eventDateDisplay = computed(() => {
@@ -389,20 +508,11 @@ async function fetchReservation() {
       return;
     }
 
-    // Customer already submitted the confirmation form → skip to payment
+    // Customer already submitted the confirmation form → show tip selection, then pay
     if (reservation.value.customer_confirmed) {
-      try {
-        const paymentResponse = await api.post(`/reservations/${reservationId}/regenerate-payment`);
-        const paymentData = paymentResponse.data?.data || paymentResponse.data;
-        if (paymentData?.payment_url) {
-          window.location.href = paymentData.payment_url;
-        } else {
-          error.value = 'Unable to generate payment link. Please contact support.';
-        }
-      } catch (paymentErr) {
-        console.error('Error regenerating payment:', paymentErr);
-        error.value = 'Unable to process payment. Please contact support.';
-      }
+      loading.value = false;
+      // Keep page visible with just the tip section (form hidden via confirmedAlready flag)
+      confirmedAlready.value = true;
       return;
     }
 
@@ -461,17 +571,24 @@ async function handleSubmit() {
 
     await api.patch(`/reservations/${reservationId}/confirmation`, updateData);
 
-    // Always regenerate a fresh Stripe session — stored payment_url may be expired
-    const paymentResponse = await api.post(`/reservations/${reservationId}/regenerate-payment`);
-    const paymentData = paymentResponse.data?.data || paymentResponse.data;
-    if (paymentData?.payment_url) {
-      window.location.href = paymentData.payment_url;
-    } else {
-      error.value = 'Unable to generate payment link. Please contact support.';
-    }
+    // Save gratuity (if any) then regenerate Stripe session
+    await saveGratuityAndRedirect(reservationId);
   } catch (err) {
     console.error('Submission error:', err);
     error.value = 'An error occurred while saving. Please try again or contact support.';
+  } finally {
+    submitting.value = false;
+  }
+}
+
+// Handler for already-confirmed path (skip form, just save tip + pay)
+async function handlePayOnly() {
+  submitting.value = true;
+  try {
+    await saveGratuityAndRedirect(route.params.id);
+  } catch (err) {
+    console.error('Payment error:', err);
+    error.value = 'An error occurred. Please try again or contact support.';
   } finally {
     submitting.value = false;
   }
@@ -634,6 +751,33 @@ textarea.form-control {
 .btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tip-section {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+}
+
+.tip-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin-bottom: 0.25rem;
+}
+
+.tip-btn {
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+}
+
+.tip-amount-display {
+  font-size: 0.95rem;
+  color: #374151;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 768px) {

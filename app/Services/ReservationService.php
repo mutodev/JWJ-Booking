@@ -1032,7 +1032,8 @@ class ReservationService
             (float) $reservation->total_amount,
             $reservation->email,
             $reservationId,
-            'Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie')
+            'Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie'),
+            (float) ($reservation->gratuity_amount ?? 0)
         );
 
         $paymentUrl = $session->url;
@@ -1187,6 +1188,12 @@ class ReservationService
             $discountBlockPc = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
         }
 
+        $gratuityAmount = (float) ($reservation->gratuity_amount ?? 0);
+        $gratuityRow    = $gratuityAmount > 0
+            ? '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Gratuity / Tip</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">$' . number_format($gratuityAmount, 2) . '</td></tr>'
+            : '';
+        $totalPaid = number_format((float) $reservation->total_amount + $gratuityAmount, 2);
+
         $templateVars = [
             'customer_name'      => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id'     => $reservation->id,
@@ -1198,7 +1205,9 @@ class ReservationService
             'total_duration_row' => $totalDurationRow,
             'promo_code_row'     => $promoBlockPc,
             'discount_row'       => $discountBlockPc,
+            'gratuity_row'       => $gratuityRow,
             'total_amount'       => number_format($reservation->total_amount, 2),
+            'total_paid'         => $totalPaid,
             '_reservation'       => $reservation,
         ];
 
@@ -1247,6 +1256,30 @@ class ReservationService
         } catch (\Throwable $e) {
             log_message('error', 'Failed to send confirmation email: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Guarda el monto de gratuity para una reserva antes de redirigir a Stripe.
+     *
+     * @param string $id Reservation ID
+     * @param float $amount Gratuity amount (0 = no tip)
+     * @return void
+     */
+    public function updateGratuity(string $id, float $amount): void
+    {
+        $reservation = $this->repository->getById($id);
+
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        if ($reservation->is_paid) {
+            throw new HTTPException('Reservation is already paid', Response::HTTP_BAD_REQUEST);
+        }
+
+        $this->repository->update($id, [
+            'gratuity_amount' => max(0, round($amount, 2)),
+        ]);
     }
 
     /**
