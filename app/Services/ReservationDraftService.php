@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\ReservationDraftModel;
+use App\Services\BrevoEmailService;
+use App\Services\EmailTemplateService;
 
 class ReservationDraftService
 {
@@ -173,6 +175,39 @@ class ReservationDraftService
             log_message('error', 'Error getting all drafts: ' . $e->getMessage());
             return [];
         }
+    }
+
+    /**
+     * Send follow-up email to an abandoned cart
+     *
+     * @param string $id Draft ID
+     * @return bool
+     */
+    public function sendFollowUpEmail(string $id): bool
+    {
+        $draft = $this->draftModel->find($id);
+
+        if (!$draft || $draft->completed || empty($draft->email)) {
+            return false;
+        }
+
+        $formData = is_string($draft->form_data)
+            ? (json_decode($draft->form_data, true) ?? [])
+            : (array) $draft->form_data;
+
+        $customerName = $formData['full_name'] ?? $formData['name'] ?? 'there';
+
+        $templateService = new EmailTemplateService();
+        $emailService    = new BrevoEmailService();
+
+        $rendered = $templateService->render('abandoned_cart_followup', [
+            'customer_name' => $customerName,
+            'resume_url'    => base_url(),
+        ]);
+
+        $emailService->sendEmail($draft->email, $rendered['subject'], $rendered['body']);
+
+        return true;
     }
 
     /**

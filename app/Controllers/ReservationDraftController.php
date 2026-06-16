@@ -116,6 +116,32 @@ class ReservationDraftController extends ResourceController
     }
 
     /**
+     * Enviar follow-up email a un carrito abandonado
+     * POST /reservation-drafts/{id}/follow-up
+     */
+    public function sendFollowUp($id = null)
+    {
+        try {
+            $result = $this->service->sendFollowUpEmail($id);
+
+            if (!$result) {
+                return $this->response
+                    ->setStatusCode(400)
+                    ->setJSON(create_response(false, null, 'Could not send email. Draft may not exist, is already completed, or has no email.'));
+            }
+
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response(true, null, 'Follow-up email sent successfully'));
+        } catch (\Exception $e) {
+            log_message('error', 'Error sending follow-up email: ' . $e->getMessage());
+            return $this->response
+                ->setStatusCode(500)
+                ->setJSON(create_response(false, null, 'An error occurred while sending the follow-up email'));
+        }
+    }
+
+    /**
      * Obtener un draft específico por ID
      * GET /reservation-drafts/{id}
      */

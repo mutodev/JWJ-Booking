@@ -255,6 +255,7 @@ $routes->group('api', function ($routes) {
         $routes->get('/', [ReservationDraftController::class, 'index']);
         $routes->get('stats', [ReservationDraftController::class, 'stats']);
         $routes->get('abandoned', [ReservationDraftController::class, 'abandoned']);
+        $routes->post('(:segment)/follow-up', [ReservationDraftController::class, 'sendFollowUp']);
         $routes->get('(:segment)', [ReservationDraftController::class, 'show']);
     });
 });

@@ -127,6 +127,16 @@
           >
             <i class="bi bi-eye"></i> View
           </button>
+          <button
+            v-if="!item.completed && item.email"
+            class="btn btn-sm btn-action-icon btn-warning ms-1"
+            :disabled="sendingId === item.id"
+            :title="'Send follow-up to ' + item.email"
+            @click="sendFollowUp(item)"
+          >
+            <i v-if="sendingId === item.id" class="bi bi-hourglass-split"></i>
+            <i v-else class="bi bi-envelope-arrow-up"></i>
+          </button>
         </template>
       </EasyDataTable>
     </div>
@@ -170,6 +180,7 @@ const filterDateTo = ref("");
 const modalDetailsVisible = ref(false);
 const modalAnalyticsVisible = ref(false);
 const selectedData = ref(null);
+const sendingId = ref(null);
 
 const viewDetails = (item) => {
   selectedData.value = { ...item };
@@ -178,6 +189,19 @@ const viewDetails = (item) => {
 
 const showAnalytics = () => {
   modalAnalyticsVisible.value = true;
+};
+
+const sendFollowUp = async (item) => {
+  sendingId.value = item.id;
+  try {
+    await api.post(`/reservation-drafts/${item.id}/follow-up`);
+    alert(`Follow-up email sent to ${item.email}`);
+  } catch (error) {
+    alert('Failed to send follow-up email. Please try again.');
+    console.error(error);
+  } finally {
+    sendingId.value = null;
+  }
 };
 
 // Headers manuales
