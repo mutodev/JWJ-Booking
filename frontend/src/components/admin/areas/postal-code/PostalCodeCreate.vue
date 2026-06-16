@@ -1,5 +1,5 @@
 <template>
-  <div v-if="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog">
+  <div v-show="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog" :aria-hidden="!show">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -151,7 +151,7 @@ const loading = ref(false);
 watch(
   () => props.cities,
   (newData) => {
-    dataCities.value = [...newData];
+    if (Array.isArray(newData)) dataCities.value = [...newData];
   },
   { deep: true, immediate: true }
 );
@@ -205,18 +205,16 @@ const override_county_id = ref("");
 watch(
   () => props.show,
   (newVal) => {
-    if (newVal) {
-      // Resetear el formulario cuando la modal se abre
-      resetForm({
-        values: {
-          zipcode: "",
-          city_id: "",
-          zone_type: "",
-          travel_fee_1_performer: null,
-          travel_fee_2_performers: null
-        },
-      });
-    }
+    resetForm({
+      values: {
+        zipcode: "",
+        city_id: "",
+        zone_type: "",
+        travel_fee_1_performer: null,
+        travel_fee_2_performers: null,
+      },
+    });
+    override_county_id.value = "";
   }
 );
 
