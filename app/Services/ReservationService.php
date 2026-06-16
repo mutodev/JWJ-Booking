@@ -1248,4 +1248,41 @@ class ReservationService
             log_message('error', 'Failed to send confirmation email: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Envía recordatorio semanal a reservas con evento en 7 días.
+     * Marca week_reminder_sent = 1 para evitar duplicados.
+     *
+     * @return int Cantidad de emails enviados
+     */
+    public function sendWeekReminders(): int
+    {
+        $reservations = $this->repository->getUpcomingForReminder();
+        $sent = 0;
+
+        foreach ($reservations as $reservation) {
+            if (empty($reservation->email)) {
+                continue;
+            }
+
+            $templateVars = [
+                'customer_name' => strtok(trim($reservation->full_name ?? ''), ' '),
+                'service_name'  => $reservation->service_name ?? '',
+                'event_date'    => isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD',
+                'event_time'    => $reservation->event_time ?? 'TBD',
+                'event_address' => $reservation->event_address ?? '',
+            ];
+
+            try {
+                $rendered = $this->emailTemplateService->render('week_reminder', $templateVars);
+                $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
+                $this->repository->update($reservation->id, ['week_reminder_sent' => 1]);
+                $sent++;
+            } catch (\Throwable $e) {
+                log_message('error', "Failed to send week reminder to {$reservation->email}: " . $e->getMessage());
+            }
+        }
+
+        return $sent;
+    }
 }

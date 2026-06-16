@@ -99,6 +99,33 @@ class ReservationRepository
      * @param string $cutoffDate Fecha límite en formato Y-m-d
      * @return int Cantidad de reservas eliminadas
      */
+    /**
+     * Reservas con evento en exactamente 7 días que aún no recibieron reminder
+     */
+    public function getUpcomingForReminder(): array
+    {
+        $targetDate = date('Y-m-d', strtotime('+7 days'));
+
+        return $this->model
+            ->select("
+                reservations.id,
+                reservations.event_date,
+                reservations.event_time,
+                reservations.event_address,
+                reservations.status,
+                customers.full_name,
+                customers.email,
+                services.name as service_name
+            ")
+            ->join("customers", "customers.id = reservations.customer_id", "left")
+            ->join("service_prices", "service_prices.id = reservations.service_price_id", "left")
+            ->join("services", "services.id = service_prices.service_id", "left")
+            ->where("reservations.event_date", $targetDate)
+            ->where("reservations.week_reminder_sent", 0)
+            ->whereNotIn("reservations.status", ['cancelled'])
+            ->findAll();
+    }
+
     public function deleteBeforeDate(string $cutoffDate): int
     {
         $reservations = $this->model

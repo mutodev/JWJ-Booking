@@ -49,6 +49,7 @@ class ReservationModel extends Model
         'is_invoiced',
         'is_paid',
         'customer_confirmed',
+        'week_reminder_sent',
         'customer_notes',
         'internal_notes',
         'description',
