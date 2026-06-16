@@ -38,7 +38,7 @@
 
             <!-- Extra children -->
             <div class="breakdown-item d-flex justify-content-between" v-if="extraChildrenTotal > 0">
-              <span>Extra Children ({{ getExtraChildrenCount() }} over {{ getMaxKidsIncluded() }}):</span>
+              <span>Number of children ({{ getExtraChildrenCount() }} over {{ getMaxKidsIncluded() }}):</span>
               <span>${{ extraChildrenTotal.toFixed(2) }}</span>
             </div>
 

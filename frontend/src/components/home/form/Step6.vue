@@ -110,7 +110,7 @@
                     </div>
                   </template>
                   <div class="d-flex justify-content-between breakdown-item" v-if="reservationData.calculation.extra_children_total > 0">
-                    <span>Extra Children ({{ reservationData.calculation.extra_children_count }} kids):</span>
+                    <span>Number of children ({{ reservationData.calculation.extra_children_count }} kids):</span>
                     <span>${{ formatPrice(reservationData.calculation.extra_children_total) }}</span>
                   </div>
                   <div class="d-flex justify-content-between breakdown-item border-top pt-2 mt-2 fw-semibold">
