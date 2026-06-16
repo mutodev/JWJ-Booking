@@ -1,5 +1,5 @@
 <template>
-  <div v-show="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog" :aria-hidden="!show">
+  <div v-show="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
@@ -172,23 +172,13 @@ const schema = yup.object({
   travel_fee_1_performer: yup
     .number()
     .nullable()
-    .transform((value, originalValue) => originalValue === '' ? null : value)
-    .min(0, "Travel fee must be positive")
-    .when('zone_type', {
-      is: 'travel_fee',
-      then: (schema) => schema.required("Travel fee for 1 performer is required when zone type is 'travel_fee'"),
-      otherwise: (schema) => schema.nullable()
-    }),
+    .transform((value, originalValue) => (originalValue === '' || originalValue === null) ? null : value)
+    .min(0, "Travel fee must be positive"),
   travel_fee_2_performers: yup
     .number()
     .nullable()
-    .transform((value, originalValue) => originalValue === '' ? null : value)
-    .min(0, "Travel fee must be positive")
-    .when('zone_type', {
-      is: 'travel_fee',
-      then: (schema) => schema.required("Travel fee for 2 performers is required when zone type is 'travel_fee'"),
-      otherwise: (schema) => schema.nullable()
-    }),
+    .transform((value, originalValue) => (originalValue === '' || originalValue === null) ? null : value)
+    .min(0, "Travel fee must be positive"),
 });
 
 const { handleSubmit, resetForm } = useForm({
@@ -198,8 +188,8 @@ const { handleSubmit, resetForm } = useForm({
 const { value: zipcode, errorMessage: zipcode_error } = useField("zipcode");
 const { value: city_id, errorMessage: city_id_error } = useField("city_id");
 const { value: zone_type, errorMessage: zone_type_error } = useField("zone_type");
-const { value: travel_fee_1_performer, errorMessage: travel_fee_1_performer_error } = useField("travel_fee_1_performer");
-const { value: travel_fee_2_performers, errorMessage: travel_fee_2_performers_error } = useField("travel_fee_2_performers");
+const { value: travel_fee_1_performer, errorMessage: travel_fee_1_performer_error, setErrors: setFee1Error } = useField("travel_fee_1_performer");
+const { value: travel_fee_2_performers, errorMessage: travel_fee_2_performers_error, setErrors: setFee2Error } = useField("travel_fee_2_performers");
 const override_county_id = ref("");
 
 watch(
@@ -231,6 +221,18 @@ const closeModal = () => {
 };
 
 const submitForm = handleSubmit(async (values) => {
+  if (values.zone_type === 'travel_fee') {
+    let hasError = false;
+    if (values.travel_fee_1_performer === null || values.travel_fee_1_performer === undefined) {
+      setFee1Error("Required for Travel Fee zone");
+      hasError = true;
+    }
+    if (values.travel_fee_2_performers === null || values.travel_fee_2_performers === undefined) {
+      setFee2Error("Required for Travel Fee zone");
+      hasError = true;
+    }
+    if (hasError) return;
+  }
   loading.value = true;
   try {
     await api.post(`/zipcodes`, {
