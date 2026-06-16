@@ -205,6 +205,15 @@
       <div class="modal-backdrop fade show" style="z-index: 1054;" @click="closeExportModal"></div>
     </div>
   </div>
+
+  <ConfirmModal
+    :show="bulkDeleteModalVisible"
+    title="Delete Reservations"
+    :message="`You are about to delete <strong>${itemsSelected.length} reservation(s)</strong>. This action cannot be undone.`"
+    confirmLabel="Delete Reservations"
+    @confirm="executeBulkDelete"
+    @cancel="bulkDeleteModalVisible = false"
+  />
 </template>
 
 <script setup>
@@ -214,6 +223,7 @@ import ReservationCreate from "./ReservationCreate.vue";
 import ReservationEdit from "./ReservationEdit.vue";
 import ReservationView from "./ReservationView.vue";
 import ComposeEmailModal from "@/components/admin/email-templates/ComposeEmailModal.vue";
+import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Reservations", icon: "bi-calendar-event" });
@@ -239,6 +249,7 @@ const exportError = ref('');
 const exportPreviewCount = ref(null);
 const itemsSelected = ref([]);
 const deletingBulk = ref(false);
+const bulkDeleteModalVisible = ref(false);
 const selectedData = ref(null);
 const sendingEmail = ref(false);
 const paymentDescription = ref("");
@@ -338,11 +349,13 @@ const handle = () => {
   getData();
 };
 
-const bulkDelete = async () => {
-  const count = itemsSelected.value.length;
-  if (!count) return;
-  if (!confirm(`Delete ${count} reservation(s)? This action cannot be undone.`)) return;
+const bulkDelete = () => {
+  if (!itemsSelected.value.length) return;
+  bulkDeleteModalVisible.value = true;
+};
 
+const executeBulkDelete = async () => {
+  bulkDeleteModalVisible.value = false;
   deletingBulk.value = true;
   try {
     const ids = itemsSelected.value.map((item) => item.id);
@@ -351,7 +364,6 @@ const bulkDelete = async () => {
     await getData();
   } catch (error) {
     console.error('Error deleting reservations:', error);
-    alert('Error deleting reservations. Please try again.');
   } finally {
     deletingBulk.value = false;
   }

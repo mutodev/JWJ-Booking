@@ -11,7 +11,7 @@ class CustomerModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = false;
     protected $returnType       = Customer::class;
-    protected $useSoftDeletes   = false;
+    protected $useSoftDeletes   = true;
     protected $protectFields    = true;
     protected $allowedFields    = [
         'email',
@@ -19,6 +19,7 @@ class CustomerModel extends Model
         'full_name',
         'billing_address',
         'segment',
+        'deleted_at',
     ];
 
     protected bool $allowEmptyInserts = false;

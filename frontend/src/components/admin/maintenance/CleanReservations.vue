@@ -14,7 +14,7 @@
               </p>
               <button
                 class="btn btn-danger btn-lg"
-                @click="confirmDelete"
+                @click="confirmModalVisible = true"
                 :disabled="loading"
               >
                 <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -36,23 +36,33 @@
       </div>
     </div>
   </div>
+
+  <ConfirmModal
+    :show="confirmModalVisible"
+    title="Delete Old Reservations"
+    message="This will soft-delete all reservations with an event date on or before last Sunday."
+    confirmLabel="Delete Old Reservations"
+    @confirm="runDelete"
+    @cancel="confirmModalVisible = false"
+  />
 </template>
 
 <script setup>
 import { ref, inject, onMounted } from "vue";
 import api from "@/services/axios";
+import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 const loading = ref(false);
 const result = ref(null);
+const confirmModalVisible = ref(false);
 
 onMounted(() => {
   updateHeaderData({ title: "Clean Reservations", icon: "bi-trash3" });
 });
 
-const confirmDelete = async () => {
-  if (!window.confirm("Are you sure you want to delete all old reservations?")) return;
-
+const runDelete = async () => {
+  confirmModalVisible.value = false;
   try {
     loading.value = true;
     const response = await api.delete("/reservations/old");

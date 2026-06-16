@@ -46,7 +46,7 @@ class CustomerService
     }
 
     /**
-     * Crear nuevo cliente (validando email único)
+     * Crear nuevo cliente (validando email único). Si existe un soft-delete, lo restaura.
      */
     public function create(array $data): string
     {
@@ -54,6 +54,16 @@ class CustomerService
 
         if ($existing) {
             throw new HTTPException(lang('Customer.alreadyExists', [$data['email']]), Response::HTTP_CONFLICT);
+        }
+
+        $softDeleted = $this->repository->getSoftDeletedByEmail($data['email']);
+
+        if ($softDeleted) {
+            $restored = $this->repository->restore($softDeleted->id, $data);
+            if (!$restored) {
+                throw new HTTPException(lang('Customer.createFailed'), Response::HTTP_BAD_REQUEST);
+            }
+            return $softDeleted->id;
         }
 
         $id = $this->repository->create($data);

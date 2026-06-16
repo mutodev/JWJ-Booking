@@ -58,6 +58,24 @@ class CustomerRepository
     }
 
     /**
+     * Obtener cliente soft-deleted por email
+     */
+    public function getSoftDeletedByEmail(string $email): ?Customer
+    {
+        return $this->model->onlyDeleted()->where('email', $email)->first();
+    }
+
+    /**
+     * Restaurar cliente soft-deleted actualizando sus campos y poniendo deleted_at = null
+     */
+    public function restore(string $id, array $data): bool
+    {
+        return $this->model->db->table('customers')
+            ->where('id', $id)
+            ->update(array_merge($data, ['deleted_at' => null, 'updated_at' => date('Y-m-d H:i:s')]));
+    }
+
+    /**
      * Crear cliente
      */
     public function create(array $data): ?string

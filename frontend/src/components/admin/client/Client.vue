@@ -55,8 +55,11 @@
 
         <!-- Acciones -->
         <template #item-actions="item">
-          <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
-            <i class="bi bi-pencil-square"></i> Edit
+          <button class="btn btn-sm btn-action-icon btn-warning me-1" @click="editModal(item)" title="Edit">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+          <button class="btn btn-sm btn-action-icon btn-danger" @click="deleteModal(item)" title="Delete">
+            <i class="bi bi-trash3"></i>
           </button>
         </template>
       </EasyDataTable>
@@ -77,6 +80,13 @@
     @close="modalCreateVisible = false"
     @saved="handle"
   />
+
+  <ClientDelete
+    :show="modalDeleteVisible"
+    :data="selectedData"
+    @close="modalDeleteVisible = false"
+    @deleted="handle"
+  />
 </template>
 
 <script setup>
@@ -84,6 +94,7 @@ import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import ClientEdit from "./ClientEdit.vue";
 import ClientCreate from "./ClientCreate.vue";
+import ClientDelete from "./ClientDelete.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Clients", icon: "bi-people-fill" });
