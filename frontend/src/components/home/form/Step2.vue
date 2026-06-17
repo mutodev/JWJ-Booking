@@ -131,9 +131,9 @@ const services = ref([]);
 const selectedService = ref(null);
 const defaultServiceImage = "/img/default.jpg";
 
-// Filter out 1-performer services when "11-24 kids" is selected
+// Filter out 1-performer services when 11+ kids is selected
 const filteredServices = computed(() => {
-  if (props.childrenRange === '11-24 kids') {
+  if (props.childrenRange && props.childrenRange !== '1-10 kids') {
     return services.value.filter(s => s.performers_count > 1);
   }
   return services.value;
