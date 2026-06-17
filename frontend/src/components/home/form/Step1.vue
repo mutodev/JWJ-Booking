@@ -219,7 +219,7 @@
             content="Enter the address where the event will take place"
             placement="right"
             effect="dark"
-            trigger="focus"
+            trigger="hover"
           >
             <input
               v-model="form.fullAddress"
@@ -227,7 +227,7 @@
               class="form-control"
               id="fullAddress"
               placeholder="123 Main St, City, State"
-              autocomplete="street-address"
+              autocomplete="off"
               @blur="validateField('fullAddress')"
             />
           </el-tooltip>
