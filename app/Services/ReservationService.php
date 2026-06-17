@@ -999,6 +999,8 @@ class ReservationService
             $discountBlock = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
         }
 
+        $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
+
         $templateVars = [
             'customer_name'       => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id'      => $reservation->id,
@@ -1008,6 +1010,7 @@ class ReservationService
             'event_address'       => $reservation->event_address ?? '',
             'children_count'      => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'birthday_child_name' => $birthdayBlock,
+            'total_duration_row'  => $totalDurationRow,
             'promo_code_row'      => $promoBlock,
             'discount_row'        => $discountBlock,
             'total_amount'        => number_format($reservation->total_amount, 2),
@@ -1202,10 +1205,7 @@ class ReservationService
 
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
 
-        $durationHours = intval($reservation->duration_hours ?? 0);
-        $totalDurationRow = $durationHours > 0
-            ? '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Total Duration</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">' . $durationHours . ' ' . ($durationHours === 1 ? 'hour' : 'hours') . '</td></tr>'
-            : '';
+        $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
 
         $promoBlockPc    = '';
         $discountBlockPc = '';
@@ -1262,17 +1262,18 @@ class ReservationService
         }
 
         $templateVars = [
-            'customer_name'  => strtok(trim($reservation->full_name ?? ''), ' '),
-            'reservation_id' => $reservation->id,
-            'service_name'   => $reservation->service_name ?? '',
-            'event_date'     => $eventDate,
-            'event_time'     => $reservation->event_time ?? 'To be confirmed',
-            'event_address'  => $reservation->event_address ?? 'To be confirmed',
-            'children_count' => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
-            'promo_code_row' => $promoBlockRc,
-            'discount_row'   => $discountBlockRc,
-            'total_amount'   => number_format($reservation->total_amount, 2),
-            '_reservation'   => $reservation,
+            'customer_name'      => strtok(trim($reservation->full_name ?? ''), ' '),
+            'reservation_id'     => $reservation->id,
+            'service_name'       => $reservation->service_name ?? '',
+            'event_date'         => $eventDate,
+            'event_time'         => $reservation->event_time ?? 'To be confirmed',
+            'event_address'      => $reservation->event_address ?? 'To be confirmed',
+            'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
+            'total_duration_row' => $this->buildDurationRow($reservation->duration_hours ?? 0),
+            'promo_code_row'     => $promoBlockRc,
+            'discount_row'       => $discountBlockRc,
+            'total_amount'       => number_format($reservation->total_amount, 2),
+            '_reservation'       => $reservation,
         ];
 
         $rendered = $this->emailTemplateService->render('reservation_confirmation', $templateVars);
@@ -1343,5 +1344,29 @@ class ReservationService
         }
 
         return $sent;
+    }
+
+    private function buildDurationRow(float|int|string $durationHours): string
+    {
+        $hours = floatval($durationHours);
+        if ($hours <= 0) {
+            return '';
+        }
+
+        $wholeH = (int) floor($hours);
+        $mins   = (int) round(($hours - $wholeH) * 60);
+
+        if ($wholeH > 0 && $mins > 0) {
+            $label = $wholeH . 'h ' . $mins . 'min';
+        } elseif ($wholeH > 0) {
+            $label = $wholeH . ' ' . ($wholeH === 1 ? 'hour' : 'hours');
+        } else {
+            $label = $mins . ' minutes';
+        }
+
+        return '<tr>'
+            . '<td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Total Duration</td>'
+            . '<td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">' . $label . '</td>'
+            . '</tr>';
     }
 }

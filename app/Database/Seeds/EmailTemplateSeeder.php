@@ -175,6 +175,9 @@ class EmailTemplateSeeder extends Seeder
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">{{children_count}}</td>
                                 </tr>
                                 {{birthday_child_name}}
+                                {{total_duration_row}}
+                                {{promo_code_row}}
+                                {{discount_row}}
                                 <tr>
                                     <td style="padding: 14px 16px; font-size: 16px; font-weight: 700; color: #1F2937; background-color: #FFF0F6; border-bottom: none;">Total Amount</td>
                                     <td style="padding: 14px 16px; font-size: 20px; font-weight: 700; color: #FF74B7; background-color: #FFF0F6; border-bottom: none;">${{total_amount}}</td>
@@ -291,6 +294,9 @@ class EmailTemplateSeeder extends Seeder
                                     <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Number of Children</td>
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">{{children_count}}</td>
                                 </tr>
+                                {{total_duration_row}}
+                                {{promo_code_row}}
+                                {{discount_row}}
                                 <tr>
                                     <td style="padding: 14px 16px; font-size: 16px; font-weight: 700; color: #1F2937; background-color: #FFF0F6; border-bottom: none;">Total Amount</td>
                                     <td style="padding: 14px 16px; font-size: 20px; font-weight: 700; color: #FF74B7; background-color: #FFF0F6; border-bottom: none;">${{total_amount}}</td>
