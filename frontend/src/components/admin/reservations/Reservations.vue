@@ -113,6 +113,7 @@
       :show="modalViewVisible"
       :data="selectedData"
       @close="modalViewVisible = false"
+      @edit="(item) => { modalViewVisible = false; editModal(item); }"
     />
 
     <ComposeEmailModal

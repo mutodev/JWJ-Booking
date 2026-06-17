@@ -516,7 +516,24 @@ async function fetchReservation() {
       return;
     }
 
-    // Keep form fields empty - client will fill them out
+    // Pre-fill form with data already entered by admin (if any)
+    const r = reservation.value;
+    const cleanTime  = (t) => (t && t.length > 5 ? t.substring(0, 5) : (t || ''));
+    const cleanDash  = (v) => (v && v !== '-' ? v : '');
+    const boolToYesNo = (v) => {
+      if (v === null || v === undefined || v === '') return '';
+      return (v == 1 || v === true || v === 'yes') ? 'yes' : 'no';
+    };
+
+    form.fullAddress             = cleanDash(r.event_address);
+    form.instructions            = cleanDash(r.arrival_parking_instructions);
+    form.startTime               = cleanTime(r.event_time);
+    form.entertainmentStartTime  = cleanTime(r.entertainment_start_time);
+    form.birthdayChildName       = cleanDash(r.birthday_child_name);
+    form.childAge                = (r.birthday_child_age && r.birthday_child_age > 0) ? String(r.birthday_child_age) : '';
+    form.ageRange                = cleanDash(r.children_age_range);
+    form.songRequests            = cleanDash(r.song_requests);
+    form.happyBirthdayRequest    = boolToYesNo(r.sing_happy_birthday);
 
   } catch (err) {
     console.error("Error fetching reservation:", err);

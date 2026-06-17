@@ -246,6 +246,26 @@ class ReservationService
             }
         }
 
+        // Save addons to reservation_addons table
+        if (!empty($addons)) {
+            foreach ($addons as $addon) {
+                $this->reservationAddonRepository->create([
+                    'reservation_id' => $response->id,
+                    'addon_id'       => $addon['id'],
+                    'quantity'       => intval($addon['quantity'] ?? 1),
+                    'suboption'      => $addon['suboption'] ?? $addon['selectedOption'] ?? null,
+                    'price_at_time'  => floatval($addon['selectedPrice'] ?? $addon['base_price'] ?? 0),
+                ]);
+            }
+        }
+
+        // Send payment email to customer automatically
+        try {
+            $this->sendPaymentEmail($response->id);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to send payment email after admin reservation creation: ' . $e->getMessage());
+        }
+
         return $response;
     }
 
