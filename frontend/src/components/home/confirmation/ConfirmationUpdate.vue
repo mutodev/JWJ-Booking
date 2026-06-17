@@ -588,8 +588,8 @@ async function handleSubmit() {
 
     await api.patch(`/reservations/${reservationId}/confirmation`, updateData);
 
-    // Save gratuity (if any) then regenerate Stripe session
-    await saveGratuityAndRedirect(reservationId);
+    // Show tip screen — user proceeds to payment from there
+    confirmedAlready.value = true;
   } catch (err) {
     console.error('Submission error:', err);
     error.value = 'An error occurred while saving. Please try again or contact support.';
