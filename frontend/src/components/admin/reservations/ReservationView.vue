@@ -133,7 +133,7 @@
                     <div class="col-6">{{ data.children_count || 0 }} children</div>
                   </div>
                   <div class="row mb-2">
-                    <div class="col-6"><strong>Age Range:</strong></div>
+                    <div class="col-6"><strong>Number of Children:</strong></div>
                     <div class="col-6">{{ data.children_age_range || 'Not specified' }}</div>
                   </div>
                   <div class="row mb-2" v-if="getExtraChildren() > 0">

@@ -68,12 +68,12 @@
                   />
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Children Age Range</label>
+                  <label class="form-label">Number of Children</label>
                   <input
                     v-model="editData.children_age_range"
                     type="text"
                     class="form-control"
-                    placeholder="e.g., 5-10 years"
+                    placeholder="e.g., 11-30 kids"
                   />
                 </div>
                 <div class="col-md-3">

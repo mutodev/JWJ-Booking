@@ -44,10 +44,10 @@
       </span>
     </div>
 
-    <!-- Children Age Range -->
+    <!-- Number of Children -->
     <div class="col-5">
       <label for="children_age_range" class="form-label"
-        >Children Age Range</label
+        >Number of Children</label
       >
       <input
         id="children_age_range"
