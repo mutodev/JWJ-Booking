@@ -26,7 +26,7 @@ class EmailTemplateSeeder extends Seeder
                 ]),
                 'content'     => json_encode([
                     'greeting_title' => 'Hi {{customer_name}}!',
-                    'intro'          => 'Thank you for choosing Jam with Jamie for your event! Please complete your event details and proceed to payment.',
+                    'intro'          => 'Thank you for choosing Jam with Jamie! Below, you\'ll find your payment link and the opportunity to submit additional information to finalize your booking.<br><br>All Terms and Conditions have been sent to you in a separate email; by submitting payment, you agree to them, so please review everything carefully beforehand.<br><br>The payment link and temporary reservation will be active for the next 3 days. After this period, the link will expire, and your reservation will be automatically cancelled.<br><br>We do our very best to accommodate requests for changes to location or time; however, we cannot guarantee modifications once the booking is finalized.',
                     'button_text'    => 'Continue to Pay',
                     'steps_heading'  => 'Next Steps',
                     'step1'          => '<strong>Complete Event Details</strong> &mdash; Click the button above to fill in your event information',
