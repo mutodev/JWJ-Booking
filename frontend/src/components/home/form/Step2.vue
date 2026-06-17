@@ -51,7 +51,7 @@
             <div class="service-info-item">
               <i class="bi bi-car-front-fill service-info-item__icon"></i>
               <span class="service-info-item__text">
-                Travel Fee: ${{ getDisplayTravelFee(service).toFixed(2) }}
+                Travel Fee: ${{ formatPrice(getDisplayTravelFee(service)) }}
               </span>
             </div>
 
@@ -248,6 +248,11 @@ function getDisplayTravelFee(service) {
   }
   // Fallback: travel fee del service_price (por county)
   return parseFloat(service.travel_fee || 0);
+}
+
+function formatPrice(value) {
+  const n = parseFloat(value) || 0;
+  return n % 1 === 0 ? String(Math.round(n)) : n.toFixed(2);
 }
 
 function formatDuration(hours) {
