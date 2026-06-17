@@ -128,7 +128,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);">
                     <tr>
                         <td style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 3px solid #FF74B7;">
-                            <img src="{{logo_url}}" alt="Jam with Jamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="300" style="display: inline-block; max-width: 300px; height: auto;">
                         </td>
                     </tr>
                     <tr>
@@ -247,7 +247,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);">
                     <tr>
                         <td style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 3px solid #FF74B7;">
-                            <img src="{{logo_url}}" alt="Jam with Jamie" width="140" style="display: inline-block; max-width: 140px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="300" style="display: inline-block; max-width: 300px; height: auto;">
                         </td>
                     </tr>
                     <tr>
@@ -361,7 +361,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 36px 40px; text-align: center;">
-                            <img src="{{logo_url}}" alt="Jam with Jamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="300" style="display: inline-block; max-width: 300px; height: auto;">
                         </td>
                     </tr>
                     <tr>
@@ -420,7 +420,7 @@ class EmailTemplateSeeder extends Seeder
                 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);">
                     <tr>
                         <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 36px 40px; text-align: center;">
-                            <img src="{{logo_url}}" alt="Jam with Jamie" width="160" style="display: inline-block; max-width: 160px; height: auto;">
+                            <img src="{{logo_url}}" alt="Jam with Jamie" width="300" style="display: inline-block; max-width: 300px; height: auto;">
                         </td>
                     </tr>
                     <tr>

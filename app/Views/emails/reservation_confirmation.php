@@ -20,7 +20,7 @@
                     <!-- Header -->
                     <tr>
                         <td style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 3px solid #FF74B7;">
-                            <img src="<?= base_url('img/logos/JWJ_logo-05.png') ?>" alt="Jam with Jamie" width="220" style="display: inline-block; max-width: 220px; height: auto;">
+                            <img src="<?= base_url('img/logos/JWJ_logo-05.png') ?>" alt="Jam with Jamie" width="300" style="display: inline-block; max-width: 300px; height: auto;">
                         </td>
                     </tr>
 
