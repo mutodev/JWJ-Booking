@@ -16,7 +16,7 @@ class EmailTemplateSeeder extends Seeder
                 'id'                  => 'et-payment-notification-00000000001',
                 'slug'                => 'payment_notification',
                 'name'                => 'Payment Notification',
-                'subject'             => 'Payment Information for Your Event Reservation - ID: {{reservation_id}}',
+                'subject'             => 'Payment Information for Your Event Reservation',
                 'body'                => $this->getPaymentNotificationBody(),
                 'available_variables' => json_encode([
                     'customer_name', 'reservation_id', 'service_name',
