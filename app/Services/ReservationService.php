@@ -656,10 +656,10 @@ class ReservationService
             throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
         }
 
-        $basePrice        = floatval($reservation['base_price'] ?? 0);
-        $addonsTotal      = floatval($reservation['addons_total'] ?? 0);
-        $extraChildrenFee = floatval($reservation['extra_children_fee'] ?? 0);
-        $expeditionFee    = floatval($reservation['expedition_fee'] ?? 0);
+        $basePrice        = floatval($reservation->base_price ?? 0);
+        $addonsTotal      = floatval($reservation->addons_total ?? 0);
+        $extraChildrenFee = floatval($reservation->extra_children_fee ?? 0);
+        $expeditionFee    = floatval($reservation->expedition_fee ?? 0);
         $grossTotal       = $basePrice + $addonsTotal + $extraChildrenFee + $expeditionFee;
 
         if (!$code) {
@@ -709,7 +709,7 @@ class ReservationService
         $newTotal = $grossTotal - $discountAmount;
 
         // Si la reservación ya tenía este mismo código no incrementamos el uso de nuevo
-        $previousCode = $reservation['promo_code'] ?? null;
+        $previousCode = $reservation->promo_code ?? null;
         $isNewCode    = strtoupper(trim($previousCode ?? '')) !== strtoupper(trim($code));
 
         $this->repository->update($id, [
