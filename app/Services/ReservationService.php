@@ -262,16 +262,6 @@ class ReservationService
             }
         }
 
-        // Send reservation confirmation email to customer
-        try {
-            $fullReservation = $this->repository->getById($response->id);
-            if ($fullReservation) {
-                $this->sendConfirmationEmail($fullReservation);
-            }
-        } catch (\Throwable $e) {
-            log_message('error', 'Failed to send confirmation email after admin reservation creation: ' . $e->getMessage());
-        }
-
         return $response;
     }
 
