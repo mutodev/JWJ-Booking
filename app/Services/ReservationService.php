@@ -262,11 +262,14 @@ class ReservationService
             }
         }
 
-        // Send payment email to customer automatically
+        // Send reservation confirmation email to customer
         try {
-            $this->sendPaymentEmail($response->id);
+            $fullReservation = $this->repository->getById($response->id);
+            if ($fullReservation) {
+                $this->sendConfirmationEmail($fullReservation);
+            }
         } catch (\Throwable $e) {
-            log_message('error', 'Failed to send payment email after admin reservation creation: ' . $e->getMessage());
+            log_message('error', 'Failed to send confirmation email after admin reservation creation: ' . $e->getMessage());
         }
 
         return $response;
