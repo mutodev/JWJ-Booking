@@ -101,4 +101,14 @@ class CustomerRepository
     {
         return $this->model->delete($id);
     }
+
+    /**
+     * Eliminar múltiples clientes (soft delete)
+     */
+    public function bulkDelete(array $ids): int
+    {
+        if (empty($ids)) return 0;
+        $this->model->whereIn('id', $ids)->delete();
+        return $this->model->db->affectedRows();
+    }
 }

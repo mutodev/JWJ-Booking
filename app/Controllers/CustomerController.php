@@ -97,4 +97,22 @@ class CustomerController extends ResourceController
                 ->setJSON(['message' => $th->getMessage()]);
         }
     }
+
+    public function bulkDelete()
+    {
+        try {
+            $data = json_decode($this->request->getBody(), true);
+            $ids  = $data['ids'] ?? [];
+
+            $count = $this->service->bulkDelete($ids);
+
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response("{$count} customer(s) deleted successfully", $count));
+        } catch (\Throwable $th) {
+            return $this->response
+                ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
 }

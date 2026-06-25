@@ -1,7 +1,7 @@
 <template>
-  <div class="row justify-content-end">
+  <div class="row justify-content-end align-items-center">
     <!-- Barra de búsqueda -->
-    <div class="col-10">
+    <div class="col">
       <div class="input-group">
         <span class="input-group-text">
           <i class="bi bi-search"></i>
@@ -15,8 +15,16 @@
       </div>
     </div>
 
+    <!-- Botón bulk delete (solo cuando hay selección) -->
+    <div class="col-auto" v-if="selectedItems.length > 0">
+      <button class="btn btn-sm btn-danger" @click="bulkDeleteModal = true">
+        <i class="bi bi-trash3"></i>
+        Delete Selected ({{ selectedItems.length }})
+      </button>
+    </div>
+
     <!-- Botón nuevo -->
-    <div class="col-md-2 pt-1">
+    <div class="col-auto">
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New Customer
@@ -28,6 +36,7 @@
   <div class="row mt-3">
     <div class="col-md-12">
       <EasyDataTable
+        v-model:items-selected="selectedItems"
         :headers="headers"
         :items="data"
         :search-field="searchField"
@@ -40,7 +49,7 @@
         show-index
         index-column-text="#"
       >
-        <!-- Estado -->
+        <!-- Segmento -->
         <template #item-segment="{ segment }">
           <span v-if="segment == 'new'">
             <i :title="segment" class="bi bi-stars text-warning h6"></i>
@@ -66,14 +75,13 @@
     </div>
   </div>
 
-  <!-- Modales -->
+  <!-- Modales CRUD -->
   <ClientEdit
     :show="modalEditVisible"
     :data="selectedData"
     @close="modalEditVisible = false"
     @saved="handle"
   />
-
 
   <ClientCreate
     :show="modalCreateVisible"
@@ -87,6 +95,16 @@
     @close="modalDeleteVisible = false"
     @deleted="handle"
   />
+
+  <!-- Modal bulk delete -->
+  <ConfirmModal
+    :show="bulkDeleteModal"
+    title="Delete Customers"
+    :message="`You are about to delete <strong>${selectedItems.length} customer(s)</strong>. This action cannot be undone.`"
+    confirmLabel="Delete Selected"
+    @confirm="submitBulkDelete"
+    @cancel="bulkDeleteModal = false"
+  />
 </template>
 
 <script setup>
@@ -95,6 +113,7 @@ import api from "@/services/axios";
 import ClientEdit from "./ClientEdit.vue";
 import ClientCreate from "./ClientCreate.vue";
 import ClientDelete from "./ClientDelete.vue";
+import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Clients", icon: "bi-people-fill" });
@@ -102,6 +121,8 @@ updateHeaderData({ title: "Clients", icon: "bi-people-fill" });
 const tableHelpers = inject("tableHelpers");
 const data = ref([]);
 const searchValue = ref("");
+const selectedItems = ref([]);
+const bulkDeleteModal = ref(false);
 
 // Modales
 const modalEditVisible = ref(false);
@@ -157,6 +178,19 @@ const handle = () => {
   modalEditVisible.value = false;
   modalDeleteVisible.value = false;
   getData();
+};
+
+// Bulk delete
+const submitBulkDelete = async () => {
+  try {
+    const ids = selectedItems.value.map((item) => item.id);
+    await api.post("/customers/bulk-delete", { ids });
+    bulkDeleteModal.value = false;
+    selectedItems.value = [];
+    getData();
+  } catch (error) {
+    console.error("Error bulk deleting customers:", error);
+  }
 };
 
 onMounted(() => {

@@ -166,6 +166,7 @@ $routes->group('api', function ($routes) {
         $routes->get('(:segment)', [CustomerController::class, 'getById']);
         $routes->get('search/(:segment)', [CustomerController::class, 'searchByName']);
         $routes->post('/', [CustomerController::class, 'create']);
+        $routes->post('bulk-delete', [CustomerController::class, 'bulkDelete']);
         $routes->put('(:segment)', [CustomerController::class, 'updateData']);
         $routes->delete('(:segment)', [CustomerController::class, 'deleteData']);
     });
