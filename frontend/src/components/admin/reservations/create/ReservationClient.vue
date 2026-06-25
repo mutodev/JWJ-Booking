@@ -72,7 +72,7 @@ const onClientCreated = async (customerId) => {
 
   try {
     const response = await api.get(`/customers/${customerId}`);
-    const newCustomer = response.data?.data;
+    const newCustomer = response.data;
 
     if (!newCustomer) return;
 
