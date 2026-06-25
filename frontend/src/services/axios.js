@@ -18,9 +18,6 @@ const baseURL =
 const api = axios.create({
   baseURL,
   timeout: 30000,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // === Interceptor de solicitud ===
