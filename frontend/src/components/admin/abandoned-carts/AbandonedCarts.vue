@@ -1,7 +1,7 @@
 <template>
   <div class="row justify-content-end">
     <!-- Barra de búsqueda -->
-    <div class="col-10">
+    <div class="col">
       <div class="input-group">
         <span class="input-group-text">
           <i class="bi bi-search"></i>
@@ -16,7 +16,7 @@
     </div>
 
     <!-- Botón de refresh y analytics -->
-    <div class="col-md-2 pt-1 d-flex gap-2">
+    <div class="col-md-auto pt-1 d-flex gap-2 justify-content-end">
       <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export CSV">
         <i class="bi bi-download"></i> Export
       </button>
@@ -377,12 +377,6 @@ const parseFormData = (raw) => {
   }
 };
 
-const fmtDate = (val) => {
-  if (!val) return '';
-  const d = new Date(val);
-  return isNaN(d.getTime()) ? String(val) : d.toLocaleDateString('en-US');
-};
-
 const fmtDateTime = (val) => {
   if (!val) return '';
   const d = new Date(val);
@@ -400,6 +394,7 @@ const STEP_NAMES = {
   5: 'Event Details',
 };
 
+// r._fd = form_data pre-parsed once per row in exportCSV
 const CSV_COLUMNS = [
   { label: 'Email',               key: (r) => r.email || '' },
   { label: 'Phone',               key: (r) => r.phone || '' },
@@ -407,18 +402,18 @@ const CSV_COLUMNS = [
   { label: 'Last Step',           key: (r) => r.current_step ?? '' },
   { label: 'Step Name',           key: (r) => STEP_NAMES[r.current_step] || '' },
   { label: 'Reservation ID',      key: (r) => r.reservation_id || '' },
-  { label: 'Zip Code',            key: (r) => parseFormData(r.form_data).zipcode || '' },
-  { label: 'Children Count',      key: (r) => parseFormData(r.form_data).children_count ?? '' },
-  { label: 'Children Age Range',  key: (r) => parseFormData(r.form_data).children_age_range || '' },
-  { label: 'Performers',          key: (r) => parseFormData(r.form_data).performers_count ?? '' },
-  { label: 'Duration (hrs)',      key: (r) => parseFormData(r.form_data).duration_hours ?? '' },
-  { label: 'Event Date',          key: (r) => parseFormData(r.form_data).event_date || '' },
-  { label: 'Event Time',          key: (r) => parseFormData(r.form_data).event_time || '' },
-  { label: 'Event Address',       key: (r) => parseFormData(r.form_data).event_address || '' },
-  { label: 'Birthday Child',      key: (r) => parseFormData(r.form_data).birthday_child_name || '' },
-  { label: 'Birthday Age',        key: (r) => parseFormData(r.form_data).birthday_child_age || '' },
-  { label: 'Promo Code',          key: (r) => parseFormData(r.form_data).promo_code || '' },
-  { label: 'Subtotal',            key: (r) => parseFormData(r.form_data).subtotal ?? '' },
+  { label: 'Zip Code',            key: (r) => r._fd.zipcode || '' },
+  { label: 'Children Count',      key: (r) => r._fd.children_count ?? '' },
+  { label: 'Children Age Range',  key: (r) => r._fd.children_age_range || '' },
+  { label: 'Performers',          key: (r) => r._fd.performers_count ?? '' },
+  { label: 'Duration (hrs)',      key: (r) => r._fd.duration_hours ?? '' },
+  { label: 'Event Date',          key: (r) => r._fd.event_date || '' },
+  { label: 'Event Time',          key: (r) => r._fd.event_time || '' },
+  { label: 'Event Address',       key: (r) => r._fd.event_address || '' },
+  { label: 'Birthday Child',      key: (r) => r._fd.birthday_child_name || '' },
+  { label: 'Birthday Age',        key: (r) => r._fd.birthday_child_age || '' },
+  { label: 'Promo Code',          key: (r) => r._fd.promo_code || '' },
+  { label: 'Subtotal',            key: (r) => r._fd.subtotal ?? '' },
   { label: 'Last Activity',       key: (r) => fmtDateTime(r.last_activity_at) },
   { label: 'Created At',          key: (r) => fmtDateTime(r.created_at) },
   { label: 'IP Address',          key: (r) => r.ip_address || '' },
@@ -471,9 +466,12 @@ const exportCSV = () => {
 
   const escape = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
   const header = CSV_COLUMNS.map((c) => escape(c.label)).join(';');
-  const rows   = filtered.map((r) => CSV_COLUMNS.map((c) => {
-    try { return escape(c.key(r)); } catch { return '""'; }
-  }).join(';'));
+  const rows   = filtered.map((r) => {
+    const enriched = { ...r, _fd: parseFormData(r.form_data) };
+    return CSV_COLUMNS.map((c) => {
+      try { return escape(c.key(enriched)); } catch { return '""'; }
+    }).join(';');
+  });
 
   const csv  = [header, ...rows].join('\n');
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
