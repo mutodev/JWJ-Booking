@@ -218,7 +218,7 @@ const submitForm = handleSubmit(async (values) => {
       formData.append('remove_image', '1');
     }
 
-    await api.post(`/type-addons/${props.data.id}?_method=PUT`, formData);
+    await api.post(`/type-addons/${props.data.id}`, formData);
 
     emit("saved");
     closeModal();

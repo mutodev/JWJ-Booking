@@ -123,7 +123,10 @@ class TypeAddonService
         $newName = $image->getRandomName();
         $image->move($this->uploadPath, $newName);
 
-        // Return relative URL
+        if (!file_exists($this->uploadPath . DIRECTORY_SEPARATOR . $newName)) {
+            throw new \RuntimeException('Failed to move uploaded file to destination');
+        }
+
         return '/img/' . $newName;
     }
 
