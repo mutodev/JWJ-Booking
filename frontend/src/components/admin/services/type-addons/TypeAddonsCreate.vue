@@ -167,11 +167,7 @@ const submitForm = handleSubmit(async (values) => {
       formData.append('image', imageFile.value);
     }
 
-    await api.post(`/type-addons`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    await api.post(`/type-addons`, formData);
 
     emit("saved", true);
     closeModal();

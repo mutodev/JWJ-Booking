@@ -215,22 +215,15 @@
             Address <span class="text-danger">*</span>
           </label>
           <p class="text-muted small mb-1">If unknown at this time, please list an address for reference, and ensure the zip code below is correct.</p>
-          <el-tooltip
-            content="Enter the address where the event will take place"
-            placement="right"
-            effect="dark"
-            trigger="hover"
-          >
-            <input
-              v-model="form.fullAddress"
-              type="text"
-              class="form-control"
-              id="fullAddress"
-              placeholder="123 Main St, City, State"
-              autocomplete="off"
-              @blur="validateField('fullAddress')"
-            />
-          </el-tooltip>
+          <input
+            v-model="form.fullAddress"
+            type="text"
+            class="form-control"
+            id="fullAddress"
+            placeholder="123 Main St, City, State"
+            autocomplete="off"
+            @blur="validateField('fullAddress')"
+          />
           <div v-if="errors.fullAddress" class="text-danger small">
             {{ errors.fullAddress }}
           </div>

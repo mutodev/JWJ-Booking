@@ -38,13 +38,6 @@
                 </p>
               </div>
               <div class="col-md-4 text-end">
-                <button
-                  v-if="!data.completed && data.email"
-                  class="btn btn-primary btn-sm"
-                  @click="contactCustomer"
-                >
-                  Send Follow-up Email
-                </button>
               </div>
             </div>
           </div>
@@ -262,13 +255,6 @@ const closeModal = () => {
   emit("close");
 };
 
-const contactCustomer = () => {
-  const subject = encodeURIComponent("Complete Your Reservation - Jam With Jamie");
-  const body = encodeURIComponent(
-    `Hi ${props.data.email || 'Customer'},\n\nWe noticed you started a reservation but didn't complete it. We'd love to help you finish your booking!\n\nBest regards,\nJam With Jamie Team`
-  );
-  window.open(`mailto:${props.data.email}?subject=${subject}&body=${body}`);
-};
 
 const parsedFormData = computed(() => {
   if (!props.data.form_data) return {};

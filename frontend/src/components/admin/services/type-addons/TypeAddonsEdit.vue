@@ -218,11 +218,7 @@ const submitForm = handleSubmit(async (values) => {
       formData.append('remove_image', '1');
     }
 
-    await api.post(`/type-addons/${props.data.id}?_method=PUT`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    await api.post(`/type-addons/${props.data.id}?_method=PUT`, formData);
 
     emit("saved");
     closeModal();

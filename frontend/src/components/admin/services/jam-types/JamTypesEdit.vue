@@ -237,11 +237,7 @@ const submitForm = handleSubmit(async (values) => {
       formData.append('image', selectedImageFile.value);
     }
 
-    await api.post(`/services/update/${props.data.id}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    await api.post(`/services/update/${props.data.id}`, formData);
     emit("saved");
     closeModal();
   } finally {
