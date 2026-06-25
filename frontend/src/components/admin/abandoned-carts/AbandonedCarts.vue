@@ -17,6 +17,9 @@
 
     <!-- Botón de refresh y analytics -->
     <div class="col-md-2 pt-1 d-flex gap-2">
+      <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export CSV">
+        <i class="bi bi-download"></i> Export
+      </button>
       <button class="btn btn-sm btn-info" @click="showAnalytics()">
         <i class="bi bi-graph-up"></i>
         Analytics
@@ -142,6 +145,46 @@
     </div>
   </div>
 
+  <!-- Export CSV Modal -->
+  <div v-if="exportModalVisible" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="bi bi-download me-2 text-success"></i>Export Abandoned Carts
+          </h5>
+          <button type="button" class="btn-close" @click="closeExportModal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">Filter by last activity date range. Both fields are required.</p>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small">From</label>
+              <input v-model="exportDateFrom" type="date" class="form-control form-control-sm" />
+            </div>
+            <div class="col-6">
+              <label class="form-label small">To</label>
+              <input v-model="exportDateTo" type="date" class="form-control form-control-sm" />
+            </div>
+          </div>
+          <div v-if="exportError" class="mt-2 text-danger small">
+            <i class="bi bi-exclamation-circle me-1"></i>{{ exportError }}
+          </div>
+          <div v-if="exportPreviewCount !== null" class="mt-2 text-success small">
+            <i class="bi bi-check-circle me-1"></i>{{ exportPreviewCount }} cart(s) found in range.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" @click="closeExportModal">Cancel</button>
+          <button type="button" class="btn btn-success btn-sm" @click="exportCSV">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i>Download CSV
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show" style="z-index: 1054;" @click="closeExportModal"></div>
+  </div>
+
   <!-- Modales -->
   <DraftDetails
     :show="modalDetailsVisible"
@@ -157,7 +200,7 @@
 </template>
 
 <script setup>
-import { inject, ref, onMounted, computed } from "vue";
+import { inject, ref, onMounted, computed, watch } from "vue";
 import api from "@/services/axios";
 import DraftDetails from "./DraftDetails.vue";
 import AnalyticsModal from "./AnalyticsModal.vue";
@@ -317,6 +360,132 @@ const getTimeAgo = (datetime) => {
     return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
   }
 };
+
+// ─── Export CSV ────────────────────────────────────────────────────────────
+const exportModalVisible  = ref(false);
+const exportDateFrom      = ref('');
+const exportDateTo        = ref('');
+const exportError         = ref('');
+const exportPreviewCount  = ref(null);
+
+const parseFormData = (raw) => {
+  if (!raw) return {};
+  try {
+    return typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch {
+    return {};
+  }
+};
+
+const fmtDate = (val) => {
+  if (!val) return '';
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? String(val) : d.toLocaleDateString('en-US');
+};
+
+const fmtDateTime = (val) => {
+  if (!val) return '';
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? String(val) : d.toLocaleString('en-US', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  });
+};
+
+const STEP_NAMES = {
+  1: 'Contact Info',
+  2: 'Choose Service',
+  3: 'Select Add-ons',
+  4: 'Review Subtotal',
+  5: 'Event Details',
+};
+
+const CSV_COLUMNS = [
+  { label: 'Email',               key: (r) => r.email || '' },
+  { label: 'Phone',               key: (r) => r.phone || '' },
+  { label: 'Status',              key: (r) => r.completed ? 'Completed' : 'Abandoned' },
+  { label: 'Last Step',           key: (r) => r.current_step ?? '' },
+  { label: 'Step Name',           key: (r) => STEP_NAMES[r.current_step] || '' },
+  { label: 'Reservation ID',      key: (r) => r.reservation_id || '' },
+  { label: 'Zip Code',            key: (r) => parseFormData(r.form_data).zipcode || '' },
+  { label: 'Children Count',      key: (r) => parseFormData(r.form_data).children_count ?? '' },
+  { label: 'Children Age Range',  key: (r) => parseFormData(r.form_data).children_age_range || '' },
+  { label: 'Performers',          key: (r) => parseFormData(r.form_data).performers_count ?? '' },
+  { label: 'Duration (hrs)',      key: (r) => parseFormData(r.form_data).duration_hours ?? '' },
+  { label: 'Event Date',          key: (r) => parseFormData(r.form_data).event_date || '' },
+  { label: 'Event Time',          key: (r) => parseFormData(r.form_data).event_time || '' },
+  { label: 'Event Address',       key: (r) => parseFormData(r.form_data).event_address || '' },
+  { label: 'Birthday Child',      key: (r) => parseFormData(r.form_data).birthday_child_name || '' },
+  { label: 'Birthday Age',        key: (r) => parseFormData(r.form_data).birthday_child_age || '' },
+  { label: 'Promo Code',          key: (r) => parseFormData(r.form_data).promo_code || '' },
+  { label: 'Subtotal',            key: (r) => parseFormData(r.form_data).subtotal ?? '' },
+  { label: 'Last Activity',       key: (r) => fmtDateTime(r.last_activity_at) },
+  { label: 'Created At',          key: (r) => fmtDateTime(r.created_at) },
+  { label: 'IP Address',          key: (r) => r.ip_address || '' },
+];
+
+const getFilteredForExport = () => {
+  const from = exportDateFrom.value ? new Date(exportDateFrom.value) : null;
+  const to   = exportDateTo.value   ? new Date(exportDateTo.value)   : null;
+  if (to) to.setHours(23, 59, 59, 999);
+  return data.value.filter((r) => {
+    const d = new Date(r.last_activity_at);
+    if (isNaN(d.getTime())) return false;
+    if (from && d < from) return false;
+    if (to   && d > to)   return false;
+    return true;
+  });
+};
+
+watch([exportDateFrom, exportDateTo], () => {
+  exportError.value = '';
+  exportPreviewCount.value = (exportDateFrom.value && exportDateTo.value)
+    ? getFilteredForExport().length
+    : null;
+});
+
+const closeExportModal = () => {
+  exportModalVisible.value = false;
+  exportDateFrom.value     = '';
+  exportDateTo.value       = '';
+  exportError.value        = '';
+  exportPreviewCount.value = null;
+};
+
+const exportCSV = () => {
+  exportError.value = '';
+  if (!exportDateFrom.value || !exportDateTo.value) {
+    exportError.value = 'Both dates are required.';
+    return;
+  }
+  if (exportDateFrom.value > exportDateTo.value) {
+    exportError.value = '"From" date must be before "To" date.';
+    return;
+  }
+
+  const filtered = getFilteredForExport();
+  if (filtered.length === 0) {
+    exportError.value = 'No carts found in this date range.';
+    return;
+  }
+
+  const escape = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+  const header = CSV_COLUMNS.map((c) => escape(c.label)).join(';');
+  const rows   = filtered.map((r) => CSV_COLUMNS.map((c) => {
+    try { return escape(c.key(r)); } catch { return '""'; }
+  }).join(';'));
+
+  const csv  = [header, ...rows].join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href     = url;
+  link.download = `abandoned_carts_${exportDateFrom.value}_${exportDateTo.value}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+  closeExportModal();
+};
+// ───────────────────────────────────────────────────────────────────────────
 
 onMounted(() => {
   getData();
