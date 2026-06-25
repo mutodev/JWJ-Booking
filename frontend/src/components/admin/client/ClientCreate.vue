@@ -170,8 +170,8 @@ const loading = ref(false);
 const submitForm = handleSubmit(async (values) => {
   try {
     loading.value = true;
-    await api.post(`/customers`, values);
-    emit("saved", true);
+    const response = await api.post(`/customers`, values);
+    emit("saved", response.data?.data ?? null);
     closeModal();
   } catch (error) {
     console.error(error);
