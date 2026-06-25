@@ -146,8 +146,9 @@
   </div>
 
   <!-- Export CSV Modal -->
-  <div v-if="exportModalVisible" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
-    <div class="modal-dialog" role="document">
+  <div v-if="exportModalVisible" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @click="closeExportModal"></div>
+    <div class="modal-dialog" role="document" style="position: relative; z-index: 1;">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title">
@@ -182,7 +183,6 @@
         </div>
       </div>
     </div>
-    <div class="modal-backdrop fade show" style="z-index: 1054;" @click="closeExportModal"></div>
   </div>
 
   <!-- Modales -->
