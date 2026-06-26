@@ -141,4 +141,15 @@ class ReservationRepository
 
         return $count;
     }
+
+    public function softDeleteByCustomerId(string $customerId): void
+    {
+        $this->model->where('customer_id', $customerId)->delete();
+    }
+
+    public function softDeleteByCustomerIds(array $customerIds): void
+    {
+        if (empty($customerIds)) return;
+        $this->model->whereIn('customer_id', $customerIds)->delete();
+    }
 }

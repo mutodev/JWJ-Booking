@@ -3,16 +3,19 @@
 namespace App\Services;
 
 use App\Repositories\CustomerRepository;
+use App\Repositories\ReservationRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 
 class CustomerService
 {
     protected $repository;
+    protected $reservationRepository;
 
     public function __construct()
     {
-        $this->repository = new CustomerRepository();
+        $this->repository            = new CustomerRepository();
+        $this->reservationRepository = new ReservationRepository();
     }
 
     /**
@@ -90,7 +93,7 @@ class CustomerService
     }
 
     /**
-     * Eliminar cliente
+     * Eliminar cliente y sus reservas asociadas (soft delete)
      */
     public function delete(string $id): bool
     {
@@ -100,11 +103,13 @@ class CustomerService
             throw new HTTPException(lang('Customer.deleteFailed'), Response::HTTP_BAD_REQUEST);
         }
 
+        $this->reservationRepository->softDeleteByCustomerId($id);
+
         return true;
     }
 
     /**
-     * Eliminar múltiples clientes (soft delete)
+     * Eliminar múltiples clientes y sus reservas asociadas (soft delete)
      */
     public function bulkDelete(array $ids): int
     {
@@ -112,6 +117,9 @@ class CustomerService
             throw new HTTPException('No customer IDs provided', Response::HTTP_BAD_REQUEST);
         }
 
-        return $this->repository->bulkDelete($ids);
+        $count = $this->repository->bulkDelete($ids);
+        $this->reservationRepository->softDeleteByCustomerIds($ids);
+
+        return $count;
     }
 }
