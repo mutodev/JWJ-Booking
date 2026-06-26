@@ -373,6 +373,7 @@ class ReservationService
         $customer = $formData['customer'] ?? null;
         $zipcode = $formData['zipcode'] ?? null;
         $service = $formData['service'] ?? null;
+        $price   = $formData['price'] ?? [];
         $subtotal = $formData['subtotal'] ?? null;
         $addons = $formData['addons'] ?? [];
         $information = $formData['information'] ?? null;
@@ -505,8 +506,8 @@ class ReservationService
             }
 
             // Calcular duración total incluyendo addons
-            // La duración base viene del servicio (duration_hours o min_duration_hours)
-            $baseDurationHours = floatval($service['duration_hours'] ?? $service['min_duration_hours'] ?? 1);
+            // min_duration_hours viene del service_price (price), no del service raíz
+            $baseDurationHours = floatval($price['min_duration_hours'] ?? $service['duration_hours'] ?? 1);
             if (($zipcode['zone_type'] ?? '') === 'minimum_2h') {
                 $baseDurationHours = max($baseDurationHours, 2.0);
             }
