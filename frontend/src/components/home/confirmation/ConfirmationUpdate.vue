@@ -102,7 +102,7 @@
             <!-- Full address -->
             <div class="mb-3">
               <label for="fullAddress" class="form-label">
-                Address <span class="text-danger">*</span>
+                Reconfirm Address <span class="text-danger">*</span>
               </label>
               <p class="text-muted small mb-1">If unknown at this time, please list an address for reference, and ensure the zip code below is correct.</p>
               <input
