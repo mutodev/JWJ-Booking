@@ -325,38 +325,6 @@
           </div>
         </div>
 
-        <!-- Gratuity / Tip Selection -->
-        <div class="tip-section mt-4">
-          <h5 class="tip-title">Add a Gratuity <span class="text-muted small fw-normal">(optional)</span></h5>
-          <p class="text-muted small mb-3">100% goes to your performer(s).</p>
-          <div class="tip-options d-flex flex-wrap gap-2 mb-3">
-            <button
-              v-for="opt in tipOptions"
-              :key="opt.label"
-              type="button"
-              class="btn tip-btn"
-              :class="selectedTip === opt.value ? 'btn-primary' : 'btn-outline-secondary'"
-              @click="selectTip(opt.value)"
-            >
-              {{ opt.label }}
-            </button>
-          </div>
-          <div v-if="selectedTip === 'custom'" class="input-group mb-2" style="max-width: 200px;">
-            <span class="input-group-text">$</span>
-            <input
-              v-model.number="customTipAmount"
-              type="number"
-              min="0"
-              step="0.01"
-              class="form-control"
-              placeholder="0.00"
-            />
-          </div>
-          <div v-if="computedTip > 0" class="tip-amount-display">
-            Gratuity: <strong>${{ computedTip.toFixed(2) }}</strong>
-          </div>
-        </div>
-
         <!-- Submit Button -->
         <div class="text-center mt-4">
           <button
@@ -365,7 +333,7 @@
             :disabled="submitting"
           >
             <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-            {{ submitting ? 'Saving...' : 'Save and Continue to Payment' }}
+            {{ submitting ? 'Saving...' : 'Save and Continue' }}
           </button>
         </div>
       </form>
@@ -572,7 +540,7 @@ async function handleSubmit() {
   submitting.value = true;
   const reservationId = route.params.id;
 
-  // Step 2: save confirmation data + get fresh Stripe session
+  // Step 2: save confirmation data, then show gratuity before payment
   try {
     const updateData = {
       event_address: form.fullAddress,
@@ -588,7 +556,7 @@ async function handleSubmit() {
 
     await api.patch(`/reservations/${reservationId}/confirmation`, updateData);
 
-    // Show tip screen — user proceeds to payment from there
+    // Show tip screen. The Stripe session is generated from there.
     confirmedAlready.value = true;
   } catch (err) {
     console.error('Submission error:', err);

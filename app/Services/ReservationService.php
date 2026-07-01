@@ -950,10 +950,10 @@ class ReservationService
     }
 
     /**
-     * Creates a Stripe Checkout Session and sends the payment email
+     * Sends the payment email with the public confirmation URL.
      *
      * @param string $reservationId ID de la reserva
-     * @return array Stripe session data
+     * @return array Confirmation URL data
      * @throws HTTPException Si la reserva no existe o falla el envío del email
      */
     public function sendPaymentEmail(string $reservationId): array
@@ -964,22 +964,6 @@ class ReservationService
         if (!$reservation) {
             throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
         }
-
-        // Create Stripe Checkout Session
-        $session = $this->getStripeService()->createCheckoutSession(
-            (float) $reservation->total_amount,
-            $reservation->email,
-            $reservationId,
-            'Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie')
-        );
-
-        $paymentUrl = $session->url;
-
-        // Save stripe session id and payment URL
-        $this->repository->update($reservationId, [
-            'payment_url'        => $paymentUrl,
-            'stripe_session_id'  => $session->id,
-        ]);
 
         // Build and send the email using template service
         $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:5173';
@@ -1020,6 +1004,7 @@ class ReservationService
             'total_amount'        => number_format($reservation->total_amount, 2),
             'description'         => $descriptionBlock,
             'confirmation_url'    => $confirmationUrl,
+            'payment_url'         => $confirmationUrl,
             '_reservation'        => $reservation,
         ];
 
@@ -1032,8 +1017,8 @@ class ReservationService
         }
 
         return [
-            'session_id'  => $session->id,
-            'payment_url' => $paymentUrl,
+            'confirmation_url' => $confirmationUrl,
+            'payment_url'      => $confirmationUrl,
         ];
     }
 
