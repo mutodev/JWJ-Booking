@@ -215,3 +215,10 @@ const closeModal = () => {
   emit("close");
 };
 </script>
+
+<style scoped>
+.modal-content,
+.modal-body {
+  min-height: 500px;
+}
+</style>
