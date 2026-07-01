@@ -26,7 +26,7 @@ class Reservation extends Entity
         'event_time' => 'string',
         'children_count' => 'integer',
         'performers_count' => 'integer',
-        'duration_hours' => 'integer',
+        'duration_hours' => 'float',
         'price_type' => 'string',
         'base_price' => 'float',
         'addons_total' => 'float',

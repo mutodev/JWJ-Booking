@@ -1345,12 +1345,17 @@ class ReservationService
         $wholeH = (int) floor($hours);
         $mins   = (int) round(($hours - $wholeH) * 60);
 
-        if ($wholeH > 0 && $mins > 0) {
-            $label = $wholeH . 'h ' . $mins . 'min';
-        } elseif ($wholeH > 0) {
-            $label = $wholeH . ' ' . ($wholeH === 1 ? 'hour' : 'hours');
+        if ($mins === 60) {
+            $wholeH++;
+            $mins = 0;
+        }
+
+        if ($mins === 0) {
+            $label = $wholeH . ' hour' . ($wholeH !== 1 ? 's' : '');
+        } elseif ($wholeH === 0) {
+            $label = $mins . ' minute' . ($mins !== 1 ? 's' : '');
         } else {
-            $label = $mins . ' minutes';
+            $label = $wholeH . ' hour' . ($wholeH !== 1 ? 's' : '') . ' ' . $mins . ' minute' . ($mins !== 1 ? 's' : '');
         }
 
         return '<tr>'
