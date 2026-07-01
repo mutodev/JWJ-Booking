@@ -36,6 +36,7 @@ class Reservation extends Entity
         'status' => 'string',
         'is_invoiced' => 'boolean',
         'is_paid' => 'boolean',
+        'customer_confirmed' => 'boolean',
         'arrival_parking_instructions' => 'string',
         'entertainment_start_time' => 'string',
         'birthday_child_name' => 'string',

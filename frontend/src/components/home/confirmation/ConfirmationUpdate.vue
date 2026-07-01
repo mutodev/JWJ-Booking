@@ -392,6 +392,8 @@ const selectTip = (value) => {
   selectedTip.value = value;
 };
 
+const isTrueValue = (value) => value === true || value === 1 || value === '1';
+
 const saveGratuityAndRedirect = async (reservationId) => {
   if (computedTip.value > 0) {
     await api.patch(`/reservations/${reservationId}/gratuity`, { amount: computedTip.value });
@@ -464,7 +466,7 @@ async function fetchReservation() {
     console.log('Reservation data:', reservation.value);
 
     // Already paid → redirect to payment success page (always, regardless of confirmation status)
-    if (reservation.value.is_paid) {
+    if (isTrueValue(reservation.value.is_paid)) {
       const sessionId = reservation.value.stripe_session_id;
       router.push(sessionId ? `/payment-success?session_id=${sessionId}` : '/payment-success');
       return;
@@ -477,7 +479,7 @@ async function fetchReservation() {
     }
 
     // Customer already submitted the confirmation form → show tip selection, then pay
-    if (reservation.value.customer_confirmed) {
+    if (isTrueValue(reservation.value.customer_confirmed)) {
       loading.value = false;
       // Keep page visible with just the tip section (form hidden via confirmedAlready flag)
       confirmedAlready.value = true;
