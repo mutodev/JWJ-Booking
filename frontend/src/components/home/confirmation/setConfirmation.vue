@@ -49,6 +49,7 @@
                 type="text"
                 class="form-control"
                 id="fullAddress"
+                @keydown.stop
                 @blur="validateField('fullAddress')"
               />
             </el-tooltip>
@@ -73,6 +74,7 @@
                 class="form-control"
                 id="instructions"
                 rows="3"
+                @keydown.stop
                 @blur="validateField('instructions')"
               ></textarea>
             </el-tooltip>
@@ -153,6 +155,7 @@
                 type="text"
                 class="form-control"
                 id="birthdayChildName"
+                @keydown.stop
                 @blur="validateField('birthdayChildName')"
               />
             </el-tooltip>
@@ -178,6 +181,7 @@
                 class="form-control"
                 id="childAge"
                 placeholder="Enter age (1-18) or N/A"
+                @keydown.stop
                 @blur="validateField('childAge')"
               />
             </el-tooltip>
@@ -202,6 +206,7 @@
                 type="text"
                 class="form-control"
                 id="ageRange"
+                @keydown.stop
                 @blur="validateField('ageRange')"
               />
             </el-tooltip>
@@ -226,6 +231,7 @@
                 class="form-control"
                 id="songRequests"
                 rows="4"
+                @keydown.stop
                 @blur="validateField('songRequests')"
               ></textarea>
             </el-tooltip>

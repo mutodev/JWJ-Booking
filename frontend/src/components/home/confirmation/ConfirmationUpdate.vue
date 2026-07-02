@@ -109,6 +109,7 @@
               id="fullAddress"
               placeholder="123 Main St, Apt #4"
               autocomplete="street-address"
+              @keydown.stop
               @blur="validateField('fullAddress')"
             />
             <div v-if="errors.fullAddress" class="text-danger small mt-1">
@@ -184,6 +185,7 @@
               class="form-control"
               id="instructions"
               rows="3"
+              @keydown.stop
               @blur="validateField('instructions')"
             ></textarea>
           </el-tooltip>
@@ -213,6 +215,7 @@
               type="text"
               class="form-control"
               id="ageRange"
+              @keydown.stop
               @blur="validateField('ageRange')"
             />
           </el-tooltip>
@@ -238,6 +241,7 @@
                 type="text"
                 class="form-control"
                 id="birthdayChildName"
+                @keydown.stop
                 @blur="validateField('birthdayChildName')"
               />
             </el-tooltip>
@@ -263,6 +267,7 @@
                 class="form-control"
                 id="childAge"
                 placeholder="Enter age (1-18) or N/A"
+                @keydown.stop
                 @blur="validateField('childAge')"
               />
             </el-tooltip>
@@ -288,6 +293,7 @@
               class="form-control"
               id="songRequests"
               rows="4"
+              @keydown.stop
               @blur="validateField('songRequests')"
             ></textarea>
           </el-tooltip>
