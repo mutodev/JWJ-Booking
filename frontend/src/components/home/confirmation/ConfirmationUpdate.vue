@@ -19,7 +19,9 @@
         <i class="bi bi-check-circle-fill fs-3 me-2 text-success"></i>
         <h2 class="mb-0">Ready to Pay</h2>
       </div>
-      <p class="text-muted mb-4">Your event details are confirmed. Add a gratuity for your performer(s) below, then proceed to payment.</p>
+      <p class="text-muted mb-4">
+        Your event details are confirmed. Would you like to add gratuity for your performer(s)? 100% goes to your performer(s). You also have the option to tip in person the day of the event if that is your preference. 
+      </p>
 
       <div class="tip-section mb-4">
         <h5 class="tip-title">Add a Gratuity <span class="text-muted small fw-normal">(optional)</span></h5>
