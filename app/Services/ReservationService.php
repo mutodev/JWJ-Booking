@@ -987,6 +987,7 @@ class ReservationService
             $discountBlock = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
         }
 
+        $totalDurationLabel = $this->formatDurationLabel($reservation->duration_hours ?? 0);
         $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
 
         $templateVars = [
@@ -1001,6 +1002,9 @@ class ReservationService
             'total_duration_row'  => $totalDurationRow,
             'promo_code_row'      => $promoBlock,
             'discount_row'        => $discountBlock,
+            'duration_hours'      => $totalDurationLabel,
+            'total_duration'      => $totalDurationLabel,
+            'total_duration_label' => $totalDurationLabel,
             'total_amount'        => number_format($reservation->total_amount, 2),
             'description'         => $descriptionBlock,
             'confirmation_url'    => $confirmationUrl,
@@ -1194,6 +1198,7 @@ class ReservationService
 
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
 
+        $totalDurationLabel = $this->formatDurationLabel($reservation->duration_hours ?? 0);
         $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
 
         $promoBlockPc    = '';
@@ -1218,6 +1223,9 @@ class ReservationService
             'event_address'      => $reservation->event_address ?? 'To be confirmed',
             'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'total_duration_row' => $totalDurationRow,
+            'duration_hours'     => $totalDurationLabel,
+            'total_duration'     => $totalDurationLabel,
+            'total_duration_label' => $totalDurationLabel,
             'promo_code_row'     => $promoBlockPc,
             'discount_row'       => $discountBlockPc,
             'gratuity_row'       => $gratuityRow,
@@ -1250,6 +1258,8 @@ class ReservationService
             $discountBlockRc = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
         }
 
+        $totalDurationLabel = $this->formatDurationLabel($reservation->duration_hours ?? 0);
+
         $templateVars = [
             'customer_name'      => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id'     => $reservation->id,
@@ -1259,6 +1269,9 @@ class ReservationService
             'event_address'      => $reservation->event_address ?? 'To be confirmed',
             'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'total_duration_row' => $this->buildDurationRow($reservation->duration_hours ?? 0),
+            'duration_hours'     => $totalDurationLabel,
+            'total_duration'     => $totalDurationLabel,
+            'total_duration_label' => $totalDurationLabel,
             'promo_code_row'     => $promoBlockRc,
             'discount_row'       => $discountBlockRc,
             'total_amount'       => number_format($reservation->total_amount, 2),
@@ -1337,6 +1350,19 @@ class ReservationService
 
     private function buildDurationRow(float|int|string $durationHours): string
     {
+        $label = $this->formatDurationLabel($durationHours);
+        if ($label === '') {
+            return '';
+        }
+
+        return '<tr>'
+            . '<td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Total Duration</td>'
+            . '<td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">' . $label . '</td>'
+            . '</tr>';
+    }
+
+    private function formatDurationLabel(float|int|string $durationHours): string
+    {
         $hours = floatval($durationHours);
         if ($hours <= 0) {
             return '';
@@ -1358,9 +1384,6 @@ class ReservationService
             $label = $wholeH . ' hour' . ($wholeH !== 1 ? 's' : '') . ' ' . $mins . ' minute' . ($mins !== 1 ? 's' : '');
         }
 
-        return '<tr>'
-            . '<td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Total Duration</td>'
-            . '<td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">' . $label . '</td>'
-            . '</tr>';
+        return $label;
     }
 }

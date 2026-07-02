@@ -255,6 +255,16 @@ final class ReservationServiceCreateTest extends CIUnitTestCase
         $this->assertEquals(275.0, $saved['total_amount']);
     }
 
+    public function testAdminCreatePreservesFractionalDurationHours(): void
+    {
+        $this->baseData['price']['min_duration_hours'] = 0.75;
+
+        $this->service->create($this->baseData);
+
+        $saved = $this->repoMock->lastCreated;
+        $this->assertEquals(0.75, $saved['duration_hours']);
+    }
+
     // -------------------------------------------------------------------------
     // Surcharge (via calculateSurcharge private method)
     // -------------------------------------------------------------------------

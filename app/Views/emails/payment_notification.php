@@ -90,6 +90,7 @@
                                         <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;"><?= esc($reservation->birthday_child_name) ?></td>
                                     </tr>
                                 <?php endif; ?>
+                                <?= $totalDurationRow ?? '' ?>
                                 <tr>
                                     <td style="padding: 14px 16px; font-size: 16px; font-weight: 700; color: #1F2937; background-color: #FFF0F6; border-bottom: none;">Total Amount</td>
                                     <td style="padding: 14px 16px; font-size: 20px; font-weight: 700; color: #FF74B7; background-color: #FFF0F6; border-bottom: none;">$<?= esc($totalAmount) ?></td>

@@ -69,12 +69,7 @@
                                     <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Number of Children</td>
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><?= esc($reservation->children_age_range ?: $reservation->children_count) ?></td>
                                 </tr>
-                                <?php if (!empty($reservation->duration_hours)): ?>
-                                <tr>
-                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Total Duration</td>
-                                    <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;"><?= esc($reservation->duration_hours) ?> <?= $reservation->duration_hours == 1 ? 'hour' : 'hours' ?></td>
-                                </tr>
-                                <?php endif; ?>
+                                <?= $totalDurationRow ?? '' ?>
                                 <tr>
                                     <td style="padding: 14px 16px; font-size: 16px; font-weight: 700; color: #1F2937; background-color: #FFF0F6; border-bottom: none;">Amount Paid</td>
                                     <td style="padding: 14px 16px; font-size: 20px; font-weight: 700; color: #FF74B7; background-color: #FFF0F6; border-bottom: none;">$<?= esc($totalAmount) ?></td>

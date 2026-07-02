@@ -191,6 +191,7 @@ class EmailTemplateService
                     'confirmationUrl' => $variables['confirmation_url'] ?? '',
                     'eventDate'       => $variables['event_date'] ?? 'TBD',
                     'totalAmount'     => $variables['total_amount'] ?? '0.00',
+                    'totalDurationRow' => $variables['total_duration_row'] ?? '',
                 ]);
                 break;
 
@@ -200,6 +201,7 @@ class EmailTemplateService
                     'reservation' => $variables['_reservation'] ?? (object) $variables,
                     'eventDate'   => $variables['event_date'] ?? 'TBD',
                     'totalAmount' => $variables['total_amount'] ?? '0.00',
+                    'totalDurationRow' => $variables['total_duration_row'] ?? '',
                 ]);
                 break;
 
@@ -223,6 +225,7 @@ class EmailTemplateService
                     'reservation' => $variables['_reservation'] ?? (object) $variables,
                     'eventDate'   => $variables['event_date'] ?? 'TBD',
                     'totalAmount' => $variables['total_amount'] ?? '0.00',
+                    'totalDurationRow' => $variables['total_duration_row'] ?? '',
                 ]);
                 break;
 
