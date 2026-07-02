@@ -505,9 +505,9 @@ class ReservationService
                 $grandTotal = $baseTotal + $surchargeAmount + $travelFee;
             }
 
-            // Calcular duración total incluyendo addons
-            // min_duration_hours viene del service_price (price), no del service raíz
-            $baseDurationHours = floatval($price['min_duration_hours'] ?? $service['duration_hours'] ?? 1);
+            // Calcular duración total incluyendo addons.
+            // El flujo público recibe min_duration_hours dentro de service; admin puede enviarlo en price.
+            $baseDurationHours = floatval($price['min_duration_hours'] ?? $service['min_duration_hours'] ?? $service['duration_hours'] ?? 1);
             if (($zipcode['zone_type'] ?? '') === 'minimum_2h') {
                 $baseDurationHours = max($baseDurationHours, 2.0);
             }

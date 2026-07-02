@@ -161,6 +161,7 @@ class ServicePriceRepository
                 service_prices.amount,
                 service_prices.travel_fee,
                 service_prices.extra_child_fee,
+                service_prices.min_duration_hours,
                 service_prices.range_age,
                 service_prices.notes,
                 services.name,
