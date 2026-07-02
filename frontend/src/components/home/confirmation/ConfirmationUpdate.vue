@@ -77,251 +77,249 @@
         In case the event is not a birthday, please fill the boxes with N/A.
       </p>
 
-      <!-- Contact Info Display (Auto-filled from reservation) -->
-      <div class="info-display mb-4">
+      <form @submit.prevent="handleSubmit">
         <div class="row">
-          <div class="col-md-6">
-            <div class="info-item">
-              <span class="info-label">Contact Name:</span>
-              <span class="info-value">{{ reservation.full_name || 'N/A' }}</span>
+          <!-- Date -->
+          <div class="col-md-6 mb-3">
+            <label for="eventDate" class="form-label">
+              Date <span class="text-danger">*</span>
+            </label>
+            <input
+              v-model="form.eventDate"
+              type="date"
+              class="form-control"
+              id="eventDate"
+              @blur="validateField('eventDate')"
+            />
+            <div v-if="errors.eventDate" class="text-danger small mt-1">
+              {{ errors.eventDate }}
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="info-item">
-              <span class="info-label">Event Date:</span>
-              <span class="info-value">{{ eventDateDisplay }}</span>
+
+          <!-- Full address -->
+          <div class="col-md-6 mb-3">
+            <label for="fullAddress" class="form-label">
+              Reconfirm Address <span class="text-danger">*</span>
+            </label>
+            <p class="text-muted small mb-1">If unknown at this time, please list an address for reference, and ensure the zip code below is correct.</p>
+            <input
+              v-model="form.fullAddress"
+              type="text"
+              class="form-control"
+              id="fullAddress"
+              placeholder="123 Main St, Apt #4"
+              autocomplete="street-address"
+              @blur="validateField('fullAddress')"
+            />
+            <div v-if="errors.fullAddress" class="text-danger small mt-1">
+              {{ errors.fullAddress }}
             </div>
           </div>
         </div>
-      </div>
 
-      <form @submit.prevent="handleSubmit">
         <div class="row">
-          <!-- Left Column -->
-          <div class="col-md-6">
-            <!-- Full address -->
-            <div class="mb-3">
-              <label for="fullAddress" class="form-label">
-                Reconfirm Address <span class="text-danger">*</span>
-              </label>
-              <p class="text-muted small mb-1">If unknown at this time, please list an address for reference, and ensure the zip code below is correct.</p>
-              <input
-                v-model="form.fullAddress"
-                type="text"
-                class="form-control"
-                id="fullAddress"
-                placeholder="123 Main St, Apt #4"
-                autocomplete="street-address"
-                @blur="validateField('fullAddress')"
+          <!-- Event start time -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">
+              Event Start Time <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Select the start time for the event"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <el-time-picker
+                v-model="form.startTime"
+                placeholder="Start time"
+                format="hh:mm A"
+                value-format="HH:mm"
+                style="width: 100%"
+                size="large"
+                @blur="validateField('startTime')"
               />
-              <div v-if="errors.fullAddress" class="text-danger small mt-1">
-                {{ errors.fullAddress }}
-              </div>
-            </div>
-
-            <!-- Arrival, parking, and additional instructions -->
-            <div class="mb-3">
-              <label for="instructions" class="form-label">
-                Provide detailed arrival and parking instructions
-              </label>
-              <el-tooltip
-                content="Provide details about parking, access, or any special instructions for arrival (optional)"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <textarea
-                  v-model="form.instructions"
-                  class="form-control"
-                  id="instructions"
-                  rows="3"
-                  @blur="validateField('instructions')"
-                ></textarea>
-              </el-tooltip>
-              <div v-if="errors.instructions" class="text-danger small mt-1">
-                {{ errors.instructions }}
-              </div>
-              <div class="parking-note mt-2">
-                <i class="bi bi-info-circle me-1"></i>
-                If there is valet or other parking that costs over $10, the amount will be added to your invoice. If we are informed of these charges after the event, the credit card on file will be charged accordingly.
-              </div>
-            </div>
-
-            <!-- Event start time -->
-            <div class="mb-3">
-              <label class="form-label">
-                Event start time <span class="text-danger">*</span>
-              </label>
-              <el-tooltip
-                content="Select the start time for the event"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <el-time-picker
-                  v-model="form.startTime"
-                  placeholder="Start time"
-                  format="hh:mm A"
-                  value-format="HH:mm"
-                  style="width: 100%"
-                  size="large"
-                  @blur="validateField('startTime')"
-                />
-              </el-tooltip>
-              <div v-if="errors.startTime" class="text-danger small mt-1">
-                {{ errors.startTime }}
-              </div>
-            </div>
-
-            <!-- Entertainment start time -->
-            <div class="mb-3">
-              <label class="form-label">Entertainment start time</label>
-              <el-tooltip
-                content="Recommended at least 30 minutes after the party start time"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <el-time-picker
-                  v-model="form.entertainmentStartTime"
-                  placeholder="Start time"
-                  format="hh:mm A"
-                  value-format="HH:mm"
-                  style="width: 100%"
-                  size="large"
-                />
-              </el-tooltip>
-              <p class="text-muted small mt-1">
-                (recommended at least 30 minutes after the party start time)
-              </p>
+            </el-tooltip>
+            <div v-if="errors.startTime" class="text-danger small mt-1">
+              {{ errors.startTime }}
             </div>
           </div>
 
-          <!-- Right Column -->
-          <div class="col-md-6">
-            <!-- Birthday child's name -->
-            <div class="mb-3">
-              <label for="birthdayChildName" class="form-label">
-                Birthday child's name <span class="text-danger">*</span>
-              </label>
-              <el-tooltip
-                content="Enter the name of the birthday child (or N/A if not applicable)"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <input
-                  v-model="form.birthdayChildName"
-                  type="text"
-                  class="form-control"
-                  id="birthdayChildName"
-                  @blur="validateField('birthdayChildName')"
-                />
-              </el-tooltip>
-              <div v-if="errors.birthdayChildName" class="text-danger small mt-1">
-                {{ errors.birthdayChildName }}
-              </div>
-            </div>
+          <!-- Entertainment start time -->
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Entertainment Start Time</label>
+            <el-tooltip
+              content="Recommended at least 30 minutes after the party start time"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <el-time-picker
+                v-model="form.entertainmentStartTime"
+                placeholder="Start time"
+                format="hh:mm A"
+                value-format="HH:mm"
+                style="width: 100%"
+                size="large"
+              />
+            </el-tooltip>
+            <p class="text-muted small mt-1">
+              (recommended at least 30 minutes after the party start time)
+            </p>
+          </div>
+        </div>
 
-            <!-- Age they are turning -->
-            <div class="mb-3">
-              <label for="childAge" class="form-label">
-                Age they are turning <span class="text-danger">*</span>
-              </label>
-              <el-tooltip
-                content="Enter the age the child is turning (1-18, or N/A if not a birthday)"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <input
-                  v-model="form.childAge"
-                  type="text"
-                  class="form-control"
-                  id="childAge"
-                  placeholder="Enter age (1-18) or N/A"
-                  @blur="validateField('childAge')"
-                />
-              </el-tooltip>
-              <div v-if="errors.childAge" class="text-danger small mt-1">
-                {{ errors.childAge }}
-              </div>
-            </div>
+        <!-- Arrival, parking, and additional instructions -->
+        <div class="mb-3">
+          <label for="instructions" class="form-label">
+            Provide detailed arrival and parking instructions
+          </label>
+          <el-tooltip
+            content="Provide details about parking, access, or any special instructions for arrival (optional)"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <textarea
+              v-model="form.instructions"
+              class="form-control"
+              id="instructions"
+              rows="3"
+              @blur="validateField('instructions')"
+            ></textarea>
+          </el-tooltip>
+          <div v-if="errors.instructions" class="text-danger small mt-1">
+            {{ errors.instructions }}
+          </div>
+          <div class="parking-note mt-2">
+            <i class="bi bi-info-circle me-1"></i>
+            If there is valet or other parking that costs over $10, the amount will be added to your invoice. If we are informed of these charges after the event, the credit card on file will be charged accordingly.
+          </div>
+        </div>
 
-            <!-- Age range of children attending -->
-            <div class="mb-3">
-              <label for="ageRange" class="form-label">
-                Number of expected children <small class="text-muted">(Please include all children attending)</small> <span class="text-danger">*</span>
-              </label>
-              <el-tooltip
-                content="Please include all children attending (e.g., 5-10 years)"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <input
-                  v-model="form.ageRange"
-                  type="text"
-                  class="form-control"
-                  id="ageRange"
-                  @blur="validateField('ageRange')"
-                />
-              </el-tooltip>
-              <div v-if="errors.ageRange" class="text-danger small mt-1">
-                {{ errors.ageRange }}
-              </div>
-            </div>
+        <!-- Number and age range of children attending -->
+        <div class="mb-3">
+          <label for="ageRange" class="form-label">
+            Number of children and their age range <span class="text-danger">*</span>
+          </label>
+          <p class="text-muted small mb-1">Please include all children attending</p>
+          <el-tooltip
+            content="Please include all children attending (e.g., 12 children, ages 4-8)"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <input
+              v-model="form.ageRange"
+              type="text"
+              class="form-control"
+              id="ageRange"
+              @blur="validateField('ageRange')"
+            />
+          </el-tooltip>
+          <div v-if="errors.ageRange" class="text-danger small mt-1">
+            {{ errors.ageRange }}
+          </div>
+        </div>
 
-            <!-- Song requests -->
-            <div class="mb-3">
-              <label for="songRequests" class="form-label">
-                Song requests, up to 3 (provide links)
-              </label>
-              <el-tooltip
-                content="Provide YouTube or Spotify links for up to 3 songs (one per line) - Optional"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <textarea
-                  v-model="form.songRequests"
-                  class="form-control"
-                  id="songRequests"
-                  rows="4"
-                  @blur="validateField('songRequests')"
-                ></textarea>
-              </el-tooltip>
-              <div v-if="errors.songRequests" class="text-danger small mt-1">
-                {{ errors.songRequests }}
-              </div>
+        <div class="row">
+          <!-- Birthday child's name -->
+          <div class="col-md-6 mb-3">
+            <label for="birthdayChildName" class="form-label">
+              Birthday child’s name <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Enter the name of the birthday child (or N/A if not applicable)"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <input
+                v-model="form.birthdayChildName"
+                type="text"
+                class="form-control"
+                id="birthdayChildName"
+                @blur="validateField('birthdayChildName')"
+              />
+            </el-tooltip>
+            <div v-if="errors.birthdayChildName" class="text-danger small mt-1">
+              {{ errors.birthdayChildName }}
             </div>
+          </div>
 
-            <!-- Happy Birthday song -->
-            <div class="mb-3">
-              <label for="happyBirthdayRequest" class="form-label">
-                Would you like Happy Birthday to be sung at the end of the set? <span class="text-danger">*</span>
-              </label>
-              <el-tooltip
-                content="Select whether you want the Happy Birthday song performed"
-                placement="right"
-                effect="dark"
-                trigger="focus"
-              >
-                <select
-                  v-model="form.happyBirthdayRequest"
-                  class="form-control"
-                  id="happyBirthdayRequest"
-                  @blur="validateField('happyBirthdayRequest')"
-                >
-                  <option value="">Please select</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </select>
-              </el-tooltip>
-              <div v-if="errors.happyBirthdayRequest" class="text-danger small mt-1">
-                {{ errors.happyBirthdayRequest }}
-              </div>
+          <!-- Age they are turning -->
+          <div class="col-md-6 mb-3">
+            <label for="childAge" class="form-label">
+              Age they are turning <span class="text-danger">*</span>
+            </label>
+            <el-tooltip
+              content="Enter the age the child is turning (1-18, or N/A if not a birthday)"
+              placement="right"
+              effect="dark"
+              trigger="focus"
+            >
+              <input
+                v-model="form.childAge"
+                type="text"
+                class="form-control"
+                id="childAge"
+                placeholder="Enter age (1-18) or N/A"
+                @blur="validateField('childAge')"
+              />
+            </el-tooltip>
+            <div v-if="errors.childAge" class="text-danger small mt-1">
+              {{ errors.childAge }}
             </div>
+          </div>
+        </div>
+
+        <!-- Song requests -->
+        <div class="mb-3">
+          <label for="songRequests" class="form-label">
+            Song requests, up to 3 (provide links)
+          </label>
+          <el-tooltip
+            content="Provide YouTube or Spotify links for up to 3 songs (one per line) - Optional"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <textarea
+              v-model="form.songRequests"
+              class="form-control"
+              id="songRequests"
+              rows="4"
+              @blur="validateField('songRequests')"
+            ></textarea>
+          </el-tooltip>
+          <div v-if="errors.songRequests" class="text-danger small mt-1">
+            {{ errors.songRequests }}
+          </div>
+        </div>
+
+        <!-- Happy Birthday song -->
+        <div class="mb-3">
+          <label for="happyBirthdayRequest" class="form-label">
+            Would you like Happy Birthday to be sung at the end of the set? <span class="text-danger">*</span>
+          </label>
+          <el-tooltip
+            content="Select whether you want the Happy Birthday song performed"
+            placement="right"
+            effect="dark"
+            trigger="focus"
+          >
+            <select
+              v-model="form.happyBirthdayRequest"
+              class="form-control"
+              id="happyBirthdayRequest"
+              @blur="validateField('happyBirthdayRequest')"
+            >
+              <option value="">Please select</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </el-tooltip>
+          <div v-if="errors.happyBirthdayRequest" class="text-danger small mt-1">
+            {{ errors.happyBirthdayRequest }}
           </div>
         </div>
 
@@ -357,6 +355,7 @@ const reservation = ref({});
 const confirmedAlready = ref(false);
 
 const form = reactive({
+  eventDate: "",
   fullAddress: "",
   instructions: "",
   startTime: "",
@@ -394,6 +393,17 @@ const selectTip = (value) => {
 
 const isTrueValue = (value) => value === true || value === 1 || value === '1';
 
+const toDateInputValue = (value) => {
+  if (!value) return '';
+  let dateStr = value;
+  if (typeof dateStr === 'object' && dateStr.date) {
+    dateStr = dateStr.date;
+  }
+
+  const match = String(dateStr).match(/^(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : '';
+};
+
 const saveGratuityAndRedirect = async (reservationId) => {
   if (computedTip.value > 0) {
     await api.patch(`/reservations/${reservationId}/gratuity`, { amount: computedTip.value });
@@ -407,31 +417,9 @@ const saveGratuityAndRedirect = async (reservationId) => {
   }
 };
 
-// Computed
-const eventDateDisplay = computed(() => {
-  if (!reservation.value.event_date) return "N/A";
-
-  // Handle both string and object formats
-  let dateStr = reservation.value.event_date;
-  if (typeof dateStr === 'object' && dateStr.date) {
-    dateStr = dateStr.date;
-  }
-
-  // Parse the date - handle both YYYY-MM-DD and datetime formats
-  const date = new Date(dateStr);
-
-  // Check if date is valid
-  if (isNaN(date.getTime())) return "N/A";
-
-  return date.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric'
-  });
-});
-
 // Validation schema (mantener igual)
 const schema = yup.object({
+  eventDate: yup.string().required("Date is required"),
   fullAddress: yup.string().required("Full address is required"),
   instructions: yup.string(),
   startTime: yup.string().required("Start time is required"),
@@ -495,6 +483,7 @@ async function fetchReservation() {
       return (v == 1 || v === true || v === 'yes') ? 'yes' : 'no';
     };
 
+    form.eventDate               = toDateInputValue(r.event_date);
     form.fullAddress             = cleanDash(r.event_address);
     form.instructions            = cleanDash(r.arrival_parking_instructions);
     form.startTime               = cleanTime(r.event_time);
@@ -545,6 +534,7 @@ async function handleSubmit() {
   // Step 2: save confirmation data, then show gratuity before payment
   try {
     const updateData = {
+      event_date: form.eventDate,
       event_address: form.fullAddress,
       arrival_parking_instructions: form.instructions || null,
       event_time: form.startTime,

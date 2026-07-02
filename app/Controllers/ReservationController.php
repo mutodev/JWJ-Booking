@@ -301,6 +301,7 @@ class ReservationController extends ResourceController
             $data = json_decode($json, true);
 
             $allowedFields = [
+                'event_date',
                 'event_address',
                 'arrival_parking_instructions',
                 'event_time',

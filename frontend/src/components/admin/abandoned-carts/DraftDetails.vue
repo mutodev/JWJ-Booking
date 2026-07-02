@@ -118,13 +118,13 @@
 
                   <!-- Children Count -->
                   <div class="col-md-6 mb-3" v-if="parsedFormData.children_count">
-                    <strong>Children Count:</strong>
+                    <strong>Total Children:</strong>
                     <p>{{ parsedFormData.children_count }} children</p>
                   </div>
 
-                  <!-- Number of Children -->
+                  <!-- Age Range -->
                   <div class="col-md-6 mb-3" v-if="parsedFormData.children_age_range">
-                    <strong>Number of Children:</strong>
+                    <strong>Age Range:</strong>
                     <p>{{ parsedFormData.children_age_range }}</p>
                   </div>
 

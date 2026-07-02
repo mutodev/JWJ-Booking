@@ -59,7 +59,7 @@
               <h6 class="segment-title">Event Details</h6>
               <div class="row g-3">
                 <div class="col-md-3">
-                  <label class="form-label">Children Count</label>
+                  <label class="form-label">Total Children</label>
                   <input
                     v-model.number="editData.children_count"
                     type="number"
@@ -68,7 +68,7 @@
                   />
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Number of Children</label>
+                  <label class="form-label">Age Range</label>
                   <input
                     v-model="editData.children_age_range"
                     type="text"
