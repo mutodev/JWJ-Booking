@@ -122,6 +122,20 @@
           <small class="text-muted">{{ getTimeAgo(last_activity_at) }}</small>
         </template>
 
+        <!-- Follow-Up Email -->
+        <template #item-follow_up_sent_at="{ follow_up_sent_at }">
+          <template v-if="follow_up_sent_at">
+            <span class="badge bg-success">
+              <i class="bi bi-check-circle"></i> Sent
+            </span>
+            <br>
+            <small class="text-muted">{{ formatDateTime(follow_up_sent_at) }}</small>
+          </template>
+          <span v-else class="badge bg-secondary">
+            <i class="bi bi-dash-circle"></i> Not sent
+          </span>
+        </template>
+
         <!-- Actions -->
         <template #item-actions="item">
           <button
@@ -132,7 +146,7 @@
           </button>
           <button
             v-if="!item.completed && item.email"
-            class="btn btn-sm btn-action-icon btn-warning ms-1"
+            class="btn btn-sm btn-action-icon btn-dark ms-1"
             :disabled="sendingId === item.id"
             :title="'Send follow-up to ' + item.email"
             @click="sendFollowUp(item)"
@@ -237,10 +251,14 @@ const showAnalytics = () => {
 const sendFollowUp = async (item) => {
   sendingId.value = item.id;
   try {
-    await api.post(`/reservation-drafts/${item.id}/follow-up`);
-    alert(`Follow-up email sent to ${item.email}`);
+    const response = await api.post(`/reservation-drafts/${item.id}/follow-up`);
+    if (response?.data) {
+      const index = data.value.findIndex((draft) => draft.id === item.id);
+      if (index !== -1) {
+        data.value[index] = response.data;
+      }
+    }
   } catch (error) {
-    alert('Failed to send follow-up email. Please try again.');
     console.error(error);
   } finally {
     sendingId.value = null;
@@ -254,6 +272,7 @@ const headers = [
   { text: "Last Step", value: "current_step", sortable: true },
   { text: "Status", value: "completed", sortable: true },
   { text: "Last Activity", value: "last_activity_at", sortable: true },
+  { text: "Follow-Up Email", value: "follow_up_sent_at", sortable: true },
   { text: "Actions", value: "actions", sortable: false },
 ];
 

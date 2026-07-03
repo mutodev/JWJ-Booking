@@ -181,9 +181,9 @@ class ReservationDraftService
      * Send follow-up email to an abandoned cart
      *
      * @param string $id Draft ID
-     * @return bool
+     * @return object|false
      */
-    public function sendFollowUpEmail(string $id): bool
+    public function sendFollowUpEmail(string $id)
     {
         $draft = $this->draftModel->find($id);
 
@@ -205,9 +205,17 @@ class ReservationDraftService
             'resume_url'    => base_url(),
         ]);
 
-        $emailService->sendEmail($draft->email, $rendered['subject'], $rendered['body']);
+        $emailResult = $emailService->sendEmail($draft->email, $rendered['subject'], $rendered['body']);
+        if (!$emailResult) {
+            return false;
+        }
 
-        return true;
+        $sentAt = date('Y-m-d H:i:s');
+        if (!$this->draftModel->update($draft->id, ['follow_up_sent_at' => $sentAt])) {
+            throw new \RuntimeException('Follow-up email was sent, but the sent timestamp could not be saved.');
+        }
+
+        return $this->draftModel->find($draft->id);
     }
 
     /**

@@ -24,6 +24,7 @@ class ReservationDraftModel extends Model
         'ip_address',
         'user_agent',
         'last_activity_at',
+        'follow_up_sent_at',
         'created_at',
         'updated_at'
     ];

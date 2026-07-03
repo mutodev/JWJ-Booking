@@ -1,6 +1,6 @@
 {
   "main.js": {
-    "file": "assets/main-DE6hmr0X.js",
+    "file": "assets/main-C98iE7aJ.js",
     "name": "main",
     "src": "main.js",
     "isEntry": true,
@@ -24,7 +24,7 @@
     "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2"
   },
   "node_modules/quill/quill.js": {
-    "file": "assets/quill-CbUQBmyd.js",
+    "file": "assets/quill-B-MBYoCR.js",
     "name": "quill",
     "src": "node_modules/quill/quill.js",
     "isDynamicEntry": true,

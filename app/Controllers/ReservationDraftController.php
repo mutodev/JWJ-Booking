@@ -127,17 +127,17 @@ class ReservationDraftController extends ResourceController
             if (!$result) {
                 return $this->response
                     ->setStatusCode(400)
-                    ->setJSON(create_response(false, null, 'Could not send email. Draft may not exist, is already completed, or has no email.'));
+                    ->setJSON(create_response('Could not send email. Draft may not exist, is already completed, or has no email.', null));
             }
 
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response(true, null, 'Follow-up email sent successfully'));
+                ->setJSON(create_response('Follow-up email sent successfully', $result));
         } catch (\Exception $e) {
             log_message('error', 'Error sending follow-up email: ' . $e->getMessage());
             return $this->response
                 ->setStatusCode(500)
-                ->setJSON(create_response(false, null, 'An error occurred while sending the follow-up email'));
+                ->setJSON(create_response('An error occurred while sending the follow-up email', null));
         }
     }
 
