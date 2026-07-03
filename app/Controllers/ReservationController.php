@@ -320,6 +320,10 @@ class ReservationController extends ResourceController
                 }
             }
 
+            if (array_key_exists('additional_notes', $data)) {
+                $updateData['customer_notes'] = $data['additional_notes'];
+            }
+
             if (empty($updateData)) {
                 throw new \Exception('No valid fields to update', 400);
             }

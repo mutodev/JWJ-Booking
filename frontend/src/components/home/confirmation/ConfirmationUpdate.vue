@@ -304,6 +304,21 @@
           </div>
         </div>
 
+        <!-- Additional notes/details -->
+        <div class="mb-3">
+          <label for="additionalNotes" class="form-label">
+            Additional Notes/Details
+          </label>
+          <p class="text-muted small mb-1">Are there any additional notes or details you would like to share to ensure the best experience? Other entertainment or activities, description of the area you have chosen for the performers to set up, etc.</p>
+          <textarea
+            v-model="form.additionalNotes"
+            class="form-control"
+            id="additionalNotes"
+            rows="4"
+            @keydown.stop
+          ></textarea>
+        </div>
+
         <!-- Happy Birthday song -->
         <div class="mb-3">
           <label for="happyBirthdayRequest" class="form-label">
@@ -372,6 +387,7 @@ const form = reactive({
   childAge: "",
   ageRange: "",
   songRequests: "",
+  additionalNotes: "",
   happyBirthdayRequest: "",
 });
 
@@ -500,6 +516,7 @@ async function fetchReservation() {
     form.childAge                = (r.birthday_child_age && r.birthday_child_age > 0) ? String(r.birthday_child_age) : '';
     form.ageRange                = cleanDash(r.children_age_range);
     form.songRequests            = cleanDash(r.song_requests);
+    form.additionalNotes         = cleanDash(r.additional_notes ?? r.customer_notes);
     form.happyBirthdayRequest    = boolToYesNo(r.sing_happy_birthday);
 
   } catch (err) {
@@ -551,6 +568,7 @@ async function handleSubmit() {
       birthday_child_age: form.childAge,
       children_age_range: form.ageRange,
       song_requests: form.songRequests || null,
+      additional_notes: form.additionalNotes || null,
       sing_happy_birthday: form.happyBirthdayRequest === "yes",
     };
 

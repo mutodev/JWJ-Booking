@@ -21,6 +21,7 @@ class ReservationRepository
         return $this->model
             ->select("
                 reservations.*,
+                reservations.customer_notes as additional_notes,
                 customers.full_name,
                 customers.email,
                 customers.phone,
@@ -48,6 +49,7 @@ class ReservationRepository
         return $this->model
             ->select("
                 reservations.*,
+                reservations.customer_notes as additional_notes,
                 customers.full_name,
                 customers.email,
                 customers.phone,

@@ -210,7 +210,7 @@
                     </div>
                     <div class="col-lg-6">
                       <div class="mb-3">
-                        <strong><i class="bi bi-person-heart me-2"></i>Customer Notes</strong>
+                        <strong><i class="bi bi-person-heart me-2"></i>Additional Notes/Details</strong>
                         <div class="mt-1 p-2 bg-light border rounded">{{ data.customer_notes || 'None specified' }}</div>
                       </div>
                       <div class="mb-3">
