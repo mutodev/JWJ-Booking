@@ -653,9 +653,7 @@ class EmailTemplateSeeder extends Seeder
 <p style="margin: 0 0 12px; font-weight: 700; color: #1F2937;">Reservation Summary</p>' . $summary . '
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
     <tr><td align="center"><a href="{{payment_url}}" style="display: inline-block; background-color: #FF74B7; color: #000000; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px;">Complete Payment</a></td></tr>
-</table>
-<p style="margin: 24px 0 4px;">Thank you,</p>
-<p style="margin: 0; font-weight: 600; color: #FF74B7;">Jam with Jamie Team</p>';
+</table>';
     }
 
     private function getReservationCancelledNoPaymentMessage(): string
@@ -663,9 +661,7 @@ class EmailTemplateSeeder extends Seeder
         return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
 <p style="margin: 0 0 16px;">Since we did not receive payment to confirm your booking, the reservation request has been canceled and the payment link has been disabled.</p>
 <p style="margin: 0 0 16px;">However, if you\'re still interested in securing the booking, let us know and we\'ll re-send the payment link.</p>
-<p style="margin: 0 0 16px;">We hope to have the opportunity to jam with you in the future!</p>
-<p style="margin: 24px 0 4px;">Thank you,</p>
-<p style="margin: 0; font-weight: 600; color: #FF74B7;">Jam with Jamie Team</p>';
+<p style="margin: 0;">We hope to have the opportunity to jam with you in the future!</p>';
     }
 
     private function getThankYouForJammingMessage(): string
@@ -679,9 +675,7 @@ class EmailTemplateSeeder extends Seeder
 <p style="margin: 0 0 16px;">If you enjoyed the entertainment, we would love it if you could leave a quick review on <a href="https://www.google.com/search?q=Jam+with+Jamie+review">Google</a>! Many parents and companies use this resource to find us and it\'s always helpful for people to hear real, third party reviews of our company and entertainment.</p>
 <p style="margin: 0 0 16px;">We have an offer to share! Rebook with us in the future and receive 15% off your booking anytime in the next year.</p>
 <p style="margin: 0 0 16px;">If you have any pictures from your event that you are willing to share, we would love to see them! Please reply to this email with any selected photos or share and tag us @jamwithjamie.</p>
-<p style="margin: 0 0 16px;">Thanks again and we look forward to jamming with you at future events!</p>
-<p style="margin: 24px 0 4px;">Best,</p>
-<p style="margin: 0; font-weight: 600; color: #FF74B7;">Jam with Jamie Team</p>';
+<p style="margin: 0;">Thanks again and we look forward to jamming with you at future events!</p>';
     }
 
     private function getAvailabilityConfirmedNextStepsMessage(): string
@@ -689,9 +683,7 @@ class EmailTemplateSeeder extends Seeder
         return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
 <p style="margin: 0 0 16px;">We\'re happy to confirm availability for your event!</p>
 <p style="margin: 0 0 16px;">You\'ll receive this Friday by the end of the day the payment link, and a short form to submit any additional information or song requests.</p>
-<p style="margin: 0 0 16px;">If you are no longer interested in proceeding with the booking, please reply to this email to let us know.</p>
-<p style="margin: 24px 0 4px;">Best,</p>
-<p style="margin: 0; font-weight: 600; color: #FF74B7;">Jam with Jamie Team</p>';
+<p style="margin: 0;">If you are no longer interested in proceeding with the booking, please reply to this email to let us know.</p>';
     }
 
     private function getNotAvailableForEventMessage(): string
@@ -699,8 +691,6 @@ class EmailTemplateSeeder extends Seeder
         return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
 <p style="margin: 0 0 16px;">Thank you so much for your patience as we worked on your booking request.</p>
 <p style="margin: 0 0 16px;">Unfortunately, we do not have a team available for the requested date and time.</p>
-<p style="margin: 0 0 16px;">We hope to jam with you in the future!</p>
-<p style="margin: 24px 0 4px;">Best,</p>
-<p style="margin: 0; font-weight: 600; color: #FF74B7;">Jam with Jamie Team</p>';
+<p style="margin: 0;">We hope to jam with you in the future!</p>';
     }
 }
