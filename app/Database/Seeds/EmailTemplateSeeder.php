@@ -360,16 +360,6 @@ class EmailTemplateSeeder extends Seeder
                             <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937;">{{content_title}}</h1>
                             <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280;">{{content_intro}}</p>
 
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px;">
-                                <tr>
-                                    <td align="center">
-                                        <div style="display: inline-block; background-color: #FFEF81; border: 2px solid #000000; border-radius: 8px; padding: 12px 24px;">
-                                            <span style="font-size: 16px; font-weight: 700; color: #000000;">Reservation ID: {{reservation_id}}</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </table>
-
                             <h2 style="margin: 0 0 16px; font-size: 17px; font-weight: 700; color: #1F2937;">Your Reservation Details</h2>
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
                                 <tr>
