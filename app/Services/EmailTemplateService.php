@@ -102,6 +102,83 @@ class EmailTemplateService
     }
 
     /**
+     * Render a template for one-off composition. Templates with a content.message
+     * field return only that editable fragment; legacy templates fall back to the
+     * full rendered body.
+     */
+    public function composePreview(string $id, array $variables): array
+    {
+        $template = $this->repository->getById($id);
+        if (!$template) {
+            throw new HTTPException('Email template not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $contentVars = $this->getContentVars($template);
+        $subject = $this->replaceOnly($template->subject, $contentVars);
+        $subject = $this->replacePlaceholders($subject, $variables);
+
+        $content = json_decode($template->content ?? '{}', true) ?? [];
+        if (array_key_exists('message', $content)) {
+            $editable = $this->replacePlaceholders((string) $content['message'], $variables);
+
+            return [
+                'subject' => $subject,
+                'body' => $editable,
+                'is_full_html' => false,
+            ];
+        }
+
+        $rendered = $this->preview($id, $variables);
+        return [
+            'subject' => $rendered['subject'],
+            'body' => $rendered['body'],
+            'is_full_html' => true,
+        ];
+    }
+
+    public function wrapContent(string $content): string
+    {
+        $logoUrl = base_url('img/logos/JWJ_logo-05.png');
+        $year = date('Y');
+
+        return <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f9fafb;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:40px 20px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+                    <tr>
+                        <td style="background-color:#ffffff;padding:32px 40px;text-align:center;border-bottom:3px solid #FF74B7;">
+                            <img src="{$logoUrl}" alt="Jam with Jamie" width="220" style="display:inline-block;max-width:220px;height:auto;">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding:40px 40px 32px;font-size:15px;line-height:1.7;color:#374151;">
+                            {$content}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center;">
+                            <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#FF74B7;">The Jam with Jamie Team</p>
+                            <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; {$year} Jam with Jamie LLC. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+HTML;
+    }
+
+    /**
      * Extract content variables (prefixed with content_) from the template's content JSON.
      */
     private function getContentVars(\App\Entities\EmailTemplate $template): array

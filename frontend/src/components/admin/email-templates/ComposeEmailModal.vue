@@ -1,19 +1,141 @@
 <template>
   <div v-if="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog" style="z-index: 1055;">
-    <div class="modal-dialog modal-xl" role="document" style="z-index: 1056;">
-      <div class="modal-content">
+    <div class="modal-dialog modal-fullscreen-lg-down modal-xl" role="document" style="z-index: 1056;">
+      <div class="modal-content h-100">
 
         <!-- Header -->
         <div class="modal-header">
-          <h5 class="modal-title fw-bold mb-0">
-            <i class="bi bi-envelope-plus me-2 text-primary"></i>
-            Compose Email
-          </h5>
+          <div>
+            <h5 class="modal-title fw-bold mb-0">
+              <i class="bi bi-envelope-plus me-2 text-primary"></i>
+              {{ reservation ? (selectedTemplateName || 'Compose Email') : 'Compose Email' }}
+            </h5>
+            <p v-if="reservation" class="text-muted small mb-0 mt-1">
+              Edit the text of this email. The design and layout are preserved automatically.
+            </p>
+          </div>
           <button type="button" class="btn-close" @click="$emit('close')"></button>
         </div>
 
-        <!-- Body -->
-        <div class="modal-body p-4">
+        <!-- Reservation template editor -->
+        <div v-if="reservation" class="modal-body p-0">
+          <div class="d-flex h-100" style="min-height: 70vh;">
+            <div class="edit-panel border-end overflow-auto p-4" style="width: 45%; min-width: 340px;">
+              <div
+                class="field-card mb-3"
+                :class="{ 'field-card--active': activeField === 'subject' }"
+              >
+                <div class="field-icon-label">
+                  <span class="field-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-envelope-fill"></i>
+                  </span>
+                  <div>
+                    <div class="field-label">Subject Line</div>
+                    <div class="field-hint">What the recipient sees in their inbox before opening</div>
+                  </div>
+                </div>
+                <input
+                  ref="subjectInput"
+                  v-model="subject"
+                  type="text"
+                  class="form-control mt-2"
+                  placeholder="Enter subject..."
+                  @focus="activeField = 'subject'"
+                  @click="activeField = 'subject'"
+                />
+                <div v-if="activeField === 'subject'" class="var-chips mt-2">
+                  <span class="var-chips-label">Insert:</span>
+                  <button
+                    v-for="v in VARIABLES"
+                    :key="v.key"
+                    class="var-chip"
+                    type="button"
+                    @click="insertIntoSubject(v.key)"
+                  >
+                    {{ v.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div
+                class="field-card mb-3"
+                :class="{ 'field-card--active': activeField === 'message' }"
+              >
+                <div class="field-icon-label">
+                  <span class="field-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-pencil"></i>
+                  </span>
+                  <div>
+                    <div class="field-label">Message</div>
+                    <div class="field-hint">Edit the email content for this reservation</div>
+                  </div>
+                </div>
+                <QuillEditor
+                  ref="quillRef"
+                  v-model:content="content"
+                  contentType="html"
+                  theme="snow"
+                  :options="QUILL_OPTIONS"
+                  class="quill-editor-field mt-2"
+                  @focus="activeField = 'message'"
+                  @selection-change="(range) => { if (range) quillLastSelection = range }"
+                />
+                <div v-if="activeField === 'message'" class="var-chips mt-2">
+                  <span class="var-chips-label">Insert dynamic value:</span>
+                  <button
+                    v-for="v in VARIABLES"
+                    :key="v.key"
+                    class="var-chip"
+                    type="button"
+                    @mousedown.prevent="insertVariable(v.key)"
+                  >
+                    {{ v.label }}
+                  </button>
+                </div>
+              </div>
+
+              <div class="field-card mb-3">
+                <div class="field-icon-label">
+                  <span class="field-icon bg-success-subtle text-success">
+                    <i class="bi bi-person-fill"></i>
+                  </span>
+                  <div>
+                    <div class="field-label">Recipient</div>
+                    <div class="field-hint">{{ lockedRecipient?.full_name || 'Customer' }} &lt;{{ lockedRecipient?.email || 'No email' }}&gt;</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-panel d-flex flex-column flex-grow-1 overflow-auto bg-light">
+              <div class="preview-topbar px-4 py-2 bg-white border-bottom d-flex align-items-center gap-2">
+                <i class="bi bi-eye-fill text-success"></i>
+                <span class="fw-semibold small">Live Preview</span>
+                <span class="badge bg-success-subtle text-success border border-success-subtle ms-1">
+                  Updates as you type
+                </span>
+                <div class="ms-auto text-muted small">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Dynamic values appear when the email is sent
+                </div>
+              </div>
+              <div class="preview-subject px-4 py-2 bg-white border-bottom">
+                <span class="text-muted small me-2">Subject:</span>
+                <strong class="small">{{ subject || '(no subject)' }}</strong>
+              </div>
+              <div class="flex-grow-1 p-3">
+                <iframe
+                  :srcdoc="reservationPreviewBody"
+                  class="w-100 h-100 border-0 rounded shadow-sm"
+                  style="min-height: 500px; background: white;"
+                ></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Default compose body -->
+        <div v-else class="modal-body p-4">
 
           <!-- Subject -->
           <div class="mb-4">
@@ -129,7 +251,7 @@
         </div>
 
         <!-- Footer -->
-        <div class="modal-footer">
+        <div class="modal-footer border-top">
           <button class="btn btn-secondary" @click="$emit('close')">Cancel</button>
           <button
             class="btn btn-primary"
@@ -148,7 +270,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { QuillEditor } from '@vueup/vue-quill';
 import '@vueup/vue-quill/dist/vue-quill.snow.css';
 import api from '@/services/axios';
@@ -160,9 +282,15 @@ const props = defineProps({
   show: { type: Boolean, default: false },
   // When opened from Reservations table — pre-selects and locks this customer
   lockedRecipient: { type: Object, default: null },
+  reservation: { type: Object, default: null },
+  templateId: { type: String, default: '' },
+  initialSubject: { type: String, default: '' },
+  initialContent: { type: String, default: '' },
+  initialIsFullHtml: { type: Boolean, default: false },
+  selectedTemplateName: { type: String, default: '' },
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'sent']);
 
 // ── State ─────────────────────────────────────────────────────────────────
 const subject = ref('');
@@ -174,6 +302,10 @@ const searchResults = ref([]);
 const searching = ref(false);
 const sending = ref(false);
 const quillRef = ref(null);
+const isFullHtml = ref(false);
+const subjectInput = ref(null);
+const activeField = ref('subject');
+const quillLastSelection = ref(null);
 
 // ── Quill ──────────────────────────────────────────────────────────────────
 const QUILL_OPTIONS = {
@@ -190,18 +322,42 @@ const QUILL_OPTIONS = {
 // ── Variables ──────────────────────────────────────────────────────────────
 const VARIABLES = [
   { key: 'customer_name', label: 'Customer Name' },
+  { key: 'reservation_id', label: 'Reservation ID' },
   { key: 'event_date',    label: 'Event Date' },
   { key: 'event_time',    label: 'Event Time' },
   { key: 'event_address', label: 'Event Address' },
   { key: 'service_name',  label: 'Service' },
+  { key: 'payment_url',   label: 'Payment URL' },
   { key: 'total_amount',  label: 'Total Amount' },
 ];
 
 function insertVariable(key) {
   const editor = quillRef.value?.getQuill?.();
   if (!editor) return;
-  const range = editor.getSelection(true);
-  editor.insertText(range?.index ?? 0, `{{${key}}}`);
+  const range = quillLastSelection.value || editor.getSelection(true);
+  const index = range?.index ?? Math.max(editor.getLength() - 1, 0);
+  editor.insertText(index, `{{${key}}}`, 'user');
+  editor.setSelection(index + key.length + 4);
+  editor.focus();
+}
+
+function insertIntoSubject(key) {
+  const tag = `{{${key}}}`;
+  const el = subjectInput.value;
+  if (!el) {
+    subject.value += tag;
+    return;
+  }
+
+  const start = el.selectionStart ?? subject.value.length;
+  const end = el.selectionEnd ?? start;
+  subject.value = subject.value.substring(0, start) + tag + subject.value.substring(end);
+  nextTick(() => {
+    const pos = start + tag.length;
+    el.selectionStart = pos;
+    el.selectionEnd = pos;
+    el.focus();
+  });
 }
 
 // ── Recipients ─────────────────────────────────────────────────────────────
@@ -240,9 +396,123 @@ function isAlreadySelected(id) {
 }
 
 // ── Computed ───────────────────────────────────────────────────────────────
+function formatDate(value) {
+  if (!value) return '';
+  const dateValue = value?.date ?? value;
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  return Number.isNaN(date.getTime()) ? String(dateValue) : date.toLocaleDateString('en-US');
+}
+
+function formatCurrency(value) {
+  const amount = Number(value || 0);
+  return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+}
+
+function reservationVariables() {
+  const reservation = props.reservation || {};
+  const customerName = reservation.full_name || reservation.customer_name || props.lockedRecipient?.full_name || '';
+
+  return {
+    customer_name: customerName,
+    reservation_id: reservation.id || '',
+    service_name: reservation.service_name || '',
+    event_date: formatDate(reservation.event_date),
+    event_time: reservation.event_time || '',
+    event_address: reservation.event_address || '',
+    children_count: reservation.children_count ?? '',
+    total_amount: formatCurrency(reservation.total_amount),
+    confirmation_url: reservation.confirmation_url || '',
+    payment_url: reservation.payment_url || reservation.payment_link || '',
+  };
+}
+
+function replaceReservationPlaceholders(value) {
+  if (!props.reservation) return value;
+  const variables = reservationVariables();
+  return String(value || '').replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (match, key) => {
+    return Object.prototype.hasOwnProperty.call(variables, key) ? variables[key] : match;
+  });
+}
+
+function normalizeEditableContent(html) {
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = html || '';
+
+  wrapper.querySelectorAll('table').forEach((table) => {
+    const lines = Array.from(table.querySelectorAll('tr'))
+      .map((row) => {
+        const cells = Array.from(row.querySelectorAll('td, th')).map((cell) => cell.textContent.trim());
+        if (cells.length >= 2) {
+          return `<p><strong>${cells[0]}</strong>: ${cells.slice(1).join(' ')}</p>`;
+        }
+        return cells[0] ? `<p>${cells[0]}</p>` : '';
+      })
+      .filter(Boolean)
+      .join('');
+
+    const replacement = document.createElement('div');
+    replacement.innerHTML = lines;
+    table.replaceWith(...Array.from(replacement.childNodes));
+  });
+
+  wrapper.querySelectorAll('[style], [class], [role], [width], [cellpadding], [cellspacing], [align], [valign]').forEach((node) => {
+    ['style', 'class', 'role', 'width', 'cellpadding', 'cellspacing', 'align', 'valign'].forEach((attr) => {
+      node.removeAttribute(attr);
+    });
+  });
+
+  return wrapper.innerHTML;
+}
+
 const canSend = computed(() => {
   const hasRecipients = sendToAll.value || selectedRecipients.value.length > 0;
-  return subject.value.trim() && content.value.trim() && hasRecipients;
+  const hasRequiredTemplate = !props.reservation || props.templateId;
+  return subject.value.trim() && content.value.trim() && hasRecipients && hasRequiredTemplate;
+});
+
+const reservationPreviewBody = computed(() => {
+  if (isFullHtml.value) {
+    return replaceReservationPlaceholders(content.value);
+  }
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f9fafb;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background-color:#ffffff;padding:32px 40px;text-align:center;border-bottom:3px solid #FF74B7;">
+              <img src="/img/logos/JWJ_logo-05.png" alt="Jam with Jamie" width="300" style="display:inline-block;max-width:300px;height:auto;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 40px 32px;font-size:15px;line-height:1.7;color:#374151;">
+              ${content.value || ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:24px 40px 32px;border-top:1px solid #f0f0f0;">
+              <p style="margin:0 0 4px;font-size:14px;color:#1F2937;">Best regards,</p>
+              <p style="margin:0;font-size:14px;font-weight:600;color:#FF74B7;">The Jam with Jamie Team</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#FF74B7;padding:16px 40px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:rgba(0,0,0,0.6);">&copy; ${new Date().getFullYear()} Jam with Jamie LLC. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 });
 
 // ── Send ───────────────────────────────────────────────────────────────────
@@ -250,15 +520,28 @@ async function send() {
   if (!canSend.value) return;
   sending.value = true;
   try {
-    const payload = {
-      subject: subject.value,
-      html_content: content.value,
-      send_to_all: sendToAll.value,
-      recipient_ids: selectedRecipients.value.map(r => r.id),
-    };
-    const res = await api.post('/email-templates/send', payload);
-    const sent = res.data?.sent ?? res.sent ?? '?';
-    toast.success(`Email sent to ${sent} recipient(s)!`);
+    if (props.reservation) {
+      await api.post('/reservations/send-template-email', {
+        reservation_id: props.reservation.id,
+        template_id: props.templateId,
+        subject: replaceReservationPlaceholders(subject.value),
+        body: replaceReservationPlaceholders(content.value),
+        is_full_html: isFullHtml.value,
+      });
+      toast.success('Email sent successfully');
+    } else {
+      const payload = {
+        subject: subject.value,
+        html_content: content.value,
+        send_to_all: sendToAll.value,
+        recipient_ids: selectedRecipients.value.map(r => r.id),
+        is_full_html: isFullHtml.value,
+      };
+      const res = await api.post('/email-templates/send', payload);
+      const sent = res.data?.sent ?? res.sent ?? '?';
+      toast.success(`Email sent to ${sent} recipient(s)!`);
+    }
+    emit('sent');
     emit('close');
     reset();
   } catch (err) {
@@ -276,14 +559,30 @@ function reset() {
   selectedRecipients.value = [];
   searchModel.value = null;
   searchResults.value = [];
+  isFullHtml.value = false;
+  activeField.value = 'subject';
+  quillLastSelection.value = null;
 }
 
 watch(() => props.show, (val) => {
   if (val) {
     reset();
+    if (props.reservation) {
+      subject.value = props.initialSubject;
+      content.value = normalizeEditableContent(props.initialContent);
+      isFullHtml.value = props.initialIsFullHtml;
+    }
     if (props.lockedRecipient) {
       selectedRecipients.value = [props.lockedRecipient];
     }
+  }
+});
+
+watch(() => [props.initialSubject, props.initialContent, props.initialIsFullHtml], () => {
+  if (props.show && props.reservation) {
+    subject.value = props.initialSubject;
+    content.value = normalizeEditableContent(props.initialContent);
+    isFullHtml.value = props.initialIsFullHtml;
   }
 });
 
@@ -295,6 +594,128 @@ watch(() => props.lockedRecipient, (val) => {
 </script>
 
 <style scoped>
+.edit-panel {
+  flex-shrink: 0;
+}
+
+.preview-panel {
+  flex: 1;
+}
+
+.preview-topbar,
+.preview-subject {
+  flex-shrink: 0;
+  font-size: 0.85rem;
+}
+
+.field-card {
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field-card--active {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+}
+
+.field-icon-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.field-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.field-label {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #1f2937;
+  line-height: 1.3;
+}
+
+.field-hint {
+  font-size: 0.78rem;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+.var-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.var-chips-label {
+  font-size: 0.75rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.var-chip {
+  background: #f0f7ff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s;
+  white-space: nowrap;
+}
+
+.var-chip:hover {
+  background: #dbeafe;
+  border-color: #93c5fd;
+}
+
+.field-card--active :deep(.ql-toolbar.ql-snow),
+.field-card--active :deep(.ql-container.ql-snow) {
+  border-color: #0d6efd;
+}
+
+:deep(.quill-editor-field .ql-toolbar.ql-snow) {
+  border-color: #dee2e6;
+  border-radius: 6px 6px 0 0;
+  padding: 6px 8px;
+  background: #f8f9fa;
+  font-family: inherit;
+}
+
+:deep(.quill-editor-field .ql-container.ql-snow) {
+  border-color: #dee2e6;
+  border-radius: 0 0 6px 6px;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  font-size: 0.875rem;
+}
+
+:deep(.quill-editor-field .ql-editor) {
+  min-height: 360px;
+  padding: 8px 12px;
+  color: #212529;
+  line-height: 1.6;
+}
+
+:deep(.quill-editor-field .ql-editor.ql-blank::before) {
+  font-style: normal;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
 .quill-wrapper :deep(.ql-container) {
   min-height: 180px;
   font-size: 15px;

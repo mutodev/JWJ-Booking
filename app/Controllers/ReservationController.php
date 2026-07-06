@@ -183,6 +183,65 @@ class ReservationController extends ResourceController
         }
     }
 
+    public function renderTemplateEmail()
+    {
+        try {
+            $data = json_decode($this->request->getBody(), true);
+            $reservationId = $data['reservation_id'] ?? '';
+            $templateId = $data['template_id'] ?? '';
+
+            if (empty($reservationId)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['message' => 'Reservation is required']);
+            }
+
+            if (empty($templateId)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['message' => 'Template is required']);
+            }
+
+            $result = $this->service->renderTemplateEmail($reservationId, $templateId);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Template loaded', $result));
+        } catch (\Throwable $th) {
+            $statusCode = ($th->getCode() >= 400 && $th->getCode() < 600) ? $th->getCode() : 500;
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    public function sendTemplateEmail()
+    {
+        try {
+            $data = json_decode($this->request->getBody(), true);
+            $reservationId = $data['reservation_id'] ?? '';
+            $templateId = $data['template_id'] ?? '';
+            $subject = $data['subject'] ?? '';
+            $body = $data['body'] ?? '';
+            $isFullHtml = (bool) ($data['is_full_html'] ?? false);
+
+            if (empty($reservationId)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['message' => 'Reservation is required']);
+            }
+
+            if (empty($templateId)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(['message' => 'Template is required']);
+            }
+
+            $result = $this->service->sendTemplateEmail($reservationId, $templateId, $subject, $body, $isFullHtml);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Email sent successfully', $result));
+        } catch (\Throwable $th) {
+            $statusCode = ($th->getCode() >= 400 && $th->getCode() < 600) ? $th->getCode() : 500;
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     /**
      * Save gratuity amount before Stripe redirect
      * PATCH /reservations/{id}/gratuity

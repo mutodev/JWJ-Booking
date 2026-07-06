@@ -83,9 +83,29 @@
               <button class="btn btn-sm btn-action-icon btn-success" @click="paymentUrlModal(item)" :disabled="item.is_paid" title="Send payment link">
                 <i class="bi bi-credit-card"></i>
               </button>
-              <button class="btn btn-sm btn-action-icon btn-primary" @click="openComposeModal(item)" title="Send email">
-                <i class="bi bi-envelope"></i>
-              </button>
+              <div class="dropdown">
+                <button
+                  class="btn btn-sm btn-action-icon btn-primary dropdown-toggle"
+                  type="button"
+                  data-bs-toggle="dropdown"
+                  aria-expanded="false"
+                  title="Send email"
+                  :disabled="loadingTemplateFor === item.id"
+                >
+                  <span v-if="loadingTemplateFor === item.id" class="spinner-border spinner-border-sm"></span>
+                  <i v-else class="bi bi-envelope"></i>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end reservation-template-menu">
+                  <li v-if="!emailTemplates.length">
+                    <span class="dropdown-item text-muted">No templates available</span>
+                  </li>
+                  <li v-for="template in emailTemplates" :key="template.id">
+                    <button class="dropdown-item" type="button" @click="openComposeModal(item, template.id)">
+                      {{ template.name }}
+                    </button>
+                  </li>
+                </ul>
+              </div>
             </div>
           </template>
         </EasyDataTable>
@@ -119,7 +139,13 @@
     <ComposeEmailModal
       :show="composeEmailVisible"
       :locked-recipient="composeLockedRecipient"
-      @close="composeEmailVisible = false"
+      :reservation="composeReservation"
+      :template-id="composeTemplateId"
+      :initial-subject="composeInitialSubject"
+      :initial-content="composeInitialContent"
+      :initial-is-full-html="composeInitialIsFullHtml"
+      :selected-template-name="composeTemplateName"
+      @close="closeComposeModal"
     />
 
     <!-- Send Payment Modal -->
@@ -225,9 +251,11 @@ import ReservationEdit from "./ReservationEdit.vue";
 import ReservationView from "./ReservationView.vue";
 import ComposeEmailModal from "@/components/admin/email-templates/ComposeEmailModal.vue";
 import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
+import { useToast } from "vue-toastification";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Reservations", icon: "bi-calendar-event" });
+const toast = useToast();
 
 const data = ref([]);
 const searchValue = ref("");
@@ -243,6 +271,21 @@ const modalViewVisible = ref(false);
 const modalPaymentUrlVisible = ref(false);
 const composeEmailVisible = ref(false);
 const composeLockedRecipient = ref(null);
+const composeReservation = ref(null);
+const composeTemplateId = ref("");
+const composeTemplateName = ref("");
+const composeInitialSubject = ref("");
+const composeInitialContent = ref("");
+const composeInitialIsFullHtml = ref(false);
+const emailTemplates = ref([]);
+const loadingTemplateFor = ref(null);
+const RESERVATION_EMAIL_TEMPLATE_SLUGS = new Set([
+  "payment_needed_secure_event",
+  "reservation_cancelled_no_payment",
+  "thank_you_for_jamming",
+  "availability_confirmed_next_steps",
+  "not_available_for_event",
+]);
 const exportModalVisible = ref(false);
 const exportDateFrom = ref('');
 const exportDateTo = ref('');
@@ -273,13 +316,48 @@ const paymentUrlModal = (item) => {
   modalPaymentUrlVisible.value = true;
 };
 
-const openComposeModal = (item) => {
-  composeLockedRecipient.value = {
-    id: item.customer_id,
-    full_name: item.full_name || item.customer_name || 'Customer',
-    email: item.email,
-  };
-  composeEmailVisible.value = true;
+const openComposeModal = async (item, templateId) => {
+  if (!templateId) {
+    toast.error("Select an email template first");
+    return;
+  }
+
+  loadingTemplateFor.value = item.id;
+  try {
+    const response = await api.post("/reservations/render-template-email", {
+      reservation_id: item.id,
+      template_id: templateId,
+    });
+    const rendered = response.data?.data ?? response.data;
+
+    composeReservation.value = { ...item };
+    composeTemplateId.value = templateId;
+    composeTemplateName.value = emailTemplates.value.find((template) => template.id === templateId)?.name || "";
+    composeInitialSubject.value = rendered?.subject || "";
+    composeInitialContent.value = rendered?.body || "";
+    composeInitialIsFullHtml.value = Boolean(rendered?.is_full_html);
+    composeLockedRecipient.value = {
+      id: item.customer_id,
+      full_name: item.full_name || item.customer_name || 'Customer',
+      email: item.email,
+    };
+    composeEmailVisible.value = true;
+  } catch (error) {
+    toast.error(error?.response?.data?.message ?? "Failed to load email template");
+  } finally {
+    loadingTemplateFor.value = null;
+  }
+};
+
+const closeComposeModal = () => {
+  composeEmailVisible.value = false;
+  composeReservation.value = null;
+  composeLockedRecipient.value = null;
+  composeTemplateId.value = "";
+  composeTemplateName.value = "";
+  composeInitialSubject.value = "";
+  composeInitialContent.value = "";
+  composeInitialIsFullHtml.value = false;
 };
 
 // Encabezados principales
@@ -341,6 +419,17 @@ const getSelectData = async () => {
     addons.value = (resAddons.data || []).flatMap(group => group.addons || []);
   } catch (error) {
     console.error(error);
+  }
+};
+
+const getEmailTemplates = async () => {
+  try {
+    const response = await api.get("/email-templates");
+    const templates = Array.isArray(response.data) ? response.data : (response.data?.data ?? []);
+    emailTemplates.value = templates.filter((template) => RESERVATION_EMAIL_TEMPLATE_SLUGS.has(template.slug));
+  } catch (error) {
+    console.error(error);
+    toast.error("Failed to load email templates");
   }
 };
 
@@ -498,5 +587,19 @@ const exportCSV = () => {
 onMounted(() => {
   getData();
   getSelectData();
+  getEmailTemplates();
 });
 </script>
+
+<style scoped>
+.reservation-template-menu {
+  min-width: 260px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.reservation-template-menu .dropdown-item {
+  font-size: 0.82rem;
+  white-space: normal;
+}
+</style>

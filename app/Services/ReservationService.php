@@ -1027,6 +1027,98 @@ class ReservationService
         ];
     }
 
+    public function renderTemplateEmail(string $reservationId, string $templateId): array
+    {
+        $reservation = $this->repository->getById($reservationId);
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $this->emailTemplateService->getById($templateId);
+
+        return $this->emailTemplateService->composePreview(
+            $templateId,
+            $this->buildReservationEmailVariables($reservation)
+        );
+    }
+
+    public function sendTemplateEmail(string $reservationId, string $templateId, string $subject, string $body, bool $isFullHtml = false): array
+    {
+        $reservation = $this->repository->getById($reservationId);
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $this->emailTemplateService->getById($templateId);
+
+        if (empty($reservation->email)) {
+            throw new HTTPException('Customer email is required', Response::HTTP_BAD_REQUEST);
+        }
+
+        $subject = trim($subject);
+        $body = trim($body);
+
+        if ($subject === '') {
+            throw new HTTPException('Subject is required', Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($body === '') {
+            throw new HTTPException('Content is required', Response::HTTP_BAD_REQUEST);
+        }
+
+        $variables = $this->buildReservationEmailVariables($reservation);
+        $subject = $this->replaceReservationPlaceholders($subject, $variables);
+        $body = $this->replaceReservationPlaceholders($body, $variables);
+        $html = $isFullHtml ? $body : $this->emailTemplateService->wrapContent($body);
+
+        try {
+            $this->emailService->sendEmail($reservation->email, $subject, $html);
+        } catch (\Throwable $e) {
+            throw new HTTPException('Failed to send email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return [
+            'sent' => 1,
+            'email' => $reservation->email,
+        ];
+    }
+
+    private function buildReservationEmailVariables(object $reservation): array
+    {
+        $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:5173';
+        $confirmationUrl = rtrim($frontendUrl, '/') . '/confirmation/' . $reservation->id;
+        $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+        $paymentUrl = $reservation->payment_url ?? $confirmationUrl;
+        $customerName = trim($reservation->full_name ?? '');
+
+        return [
+            'customer_name' => $customerName !== '' ? $customerName : 'Customer',
+            'reservation_id' => $reservation->id,
+            'service_name' => $reservation->service_name ?? '',
+            'event_date' => $eventDate,
+            'event_time' => $reservation->event_time ?? '',
+            'event_address' => $reservation->event_address ?? '',
+            'address' => $reservation->event_address ?? '',
+            'children_count' => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
+            'total_amount' => '$' . number_format((float) ($reservation->total_amount ?? 0), 2),
+            'confirmation_url' => $confirmationUrl,
+            'payment_url' => $paymentUrl,
+            'payment_link' => $paymentUrl,
+        ];
+    }
+
+    private function replaceReservationPlaceholders(string $content, array $variables): string
+    {
+        foreach ($variables as $key => $value) {
+            if (!is_scalar($value) && $value !== null) {
+                continue;
+            }
+            $content = str_replace('{{' . $key . '}}', (string) ($value ?? ''), $content);
+        }
+
+        return $content;
+    }
+
     /**
      * Regenerates a Stripe Checkout Session for an unpaid reservation (no email sent)
      *

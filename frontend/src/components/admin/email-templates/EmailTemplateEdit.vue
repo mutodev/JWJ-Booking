@@ -598,7 +598,7 @@ const extractSchemaFromBody = (html) => {
         icon:      "bi bi-pencil",
         iconBg:    "bg-secondary-subtle",
         iconColor: "text-secondary",
-        multiline: ["intro", "important_note", "question_note", "security_reminder", "closing_note"].includes(key),
+        multiline: ["intro", "message", "important_note", "question_note", "security_reminder", "closing_note"].includes(key),
         rows:      3,
       });
     }

@@ -175,6 +175,8 @@ $routes->group('api', function ($routes) {
         $routes->get('/', [ReservationController::class, 'getAll']);
         $routes->post('/', [ReservationController::class, 'create']);
         $routes->post('send-payment-email', [ReservationController::class, 'sendPaymentEmail']);
+        $routes->post('render-template-email', [ReservationController::class, 'renderTemplateEmail']);
+        $routes->post('send-template-email', [ReservationController::class, 'sendTemplateEmail']);
         $routes->post('bulk-delete', [ReservationController::class, 'bulkDelete']);
         $routes->delete('old', [ReservationController::class, 'deleteOldReservations']);
         $routes->post('(:segment)/promo', [ReservationController::class, 'applyPromoCode/$1']);
@@ -241,6 +243,7 @@ $routes->group('api', function ($routes) {
         $routes->get('(:segment)', [EmailTemplateController::class, 'getById']);
         $routes->put('(:segment)', [EmailTemplateController::class, 'updateData']);
         $routes->post('preview', [EmailTemplateController::class, 'preview']);
+        $routes->post('compose-preview', [EmailTemplateController::class, 'composePreview']);
         $routes->post('send', [EmailTemplateController::class, 'sendCustomEmail']);
     });
 
