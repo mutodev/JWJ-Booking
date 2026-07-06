@@ -38,6 +38,7 @@ use App\Repositories\PromoCodeRepository;
 use App\Services\BrevoEmailService;
 use App\Services\EmailTemplateService;
 use App\Services\StripeService;
+use App\Models\ReservationEmailHistoryModel;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
 
@@ -1049,7 +1050,7 @@ class ReservationService
             throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
         }
 
-        $this->emailTemplateService->getById($templateId);
+        $template = $this->emailTemplateService->getById($templateId);
 
         if (empty($reservation->email)) {
             throw new HTTPException('Customer email is required', Response::HTTP_BAD_REQUEST);
@@ -1077,10 +1078,55 @@ class ReservationService
             throw new HTTPException('Failed to send email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
+        $this->recordEmailHistory([
+            'reservation_id'  => $reservationId,
+            'template_id'     => $templateId,
+            'template_name'   => $template->name ?? '',
+            'sent_by'         => $this->getAuthenticatedUserName(),
+            'recipient_email' => $reservation->email,
+            'email_subject'   => $subject,
+            'email_body'      => $html,
+            'status'          => 'Sent',
+            'sent_at'         => date('Y-m-d H:i:s'),
+        ]);
+
         return [
             'sent' => 1,
             'email' => $reservation->email,
         ];
+    }
+
+    public function getEmailHistory(string $reservationId): array
+    {
+        $reservation = $this->repository->getById($reservationId);
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        return (new ReservationEmailHistoryModel())
+            ->where('reservation_id', $reservationId)
+            ->orderBy('sent_at', 'DESC')
+            ->findAll();
+    }
+
+    private function recordEmailHistory(array $data): void
+    {
+        (new ReservationEmailHistoryModel())->insert($data);
+    }
+
+    private function getAuthenticatedUserName(): string
+    {
+        $user = service('auth')->user();
+        if (!$user) {
+            return 'System';
+        }
+
+        $name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+
+        return $user->email ?? 'System';
     }
 
     private function buildReservationEmailVariables(object $reservation): array

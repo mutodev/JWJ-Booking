@@ -179,6 +179,7 @@ $routes->group('api', function ($routes) {
         $routes->post('send-template-email', [ReservationController::class, 'sendTemplateEmail']);
         $routes->post('bulk-delete', [ReservationController::class, 'bulkDelete']);
         $routes->delete('old', [ReservationController::class, 'deleteOldReservations']);
+        $routes->get('(:segment)/email-history', [ReservationController::class, 'getEmailHistory/$1']);
         $routes->post('(:segment)/promo', [ReservationController::class, 'applyPromoCode/$1']);
         $routes->put('(:segment)', [ReservationController::class, 'updateData']);
         $routes->delete('(:segment)', [ReservationController::class, 'deleteData']);

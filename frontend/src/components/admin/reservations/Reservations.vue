@@ -42,16 +42,9 @@
           show-index
         >
           <template #item-status="{ status }">
-            <span v-if="status === 'pending'" class="badge bg-warning text-dark"
-              >Pending</span
-            >
-            <span v-else-if="status === 'confirmed'" class="badge bg-success"
-              >Confirmed</span
-            >
-            <span v-else-if="status === 'cancelled'" class="badge bg-danger"
-              >Cancelled</span
-            >
-            <span v-else class="badge bg-secondary">{{ status }}</span>
+            <span class="badge" :class="getStatusBadgeClass(status)">
+              {{ getStatusLabel(status) }}
+            </span>
           </template>
 
           <template #item-is_paid="{ is_paid }">
@@ -286,6 +279,21 @@ const RESERVATION_EMAIL_TEMPLATE_SLUGS = new Set([
   "availability_confirmed_next_steps",
   "not_available_for_event",
 ]);
+const STATUS_LABELS = {
+  new: "New",
+  checking_availability: "Checking Availability",
+  availability_confirmed: "Availability Confirmed",
+  follow_up: "Follow-up",
+  ready_for_payment_link: "Ready for Payment Link",
+  payment_link_sent: "Payment Link Sent",
+  payment_reminder: "Payment Reminder",
+  booked: "Booked",
+  get_ready_to_jam: "Get Ready to Jam",
+  thank_you_for_jamming: "Thank you for jamming",
+  cancelled: "Cancelled",
+  under_review: "Under Review",
+  confirmed: "Confirmed",
+};
 const exportModalVisible = ref(false);
 const exportDateFrom = ref('');
 const exportDateTo = ref('');
@@ -314,6 +322,15 @@ const paymentUrlModal = (item) => {
   selectedData.value = { ...item };
   paymentDescription.value = item.description || "";
   modalPaymentUrlVisible.value = true;
+};
+
+const getStatusLabel = (status) => STATUS_LABELS[status] || status || "";
+
+const getStatusBadgeClass = (status) => {
+  if (status === "cancelled") return "bg-danger";
+  if (["booked", "availability_confirmed", "thank_you_for_jamming", "confirmed"].includes(status)) return "bg-success";
+  if (["new", "checking_availability", "follow_up", "payment_reminder"].includes(status)) return "bg-warning text-dark";
+  return "bg-secondary";
 };
 
 const openComposeModal = async (item, templateId) => {

@@ -242,6 +242,18 @@ class ReservationController extends ResourceController
         }
     }
 
+    public function getEmailHistory($id)
+    {
+        try {
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Email history loaded', $this->service->getEmailHistory($id)));
+        } catch (\Throwable $th) {
+            $statusCode = ($th->getCode() >= 400 && $th->getCode() < 600) ? $th->getCode() : 500;
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     /**
      * Save gratuity amount before Stripe redirect
      * PATCH /reservations/{id}/gratuity

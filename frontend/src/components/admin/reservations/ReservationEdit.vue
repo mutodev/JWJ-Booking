@@ -14,10 +14,10 @@
 
             <!-- Segment: Basic Info -->
             <div class="segment mb-3">
-              <h6 class="segment-title">Basic Information</h6>
+              <h6 class="segment-title">Event details</h6>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label">Event Address</label>
+                  <label class="form-label">Reconfirm Address</label>
                   <input
                     v-model="editData.event_address"
                     type="text"
@@ -26,7 +26,7 @@
                   />
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Event Date</label>
+                  <label class="form-label">Date</label>
                   <input
                     v-model="editData.event_date"
                     type="date"
@@ -49,17 +49,17 @@
                     class="form-control"
                     placeholder="Optional"
                   />
-                  <small class="text-muted">Recommended at least 30 minutes after party start</small>
+                  <small class="text-muted">(recommended at least 30 minutes after the party start time)</small>
                 </div>
               </div>
             </div>
 
             <!-- Segment: Event Details -->
             <div class="segment mb-3">
-              <h6 class="segment-title">Event Details</h6>
+              <h6 class="segment-title">Event notes</h6>
               <div class="row g-3">
                 <div class="col-md-3">
-                  <label class="form-label">Total Children</label>
+                  <label class="form-label">Number of Children</label>
                   <input
                     v-model.number="editData.children_count"
                     type="number"
@@ -68,7 +68,7 @@
                   />
                 </div>
                 <div class="col-md-3">
-                  <label class="form-label">Age Range</label>
+                  <label class="form-label">Number of children and their age range</label>
                   <input
                     v-model="editData.children_age_range"
                     type="text"
@@ -95,7 +95,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Birthday Child's Name</label>
+                  <label class="form-label">Birthday child’s name</label>
                   <input
                     v-model="editData.birthday_child_name"
                     type="text"
@@ -104,7 +104,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Age They Are Turning</label>
+                  <label class="form-label">Age they are turning</label>
                   <input
                     v-model="editData.birthday_child_age"
                     type="text"
@@ -113,7 +113,7 @@
                   />
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label">Happy Birthday Song?</label>
+                  <label class="form-label">Would you like Happy Birthday to be sung at the end of the set?</label>
                   <select v-model="editData.sing_happy_birthday" class="form-select">
                     <option value="">Please select</option>
                     <option value="1">Yes</option>
@@ -131,12 +131,19 @@
                   <label class="form-label">Status</label>
                   <select v-model="editData.status" class="form-select">
                     <option value="new">New</option>
-                    <option value="under_review">Under Review</option>
-                    <option value="confirmed">Confirmed</option>
+                    <option value="checking_availability">Checking Availability</option>
+                    <option value="availability_confirmed">Availability Confirmed</option>
+                    <option value="follow_up">Follow-up</option>
+                    <option value="ready_for_payment_link">Ready for Payment Link</option>
+                    <option value="payment_link_sent">Payment Link Sent</option>
+                    <option value="payment_reminder">Payment Reminder</option>
+                    <option value="booked">Booked</option>
+                    <option value="get_ready_to_jam">Get Ready to Jam</option>
+                    <option value="thank_you_for_jamming">Thank you for jamming</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
                   <small v-if="statusChangedByPayment" class="text-success">
-                    <i class="bi bi-check-circle"></i> Status automatically changed to confirmed
+                    <i class="bi bi-check-circle"></i> Status automatically changed to Booked
                   </small>
                 </div>
                 <div class="col-md-4">
@@ -171,10 +178,10 @@
 
             <!-- Segment: Notes & Instructions -->
             <div class="segment mb-3">
-              <h6 class="segment-title">Notes & Instructions</h6>
+              <h6 class="segment-title">Birthday and music</h6>
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label">Arrival/Parking Instructions</label>
+                  <label class="form-label">Provide detailed arrival and parking instructions</label>
                   <textarea
                     v-model="editData.arrival_parking_instructions"
                     class="form-control"
@@ -183,7 +190,7 @@
                   ></textarea>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label">Song Requests</label>
+                  <label class="form-label">Song requests, up to 3 (provide links)</label>
                   <textarea
                     v-model="editData.song_requests"
                     class="form-control"
@@ -217,7 +224,7 @@
               <h6 class="segment-title">Promo Code</h6>
               <div class="row g-3 align-items-end">
                 <div class="col-md-4">
-                  <label class="form-label">Promo Code</label>
+                  <label class="form-label">Promo Code (Optional)</label>
                   <div class="input-group">
                     <input
                       v-model="promoCodeInput"
@@ -288,7 +295,7 @@
               <h6 class="segment-title">Read-Only Information</h6>
               <div class="row g-3">
                 <div class="col-md-4">
-                  <label class="form-label">Customer</label>
+                  <label class="form-label">Client</label>
                   <input
                     :value="editData.customer_name || editData.full_name || 'N/A'"
                     type="text"
@@ -378,8 +385,8 @@ const closeModal = () => {
 
 const handlePaymentChange = () => {
   // Si se marca como pagado, cambiar automáticamente el estado a confirmado
-  if (editData.value.is_paid && editData.value.status !== 'confirmed') {
-    editData.value.status = 'confirmed';
+  if (editData.value.is_paid && editData.value.status !== 'booked') {
+    editData.value.status = 'booked';
     statusChangedByPayment.value = true;
     // Ocultar el mensaje después de 3 segundos
     setTimeout(() => {
