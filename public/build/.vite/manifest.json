@@ -1,6 +1,6 @@
 {
   "main.js": {
-    "file": "assets/main-C4zPxjVf.js",
+    "file": "assets/main-D7UgMN8M.js",
     "name": "main",
     "src": "main.js",
     "isEntry": true,
@@ -8,7 +8,7 @@
       "node_modules/quill/quill.js"
     ],
     "css": [
-      "assets/main-GF77VWL6.css"
+      "assets/main-kK-PLQNi.css"
     ],
     "assets": [
       "assets/bootstrap-icons-mSm7cUeB.woff2",
@@ -24,7 +24,7 @@
     "src": "node_modules/bootstrap-icons/font/fonts/bootstrap-icons.woff2"
   },
   "node_modules/quill/quill.js": {
-    "file": "assets/quill-CPBJo2Fk.js",
+    "file": "assets/quill-Cqwwi1ZI.js",
     "name": "quill",
     "src": "node_modules/quill/quill.js",
     "isDynamicEntry": true,

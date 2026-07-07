@@ -27,7 +27,7 @@
         header-text-direction="center"
         body-text-direction="center"
         :rows-per-page="10"
-        :rows-per-page-options="[5, 10, 25]"
+        :rows-items="[10, 25, 50, 100]"
         show-index
         index-column-text="#"
       >

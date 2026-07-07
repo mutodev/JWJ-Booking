@@ -548,7 +548,7 @@ class ReservationService
                 'children_age_range' => $information['ageRange'] ?? null,
                 'song_requests' => $information['songRequests'] ?? null,
                 'sing_happy_birthday' => ($information['happyBirthdayRequest'] ?? 'no') === 'yes',
-                'customer_confirmed' => true,
+                'customer_confirmed' => false,
                 'customer_notes' => null,
                 'internal_notes' => null
             ];
