@@ -40,9 +40,9 @@ class CountyService
     /**
      * Obtener todos los condados con areas
      */
-    public function getAllAndMetrpolitan(): array
+    public function getAllAndMetrpolitan(?string $search = null): array
     {
-        return $this->countyRepository->getAllAndMetrpolitan();
+        return $this->countyRepository->getAllAndMetrpolitan($search);
     }
 
     /**

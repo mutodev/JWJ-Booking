@@ -43,9 +43,9 @@ class CountyRepository
      *
      * @return array
      */
-    public function getAllAndMetrpolitan()
+    public function getAllAndMetrpolitan(?string $search = null)
     {
-        return $this->countyModel
+        $builder = $this->countyModel
             ->select('
                 counties.id,
                 counties.name,
@@ -53,7 +53,19 @@ class CountyRepository
                 counties.metropolitan_area_id,
                 metropolitan_areas.name AS metropolitan_area_name
             ')
-            ->join('metropolitan_areas', 'metropolitan_areas.id = counties.metropolitan_area_id')
+            ->join('metropolitan_areas', 'metropolitan_areas.id = counties.metropolitan_area_id');
+
+        $search = trim((string) $search);
+
+        if ($search !== '') {
+            $builder
+                ->groupStart()
+                ->like('counties.name', $search)
+                ->orLike('metropolitan_areas.name', $search)
+                ->groupEnd();
+        }
+
+        return $builder
             ->orderBy('counties.name')
             ->orderBy('metropolitan_areas.name')
             ->findAll();

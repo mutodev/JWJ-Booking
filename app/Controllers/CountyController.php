@@ -30,9 +30,11 @@ class CountyController extends ResourceController
     public function getAllAndMetrpolitan()
     {
         try {
+            $search = $this->request->getGet('search');
+
             return $this->response
                 ->setStatusCode(200)
-                ->setJSON(create_response(lang('App.county_list_with_areas'), $this->service->getAllAndMetrpolitan()));
+                ->setJSON(create_response(lang('App.county_list_with_areas'), $this->service->getAllAndMetrpolitan($search)));
         } catch (\Throwable $th) {
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())

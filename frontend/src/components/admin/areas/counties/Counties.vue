@@ -26,8 +26,6 @@
       <EasyDataTable
         :headers="headers"
         :items="data"
-        :search-field="searchField"
-        :search-value="searchValue"
         table-class-name="table table-hover"
         header-text-direction="center"
         body-text-direction="center"
@@ -70,7 +68,7 @@
 </template>
 
 <script setup>
-import { inject, ref, onMounted, computed } from "vue";
+import { inject, ref, onMounted, computed, watch } from "vue";
 import api from "@/services/axios";
 import CountiesEdit from "./CountiesEdit.vue";
 import CountiesCreate from "./CountiesCreate.vue";
@@ -99,11 +97,6 @@ const headers = computed(() => {
   });
 });
 
-// Campos de búsqueda usando el helper global
-const searchField = computed(() => {
-  return tableHelpers.generateSearchFields(headers.value);
-});
-
 const editModal = (item) => {
   selectedData.value = { ...item };
   modalEditVisible.value = true;
@@ -113,10 +106,18 @@ const createModal = () => {
   modalCreateVisible.value = true;
 };
 
+let searchTimeout = null;
 
 const getData = async () => {
   try {
-    const response = await api.get("counties/get-all-and-metropolitan");
+    const params = {};
+    const search = searchValue.value.trim();
+
+    if (search) {
+      params.search = search;
+    }
+
+    const response = await api.get("counties/get-all-and-metropolitan", { params });
     data.value = response.data;
   } catch (error) {
     console.error(error);
@@ -138,6 +139,13 @@ const handle = () => {
   getData();
   getAreas();
 };
+
+watch(searchValue, () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    getData();
+  }, 350);
+});
 
 onMounted(() => {
   getData();
