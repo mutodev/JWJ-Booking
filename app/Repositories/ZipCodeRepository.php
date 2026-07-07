@@ -37,9 +37,13 @@ class ZipCodeRepository
     public function getByCityAndCode($cityId, $code): ?Zipcode
     {
         return $this->zipCodeModel
-            ->where('zipcode', $code)
-            ->where('city_id', $cityId)
-            ->where('is_active', true)
+            ->join('cities', 'cities.id = zipcodes.city_id')
+            ->join('counties', 'counties.id = cities.county_id')
+            ->where('zipcodes.zipcode', $code)
+            ->where('zipcodes.city_id', $cityId)
+            ->where('zipcodes.is_active', true)
+            ->where('cities.is_active', true)
+            ->where('counties.is_active', true)
             ->first();
     }
 
@@ -59,6 +63,8 @@ class ZipCodeRepository
             ->where('zipcodes.zipcode', $code)
             ->where('counties.metropolitan_area_id', $metropolitanAreaId)
             ->where('zipcodes.is_active', true)
+            ->where('cities.is_active', true)
+            ->where('counties.is_active', true)
             ->first();
     }
 
