@@ -55,13 +55,16 @@ class CountyRepository
             ')
             ->join('metropolitan_areas', 'metropolitan_areas.id = counties.metropolitan_area_id');
 
-        $search = trim((string) $search);
+        $search = strtolower(trim((string) $search));
 
         if ($search !== '') {
+            $escapedSearch = str_replace(['!', '%', '_', "'"], ['!!', '!%', '!_', "''"], $search);
+            $likeSearch = "'%" . $escapedSearch . "%' ESCAPE '!'";
+
             $builder
                 ->groupStart()
-                ->like('counties.name', $search)
-                ->orLike('metropolitan_areas.name', $search)
+                ->where("LOWER(counties.name) LIKE {$likeSearch}", null, false)
+                ->orWhere("LOWER(metropolitan_areas.name) LIKE {$likeSearch}", null, false)
                 ->groupEnd();
         }
 
