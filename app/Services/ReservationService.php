@@ -1070,6 +1070,9 @@ class ReservationService
         $variables = $this->buildReservationEmailVariables($reservation);
         $subject = $this->replaceReservationPlaceholders($subject, $variables);
         $body = $this->replaceReservationPlaceholders($body, $variables);
+        if (($template->slug ?? '') === 'payment_needed_secure_event') {
+            $body = $this->ensurePaymentReminderCtaButton($body, $variables['payment_url'] ?? '');
+        }
         $html = $isFullHtml ? $body : $this->emailTemplateService->wrapContent($body);
 
         try {
@@ -1181,6 +1184,47 @@ class ReservationService
         }
 
         return $content;
+    }
+
+    private function ensurePaymentReminderCtaButton(string $body, string $paymentUrl): string
+    {
+        if (stripos($body, 'Complete Payment') === false) {
+            return $body;
+        }
+
+        if (stripos($body, 'background-color: #FF74B7') !== false && stripos($body, '<a ') !== false) {
+            return $body;
+        }
+
+        $button = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+    <tr><td align="center"><a href="' . esc($paymentUrl) . '" style="display: inline-block; background-color: #FF74B7; color: #000000; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-size: 16px; font-weight: 700; letter-spacing: 0.3px;">Complete Payment</a></td></tr>
+</table>';
+
+        $body = preg_replace(
+            '/<p>\s*<a\s+[^>]*href="[^"]*"[^>]*>\s*Complete Payment\s*<\/a>\s*<\/p>/i',
+            $button,
+            $body,
+            1,
+            $count
+        );
+
+        if ($count > 0) {
+            return $body;
+        }
+
+        $body = preg_replace(
+            '/<p>\s*Complete Payment\s*<\/p>/i',
+            $button,
+            $body,
+            1,
+            $count
+        );
+
+        if ($count > 0) {
+            return $body;
+        }
+
+        return preg_replace('/Complete Payment/i', $button, $body, 1) ?? $body;
     }
 
     /**

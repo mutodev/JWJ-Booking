@@ -445,7 +445,16 @@ function normalizeEditableContent(html) {
   wrapper.querySelectorAll('table').forEach((table) => {
     const lines = Array.from(table.querySelectorAll('tr'))
       .map((row) => {
-        const cells = Array.from(row.querySelectorAll('td, th')).map((cell) => cell.textContent.trim());
+        const cells = Array.from(row.querySelectorAll('td, th')).map((cell) => {
+          const link = cell.querySelector('a[href]');
+          if (link) {
+            const href = link.getAttribute('href') || '';
+            const label = link.textContent.trim();
+            return label ? `<a href="${href}">${label}</a>` : '';
+          }
+
+          return cell.textContent.trim();
+        });
         if (cells.length >= 2) {
           return `<p><strong>${cells[0]}</strong>: ${cells.slice(1).join(' ')}</p>`;
         }
