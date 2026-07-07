@@ -163,6 +163,20 @@ class EmailTemplateSeeder extends Seeder
                 'created_at'  => $now,
                 'updated_at'  => $now,
             ],
+            [
+                'id'                  => 'et-week-of-event-reminder-0006',
+                'slug'                => 'week_reminder',
+                'name'                => 'Week-of-Event Reminder',
+                'subject'             => 'Week-of-Event Reminder',
+                'body'                => $this->getReservationMessageBody(),
+                'available_variables' => $this->getWeekReminderEmailVariables(),
+                'content'             => json_encode([
+                    'message' => $this->getWeekReminderMessage(),
+                ]),
+                'is_active'   => true,
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ],
         ];
 
         foreach ($data as $template) {
@@ -578,6 +592,16 @@ class EmailTemplateSeeder extends Seeder
         ]);
     }
 
+    private function getWeekReminderEmailVariables(): string
+    {
+        return json_encode([
+            'customer_name', 'reservation_id', 'service_name',
+            'event_date', 'event_time', 'event_address',
+            'entertainment_start_time', 'performers_count',
+            'entertainment_start_time_row', 'performers_row',
+        ]);
+    }
+
     private function getReservationMessageBody(): string
     {
         return '<!DOCTYPE html>
@@ -623,12 +647,51 @@ class EmailTemplateSeeder extends Seeder
 
     private function getReservationSummaryTable(): string
     {
-        return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0 24px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
-    <tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Date</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">{{event_date}}</td></tr>
-    <tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Time</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">{{event_time}}</td></tr>
-    <tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Address</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">{{event_address}}</td></tr>
-    <tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%;">Service</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937;">{{service_name}}</td></tr>
-</table>';
+        return $this->getSummaryTable([
+            ['Date', '{{event_date}}', true],
+            ['Time', '{{event_time}}', false],
+            ['Address', '{{event_address}}', true],
+            ['Service', '{{service_name}}', false],
+        ]);
+    }
+
+    private function getWeekReminderSummaryTable(): string
+    {
+        return $this->getSummaryTable([
+            ['Event Date', '{{event_date}}', true],
+            ['Event Time', '{{event_time}}', false],
+            '{{entertainment_start_time_row}}',
+            ['Address', '{{event_address}}', true],
+            ['Service', '{{service_name}}', false],
+            '{{performers_row}}',
+        ]);
+    }
+
+    private function getSummaryTable(array $rows): string
+    {
+        $html = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin: 18px 0 24px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">';
+
+        foreach ($rows as $row) {
+            if (is_string($row)) {
+                $html .= "\n    " . $row;
+                continue;
+            }
+
+            [$label, $value, $shaded] = $row;
+            $background = $shaded ? ' background-color: #f9fafb;' : '';
+            $html .= "\n    " . '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280;' . $background . ' width: 40%; border-bottom: 1px solid #e5e7eb;">' . $label . '</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937;' . $background . ' border-bottom: 1px solid #e5e7eb;">' . $value . '</td></tr>';
+        }
+
+        return $html . "\n</table>";
+    }
+
+    private function getWeekReminderMessage(): string
+    {
+        return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
+<p style="margin: 0 0 16px;">This is a friendly reminder that your Jam with Jamie event is coming up this week!</p>
+<p style="margin: 0 0 12px;">Below are your event details:</p>' . $this->getWeekReminderSummaryTable() . '
+<p style="margin: 0 0 16px;">If anything has changed regarding your event, such as parking instructions, arrival details, special requests, song requests, or any additional information, please reply to this email as soon as possible so we can prepare everything for your event.</p>
+<p style="margin: 0;">We\'re excited to perform for you and look forward to making your event unforgettable!</p>';
     }
 
     private function getPaymentNeededSecureEventMessage(): string

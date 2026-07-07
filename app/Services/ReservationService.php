@@ -1136,6 +1136,8 @@ class ReservationService
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
         $paymentUrl = $reservation->payment_url ?? $confirmationUrl;
         $customerName = trim($reservation->full_name ?? '');
+        $entertainmentStartTime = $reservation->entertainment_start_time ?? '';
+        $performersCount = $reservation->performers_count ?? '';
 
         return [
             'customer_name' => $customerName !== '' ? $customerName : 'Customer',
@@ -1143,14 +1145,30 @@ class ReservationService
             'service_name' => $reservation->service_name ?? '',
             'event_date' => $eventDate,
             'event_time' => $reservation->event_time ?? '',
+            'entertainment_start_time' => $entertainmentStartTime,
             'event_address' => $reservation->event_address ?? '',
             'address' => $reservation->event_address ?? '',
             'children_count' => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
+            'performers_count' => $performersCount,
             'total_amount' => '$' . number_format((float) ($reservation->total_amount ?? 0), 2),
             'confirmation_url' => $confirmationUrl,
             'payment_url' => $paymentUrl,
             'payment_link' => $paymentUrl,
+            'entertainment_start_time_row' => $this->buildOptionalSummaryRow('Entertainment Start Time', $entertainmentStartTime, true),
+            'performers_row' => $this->buildOptionalSummaryRow('Performer(s)', $performersCount, false),
         ];
+    }
+
+    private function buildOptionalSummaryRow(string $label, mixed $value, bool $shaded): string
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return '';
+        }
+
+        $background = $shaded ? ' background-color: #f9fafb;' : '';
+
+        return '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280;' . $background . ' width: 40%; border-bottom: 1px solid #e5e7eb;">' . esc($label) . '</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937;' . $background . ' border-bottom: 1px solid #e5e7eb;">' . esc($value) . '</td></tr>';
     }
 
     private function replaceReservationPlaceholders(string $content, array $variables): string
@@ -1466,13 +1484,7 @@ class ReservationService
                 continue;
             }
 
-            $templateVars = [
-                'customer_name' => strtok(trim($reservation->full_name ?? ''), ' '),
-                'service_name'  => $reservation->service_name ?? '',
-                'event_date'    => isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD',
-                'event_time'    => $reservation->event_time ?? 'TBD',
-                'event_address' => $reservation->event_address ?? '',
-            ];
+            $templateVars = $this->buildReservationEmailVariables($reservation);
 
             try {
                 $rendered = $this->emailTemplateService->render('week_reminder', $templateVars);

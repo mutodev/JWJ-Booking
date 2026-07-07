@@ -278,6 +278,7 @@ const RESERVATION_EMAIL_TEMPLATE_SLUGS = new Set([
   "thank_you_for_jamming",
   "availability_confirmed_next_steps",
   "not_available_for_event",
+  "week_reminder",
 ]);
 const STATUS_LABELS = {
   new: "New",
