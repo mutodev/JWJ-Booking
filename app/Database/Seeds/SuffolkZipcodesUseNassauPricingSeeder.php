@@ -28,18 +28,19 @@ class SuffolkZipcodesUseNassauPricingSeeder extends Seeder
 
         $this->db->transStart();
 
+        $this->deleteExistingZipcodes($this->targetZipcodes());
+
         foreach ($this->cityZipcodes as $cityName => $zipcodes) {
             $cityId = $this->ensureCity($cityName, $suffolkCounty->id);
 
             foreach ($zipcodes as $zipcode) {
-                $updated = $this->updateExistingSuffolkZipcodes(
+                $this->insertZipcode(
                     $zipcode,
                     $cityId,
-                    $nassauCounty->id,
-                    $suffolkCounty->id
+                    $nassauCounty->id
                 );
 
-                echo "{$zipcode}: {$updated} Suffolk zipcode record(s) configured to use Nassau pricing.\n";
+                echo "{$zipcode}: inserted under {$cityName} with Nassau pricing and standard duration rules.\n";
             }
         }
 
@@ -50,7 +51,25 @@ class SuffolkZipcodesUseNassauPricingSeeder extends Seeder
             return;
         }
 
-        echo "Suffolk zipcodes now use Nassau pricing without duplicate zipcode records.\n";
+        echo "Suffolk zipcodes recreated with Nassau pricing and without duplicate zipcode records.\n";
+    }
+
+    private function targetZipcodes(): array
+    {
+        return array_values(array_unique(array_merge(...array_values($this->cityZipcodes))));
+    }
+
+    private function deleteExistingZipcodes(array $zipcodes): void
+    {
+        if (empty($zipcodes)) {
+            return;
+        }
+
+        $this->db->table('zipcodes')
+            ->whereIn('zipcode', $zipcodes)
+            ->delete();
+
+        echo "Deleted existing target zipcode records.\n";
     }
 
     private function findCounty(string $name): ?object
@@ -96,40 +115,23 @@ class SuffolkZipcodesUseNassauPricingSeeder extends Seeder
         return $cityId;
     }
 
-    private function updateExistingSuffolkZipcodes(
+    private function insertZipcode(
         string $zipcode,
         string $cityId,
-        string $nassauCountyId,
-        string $suffolkCountyId
-    ): int {
-        $rows = $this->db->query("
-            SELECT z.id
-            FROM zipcodes z
-            INNER JOIN cities ci ON ci.id = z.city_id
-            WHERE z.zipcode = ?
-              AND ci.county_id = ?
-        ", [$zipcode, $suffolkCountyId])->getResult();
-
-        if (empty($rows)) {
-            echo "{$zipcode}: no existing Suffolk zipcode record found. No duplicate created.\n";
-            return 0;
-        }
-
-        $ids = array_map(static fn ($row) => $row->id, $rows);
-
-        $this->db->table('zipcodes')
-            ->whereIn('id', $ids)
-            ->update([
-                'city_id' => $cityId,
-                'zone_type' => 'standard',
-                'override_county_id' => $nassauCountyId,
-                'travel_fee_1_performer' => null,
-                'travel_fee_2_performers' => null,
-                'is_active' => true,
-                'deleted_at' => null,
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-
-        return count($ids);
+        string $nassauCountyId
+    ): void {
+        $this->db->table('zipcodes')->insert([
+            'id' => Uuid::uuid4()->toString(),
+            'city_id' => $cityId,
+            'zipcode' => $zipcode,
+            'zone_type' => 'standard',
+            'override_county_id' => $nassauCountyId,
+            'travel_fee_1_performer' => null,
+            'travel_fee_2_performers' => null,
+            'is_active' => true,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+            'deleted_at' => null,
+        ]);
     }
 }
