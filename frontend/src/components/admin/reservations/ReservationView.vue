@@ -185,7 +185,7 @@
               <button type="button" class="btn btn-secondary me-2" @click="closeModal">
                 <i class="bi bi-x-lg me-1"></i> Close
               </button>
-              <button type="button" class="btn btn-primary" @click="editReservation">
+              <button v-if="canUpdate" type="button" class="btn btn-primary" @click="editReservation">
                 <i class="bi bi-pencil me-1"></i> Edit Reservation
               </button>
             </div>
@@ -227,6 +227,7 @@
 <script setup>
 import { computed, defineComponent, h, ref, watch } from "vue";
 import api from "@/services/axios";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const data = ref({});
 const activeTab = ref("details");
@@ -234,6 +235,7 @@ const emailHistory = ref([]);
 const historyLoading = ref(false);
 const historyLoaded = ref(false);
 const selectedHistory = ref(null);
+const { canUpdate } = useMenuPermissions("/admin/reservations");
 
 const emit = defineEmits(["close", "saved", "edit"]);
 const props = defineProps({

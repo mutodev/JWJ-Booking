@@ -13,7 +13,7 @@
         />
       </div>
     </div>
-    <div class="col-md-2 pt-1">
+    <div v-if="canCreate" class="col-md-2 pt-1">
       <button class="btn btn-sm btn-primary" @click="openCreateModal">
         <i class="bi bi-plus-lg"></i>
         New Type
@@ -66,7 +66,7 @@
         </template>
 
         <!-- Acciones -->
-        <template #item-actions="item">
+        <template v-if="canUpdate" #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="openEditModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
@@ -96,6 +96,7 @@ import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import TypeAddonsEdit from "./TypeAddonsEdit.vue";
 import TypeAddonsCreate from "./TypeAddonsCreate.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 // Page header configuration
 const updateHeaderData = inject("updateHeaderData");
@@ -110,14 +111,15 @@ const searchValue = ref("");
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const selectedData = ref(null);
+const { canCreate, canUpdate } = useMenuPermissions("/admin/services/type-addons");
 
 // Table headers configuration
-const headers = ref([
+const headers = computed(() => [
   { text: "Image", value: "image", sortable: false },
   { text: "Name", value: "name", sortable: true },
   { text: "Description", value: "description", sortable: true },
   { text: "Status", value: "is_active", sortable: true },
-  { text: "Actions", value: "actions", sortable: false },
+  ...(canUpdate.value ? [{ text: "Actions", value: "actions", sortable: false }] : []),
 ]);
 
 // Computed search fields for table filtering

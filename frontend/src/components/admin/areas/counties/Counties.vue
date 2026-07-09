@@ -13,7 +13,7 @@
         />
       </div>
     </div>
-    <div class="col-md-2 pt-1">
+    <div v-if="canCreate" class="col-md-2 pt-1">
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New County
@@ -41,7 +41,7 @@
         </template>
 
         <!-- Slot para las acciones -->
-        <template #item-actions="item">
+        <template v-if="canUpdate" #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
@@ -72,6 +72,7 @@ import { inject, ref, onMounted, computed, watch } from "vue";
 import api from "@/services/axios";
 import CountiesEdit from "./CountiesEdit.vue";
 import CountiesCreate from "./CountiesCreate.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Counties", icon: "bi-pin-map" });
@@ -85,10 +86,12 @@ const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const selectedData = ref(null);
 const searchValue = ref("");
+const { canCreate, canUpdate } = useMenuPermissions("/admin/areas/counties");
 
 // Headers dinámicos usando el helper global
 const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {
+    addActionsColumn: canUpdate.value,
     customLabels: {
       name: "Name",
       metropolitan_area_name: "Metropolitan",

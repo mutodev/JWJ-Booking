@@ -13,7 +13,7 @@
         />
       </div>
     </div>
-    <div class="col-md-2 pt-1">
+    <div v-if="canCreate" class="col-md-2 pt-1">
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New Postal Code
@@ -87,6 +87,7 @@
                     ? 'bg-success border-success'
                     : 'bg-danger border-danger'
                 "
+                :disabled="!canUpdate"
                 @change="toggleActive(id)"
               />
             </div>
@@ -94,7 +95,7 @@
         </template>
 
         <!-- Slot para acciones -->
-        <template #item-actions="item">
+        <template v-if="canUpdate" #item-actions="item">
           <div class="d-flex gap-1 justify-content-center">
             <button class="btn btn-sm btn-warning" @click="editModal(item)">
               <i class="bi bi-pencil-square"></i>
@@ -130,6 +131,7 @@ import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import PostalCodeCreate from "./PostalCodeCreate.vue";
 import PostalCodeEdit from "./PostalCodeEdit.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Postal codes", icon: "bi-pin" });
@@ -143,9 +145,11 @@ const counties = ref([]);
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const selectedData = ref(null);
+const { canCreate, canUpdate } = useMenuPermissions("/admin/areas/postal-codes");
 
 const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {
+    addActionsColumn: canUpdate.value,
     excludeColumns: ["city_id", "id", "deleted_at", "created_at", "updated_at"],
     customLabels: {
       zipcode: "Zipcode",

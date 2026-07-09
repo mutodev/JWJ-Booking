@@ -14,16 +14,16 @@
         />
       </div>
     </div>
-    <div class="col-md-3 pt-1 d-flex gap-2">
-      <button class="btn btn-sm btn-warning" @click="bulkUpdateModal = true" title="Update base price for all counties of a Jam">
+    <div v-if="canCreate || canUpdate" class="col-md-3 pt-1 d-flex gap-2">
+      <button v-if="canUpdate" class="btn btn-sm btn-warning" @click="bulkUpdateModal = true" title="Update base price for all counties of a Jam">
         <i class="bi bi-pencil-square"></i>
         By Jam
       </button>
-      <button class="btn btn-sm btn-warning" @click="bulkUpdateByCountyModal = true" title="Update prices for all Jams of a County">
+      <button v-if="canUpdate" class="btn btn-sm btn-warning" @click="bulkUpdateByCountyModal = true" title="Update prices for all Jams of a County">
         <i class="bi bi-pencil-square"></i>
         By County
       </button>
-      <button class="btn btn-sm btn-primary" @click="createModal()">
+      <button v-if="canCreate" class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New Price
       </button>
@@ -68,7 +68,7 @@
         </template>
 
         <!-- Acciones -->
-        <template #item-actions="item">
+        <template v-if="canUpdate" #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
@@ -116,6 +116,7 @@ import PricesCreate from "./PricesCreate.vue";
 import PricesEdit from "./PricesEdit.vue";
 import PricesBulkUpdateAmount from "./PricesBulkUpdateAmount.vue";
 import PricesBulkUpdateByCounty from "./PricesBulkUpdateByCounty.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 // 🏷️ Header dinámico
 const updateHeaderData = inject("updateHeaderData");
@@ -135,6 +136,7 @@ const modalDeleteVisible = ref(false);
 const bulkUpdateModal = ref(false);
 const bulkUpdateByCountyModal = ref(false);
 const selectedData = ref(null);
+const { canCreate, canUpdate } = useMenuPermissions("/admin/services/prices");
 
 // ✏️ Edit
 const editModal = (item) => {
@@ -154,7 +156,7 @@ const deleteModal = (item) => {
 };
 
 // 📝 Cabeceras de tabla - solo campos importantes
-const headers = ref([
+const headers = computed(() => [
   { text: "Service", value: "service_name", sortable: true },
   { text: "Area", value: "area_name", sortable: true },
   { text: "County", value: "county_name", sortable: true },
@@ -164,7 +166,7 @@ const headers = ref([
   { text: "Extra Child Fee", value: "extra_child_fee", sortable: true },
   { text: "Age Range", value: "range_age", sortable: true },
   { text: "Status", value: "is_available", sortable: true },
-  { text: "Actions", value: "actions", sortable: false },
+  ...(canUpdate.value ? [{ text: "Actions", value: "actions", sortable: false }] : []),
 ]);
 
 // 🔍 Campos de búsqueda

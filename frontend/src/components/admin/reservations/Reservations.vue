@@ -7,7 +7,7 @@
       </div>
       <div class="toolbar-actions">
         <button
-          v-if="itemsSelected.length > 0"
+          v-if="canDelete && itemsSelected.length > 0"
           class="btn btn-sm btn-danger"
           @click="bulkDelete"
           :disabled="deletingBulk"
@@ -20,7 +20,7 @@
         <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export CSV">
           <i class="bi bi-download"></i> Export
         </button>
-        <button class="btn btn-sm btn-primary" @click="createModal()" title="New reservation">
+        <button v-if="canCreate" class="btn btn-sm btn-primary" @click="createModal()" title="New reservation">
           <i class="bi bi-plus-lg"></i> New
         </button>
       </div>
@@ -67,16 +67,16 @@
 
           <template #item-actions="item">
             <div class="d-flex gap-1 justify-content-center">
-              <button class="btn btn-sm btn-action-icon btn-warning" @click="editModal(item)" title="Edit reservation">
+              <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-warning" @click="editModal(item)" title="Edit reservation">
                 <i class="bi bi-pencil-square"></i>
               </button>
               <button class="btn btn-sm btn-action-icon btn-secondary" @click="viewModal(item)" title="View details">
                 <i class="bi bi-eye"></i>
               </button>
-              <button class="btn btn-sm btn-action-icon btn-success" @click="paymentUrlModal(item)" :disabled="item.is_paid" title="Send payment link">
+              <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-success" @click="paymentUrlModal(item)" :disabled="item.is_paid" title="Send payment link">
                 <i class="bi bi-credit-card"></i>
               </button>
-              <div class="dropdown">
+              <div v-if="canUpdate" class="dropdown">
                 <button
                   class="btn btn-sm btn-action-icon btn-primary dropdown-toggle"
                   type="button"
@@ -245,10 +245,12 @@ import ReservationView from "./ReservationView.vue";
 import ComposeEmailModal from "@/components/admin/email-templates/ComposeEmailModal.vue";
 import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
 import { useToast } from "vue-toastification";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Reservations", icon: "bi-calendar-event" });
 const toast = useToast();
+const { canCreate, canUpdate, canDelete } = useMenuPermissions("/admin/reservations");
 
 const data = ref([]);
 const searchValue = ref("");

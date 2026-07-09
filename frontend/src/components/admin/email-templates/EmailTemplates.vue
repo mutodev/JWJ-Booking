@@ -11,7 +11,7 @@
       </div>
     </div>
 
-    <div class="col-2 mb-3 d-flex justify-content-end">
+    <div v-if="canCreate" class="col-2 mb-3 d-flex justify-content-end">
       <button class="btn btn-sm btn-primary" @click="composeModalVisible = true">
         <i class="bi bi-envelope-plus me-1"></i> New Email
       </button>
@@ -38,7 +38,7 @@
 
         <template #item-actions="item">
           <div class="d-flex gap-1 justify-content-center">
-            <button class="btn btn-sm btn-warning" @click="editTemplate(item)">
+            <button v-if="canUpdate" class="btn btn-sm btn-warning" @click="editTemplate(item)">
               <i class="bi bi-pencil-square"></i> Edit
             </button>
             <button class="btn btn-sm btn-info" @click="previewTemplate(item)">
@@ -75,6 +75,7 @@ import api from "@/services/axios";
 import EmailTemplateEdit from "./EmailTemplateEdit.vue";
 import EmailTemplatePreview from "./EmailTemplatePreview.vue";
 import ComposeEmailModal from "./ComposeEmailModal.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Email Templates", icon: "bi bi-envelope-paper" });
@@ -88,6 +89,7 @@ const previewModalVisible = ref(false);
 const composeModalVisible = ref(false);
 const selectedTemplateId = ref(null);
 const previewTemplateId = ref(null);
+const { canCreate, canUpdate } = useMenuPermissions("/admin/config/email-templates");
 
 const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {

@@ -13,7 +13,7 @@
         />
       </div>
     </div>
-    <div class="col-md-2 pt-1">
+    <div v-if="canCreate" class="col-md-2 pt-1">
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New City
@@ -43,7 +43,7 @@
         </template>
 
         <!-- Slot para las acciones -->
-        <template #item-actions="item">
+        <template v-if="canUpdate" #item-actions="item">
           <button class="btn btn-sm btn-warning me-2" @click="editModal(item)">
             <i class="bi bi-pencil-square"></i> Edit
           </button>
@@ -73,6 +73,7 @@ import { inject, ref, onMounted, computed } from "vue";
 import api from "@/services/axios";
 import CitiesEdit from "./CitiesEdit.vue";
 import CitiesCreate from "./CitiesCreate.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Cities", icon: "bi-building" });
@@ -85,9 +86,11 @@ const counties = ref([]);
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const selectedData = ref(null);
+const { canCreate, canUpdate } = useMenuPermissions("/admin/areas/cities");
 
 const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {
+    addActionsColumn: canUpdate.value,
     customLabels: {
       name: "Name",
       is_active: "State",

@@ -16,7 +16,7 @@
     </div>
 
     <!-- Botón bulk delete (solo cuando hay selección) -->
-    <div class="col-auto" v-if="selectedItems.length > 0">
+    <div class="col-auto" v-if="canDelete && selectedItems.length > 0">
       <button class="btn btn-sm btn-danger" @click="bulkDeleteModal = true">
         <i class="bi bi-trash3"></i>
         Delete Selected ({{ selectedItems.length }})
@@ -24,7 +24,7 @@
     </div>
 
     <!-- Botón nuevo -->
-    <div class="col-auto">
+    <div v-if="canCreate" class="col-auto">
       <button class="btn btn-sm btn-primary" @click="createModal()">
         <i class="bi bi-plus-lg"></i>
         New Customer
@@ -64,10 +64,10 @@
 
         <!-- Acciones -->
         <template #item-actions="item">
-          <button class="btn btn-sm btn-action-icon btn-warning me-1" @click="editModal(item)" title="Edit">
+          <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-warning me-1" @click="editModal(item)" title="Edit">
             <i class="bi bi-pencil-square"></i>
           </button>
-          <button class="btn btn-sm btn-action-icon btn-danger" @click="deleteModal(item)" title="Delete">
+          <button v-if="canDelete" class="btn btn-sm btn-action-icon btn-danger" @click="deleteModal(item)" title="Delete">
             <i class="bi bi-trash3"></i>
           </button>
         </template>
@@ -114,6 +114,7 @@ import ClientEdit from "./ClientEdit.vue";
 import ClientCreate from "./ClientCreate.vue";
 import ClientDelete from "./ClientDelete.vue";
 import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Clients", icon: "bi-people-fill" });
@@ -129,6 +130,7 @@ const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const modalDeleteVisible = ref(false);
 const selectedData = ref(null);
+const { canCreate, canUpdate, canDelete } = useMenuPermissions("/admin/clients");
 
 const editModal = (item) => {
   selectedData.value = { ...item };
@@ -147,6 +149,7 @@ const deleteModal = (item) => {
 // Headers dinámicos
 const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {
+    addActionsColumn: canUpdate.value || canDelete.value,
     customLabels: {
       full_name: "Full Name",
       email: "Email",

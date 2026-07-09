@@ -97,6 +97,22 @@ const router = createRouter({
   routes,
 });
 
+const normalizePath = (path) => path.replace(/\/+$/, "");
+
+const hasMenuAccess = (items, path) => {
+  for (const item of items) {
+    if (normalizePath(item.uri || "") === path) {
+      return true;
+    }
+
+    if (hasMenuAccess(item.children || [], path)) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 // Guard global (middleware)
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("token");
@@ -121,6 +137,19 @@ router.beforeEach((to, from, next) => {
       console.error("Error validating token:", error);
       localStorage.clear();
       next("/login");
+      return;
+    }
+
+    const path = normalizePath(to.path);
+    const publicAdminPaths = ["/admin", "/admin/profile"];
+    const access = JSON.parse(localStorage.getItem("access") || "[]");
+
+    if (
+      access.length > 0 &&
+      !publicAdminPaths.includes(path) &&
+      !hasMenuAccess(access, path)
+    ) {
+      next("/admin/dashboard");
       return;
     }
   }
