@@ -26,12 +26,12 @@ class EmailTemplateSeeder extends Seeder
                 ]),
                 'content'     => json_encode([
                     'greeting_title' => 'Hi {{customer_name}}!',
-                    'intro'          => 'Thank you for choosing Jam with Jamie! Below, you\'ll find your payment link and the opportunity to submit additional information to finalize your booking.<br><br>All Terms and Conditions have been sent to you in a separate email; by submitting payment, you agree to them, so please review everything carefully beforehand.<br><br>The payment link and temporary reservation will be active for the next 3 days. After this period, the link will expire, and your reservation will be automatically cancelled.<br><br>We do our very best to accommodate requests for changes to location or time; however, we cannot guarantee modifications once the booking is finalized.',
+                    'intro'          => 'Thank you for choosing Jam with Jamie!<br><br>Here is your payment link. To finalize your booking, click &ldquo;Continue to Pay,&rdquo; and complete the requested additional information.<br><br><strong>All Terms and Conditions are included below. Submitting payment confirms accepting the Terms and Conditions, so please review carefully.</strong><br><br>The payment link will be active for the next 3 days. After this period, the link will expire, and your reservation will be cancelled.<br><br>We do our very best to accommodate requests for changes to location or time; however, we cannot guarantee modifications once the booking is finalized.<br><br>Please feel free to reach out to us with any questions.',
                     'button_text'    => 'Continue to Pay',
                     'steps_heading'  => 'Next Steps',
-                    'step1'          => '<strong>Complete Event Details</strong> &mdash; Click the button above to fill in your event information',
-                    'step2'          => '<strong>Proceed to Payment</strong> &mdash; After completing the details, you\'ll be redirected to a secure payment page powered by Stripe',
-                    'important_note' => 'Please complete your event details before the event date to ensure everything is ready for your special day!',
+                    'step1'          => '<strong>Complete your payment to secure the booking</strong> &mdash; Click the button above to be redirected to the payment platform. You&rsquo;ll have the opportunity to submit any additional information or song requests.',
+                    'step2'          => '<strong>Get Ready to Jam!</strong> &mdash; After payment is settled, your event will be officially booked and we&rsquo;ll reach out again the week of your event to re-confirm all the details.',
+                    'important_note' => 'Please complete your event details prior to submitting payment, as this is your contract.',
                 ]),
                 'is_active'   => true,
                 'created_at'  => $now,
@@ -50,12 +50,12 @@ class EmailTemplateSeeder extends Seeder
                 ]),
                 'content'     => json_encode([
                     'title'          => 'Reservation Received!',
-                    'intro'          => 'Hi {{customer_name}}, thank you for booking with Jam with Jamie! We\'ve received your reservation and our team will be in touch shortly.',
+                    'intro'          => 'Hi {{customer_name}},<br><br>Thank you for choosing Jam with Jamie!<br><br>We&rsquo;ve received your reservation request.<br><br>Our Operations Team will review availability and be in touch via email within the next 24-48 hours.<br><br>Our office hours are Monday-Friday, 9:00 a.m. to 5:00 p.m. EST. If your request was submitted over the weekend, our team will begin reviewing it on the next business day.<br><br><strong>Please note this is a reservation request only and does not confirm your booking.</strong> Once availability has been secured, we&rsquo;ll follow up with next steps and a payment link to finalize your reservation.',
                     'steps_heading'  => 'What\'s Next?',
-                    'step1'          => '<strong>Our team reviews your reservation</strong> &mdash; We\'ll confirm availability and prepare everything for your event',
-                    'step2'          => '<strong>You\'ll receive a payment link</strong> &mdash; Once confirmed, we\'ll send you a secure payment link via email',
-                    'step3'          => '<strong>Get ready to party!</strong> &mdash; After payment, your event is fully booked and we\'ll see you there!',
-                    'question_note'  => 'Feel free to reply to this email or contact us anytime. We\'re happy to help make your event special!',
+                    'step1'          => '<strong>Our team reviews your reservation</strong> &mdash; We&rsquo;ll be in touch within the next 24-48 business hours.',
+                    'step2'          => '<strong>If we are able to accommodate your event</strong> &mdash; You&rsquo;ll receive a confirmation email along with payment information to secure the booking.',
+                    'step3'          => '<strong>Get ready to Jam!</strong> &mdash; After payment is settled, your event will be officially booked and we&rsquo;ll reach out again the week of your event to re-confirm all the details.',
+                    'question_note'  => 'Feel free to schedule a call with us <a href="https://dfaebhb.r.af.d.sendibt2.com/tr/cl/BA0zw6FLJY27_DS_GQTLBD26ofunR0fxnaGmBdLWueGkwpQobIkkoebewhQEXdEuiNEAzUwxxNJQFHIndl7cnHDCTqYjLxO5NJMXPw7YXliVkYKgcrFlOH-j2hWj5uinw8gQ-yO_5wmpYu6OXO_seYY1KFMcny7einTn0pW2u6n5bnck0fMvGW6TYKtCDatOqsEgZ6L1Pgdb4a16vTjs4lLaew2skswUMLiRwl530SF3uVFgVuKohaNEMRj6Y3A1OsV_EJxj-voGSvaEWxZrB78HPsdHBph2fvcPQtdd2N9nStIiIjiHyZ-lZA" target="_blank" rel="noopener noreferrer">HERE.</a>',
                 ]),
                 'is_active'   => true,
                 'created_at'  => $now,
@@ -598,6 +598,8 @@ class EmailTemplateSeeder extends Seeder
             'customer_name', 'reservation_id', 'service_name',
             'event_date', 'event_time', 'event_address',
             'entertainment_start_time', 'performers_count',
+            'performers_names', 'event_contact_name', 'event_contact_phone',
+            'performer_venmo_handles',
             'entertainment_start_time_row', 'performers_row',
         ]);
     }
@@ -686,10 +688,21 @@ class EmailTemplateSeeder extends Seeder
     private function getWeekReminderMessage(): string
     {
         return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
-<p style="margin: 0 0 16px;">This is a friendly reminder that your Jam with Jamie event is coming up this week!</p>
-<p style="margin: 0 0 12px;">Below are your event details:</p>' . $this->getWeekReminderSummaryTable() . '
-<p style="margin: 0 0 16px;">If anything has changed regarding your event, such as parking instructions, arrival details, special requests, song requests, or any additional information, please reply to this email as soon as possible so we can prepare everything for your event.</p>
-<p style="margin: 0;">We\'re excited to perform for you and look forward to making your event unforgettable!</p>';
+<p style="margin: 0 0 12px;">We\'re so excited to jam with you soon! The details for your upcoming event are below, please be sure to review them carefully.</p>
+<p style="margin: 0 0 12px;">Your performer(s) are: {{performers_names}}, and they will arrive 10&ndash;15 minutes prior to the entertainment start time to get set up.</p>' . $this->getWeekReminderSummaryTable() . '
+<p style="margin: 0 0 12px;">&#11088; <strong><u>Important Information and Reminders</u></strong> &#11088;</p>
+<ol style="margin: 0 0 16px; padding-left: 22px;">
+<li>The Jam with Jamie contact person on the day of your event is {{event_contact_name}}, and can be reached at {{event_contact_phone}}.</li>
+<li>Performer(s) may be able to accommodate a delay of up to 10 minutes past the scheduled start time. If the performer(s) are unable to, and are asked to start late, the set will be shortened accordingly and will still end at the originally scheduled time. Additional wait time will incur late fees as outlined in the Terms &amp; Conditions.</li>
+<li>Gratuity is never required, but is greatly appreciated. For your convenience, the performers\' Venmo handles are: {{performer_venmo_handles}}</li>
+<li>If outdoors, please reserve a shaded area away from major distractions such as pools or inflatables. If indoors, please choose a space away from toys and play areas.</li>
+<li>Space setup: Allow approximately 15-20 ft of space for the jam session, so there is room for the kids to engage with the movement and activities comfortably. Avoid hallways, corners, or any spot that may restrict movement.</li>
+<li>We encourage grown-ups to join in! The kids love seeing everyone sing, dance, and jam together!</li>
+</ol>
+<p style="margin: 0 0 16px;">For everyone\'s safety, we ask that children stay clear of the performer instruments and sound equipment. Props will be passed out and collected by the performers during the set to maximize interaction!</p>
+<p style="margin: 0;"><strong>Please reply to this email to confirm receipt and that all reservation details are correct.</strong> If there is anything you\'d like to add or change, please let us know as soon as possible so we can review and update your booking accordingly. If we do not receive a response, we will assume that all details have been checked and are correct.</p>
+<p style="margin: 0;"><br></p>
+<p style="margin: 0;">We can\'t wait to celebrate with you!</p>';
     }
 
     private function getPaymentNeededSecureEventMessage(): string
@@ -733,8 +746,18 @@ class EmailTemplateSeeder extends Seeder
     {
         return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
 <p style="margin: 0 0 16px;">We\'re happy to confirm availability for your event!</p>
-<p style="margin: 0 0 16px;">You\'ll receive this Friday by the end of the day the payment link, and a short form to submit any additional information or song requests.</p>
-<p style="margin: 0;">If you are no longer interested in proceeding with the booking, please reply to this email to let us know.</p>';
+<p style="margin: 0;"><strong>You\'ll receive your payment link by the end of the day on Friday,</strong> along with a short form to submit any additional event details and song requests.</p>
+<p style="margin: 0;"><br></p>
+<p style="margin: 0;">If you have any questions in the meantime, feel free to reply to this email or schedule a call with us <a href="https://dfaebhb.r.tsp1-brevo.net/tr/cl/uFGTqCh_pLs021c6GgWNVqxe_WZ3pAHB2IWFWAo7WZW6ZDUEzEvyPh32XVbgqIOQcq_cx-bFTCnORptoL06fOvcpWe3mn5KwN3qh-HOC1HbCpfah36OZZOsLS8K5TA1CFCs9xvWrjFU3xrmJTxYI5gtX9aktvwdjGbbF735bP6-6ku49yA90ng5bOd14V31ua7f3vDKv-0LPl7hbKs2PkxiUKIBxUqzR_PkLXOXAhrlb-lm2F1V0nTgD2qS2tvdcHvNaW_ONFxJIRzuah8Q5YrI_Ydgn2w1oRiYMPWFhMKdgnYrSsCl5Bg" rel="noopener noreferrer" target="_blank">HERE.</a></p>
+<p style="margin: 0;"><br></p>
+<p style="margin: 0;"><strong>If you are no longer interested in moving forward with your booking, please reply to this email to let us know so we can release the team currently being held for you and cancel the invoice process.</strong></p>
+<p style="margin: 0;"><br></p>
+<p style="margin: 0;"><strong><u>Your Reservation Request:</u></strong></p>
+<p style="margin: 0;"><br></p>
+<p style="margin: 0;">{{event_date}}</p>
+<p style="margin: 0;">{{event_time}}</p>
+<p style="margin: 0;">{{event_address}}</p>
+<p style="margin: 0;">{{total_amount}}</p>';
     }
 
     private function getNotAvailableForEventMessage(): string
@@ -742,6 +765,8 @@ class EmailTemplateSeeder extends Seeder
         return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
 <p style="margin: 0 0 16px;">Thank you so much for your patience as we worked on your booking request.</p>
 <p style="margin: 0 0 16px;">Unfortunately, we do not have a team available for the requested date and time.</p>
-<p style="margin: 0;">We hope to jam with you in the future!</p>';
+<p style="margin: 0;">We hope to jam with you in the future!</p>
+<p style="margin: 0;"><br></p>
+<p style="margin: 0;">In the meantime, we invite you to follow us on <a href="https://dfaebhb.r.bh.d.sendibt3.com/tr/cl/0GjFjGTTteY_7yIhxTTHMzKK7wi99QB__sKIaGUPdRqBYTrYgp4bfwCq448kdoQVImXq-Yc-3qGSqusGEmRtTjR14SgS2UCPwLGwq4UVNFXPpzaberxCAQUepP2GIew1sArGcvcf9jsuCfX5Xl8sNuK0UWHjqkUxhU1zKGrCQ_j0aMQJRgPqSd46MMUdRRmTPvJxiw6ewT0DtEG5h6mq6mKGqF2cgzAuZdAl-XD-ZjCHFdDwkwrGXwaxu5WudfcD3fuqqtBfrdeyTAVv56LuRwFUCImFKx-90otfvRNCjcDCqZc" rel="noopener noreferrer" target="_blank">social media</a> and <a href="https://dfaebhb.r.bh.d.sendibt3.com/tr/cl/gLfX4bpCT6zg4P0BMOOC2nxdGm2EOT0QYJS_0aq2v4cewdpFhH2Ig6aYfDBA7Z7qNOOdHQ5ivax1-R7pVMcdKBU5GXV0ZUyFKxxzIIMBg6DVvBtQB3NnxTsv0CdPIXOzL9LM05ZadxsbgA5gCI2zyuxLr5QDQqsgomF-VfZ3pQO-96iUjVasEiAcV91iZMeemGLbuzJsgvvTq2FRIOqhELBpVYca7EYcTWDW2jD83tw60_UZbDEgKKaZwucNaa1lQjdA_uYlzTZZO6u41zoRLH9eutlC6Nko-Mm1CRad1w" rel="noopener noreferrer" target="_blank">subscribe to our newsletter</a> to stay up to date on special offers, events, and all things Jam with Jamie.</p>';
     }
 }
