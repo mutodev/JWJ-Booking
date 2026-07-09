@@ -279,7 +279,7 @@ class EmailTemplateSeeder extends Seeder
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">{{event_date}}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Event Time</td>
+                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Entertainment Start Time</td>
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">{{event_time}}</td>
                                 </tr>
                                 <tr>
@@ -389,7 +389,7 @@ class EmailTemplateSeeder extends Seeder
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">{{event_date}}</td>
                                 </tr>
                                 <tr>
-                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Event Time</td>
+                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Entertainment Start Time</td>
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">{{event_time}}</td>
                                 </tr>
                                 <tr>
@@ -650,7 +650,7 @@ class EmailTemplateSeeder extends Seeder
     private function getReservationSummaryTable(): string
     {
         return '<p style="margin: 18px 0 8px;"><strong>Date:</strong> {{event_date}}</p>
-<p style="margin: 0 0 8px;"><strong>Time:</strong> {{event_time}}</p>
+<p style="margin: 0 0 8px;"><strong>Entertainment Start Time:</strong> {{event_time}}</p>
 <p style="margin: 0 0 8px;"><strong>Address:</strong> {{event_address}}</p>
 <p style="margin: 0 0 24px;"><strong>Service:</strong> {{service_name}}</p>';
     }
@@ -658,8 +658,7 @@ class EmailTemplateSeeder extends Seeder
     private function getWeekReminderSummaryTable(): string
     {
         return '<p style="margin: 18px 0 8px;"><strong>Event Date:</strong> {{event_date}}</p>
-<p style="margin: 0 0 8px;"><strong>Event Time:</strong> {{event_time}}</p>
-<p style="margin: 0 0 8px;"><strong>Entertainment Start Time:</strong> {{entertainment_start_time}}</p>
+<p style="margin: 0 0 8px;"><strong>Entertainment Start Time:</strong> {{event_time}}</p>
 <p style="margin: 0 0 8px;"><strong>Address:</strong> {{event_address}}</p>
 <p style="margin: 0 0 8px;"><strong>Service:</strong> {{service_name}}</p>
 <p style="margin: 0 0 24px;"><strong>Performer(s):</strong> {{performers_count}}</p>';

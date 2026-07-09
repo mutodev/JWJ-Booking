@@ -70,7 +70,7 @@ const sampleVariables = {
   reservation_id: "RES-SAMPLE-12345",
   service_name: "JamWithJamie Classic Party",
   event_date: "March 15, 2026",
-  event_time: "2:00 PM",
+  event_time: "1:45 PM",
   event_address: "123 Party Lane, Los Angeles, CA 90001",
   children_count: "12",
   birthday_child_name: "",

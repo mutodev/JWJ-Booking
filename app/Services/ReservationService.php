@@ -971,6 +971,7 @@ class ReservationService
         $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:5173';
         $confirmationUrl = rtrim($frontendUrl, '/') . '/confirmation/' . $reservationId;
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+        $eventTime = $this->getEmailEventTime($reservation);
 
         $descriptionBlock = '';
         if (!empty($reservation->description)) {
@@ -997,7 +998,7 @@ class ReservationService
             'reservation_id'      => $reservation->id,
             'service_name'        => $reservation->service_name ?? '',
             'event_date'          => $eventDate,
-            'event_time'          => $reservation->event_time ?? '',
+            'event_time'          => $eventTime,
             'event_address'       => $reservation->event_address ?? '',
             'children_count'      => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'birthday_child_name' => $birthdayBlock,
@@ -1140,6 +1141,7 @@ class ReservationService
         $paymentUrl = $reservation->payment_url ?? $confirmationUrl;
         $customerName = trim($reservation->full_name ?? '');
         $entertainmentStartTime = $reservation->entertainment_start_time ?? '';
+        $eventTime = $this->getEmailEventTime($reservation);
         $performersCount = $reservation->performers_count ?? '';
 
         return [
@@ -1147,7 +1149,7 @@ class ReservationService
             'reservation_id' => $reservation->id,
             'service_name' => $reservation->service_name ?? '',
             'event_date' => $eventDate,
-            'event_time' => $reservation->event_time ?? '',
+            'event_time' => $eventTime,
             'entertainment_start_time' => $entertainmentStartTime,
             'event_address' => $reservation->event_address ?? '',
             'address' => $reservation->event_address ?? '',
@@ -1164,6 +1166,17 @@ class ReservationService
             'entertainment_start_time_row' => $this->buildOptionalSummaryRow('Entertainment Start Time', $entertainmentStartTime, true),
             'performers_row' => $this->buildOptionalSummaryRow('Performer(s)', $performersCount, false),
         ];
+    }
+
+    private function getEmailEventTime(object $reservation, string $fallback = ''): string
+    {
+        $entertainmentStartTime = trim((string) ($reservation->entertainment_start_time ?? ''));
+        if ($entertainmentStartTime !== '') {
+            return $entertainmentStartTime;
+        }
+
+        $eventTime = trim((string) ($reservation->event_time ?? ''));
+        return $eventTime !== '' ? $eventTime : $fallback;
     }
 
     private function buildOptionalSummaryRow(string $label, mixed $value, bool $shaded): string
@@ -1402,6 +1415,7 @@ class ReservationService
         }
 
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+        $eventTime = $this->getEmailEventTime($reservation, 'To be confirmed');
 
         $totalDurationLabel = $this->formatDurationLabel($reservation->duration_hours ?? 0);
         $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
@@ -1424,7 +1438,7 @@ class ReservationService
             'reservation_id'     => $reservation->id,
             'service_name'       => $reservation->service_name ?? '',
             'event_date'         => $eventDate,
-            'event_time'         => $reservation->event_time ?? 'To be confirmed',
+            'event_time'         => $eventTime,
             'event_address'      => $reservation->event_address ?? 'To be confirmed',
             'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'total_duration_row' => $totalDurationRow,
@@ -1455,6 +1469,7 @@ class ReservationService
         }
 
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+        $eventTime = $this->getEmailEventTime($reservation, 'To be confirmed');
 
         $promoBlockRc    = '';
         $discountBlockRc = '';
@@ -1470,7 +1485,7 @@ class ReservationService
             'reservation_id'     => $reservation->id,
             'service_name'       => $reservation->service_name ?? '',
             'event_date'         => $eventDate,
-            'event_time'         => $reservation->event_time ?? 'To be confirmed',
+            'event_time'         => $eventTime,
             'event_address'      => $reservation->event_address ?? 'To be confirmed',
             'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
             'total_duration_row' => $this->buildDurationRow($reservation->duration_hours ?? 0),

@@ -479,7 +479,7 @@ const VAR_LABELS = {
   reservation_id:      "Reservation #",
   service_name:        "Service",
   event_date:          "Event Date",
-  event_time:          "Event Time",
+  event_time:          "Entertainment Start Time",
   event_address:       "Location",
   children_count:      "No. of Children",
   performers_names:    "Performer Names",
