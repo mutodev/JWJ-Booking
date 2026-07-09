@@ -710,7 +710,6 @@ class EmailTemplateSeeder extends Seeder
         $summary = $this->getReservationSummaryTable();
 
         return '<p style="margin: 0 0 16px;">Hi {{customer_name}},</p>
-<p style="margin: 0 0 12px; font-weight: 700; color: #1F2937;">Reservation Summary</p>' . $summary . '
 <p style="margin: 0 0 16px;">This is a friendly reminder that we have not yet received payment for your upcoming Jam with Jamie booking.</p>
 <p style="margin: 0 0 16px;">To secure your event date and finalize your reservation, please complete the payment within 24 hours or your reservation request will be cancelled.</p>
 <p style="margin: 0 0 16px;">If you have any questions, please let us know.</p>
