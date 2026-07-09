@@ -22,14 +22,32 @@ class RoleMenuPermissionSeeder extends Seeder
         return $menu ? $menu->id : null;
     }
 
+    /**
+     * Obtiene el ID de un rol por su nombre
+     */
+    private function getRoleIdByName(string $name): ?string
+    {
+        $role = $this->db->table('roles')
+            ->where('name', $name)
+            ->where('deleted_at', null)
+            ->get()
+            ->getRow();
+
+        return $role ? $role->id : null;
+    }
+
     public function run()
     {
         $permissions = [];
 
-        // IDs de roles (deben coincidir con los del RoleSeeder)
-        $adminRoleId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-        $coordRoleId = 'b2c3d4e5-f6g7-8901-bcde-f23456789012';
-        $viewerRoleId = 'c3d4e5f6-g7h8-9012-cdef-345678901234';
+        // Obtener IDs de roles por nombre para evitar depender de IDs hardcodeados
+        $adminRoleId = $this->getRoleIdByName('Administrador');
+        $coordRoleId = $this->getRoleIdByName('Coordinador');
+        $viewerRoleId = $this->getRoleIdByName('Visualizador');
+
+        if (!$adminRoleId || !$coordRoleId || !$viewerRoleId) {
+            throw new \RuntimeException('Required roles not found. Run RoleSeeder or verify role names.');
+        }
 
         // Obtener IDs de menús por URI (más robusto que hardcodear IDs)
         $menuUris = [
