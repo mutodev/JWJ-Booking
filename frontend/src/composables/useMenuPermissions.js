@@ -9,6 +9,8 @@ const emptyPermissions = {
 
 const normalizeUri = (uri) => (uri || "").replace(/\/+$/, "");
 
+const toBoolean = (value) => value === true || value === 1 || value === "1";
+
 const findMenuByUri = (items, uri) => {
   for (const item of items) {
     if (normalizeUri(item.uri) === uri) {
@@ -28,8 +30,14 @@ export function useMenuPermissions(uri = window.location.pathname) {
   const permissions = computed(() => {
     const access = JSON.parse(localStorage.getItem("access") || "[]");
     const menu = findMenuByUri(access, normalizeUri(uri));
+    const rawPermissions = menu?.permissions || emptyPermissions;
 
-    return menu?.permissions || emptyPermissions;
+    return {
+      view: toBoolean(rawPermissions.view),
+      create: toBoolean(rawPermissions.create),
+      update: toBoolean(rawPermissions.update),
+      delete: toBoolean(rawPermissions.delete),
+    };
   });
 
   return {
