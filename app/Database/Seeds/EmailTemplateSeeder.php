@@ -657,14 +657,12 @@ class EmailTemplateSeeder extends Seeder
 
     private function getWeekReminderSummaryTable(): string
     {
-        return $this->getSummaryTable([
-            ['Event Date', '{{event_date}}', true],
-            ['Event Time', '{{event_time}}', false],
-            '{{entertainment_start_time_row}}',
-            ['Address', '{{event_address}}', true],
-            ['Service', '{{service_name}}', false],
-            '{{performers_row}}',
-        ]);
+        return '<p style="margin: 18px 0 8px;"><strong>Event Date:</strong> {{event_date}}</p>
+<p style="margin: 0 0 8px;"><strong>Event Time:</strong> {{event_time}}</p>
+<p style="margin: 0 0 8px;"><strong>Entertainment Start Time:</strong> {{entertainment_start_time}}</p>
+<p style="margin: 0 0 8px;"><strong>Address:</strong> {{event_address}}</p>
+<p style="margin: 0 0 8px;"><strong>Service:</strong> {{service_name}}</p>
+<p style="margin: 0 0 24px;"><strong>Performer(s):</strong> {{performers_count}}</p>';
     }
 
     private function getSummaryTable(array $rows): string

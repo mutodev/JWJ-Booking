@@ -582,7 +582,7 @@ watch(() => props.show, (val) => {
     reset();
     if (props.reservation) {
       subject.value = props.initialSubject;
-      content.value = normalizeEditableContent(props.initialContent);
+      content.value = props.initialContent;
       isFullHtml.value = props.initialIsFullHtml;
     }
     if (props.lockedRecipient) {
@@ -594,7 +594,7 @@ watch(() => props.show, (val) => {
 watch(() => [props.initialSubject, props.initialContent, props.initialIsFullHtml], () => {
   if (props.show && props.reservation) {
     subject.value = props.initialSubject;
-    content.value = normalizeEditableContent(props.initialContent);
+    content.value = props.initialContent;
     isFullHtml.value = props.initialIsFullHtml;
   }
 });

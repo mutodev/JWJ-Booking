@@ -76,6 +76,10 @@ const sampleVariables = {
   birthday_child_name: "",
   total_amount: "350.00",
   description: "",
+  entertainment_start_time: "1:45 PM",
+  performers_count: "2",
+  entertainment_start_time_row: '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Entertainment Start Time</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">1:45 PM</td></tr>',
+  performers_row: '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Performer(s)</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">2</td></tr>',
   confirmation_url: "#",
   password: "TempP@ss123",
 };
@@ -92,17 +96,56 @@ watch(
 const fetchPreview = async () => {
   loading.value = true;
   try {
-    const response = await api.post("/email-templates/preview", {
+    const response = await api.post("/email-templates/compose-preview", {
       id: props.templateId,
       variables: sampleVariables,
     });
-    previewSubject.value = response.data.subject;
-    previewBody.value = response.data.body;
+    const rendered = response.data?.data ?? response.data ?? response;
+    previewSubject.value = rendered.subject;
+    previewBody.value = rendered.is_full_html
+      ? rendered.body
+      : wrapContent(rendered.body);
   } catch (error) {
     console.error("Error fetching preview:", error);
   } finally {
     loading.value = false;
   }
+};
+
+const wrapContent = (content) => {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f9fafb;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background-color:#ffffff;padding:32px 40px;text-align:center;border-bottom:3px solid #FF74B7;">
+              <img src="/img/logos/JWJ_logo-05.png" alt="Jam with Jamie" width="220" style="display:inline-block;max-width:220px;height:auto;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 40px 32px;font-size:15px;line-height:1.7;color:#374151;">
+              ${content}
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center;">
+              <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#FF74B7;">The Jam with Jamie Team</p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; ${new Date().getFullYear()} Jam with Jamie LLC. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 };
 
 const closeModal = () => {

@@ -491,6 +491,28 @@ const VAR_LABELS = {
 
 const getVarLabel = (key) => VAR_LABELS[key] || key.replace(/_/g, " ");
 
+const RESERVATION_MESSAGE_TEMPLATE_SLUGS = new Set([
+  "payment_needed_secure_event",
+  "reservation_cancelled_no_payment",
+  "thank_you_for_jamming",
+  "availability_confirmed_next_steps",
+  "not_available_for_event",
+  "week_reminder",
+]);
+
+const MESSAGE_SCHEMA = [
+  {
+    key: "message",
+    label: "Message",
+    hint: "Edit the email content used when sending from reservations",
+    icon: "bi bi-pencil",
+    iconBg: "bg-primary-subtle",
+    iconColor: "text-primary",
+    multiline: true,
+    rows: 8,
+  },
+];
+
 // ── State ──────────────────────────────────────────────────────────────────
 const templateData       = ref(null);
 const subject            = ref("");
@@ -511,11 +533,15 @@ const errorMsg          = ref("");
 // ── Computed ───────────────────────────────────────────────────────────────
 const contentSchema = computed(() => {
   const slug = templateData.value?.slug;
-  return CONTENT_SCHEMAS[slug] || extractSchemaFromBody(body.value);
+  return getContentSchema(slug, content.value, body.value);
 });
 
 // Replace {{content_*}} placeholders with current values for live preview
 const previewBody = computed(() => {
+  if (isReservationMessageTemplate(templateData.value?.slug, content.value)) {
+    return wrapReservationMessagePreview(content.value.message || "");
+  }
+
   let html = body.value;
   for (const field of contentSchema.value) {
     const val = content.value[field.key] ?? "";
@@ -567,7 +593,7 @@ const fetchTemplate = async (id) => {
     }
 
     const slug   = data.slug;
-    const schema = CONTENT_SCHEMAS[slug] || extractSchemaFromBody(body.value);
+    const schema = getContentSchema(slug, savedContent, body.value);
     const built  = {};
     for (const field of schema) {
       built[field.key] = savedContent[field.key] ?? "";
@@ -579,6 +605,54 @@ const fetchTemplate = async (id) => {
     errorMsg.value = "Error loading template";
     console.error("Error fetching template:", error);
   }
+};
+
+const isReservationMessageTemplate = (slug, savedContent = {}) => {
+  return RESERVATION_MESSAGE_TEMPLATE_SLUGS.has(slug) || Object.prototype.hasOwnProperty.call(savedContent, "message");
+};
+
+const getContentSchema = (slug, savedContent = {}, html = "") => {
+  if (isReservationMessageTemplate(slug, savedContent)) {
+    return MESSAGE_SCHEMA;
+  }
+
+  return CONTENT_SCHEMAS[slug] || extractSchemaFromBody(html);
+};
+
+const wrapReservationMessagePreview = (message) => {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f9fafb;font-family:Arial,'Helvetica Neue',Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f9fafb;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.06);">
+          <tr>
+            <td style="background-color:#ffffff;padding:32px 40px;text-align:center;border-bottom:3px solid #FF74B7;">
+              <img src="/img/logos/JWJ_logo-05.png" alt="Jam with Jamie" width="220" style="display:inline-block;max-width:220px;height:auto;">
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px 40px 32px;font-size:15px;line-height:1.7;color:#374151;">
+              ${message}
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#f9fafb;padding:24px 40px;border-top:1px solid #e5e7eb;text-align:center;">
+              <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#FF74B7;">The Jam with Jamie Team</p>
+              <p style="margin:0;font-size:12px;color:#9ca3af;">&copy; ${new Date().getFullYear()} Jam with Jamie LLC. All rights reserved.</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 };
 
 // Fallback: extract {{content_*}} keys from body HTML for unknown slugs
