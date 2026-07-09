@@ -649,12 +649,10 @@ class EmailTemplateSeeder extends Seeder
 
     private function getReservationSummaryTable(): string
     {
-        return $this->getSummaryTable([
-            ['Date', '{{event_date}}', true],
-            ['Time', '{{event_time}}', false],
-            ['Address', '{{event_address}}', true],
-            ['Service', '{{service_name}}', false],
-        ]);
+        return '<p style="margin: 18px 0 8px;"><strong>Date:</strong> {{event_date}}</p>
+<p style="margin: 0 0 8px;"><strong>Time:</strong> {{event_time}}</p>
+<p style="margin: 0 0 8px;"><strong>Address:</strong> {{event_address}}</p>
+<p style="margin: 0 0 24px;"><strong>Service:</strong> {{service_name}}</p>';
     }
 
     private function getWeekReminderSummaryTable(): string
