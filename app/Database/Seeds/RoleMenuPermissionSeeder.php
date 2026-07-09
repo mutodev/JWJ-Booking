@@ -128,10 +128,8 @@ class RoleMenuPermissionSeeder extends Seeder
         // Permisos especiales para coordinador
         $coordSpecialPermissions = [
             'reservations' => ['can_create' => true, 'can_update' => true],
-            'prices' => ['can_create' => true, 'can_update' => true],
-            'typeAddons' => ['can_update' => true],
-            'addons' => ['can_update' => true],
-            'emailTemplates' => ['can_update' => true],
+            'clients' => ['can_create' => true, 'can_update' => true],
+            'emailTemplates' => ['can_create' => true, 'can_update' => true],
         ];
 
         foreach ($coordMenuKeys as $key) {
