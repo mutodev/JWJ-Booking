@@ -220,6 +220,8 @@ class ReservationService
             'base_price' => $servicePrice,
             'addons_total' => $addonsTotal,
             'expedition_fee' => $travelFee + $surchargeAmount,
+            'travel_fee' => $travelFee,
+            'expedite_fee' => $surchargeAmount,
             'extra_children_fee' => $extraChildrenTotal,
             'discount_amount' => $discountAmount,
             'promo_code' => $promoCodeUsed,
@@ -534,6 +536,8 @@ class ReservationService
                 'base_price' => $servicePrice,
                 'addons_total' => $addonsTotal,
                 'expedition_fee' => $surchargeAmount + $travelFee, // Incluir travel fee en expedition_fee
+                'travel_fee' => $travelFee,
+                'expedite_fee' => $surchargeAmount,
                 'extra_children_fee' => $extraChildrenTotal,
                 'discount_amount' => $discount, // Descuento del promo code
                 'promo_code' => $subtotal['promoCode'] ?? null, // Código promocional usado

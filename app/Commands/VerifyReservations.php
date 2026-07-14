@@ -40,7 +40,8 @@ class VerifyReservations extends BaseCommand
                 CLI::write('   Base precio: $' . number_format($reservation->base_price ?? 0, 2));
                 CLI::write('   Addons: $' . number_format($reservation->addons_total ?? 0, 2));
                 CLI::write('   Extra niños: $' . number_format($reservation->extra_children_fee ?? 0, 2));
-                CLI::write('   Surcharge: $' . number_format($reservation->expedition_fee ?? 0, 2));
+                CLI::write('   Travel Fee: $' . number_format($reservation->travel_fee ?? $reservation->expedition_fee ?? 0, 2));
+                CLI::write('   Expedite Fee: $' . number_format($reservation->expedite_fee ?? 0, 2));
                 CLI::write('   TOTAL: $' . number_format($reservation->total_amount ?? 0, 2), 'green');
                 CLI::write('   Status: ' . ($reservation->status ?? 'N/A'));
 

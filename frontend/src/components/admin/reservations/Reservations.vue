@@ -512,6 +512,16 @@ const parseDate = (val) => {
   return isNaN(d.getTime()) ? null : d;
 };
 const fmtDate = (val) => parseDate(val)?.toLocaleDateString('en-US') ?? '';
+const getTravelFee = (r) => {
+  const travelFee = parseFloat(r.travel_fee ?? 0) || 0;
+  const expediteFee = parseFloat(r.expedite_fee ?? 0) || 0;
+  const legacyFee = parseFloat(r.expedition_fee ?? 0) || 0;
+
+  if (travelFee > 0) return travelFee;
+  if (legacyFee > 0 && expediteFee === 0) return legacyFee;
+  return 0;
+};
+const getExpediteFee = (r) => parseFloat(r.expedite_fee ?? 0) || 0;
 
 const CSV_COLUMNS = [
   { label: 'Customer',           key: (r) => r.full_name || '' },
@@ -532,7 +542,8 @@ const CSV_COLUMNS = [
   { label: 'Paid',               key: (r) => r.is_paid ? 'Yes' : 'No' },
   { label: 'Base Price',         key: (r) => parseFloat(r.base_price || 0).toFixed(2) },
   { label: 'Addons Total',       key: (r) => parseFloat(r.addons_total || 0).toFixed(2) },
-  { label: 'Expedition Fee',     key: (r) => parseFloat(r.expedition_fee || 0).toFixed(2) },
+  { label: 'Travel Fee',         key: (r) => getTravelFee(r).toFixed(2) },
+  { label: 'Expedite Fee',       key: (r) => getExpediteFee(r).toFixed(2) },
   { label: 'Extra Children Fee', key: (r) => parseFloat(r.extra_children_fee || 0).toFixed(2) },
   { label: 'Promo Code',         key: (r) => r.promo_code || '' },
   { label: 'Discount',           key: (r) => parseFloat(r.discount_amount || 0).toFixed(2) },

@@ -31,6 +31,8 @@ class Reservation extends Entity
         'base_price' => 'float',
         'addons_total' => 'float',
         'expedition_fee' => 'float',
+        'travel_fee' => 'float',
+        'expedite_fee' => 'float',
         'extra_children_fee' => 'float',
         'total_amount' => 'float',
         'status' => 'string',

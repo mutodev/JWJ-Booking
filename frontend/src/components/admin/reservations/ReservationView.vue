@@ -131,7 +131,8 @@
                 <DetailField label="Base Service" :value="formatCurrency(data.base_price)" class="col-md-3" />
                 <DetailField label="Add-ons" :value="formatCurrency(data.addons_total)" class="col-md-3" />
                 <DetailField label="Number of Children" :value="formatCurrency(data.extra_children_fee)" class="col-md-3" />
-                <DetailField label="Expedition Fee" :value="formatCurrency(data.expedition_fee)" class="col-md-3" />
+                <DetailField v-if="displayTravelFee > 0" label="Travel Fee" :value="formatCurrency(displayTravelFee)" class="col-md-3" />
+                <DetailField v-if="displayExpediteFee > 0" label="Expedite Fee" :value="formatCurrency(displayExpediteFee)" class="col-md-3" />
               </div>
             </div>
           </div>
@@ -330,6 +331,18 @@ const locationLabel = computed(() => {
   const cityCounty = `${data.value.city_name || ""}, ${data.value.county_name || ""}`.replace(/^, |, $/g, "");
   return cityCounty || data.value.location || data.value.zipcode || "N/A";
 });
+
+const displayTravelFee = computed(() => {
+  const travelFee = parseFloat(data.value.travel_fee ?? 0) || 0;
+  const expediteFee = parseFloat(data.value.expedite_fee ?? 0) || 0;
+  const legacyFee = parseFloat(data.value.expedition_fee ?? 0) || 0;
+
+  if (travelFee > 0) return travelFee;
+  if (legacyFee > 0 && expediteFee === 0) return legacyFee;
+  return 0;
+});
+
+const displayExpediteFee = computed(() => parseFloat(data.value.expedite_fee ?? 0) || 0);
 
 const closeModal = () => {
   emit("close");

@@ -89,6 +89,18 @@ class CreateReservationsTable extends Migration
                 'null' => false,
                 'default' => 0.00
             ],
+            'travel_fee' => [
+                'type' => 'DECIMAL',
+                'constraint' => '10,2',
+                'null' => false,
+                'default' => 0.00
+            ],
+            'expedite_fee' => [
+                'type' => 'DECIMAL',
+                'constraint' => '10,2',
+                'null' => false,
+                'default' => 0.00
+            ],
             'extra_children_fee' => [
                 'type' => 'DECIMAL',
                 'constraint' => '10,2',

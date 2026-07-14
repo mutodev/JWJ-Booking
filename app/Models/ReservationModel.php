@@ -31,6 +31,8 @@ class ReservationModel extends Model
         'song_requests',
         'sing_happy_birthday',
         'expedition_fee',
+        'travel_fee',
+        'expedite_fee',
         'extra_children_fee',
         'discount_amount',
         'promo_code',
