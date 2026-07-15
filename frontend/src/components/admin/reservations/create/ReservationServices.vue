@@ -149,9 +149,13 @@ const getOptionTitle = (price) => {
 };
 
 const getPriceDurationHours = (price) => {
-  return parseFloat(
-    service.value?.duration_hours ?? price.min_duration_hours ?? price.duration_hours ?? 0
+  const baseDuration = parseFloat(
+    service.value?.duration_hours ?? price.duration_hours ?? price.min_duration_hours ?? 0
   ) || 0;
+
+  return props.zipcode?.zone_type === "minimum_2h"
+    ? Math.max(baseDuration, 2)
+    : baseDuration;
 };
 
 const formatDuration = (hours) => {
