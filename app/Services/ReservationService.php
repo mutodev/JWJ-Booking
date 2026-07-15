@@ -36,6 +36,7 @@ use App\Repositories\CustomerRepository;
 use App\Repositories\ReservationAddonRepository;
 use App\Repositories\PromoCodeRepository;
 use App\Services\BrevoEmailService;
+use App\Services\BrevoContactService;
 use App\Services\EmailTemplateService;
 use App\Services\StripeService;
 use App\Models\ReservationEmailHistoryModel;
@@ -71,6 +72,9 @@ class ReservationService
      */
     protected $emailService;
 
+    /** @var BrevoContactService|null */
+    protected $brevoContactService = null;
+
     /**
      * Servicio para renderizar templates de email
      * @var EmailTemplateService
@@ -100,6 +104,12 @@ class ReservationService
         $this->reservationAddonRepository = new ReservationAddonRepository();
         $this->promoCodeRepository = new PromoCodeRepository();
         $this->emailService = new BrevoEmailService();
+        try {
+            $this->brevoContactService = new BrevoContactService();
+        } catch (\Throwable $e) {
+            // Brevo must never prevent the reservation service from starting.
+            log_message('error', 'Failed to initialize Brevo contact integration: ' . $e->getMessage());
+        }
         $this->emailTemplateService = new EmailTemplateService();
     }
 
@@ -264,6 +274,21 @@ class ReservationService
                     'price_at_time'  => floatval($addon['selectedPrice'] ?? $addon['base_price'] ?? 0),
                 ]);
             }
+        }
+
+        // Sync newsletter contact without affecting reservation creation.
+        try {
+            $customer = !empty($reservationData['customer_id'])
+                ? $this->customerRepository->getById($reservationData['customer_id'])
+                : null;
+            if ($customer) {
+                $this->syncBrevoContactSafely(
+                    (array) $customer->toRawArray(),
+                    'admin reservation creation'
+                );
+            }
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to prepare Brevo contact after admin reservation creation: ' . $e->getMessage());
         }
 
         // Send "Reservation Received" confirmation email (no payment link)
@@ -600,6 +625,14 @@ class ReservationService
                 }
             }
 
+            // Brevo is an external side effect: never roll back or fail a valid reservation.
+            $this->syncBrevoContactSafely([
+                'first_name' => $information['name'] ?? $customer['firstName'] ?? '',
+                'last_name' => $information['lastName'] ?? $customer['lastName'] ?? '',
+                'email' => $customer['email'] ?? '',
+                'phone' => $customer['phone'] ?? '',
+            ], 'reservation creation');
+
             // Enviar email de confirmación al cliente
             $this->sendConfirmationEmail($reservation);
 
@@ -882,6 +915,22 @@ class ReservationService
         }
 
         return $customerId;
+    }
+
+    /**
+     * Brevo is optional. No integration failure may affect a valid reservation.
+     */
+    private function syncBrevoContactSafely(array $contact, string $context): void
+    {
+        if ($this->brevoContactService === null) {
+            return;
+        }
+
+        try {
+            $this->brevoContactService->syncContact($contact);
+        } catch (\Throwable $e) {
+            log_message('error', "Failed to sync Brevo contact after {$context}: " . $e->getMessage());
+        }
     }
 
     /**
