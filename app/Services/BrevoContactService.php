@@ -31,7 +31,17 @@ class BrevoContactService
 
         $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', $apiKey);
         $timeout = max(1, (int) (getenv('brevo.contacts.timeout') ?: 5));
-        $this->apiInstance = new ContactsApi(new Client(['timeout' => $timeout]), $config);
+        $caBundle = trim((string) getenv('brevo.contacts.caBundle'));
+        $verify = $caBundle !== '' ? $caBundle : true;
+
+        if (is_string($verify) && !is_file($verify)) {
+            throw new \RuntimeException('Brevo CA bundle does not exist: ' . $verify);
+        }
+
+        $this->apiInstance = new ContactsApi(new Client([
+            'timeout' => $timeout,
+            'verify' => $verify,
+        ]), $config);
     }
 
     public function isEnabled(): bool
