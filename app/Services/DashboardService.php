@@ -20,12 +20,7 @@ class DashboardService
     {
         $results = $this->dashboardRepository->getReservationsByStatus();
 
-        $statusLabels = [
-            'new' => 'Nueva',
-            'under_review' => 'En Revisión',
-            'confirmed' => 'Confirmada',
-            'cancelled' => 'Cancelada'
-        ];
+        $statusLabels = $this->getStatusLabels();
 
         $data = [];
         $total = 0;
@@ -60,12 +55,7 @@ class DashboardService
 
         $results = $this->dashboardRepository->getReservationsStatusEvolution($startDate, $endDate);
 
-        $statusLabels = [
-            'new' => 'Nueva',
-            'under_review' => 'En Revisión',
-            'confirmed' => 'Confirmada',
-            'cancelled' => 'Cancelada'
-        ];
+        $statusLabels = $this->getStatusLabels();
 
         $months = [];
         $statusData = [];
@@ -294,12 +284,40 @@ class DashboardService
     private function getStatusColor($status)
     {
         $colors = [
-            'new' => '#17a2b8',           // Info blue
-            'under_review' => '#ffc107',  // Warning yellow
-            'confirmed' => '#28a745',     // Success green
-            'cancelled' => '#dc3545'      // Danger red
+            'new' => '#36a2eb',
+            'under_review' => '#ffcd56',
+            'confirmed' => '#4bc0c0',
+            'checking_availability' => '#9966ff',
+            'availability_confirmed' => '#2ec4b6',
+            'follow_up' => '#ff9f40',
+            'ready_for_payment_link' => '#5c7cfa',
+            'payment_link_sent' => '#845ef7',
+            'payment_reminder' => '#f06595',
+            'booked' => '#22b573',
+            'get_ready_to_jam' => '#20c997',
+            'thank_you_for_jamming' => '#0ca678',
+            'cancelled' => '#ff6384'
         ];
 
         return $colors[$status] ?? '#6c757d';
+    }
+
+    private function getStatusLabels(): array
+    {
+        return [
+            'new' => 'New',
+            'under_review' => 'Under Review',
+            'confirmed' => 'Confirmed',
+            'checking_availability' => 'Checking Availability',
+            'availability_confirmed' => 'Availability Confirmed',
+            'follow_up' => 'Follow-up',
+            'ready_for_payment_link' => 'Ready for Payment Link',
+            'payment_link_sent' => 'Payment Link Sent',
+            'payment_reminder' => 'Payment Reminder',
+            'booked' => 'Booked',
+            'get_ready_to_jam' => 'Get Ready to Jam',
+            'thank_you_for_jamming' => 'Thank You for Jamming',
+            'cancelled' => 'Cancelled'
+        ];
     }
 }

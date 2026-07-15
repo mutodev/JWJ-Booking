@@ -89,8 +89,19 @@ const totalReservations = computed(() => {
  * @returns {number} Percentage of confirmed reservations (0-100)
  */
 const confirmedPercentage = computed(() => {
-  const confirmed = props.data.find(item => item.status === 'confirmed');
-  return confirmed?.percentage || 0;
+  const confirmedStatuses = new Set([
+    'confirmed',
+    'booked',
+    'get_ready_to_jam',
+    'thank_you_for_jamming'
+  ]);
+  const confirmedCount = props.data.reduce((total, item) => (
+    confirmedStatuses.has(item.status) ? total + (Number(item.count) || 0) : total
+  ), 0);
+
+  return totalReservations.value > 0
+    ? Math.round((confirmedCount / totalReservations.value) * 1000) / 10
+    : 0;
 });
 
 /**
@@ -122,10 +133,11 @@ const chartOptions = {
     legend: {
       position: 'bottom',
       labels: {
-        padding: 20,
+        padding: 12,
         usePointStyle: true,
+        boxWidth: 10,
         font: {
-          size: 12
+          size: 11
         }
       }
     },
