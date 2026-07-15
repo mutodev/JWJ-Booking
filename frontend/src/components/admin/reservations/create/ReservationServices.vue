@@ -120,10 +120,14 @@ const onSelectService = async (selected) => {
   selectedPrice.value = null;
 
   try {
-    const response = await api.get(
-      `/service-prices/get-by-service-and-county/${selected.id}/${county.value?.id}`
+    // Resolve prices through the zipcode so override_county_id is honored.
+    // This mirrors the customer booking flow and avoids using the visible
+    // county when a zipcode is configured to use another county's pricing.
+    const response = await api.get(`/home/services/${props.zipcode.id}`);
+    const prices = Array.isArray(response) ? response : (response?.data || []);
+    servicePriceList.value = prices.filter(
+      (price) => String(price.service_id) === String(selected.id)
     );
-    servicePriceList.value = response.data;    
     emit("setData", {service: service.value, price: null});
   } catch (err) {
     console.error(err);

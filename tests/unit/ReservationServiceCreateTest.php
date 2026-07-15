@@ -279,6 +279,18 @@ final class ReservationServiceCreateTest extends CIUnitTestCase
         $this->assertEquals(0.75, $saved['duration_hours']);
     }
 
+    public function testAdminCreateUsesPriceServiceDurationBeforeLegacyMinimum(): void
+    {
+        $this->baseData['service'] = ['id' => 'service-1'];
+        $this->baseData['price']['duration_hours'] = 0.75;
+        $this->baseData['price']['min_duration_hours'] = 2.0;
+
+        $this->service->create($this->baseData);
+
+        $saved = $this->repoMock->lastCreated;
+        $this->assertEquals(0.75, $saved['duration_hours']);
+    }
+
     // -------------------------------------------------------------------------
     // Surcharge (via calculateSurcharge private method)
     // -------------------------------------------------------------------------

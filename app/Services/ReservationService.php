@@ -209,7 +209,12 @@ class ReservationService
 
         // Calcular duración total incluyendo addons.
         // La duración base viene del type service; el precio queda como fallback legacy.
-        $baseDurationHours = floatval($data['service']['duration_hours'] ?? $data['price']['min_duration_hours'] ?? 1);
+        $baseDurationHours = floatval(
+            $data['service']['duration_hours']
+            ?? $data['price']['duration_hours']
+            ?? $data['price']['min_duration_hours']
+            ?? 1
+        );
         if (($data['areas']['zipcode']['zone_type'] ?? '') === 'minimum_2h') {
             $baseDurationHours = max($baseDurationHours, 2.0);
         }
