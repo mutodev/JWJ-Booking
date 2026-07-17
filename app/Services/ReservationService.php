@@ -510,12 +510,11 @@ class ReservationService
                 $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
                 $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
 
-                // Calcular baseTotal y surchargeAmount
-                // baseTotal = servicePrice + addonsTotal + extraChildrenTotal - discount
+                // Recalcular el total y el expedite fee con la misma regla del
+                // flujo administrativo; el backend conserva la fuente de verdad.
                 $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal - $discount;
-                // El surchargeAmount se considera 0 ya que está incluido en el travelFee
-                $surchargeAmount = 0;
-                $grandTotal = $baseTotal + $travelFee;
+                $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDate);
+                $grandTotal = $baseTotal + $travelFee + $surchargeAmount;
             } else {
                 // Formulario antiguo: calcular usando funciones centralizadas
                 $addonsTotal = $this->calculateAddonsTotal($addons);

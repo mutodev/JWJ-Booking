@@ -345,31 +345,31 @@ final class ReservationServiceCreateTest extends CIUnitTestCase
         $ref = new \ReflectionMethod(ReservationService::class, 'calculateSurcharge');
         $ref->setAccessible(true);
 
-        // > 7 days → no surcharge
+        // More than 3 days: no expedite fee.
         $farDate = (new \DateTime('+30 days'))->format('Y-m-d');
         $this->assertEquals(0.0, $ref->invoke($this->service, 100.0, $farDate));
 
-        // 2-7 days → 10%
+        // Five days away: no expedite fee.
         $soonDate = (new \DateTime('+5 days'))->format('Y-m-d');
-        $this->assertEquals(10.0, $ref->invoke($this->service, 100.0, $soonDate));
+        $this->assertEquals(0.0, $ref->invoke($this->service, 100.0, $soonDate));
 
-        // < 2 days → 20%
+        // Three days or less: flat $50 expedite fee.
         $urgentDate = (new \DateTime('+1 day'))->format('Y-m-d');
-        $this->assertEquals(20.0, $ref->invoke($this->service, 100.0, $urgentDate));
+        $this->assertEquals(50.0, $ref->invoke($this->service, 100.0, $urgentDate));
 
-        // null date → 0
+        // Missing date: no expedite fee.
         $this->assertEquals(0.0, $ref->invoke($this->service, 100.0, null));
     }
 
     public function testSurchargeIsAddedToTotal(): void
     {
-        // Use a date 5 days from now → 10% surcharge
-        $this->baseData['form']['date'] = (new \DateTime('+5 days'))->format('Y-m-d');
+        // Use a date three days from now: flat $50 expedite fee.
+        $this->baseData['form']['date'] = (new \DateTime('+3 days'))->format('Y-m-d');
 
         $this->service->create($this->baseData);
 
         $saved = $this->repoMock->lastCreated;
-        // base 200 × 10% = 20 surcharge → total 220
-        $this->assertEquals(220.0, $saved['total_amount']);
+        $this->assertEquals(50.0, $saved['expedite_fee']);
+        $this->assertEquals(250.0, $saved['total_amount']);
     }
 }

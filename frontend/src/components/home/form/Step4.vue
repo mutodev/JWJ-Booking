@@ -101,6 +101,12 @@
               <span>${{ travelFee.toFixed(2) }}</span>
             </div>
 
+            <!-- Expedite fee -->
+            <div class="breakdown-item d-flex justify-content-between mt-2" v-if="expediteFee > 0">
+              <span>Expedite Fee:</span>
+              <span>${{ expediteFee.toFixed(2) }}</span>
+            </div>
+
             <hr class="my-2">
 
             <!-- Total -->
@@ -248,6 +254,24 @@ const travelFee = computed(() => {
   return parseFloat(props.service.travel_fee || 0);
 });
 
+// Same rule used by ReservationService::calculateSurcharge(): bookings with
+// three days or less notice receive a flat $50 expedite fee.
+const expediteFee = computed(() => {
+  const rawDate = props.customer?.eventDateTime;
+  if (!rawDate) return 0;
+
+  const datePart = String(rawDate).slice(0, 10);
+  const match = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return 0;
+
+  const eventDay = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const daysUntilEvent = Math.max(0, Math.round((eventDay - today) / 86400000));
+
+  return daysUntilEvent <= 3 ? 50 : 0;
+});
+
 // Obtener el límite de niños incluidos del servicio
 function getMaxKidsIncluded() {
   if (!props.service) return 40;
@@ -296,7 +320,7 @@ const discount = computed(() => {
 
 // Calcular subtotal
 const subtotal = computed(() => {
-  return baseAmount.value - discount.value + travelFee.value;
+  return baseAmount.value - discount.value + travelFee.value + expediteFee.value;
 });
 
 // Función para obtener la cantidad de niños extra
@@ -393,6 +417,7 @@ function emitSubtotalData() {
     addonsTotal: addonsTotal.value,
     extraChildrenTotal: extraChildrenTotal.value,
     travelFee: travelFee.value,
+    expediteFee: expediteFee.value,
     discount: discount.value,
     promoCode: promoValid.value ? promoCode.value : null,
     promoCodeData: promoCodeData.value,
