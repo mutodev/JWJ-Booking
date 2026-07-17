@@ -292,6 +292,51 @@ final class ReservationServiceCreateTest extends CIUnitTestCase
     }
 
     // -------------------------------------------------------------------------
+    // Travel fee resolution shared by admin and customer creation flows
+    // -------------------------------------------------------------------------
+
+    public function testTravelFeeUsesZipcodeRateForOnePerformer(): void
+    {
+        $fee = $this->resolveTravelFee([
+            'zone_type' => 'travel_fee',
+            'travel_fee_1_performer' => 50,
+            'travel_fee_2_performers' => 75,
+        ], 1, 25);
+
+        $this->assertEquals(50.0, $fee);
+    }
+
+    public function testTravelFeeUsesZipcodeRateForTwoPerformers(): void
+    {
+        $fee = $this->resolveTravelFee([
+            'zone_type' => 'travel_fee',
+            'travel_fee_1_performer' => 50,
+            'travel_fee_2_performers' => 75,
+        ], 2, 25);
+
+        $this->assertEquals(75.0, $fee);
+    }
+
+    public function testTravelFeeFallsBackToServicePriceOutsideTravelFeeZone(): void
+    {
+        $fee = $this->resolveTravelFee([
+            'zone_type' => 'standard',
+            'travel_fee_1_performer' => 50,
+            'travel_fee_2_performers' => 75,
+        ], 2, 25);
+
+        $this->assertEquals(25.0, $fee);
+    }
+
+    private function resolveTravelFee(array $zipcode, int $performers, float $fallback): float
+    {
+        $method = new \ReflectionMethod(ReservationService::class, 'resolveTravelFee');
+        $method->setAccessible(true);
+
+        return $method->invoke($this->service, $zipcode, $performers, $fallback);
+    }
+
+    // -------------------------------------------------------------------------
     // Surcharge (via calculateSurcharge private method)
     // -------------------------------------------------------------------------
 

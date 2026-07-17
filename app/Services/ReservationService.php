@@ -186,20 +186,13 @@ class ReservationService
         $eventDateStr = $bookingDate ? $bookingDate->format('Y-m-d') : null;
         $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDateStr);
 
-        // Calcular travel fee del zipcode
-        $travelFee = 0;
         $zipcode = $data['areas']['zipcode'] ?? null;
         $performers = intval($data['price']['performers_count'] ?? 1);
-        if ($zipcode) {
-            if ($performers >= 2 && !empty($zipcode['travel_fee_2_performers'])) {
-                $travelFee = floatval($zipcode['travel_fee_2_performers']);
-            } elseif (!empty($zipcode['travel_fee_1_performer'])) {
-                $travelFee = floatval($zipcode['travel_fee_1_performer']);
-            }
-        }
-        if ($travelFee == 0) {
-            $travelFee = floatval($data['price']['travel_fee'] ?? 0);
-        }
+        $travelFee = $this->resolveTravelFee(
+            $zipcode ?? [],
+            $performers,
+            floatval($data['price']['travel_fee'] ?? 0)
+        );
 
         // Descuento de promo code (solo aplica al baseTotal, no al surcharge)
         $discountAmount = floatval($data['promoCode']['discount_amount'] ?? 0);
@@ -506,9 +499,12 @@ class ReservationService
                 $servicePrice = floatval($subtotal['servicePrice'] ?? $serviceAmount);
                 $addonsTotal = floatval($subtotal['addonsTotal'] ?? 0);
                 $extraChildrenTotal = floatval($subtotal['extraChildrenTotal'] ?? 0);
-                $travelFee = floatval($subtotal['travelFee'] ?? 0);
+                $travelFee = $this->resolveTravelFee(
+                    $zipcode,
+                    intval($service['performers_count'] ?? 1),
+                    floatval($service['travel_fee'] ?? 0)
+                );
                 $discount = floatval($subtotal['discount'] ?? 0);
-                $grandTotal = floatval($subtotal['subtotal'] ?? 0);
 
                 // Calcular extraChildren count para el reporte
                 $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
@@ -519,12 +515,17 @@ class ReservationService
                 $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal - $discount;
                 // El surchargeAmount se considera 0 ya que está incluido en el travelFee
                 $surchargeAmount = 0;
+                $grandTotal = $baseTotal + $travelFee;
             } else {
                 // Formulario antiguo: calcular usando funciones centralizadas
                 $addonsTotal = $this->calculateAddonsTotal($addons);
 
                 // Obtener travel_fee del servicio
-                $travelFee = floatval($service['travel_fee'] ?? 0);
+                $travelFee = $this->resolveTravelFee(
+                    $zipcode,
+                    intval($service['performers_count'] ?? 1),
+                    floatval($service['travel_fee'] ?? 0)
+                );
 
                 // Calcular recargo por niños adicionales
                 $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
@@ -936,6 +937,25 @@ class ReservationService
         } catch (\Throwable $e) {
             log_message('error', "Failed to sync Brevo contact after {$context}: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Resolves the travel fee using the same priority shown in the booking UI:
+     * zipcode override by performer count, then the service-price fallback.
+     */
+    private function resolveTravelFee(array $zipcode, int $performers, float $fallbackFee): float
+    {
+        if (($zipcode['zone_type'] ?? '') === 'travel_fee') {
+            if ($performers >= 2 && !empty($zipcode['travel_fee_2_performers'])) {
+                return floatval($zipcode['travel_fee_2_performers']);
+            }
+
+            if (!empty($zipcode['travel_fee_1_performer'])) {
+                return floatval($zipcode['travel_fee_1_performer']);
+            }
+        }
+
+        return $fallbackFee;
     }
 
     /**
