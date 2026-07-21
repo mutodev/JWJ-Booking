@@ -134,6 +134,32 @@
                 <DetailField v-if="displayTravelFee > 0" label="Travel Fee" :value="formatCurrency(displayTravelFee)" class="col-md-3" />
                 <DetailField v-if="displayExpediteFee > 0" label="Expedite Fee" :value="formatCurrency(displayExpediteFee)" class="col-md-3" />
               </div>
+              <div class="mt-3">
+                <label class="form-label">Selected Add-ons</label>
+                <div v-if="data.addons?.length" class="table-responsive">
+                  <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Add-on</th>
+                        <th>Option</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-end">Unit Price</th>
+                        <th class="text-end">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="addon in data.addons" :key="addon.id || addon.addon_id">
+                        <td>{{ addon.name || addon.type_name || 'N/A' }}</td>
+                        <td>{{ addon.suboption || 'N/A' }}</td>
+                        <td class="text-center">{{ addon.quantity || 1 }}</td>
+                        <td class="text-end">{{ formatCurrency(addon.price_at_time) }}</td>
+                        <td class="text-end">{{ formatCurrency((Number(addon.price_at_time) || 0) * (Number(addon.quantity) || 1)) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div v-else class="detail-value">No add-ons selected</div>
+              </div>
             </div>
           </div>
 

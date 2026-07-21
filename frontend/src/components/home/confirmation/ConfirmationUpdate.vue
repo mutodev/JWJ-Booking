@@ -13,56 +13,11 @@
       {{ error }}
     </div>
 
-    <!-- Already confirmed: show only tip selection + pay button -->
+    <!-- Already confirmed: redirect directly to Stripe -->
     <div v-else-if="confirmedAlready" class="py-4">
-      <div class="d-flex align-items-center mb-4">
-        <i class="bi bi-check-circle-fill fs-3 me-2 text-success"></i>
-        <h2 class="mb-0">Ready to Pay</h2>
-      </div>
-      <p class="text-muted mb-4">
-        Your event details are confirmed. Would you like to add gratuity for your performer(s)? 100% goes to your performer(s). You also have the option to tip in person the day of the event if that is your preference. 
-      </p>
-
-      <div class="tip-section mb-4">
-        <h5 class="tip-title">Add a Gratuity <span class="text-muted small fw-normal">(optional)</span></h5>
-        <p class="text-muted small mb-3">100% goes to your performer(s).</p>
-        <div class="tip-options d-flex flex-wrap gap-2 mb-3">
-          <button
-            v-for="opt in tipOptions"
-            :key="opt.label"
-            type="button"
-            class="btn tip-btn"
-            :class="selectedTip === opt.value ? 'btn-primary' : 'btn-outline-secondary'"
-            @click="selectTip(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        </div>
-        <div v-if="selectedTip === 'custom'" class="input-group mb-2" style="max-width: 200px;">
-          <span class="input-group-text">$</span>
-          <input
-            v-model.number="customTipAmount"
-            type="number"
-            min="0"
-            step="0.01"
-            class="form-control"
-            placeholder="0.00"
-          />
-        </div>
-        <div v-if="computedTip > 0" class="tip-amount-display">
-          Gratuity: <strong>${{ computedTip.toFixed(2) }}</strong>
-        </div>
-      </div>
-
-      <div class="text-center">
-        <button
-          class="btn btn-success btn-lg"
-          :disabled="submitting"
-          @click="handlePayOnly"
-        >
-          <span v-if="submitting" class="spinner-border spinner-border-sm me-2"></span>
-          {{ submitting ? 'Redirecting...' : 'Proceed to Payment' }}
-        </button>
+      <div class="text-center py-5">
+        <div class="spinner-border text-success" role="status"></div>
+        <p class="mt-3 mb-0">Redirecting to secure payment...</p>
       </div>
     </div>
 
@@ -176,21 +131,14 @@
           <label for="instructions" class="form-label">
             Provide detailed arrival and parking instructions
           </label>
-          <el-tooltip
-            content="Provide details about parking, access, or any special instructions for arrival (optional)"
-            placement="right"
-            effect="dark"
-            trigger="focus"
-          >
-            <textarea
-              v-model="form.instructions"
-              class="form-control"
-              id="instructions"
-              rows="3"
-              @keydown.stop
-              @blur="validateField('instructions')"
-            ></textarea>
-          </el-tooltip>
+          <textarea
+            v-model="form.instructions"
+            class="form-control"
+            id="instructions"
+            rows="3"
+            placeholder="Provide details about parking, access, or any special instructions for arrival (optional)"
+            @blur="validateField('instructions')"
+          ></textarea>
           <div v-if="errors.instructions" class="text-danger small mt-1">
             {{ errors.instructions }}
           </div>
@@ -284,21 +232,14 @@
           <label for="songRequests" class="form-label">
             Song requests, up to 3 (provide links)
           </label>
-          <el-tooltip
-            content="Provide YouTube or Spotify links for up to 3 songs (one per line) - Optional"
-            placement="right"
-            effect="dark"
-            trigger="focus"
-          >
-            <textarea
-              v-model="form.songRequests"
-              class="form-control"
-              id="songRequests"
-              rows="4"
-              @keydown.stop
-              @blur="validateField('songRequests')"
-            ></textarea>
-          </el-tooltip>
+          <textarea
+            v-model="form.songRequests"
+            class="form-control"
+            id="songRequests"
+            rows="4"
+            placeholder="Provide YouTube or Spotify links for up to 3 songs (one per line) - Optional"
+            @blur="validateField('songRequests')"
+          ></textarea>
           <div v-if="errors.songRequests" class="text-danger small mt-1">
             {{ errors.songRequests }}
           </div>
@@ -363,7 +304,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import api from "@/services/axios";
 import * as yup from "yup";
@@ -393,28 +334,6 @@ const form = reactive({
 
 const errors = reactive({});
 
-// Tip / Gratuity
-const selectedTip = ref(null);
-const customTipAmount = ref(0);
-const tipOptions = [
-  { label: 'No tip', value: 0 },
-  { label: '10%',    value: 0.10 },
-  { label: '15%',    value: 0.15 },
-  { label: '20%',    value: 0.20 },
-  { label: 'Custom', value: 'custom' },
-];
-
-const computedTip = computed(() => {
-  if (selectedTip.value === null || selectedTip.value === 0) return 0;
-  if (selectedTip.value === 'custom') return Math.max(0, customTipAmount.value || 0);
-  const base = parseFloat(reservation.value.total_amount || 0);
-  return Math.round(base * selectedTip.value * 100) / 100;
-});
-
-const selectTip = (value) => {
-  selectedTip.value = value;
-};
-
 const isTrueValue = (value) => value === true || value === 1 || value === '1';
 
 const toDateInputValue = (value) => {
@@ -428,10 +347,7 @@ const toDateInputValue = (value) => {
   return match ? match[1] : '';
 };
 
-const saveGratuityAndRedirect = async (reservationId) => {
-  if (computedTip.value > 0) {
-    await api.patch(`/reservations/${reservationId}/gratuity`, { amount: computedTip.value });
-  }
+const redirectToPayment = async (reservationId) => {
   const paymentResponse = await api.post(`/reservations/${reservationId}/regenerate-payment`);
   const paymentData = paymentResponse.data?.data || paymentResponse.data;
   if (paymentData?.payment_url) {
@@ -492,9 +408,8 @@ async function fetchReservation() {
 
     // Customer already submitted the confirmation form → show tip selection, then pay
     if (isTrueValue(reservation.value.customer_confirmed)) {
-      loading.value = false;
-      // Keep page visible with just the tip section (form hidden via confirmedAlready flag)
       confirmedAlready.value = true;
+      await redirectToPayment(reservationId);
       return;
     }
 
@@ -556,7 +471,7 @@ async function handleSubmit() {
   submitting.value = true;
   const reservationId = route.params.id;
 
-  // Step 2: save confirmation data, then show gratuity before payment
+  // Step 2: save confirmation data and continue directly to Stripe.
   try {
     const updateData = {
       event_date: form.eventDate,
@@ -574,24 +489,11 @@ async function handleSubmit() {
 
     await api.patch(`/reservations/${reservationId}/confirmation`, updateData);
 
-    // Show tip screen. The Stripe session is generated from there.
     confirmedAlready.value = true;
+    await redirectToPayment(reservationId);
   } catch (err) {
     console.error('Submission error:', err);
     error.value = 'An error occurred while saving. Please try again or contact support.';
-  } finally {
-    submitting.value = false;
-  }
-}
-
-// Handler for already-confirmed path (skip form, just save tip + pay)
-async function handlePayOnly() {
-  submitting.value = true;
-  try {
-    await saveGratuityAndRedirect(route.params.id);
-  } catch (err) {
-    console.error('Payment error:', err);
-    error.value = 'An error occurred. Please try again or contact support.';
   } finally {
     submitting.value = false;
   }

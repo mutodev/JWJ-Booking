@@ -149,6 +149,10 @@ class ReservationService
             throw new HTTPException(lang('Reservation.notFound'), Response::HTTP_NOT_FOUND);
         }
 
+        // El total vive en reservations, pero el detalle se guarda en la tabla pivote.
+        // Incluirlo aquí permite que cualquier consumidor del detalle sepa qué se compró.
+        $reservation->addons = $this->reservationAddonRepository->getDetailedByReservation($id);
+
         return $reservation;
     }
 

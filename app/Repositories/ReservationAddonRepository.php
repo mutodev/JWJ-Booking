@@ -40,6 +40,27 @@ class ReservationAddonRepository
     }
 
     /**
+     * Obtener el desglose de add-ons de una reserva con sus datos de catálogo.
+     */
+    public function getDetailedByReservation(string $reservationId): array
+    {
+        return $this->model
+            ->select([
+                'reservation_addons.id',
+                'reservation_addons.addon_id',
+                'reservation_addons.quantity',
+                'reservation_addons.suboption',
+                'reservation_addons.price_at_time',
+                'addons.name',
+                'type_addons.name as type_name',
+            ])
+            ->join('addons', 'addons.id = reservation_addons.addon_id', 'left')
+            ->join('type_addons', 'type_addons.id = addons.type_addon_id', 'left')
+            ->where('reservation_addons.reservation_id', $reservationId)
+            ->findAll();
+    }
+
+    /**
      * Crear un registro. Con UUID generado en beforeInsert.
      * Retorna el ID insertado (UUID) o false si falla.
      */
