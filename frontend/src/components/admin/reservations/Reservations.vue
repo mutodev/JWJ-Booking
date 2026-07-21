@@ -316,9 +316,16 @@ const editModal = (item) => {
 const createModal = () => {
   modalCreateVisible.value = true;
 };
-const viewModal = (item) => {
-  selectedData.value = { ...item };
-  modalViewVisible.value = true;
+const viewModal = async (item) => {
+  try {
+    const response = await api.get(`/reservations/${item.id}`);
+    const reservation = response?.data ?? response;
+    selectedData.value = { ...reservation };
+    modalViewVisible.value = true;
+  } catch (error) {
+    console.error('Failed to load reservation details:', error);
+    toast.error(error?.response?.data?.message ?? 'Failed to load reservation details');
+  }
 };
 
 const paymentUrlModal = (item) => {
