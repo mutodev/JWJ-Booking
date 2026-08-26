@@ -943,8 +943,18 @@
   background: white;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  overflow: hidden;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* overflow:hidden vivía en el contenedor raíz y recortaba el dropdown de
+   "rows per page" del footer. Se redondean __main y __footer por separado
+   en su lugar para mantener el look de card sin clipear ese dropdown. */
+.admin-content .vue3-easy-data-table__main {
+  border-radius: 12px 12px 0 0;
+}
+
+.admin-content .vue3-easy-data-table__footer {
+  border-radius: 0 0 12px 12px;
 }
 
 .admin-content .easy-data-table__rows-per-page,
