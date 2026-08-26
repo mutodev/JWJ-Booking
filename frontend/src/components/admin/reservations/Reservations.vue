@@ -26,12 +26,54 @@
       </div>
     </div>
 
+    <div class="row mt-2 mb-2">
+      <div class="col-md-3">
+        <label class="form-label small">Filter by Status</label>
+        <div class="dropdown">
+          <button
+            class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 text-start"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            {{ filterStatuses.length ? `${filterStatuses.length} selected` : 'All statuses' }}
+          </button>
+          <ul class="dropdown-menu status-filter-menu p-2">
+            <li v-for="(label, value) in STATUS_LABELS" :key="value">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  :id="`status-filter-${value}`"
+                  :value="value"
+                  v-model="filterStatuses"
+                />
+                <label class="form-check-label" :for="`status-filter-${value}`">{{ label }}</label>
+              </div>
+            </li>
+            <li v-if="filterStatuses.length"><hr class="dropdown-divider"></li>
+            <li v-if="filterStatuses.length">
+              <button class="btn btn-sm btn-link p-0" type="button" @click="filterStatuses = []">Clear</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">Filter by Payment</label>
+        <select v-model="filterPaid" class="form-select form-select-sm">
+          <option value="">All</option>
+          <option value="paid">Paid</option>
+          <option value="unpaid">Unpaid</option>
+        </select>
+      </div>
+    </div>
+
     <div class="row">
       <div class="col-md-12">
         <EasyDataTable
           v-model:items-selected="itemsSelected"
           :headers="headers"
-          :items="dataProcessed"
+          :items="filteredData"
           :search-field="searchField"
           :search-value="searchValue"
           table-class-name="table table-hover"
@@ -305,6 +347,8 @@ const exportPreviewCount = ref(null);
 const itemsSelected = ref([]);
 const deletingBulk = ref(false);
 const bulkDeleteModalVisible = ref(false);
+const filterStatuses = ref([]);
+const filterPaid = ref("");
 const selectedData = ref(null);
 const sendingEmail = ref(false);
 const paymentDescription = ref("");
@@ -424,6 +468,23 @@ const dataProcessed = computed(() =>
     is_paid: Boolean(item.is_paid),
   }))
 );
+
+// Filtrado por status (multi-select) y estado de pago
+const filteredData = computed(() => {
+  let filtered = dataProcessed.value;
+
+  if (filterStatuses.value.length) {
+    filtered = filtered.filter((item) => filterStatuses.value.includes(item.status));
+  }
+
+  if (filterPaid.value === 'paid') {
+    filtered = filtered.filter((item) => item.is_paid);
+  } else if (filterPaid.value === 'unpaid') {
+    filtered = filtered.filter((item) => !item.is_paid);
+  }
+
+  return filtered;
+});
 
 const getData = async () => {
   try {
@@ -641,5 +702,15 @@ onMounted(() => {
 .reservation-template-menu .dropdown-item {
   font-size: 0.82rem;
   white-space: normal;
+}
+
+.status-filter-menu {
+  min-width: 240px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.status-filter-menu .form-check-label {
+  font-size: 0.85rem;
 }
 </style>
