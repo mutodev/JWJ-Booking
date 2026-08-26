@@ -415,6 +415,7 @@ async function submitReservation() {
       songRequests: null, // No se recolecta sin Step5
       happyBirthdayRequest: 'no',
       instructions: null, // No se recolecta sin Step5
+      customerNotes: (form.value?.additionalNotes || '').trim() || null,
       isValid: true
     };
 

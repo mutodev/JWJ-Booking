@@ -354,7 +354,8 @@ class ReservationService
      *       startTime: string, entertainmentStartTime: string,
      *       birthdayChildName: string, childAge: int,
      *       ageRange: string, songRequests: string,
-     *       happyBirthdayRequest: string, instructions: string
+     *       happyBirthdayRequest: string, instructions: string,
+     *       customerNotes: string
      *     }
      *
      * @return array {
@@ -591,7 +592,7 @@ class ReservationService
                 'song_requests' => $information['songRequests'] ?? null,
                 'sing_happy_birthday' => ($information['happyBirthdayRequest'] ?? 'no') === 'yes',
                 'customer_confirmed' => false,
-                'customer_notes' => null,
+                'customer_notes' => $information['customerNotes'] ?? null,
                 'internal_notes' => null
             ];
 

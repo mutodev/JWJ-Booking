@@ -124,6 +124,25 @@
         </div>
       </div>
 
+      <!-- Notas adicionales / special requests -->
+      <div class="notes-section mt-4">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-6">
+            <label for="additional-notes" class="form-label small fw-semibold text-muted">
+              Any other details or special requests (optional)
+            </label>
+            <textarea
+              id="additional-notes"
+              v-model="additionalNotes"
+              class="form-control"
+              rows="4"
+              placeholder="Let us know anything else we should be aware of..."
+              @input="emitSubtotalData"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
       <!-- Botón de confirmación -->
       <div class="confirmation-section mt-5">
         <div class="d-flex align-items-center justify-content-center">
@@ -191,6 +210,7 @@ const emit = defineEmits(["setData"]);
 
 const showBreakdown = ref(true);
 const isConfirmed = ref(false);
+const additionalNotes = ref("");
 const promoCode = ref("");
 const promoValid = ref(false);
 const promoInvalid = ref(false);
@@ -425,7 +445,7 @@ function emitSubtotalData() {
     isValid: isConfirmed.value && subtotal.value > 0
   };
 
-  emit("setData", { subtotal: subtotalData });
+  emit("setData", { subtotal: subtotalData, additionalNotes: additionalNotes.value });
 }
 
 // Watch para emitir datos cuando sea activo o cambien los valores
