@@ -242,7 +242,9 @@ class ReservationService
             'is_invoiced' => false,
             'is_paid' => false,
             'arrival_parking_instructions' => $data['form']['arrivalParkingInstructions'] ?? "-",
-            'entertainment_start_time' => $data['form']['entertainmentStartTime'] ?? $data['form']['startTime'],
+            'entertainment_start_time' => !empty($data['form']['entertainmentStartTime'])
+                ? $data['form']['entertainmentStartTime']
+                : $this->addMinutesToTime($data['form']['startTime'] ?? null, 30),
             'birthday_child_name' => $data['form']['birthdayChildName'] ?? null,
             'birthday_child_age' => $data['form']['childAge'] ?? $data['form']['birthdayChildAge'] ?? null,
             'children_age_range' => $data['form']['childrenAgeRange'] ?? "-",
