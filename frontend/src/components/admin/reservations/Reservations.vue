@@ -391,6 +391,7 @@ const closeComposeModal = () => {
 const headers = computed(() => [
   { text: "Customer", value: "customer_name" },
   { text: "Service", value: "service_name" },
+  { text: "Event Type", value: "event_type" },
   { text: "Location", value: "location" },
   { text: "Date", value: "event_date" },
   { text: "Time", value: "event_time" },
@@ -413,6 +414,7 @@ const dataProcessed = computed(() =>
     ...item,
     customer_name: item.full_name || 'N/A',
     service_name: item.service_name || 'N/A',
+    event_type: item.event_type || 'N/A',
     location: `${item.city_name || ''}, ${item.county_name || ''}`.replace(', ', '') ? `${item.city_name || ''}, ${item.county_name || ''}` : item.zipcode || 'N/A',
     event_address: item.event_address ?? "",
     event_date: item.event_date?.date ? new Date(item.event_date.date) : (item.event_date ? new Date(item.event_date) : null),

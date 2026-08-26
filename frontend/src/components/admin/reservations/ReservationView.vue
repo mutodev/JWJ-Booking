@@ -74,6 +74,7 @@
                 <DetailField label="Event Date" :value="formatDate(data.event_date)" class="col-md-3" />
                 <DetailField label="Event Start Time" :value="data.event_time" class="col-md-3" />
                 <DetailField label="Entertainment Start Time" :value="data.entertainment_start_time" class="col-md-6" />
+                <DetailField label="Event Type" :value="data.event_type" class="col-md-3" />
               </div>
             </div>
 
