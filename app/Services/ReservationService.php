@@ -1220,7 +1220,7 @@ class ReservationService
         $confirmationUrl = rtrim($frontendUrl, '/') . '/confirmation/' . $reservation->id;
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
         $paymentUrl = $reservation->payment_url ?? $confirmationUrl;
-        $customerName = trim($reservation->full_name ?? '');
+        $customerName = strtok(trim($reservation->full_name ?? ''), ' ');
         $entertainmentStartTime = $reservation->entertainment_start_time ?? '';
         $eventTime = $this->getEmailEventTime($reservation);
         $performersCount = $reservation->performers_count ?? '';
