@@ -716,8 +716,23 @@ class ReservationService
         $basePrice        = floatval($reservation->base_price ?? 0);
         $addonsTotal      = floatval($reservation->addons_total ?? 0);
         $extraChildrenFee = floatval($reservation->extra_children_fee ?? 0);
+        $travelFee        = floatval($reservation->travel_fee ?? 0);
         $expeditionFee    = floatval($reservation->expedition_fee ?? 0);
         $grossTotal       = $basePrice + $addonsTotal + $extraChildrenFee + $expeditionFee;
+
+        // "Custom Song" nunca participa del descuento, sin importar el promo
+        // code. addons_total es un agregado, así que hay que restarle el
+        // aporte de ese add-on puntual leyendo el detalle de la reserva.
+        $customSongTotal = 0.0;
+        foreach ($this->reservationAddonRepository->getDetailedByReservation($id) as $addonRow) {
+            $addonName = is_array($addonRow) ? ($addonRow['name'] ?? null) : ($addonRow->name ?? null);
+            if ($addonName === 'Custom Song') {
+                $quantity = is_array($addonRow) ? ($addonRow['quantity'] ?? 1) : ($addonRow->quantity ?? 1);
+                $priceAtTime = is_array($addonRow) ? ($addonRow['price_at_time'] ?? 0) : ($addonRow->price_at_time ?? 0);
+                $customSongTotal += floatval($priceAtTime) * intval($quantity);
+            }
+        }
+        $discountEligibleAddonsTotal = max(0, $addonsTotal - $customSongTotal);
 
         if (!$code) {
             // Quitar promo code: restaurar total original
@@ -751,10 +766,12 @@ class ReservationService
             throw new HTTPException('Promo code usage limit reached', Response::HTTP_BAD_REQUEST);
         }
 
-        // Calcular descuento
-        $discountBase = $basePrice + $addonsTotal + $extraChildrenFee;
+        // Calcular descuento: precio base + add-ons (sin Custom Song) + niños
+        // extra. Expedite fee nunca se descuenta; travel fee solo si el
+        // promo code lo tiene habilitado explícitamente.
+        $discountBase = $basePrice + $discountEligibleAddonsTotal + $extraChildrenFee;
         if ($validation['applies_to_travel_fee']) {
-            $discountBase += $expeditionFee;
+            $discountBase += $travelFee;
         }
 
         if ($validation['discount_type'] === 'percentage') {

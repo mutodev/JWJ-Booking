@@ -65,7 +65,7 @@
                 </button>
               </div>
               <div v-if="promoValid" class="valid-feedback d-block small">
-                Promo applied — {{ promoCodeData?.discount_percentage }}% off (excl. travel fee)
+                Promo applied — {{ promoCodeData?.discount_percentage }}% off (excl. travel fee, expedite fee, Custom Song)
               </div>
               <div v-if="promoInvalid" class="invalid-feedback d-block small">{{ promoError }}</div>
             </div>
@@ -175,10 +175,20 @@ async function validatePromo() {
       promoValid.value = true;
       appliedCode.value = promoCode.value.trim();
 
-      // Calcula el descuento sobre el precio base del servicio seleccionado
+      // Descuento sobre precio base + add-ons + niños extra. No aplica a
+      // travel fee, expedite fee, ni al add-on "Custom Song".
       const baseAmount = parseFloat(dataForm.value.price?.amount || 0);
+      const addonsDiscountEligible = (dataForm.value.addons || []).reduce((sum, addon) => {
+        if (addon.name === 'Custom Song') return sum;
+        return sum + (parseFloat(addon.base_price) || 0);
+      }, 0);
+      const extraChildrenQty = parseInt(dataForm.value.form?.extraChildren || 0);
+      const extraChildFee = parseFloat(dataForm.value.price?.extra_child_fee || 0);
+      const extraChildrenTotal = extraChildrenQty * extraChildFee;
+
       const pct = parseFloat(response.data.discount_percentage || 0);
-      const discountAmount = (baseAmount * pct) / 100;
+      const discountBase = baseAmount + addonsDiscountEligible + extraChildrenTotal;
+      const discountAmount = (discountBase * pct) / 100;
 
       dataForm.value.promoCode = {
         code: appliedCode.value,

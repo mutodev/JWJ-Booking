@@ -71,7 +71,7 @@
                 </button>
               </div>
               <div class="promo-disclaimer mt-2">
-                <small>*Discounts only apply to the base rate and not to travel fees.</small>
+                <small>*Discounts don't apply to travel fee, expedite fee, or the Custom Song add-on.</small>
               </div>
               <div v-if="promoValid" class="valid-feedback d-block">
                 <i class="bi bi-check-circle-fill me-1"></i>
@@ -118,7 +118,7 @@
             <!-- Discount note -->
             <div v-if="discount > 0 || promoCode" class="discount-note mt-2">
               <i class="bi bi-info-circle me-1"></i>
-              <small>*Discount applies to service, add-ons, and extra children. Travel fees are not discounted.</small>
+              <small>*Discount applies to service, add-ons, and extra children. Travel fee, expedite fee, and the Custom Song add-on are not discounted.</small>
             </div>
           </div>
         </div>
@@ -328,14 +328,33 @@ const baseAmount = computed(() => {
   return servicePrice.value + addonsTotal.value + extraChildrenTotal.value;
 });
 
+// Total de add-ons elegibles para descuento: excluye "Custom Song" por nombre,
+// además de los referral services que ya se excluyen del total general.
+const discountEligibleAddonsTotal = computed(() => {
+  if (!props.addons || props.addons.length === 0) return 0;
+
+  return props.addons.reduce((total, addon) => {
+    const isReferral = addon.is_referral_service === "1" || addon.is_referral_service === 1 || addon.is_referral_service === true;
+    if (isReferral || addon.name === 'Custom Song') {
+      return total;
+    }
+
+    const price = parseFloat(addon.selectedPrice || addon.base_price || 0);
+    const quantity = parseInt(addon.quantity || 1);
+    return total + (price * quantity);
+  }, 0);
+});
+
 // Calcular descuento
 const discount = computed(() => {
   if (!promoCodeData.value || !promoValid.value) return 0;
 
   const discountPercentage = parseFloat(promoCodeData.value.discount_percentage || 0);
 
-  // El descuento solo aplica al base amount (no incluye travel fee)
-  return (baseAmount.value * discountPercentage) / 100;
+  // El descuento aplica a precio base + add-ons + niños extra, pero NO a
+  // travel fee, expedite fee ni al add-on "Custom Song".
+  const discountBase = servicePrice.value + discountEligibleAddonsTotal.value + extraChildrenTotal.value;
+  return (discountBase * discountPercentage) / 100;
 });
 
 // Calcular subtotal
