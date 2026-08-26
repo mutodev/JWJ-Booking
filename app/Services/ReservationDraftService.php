@@ -233,4 +233,38 @@ class ReservationDraftService
             return null;
         }
     }
+
+    /**
+     * Delete a single draft (Admin)
+     *
+     * @param string $id
+     * @return bool
+     */
+    public function deleteDraft(string $id): bool
+    {
+        try {
+            return (bool) $this->draftModel->delete($id);
+        } catch (\Exception $e) {
+            log_message('error', 'Error deleting draft: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Delete multiple drafts at once (Admin)
+     *
+     * @param array $ids
+     * @return array { deleted: int, total: int }
+     */
+    public function bulkDeleteDrafts(array $ids): array
+    {
+        $deleted = 0;
+        foreach ($ids as $id) {
+            if ($this->deleteDraft((string) $id)) {
+                $deleted++;
+            }
+        }
+
+        return ['deleted' => $deleted, 'total' => count($ids)];
+    }
 }

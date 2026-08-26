@@ -261,7 +261,9 @@ $routes->group('api', function ($routes) {
         $routes->get('/', [ReservationDraftController::class, 'index']);
         $routes->get('stats', [ReservationDraftController::class, 'stats']);
         $routes->get('abandoned', [ReservationDraftController::class, 'abandoned']);
+        $routes->post('bulk-delete', [ReservationDraftController::class, 'bulkDelete']);
         $routes->post('(:segment)/follow-up', [ReservationDraftController::class, 'sendFollowUp']);
+        $routes->delete('(:segment)', [ReservationDraftController::class, 'delete']);
         $routes->get('(:segment)', [ReservationDraftController::class, 'show']);
     });
 });

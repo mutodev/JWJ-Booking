@@ -196,4 +196,58 @@ class ReservationDraftController extends ResourceController
                 );
         }
     }
+
+    /**
+     * Eliminar un draft (carrito abandonado) específico
+     * DELETE /reservation-drafts/{id}
+     */
+    public function delete($id = null)
+    {
+        try {
+            if (!$id) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(create_response('Draft ID is required', null));
+            }
+
+            $deleted = $this->service->deleteDraft($id);
+
+            if (!$deleted) {
+                return $this->response->setStatusCode(404)
+                    ->setJSON(create_response('Draft not found or could not be deleted', null));
+            }
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Draft deleted successfully', null));
+        } catch (\Throwable $th) {
+            log_message('error', 'Error deleting draft: ' . $th->getMessage());
+            return $this->response->setStatusCode(500)
+                ->setJSON(create_response('An error occurred while deleting the draft', null));
+        }
+    }
+
+    /**
+     * Eliminar múltiples drafts (carritos abandonados) a la vez
+     * POST /reservation-drafts/bulk-delete
+     */
+    public function bulkDelete()
+    {
+        try {
+            $data = json_decode($this->request->getBody(), true);
+            $ids  = $data['ids'] ?? [];
+
+            if (empty($ids) || !is_array($ids)) {
+                return $this->response->setStatusCode(400)
+                    ->setJSON(create_response('No IDs provided', null));
+            }
+
+            $result = $this->service->bulkDeleteDrafts($ids);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Drafts deleted successfully', $result));
+        } catch (\Throwable $th) {
+            log_message('error', 'Error bulk deleting drafts: ' . $th->getMessage());
+            return $this->response->setStatusCode(500)
+                ->setJSON(create_response('An error occurred while deleting drafts', null));
+        }
+    }
 }

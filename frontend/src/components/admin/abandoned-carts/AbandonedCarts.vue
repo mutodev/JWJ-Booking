@@ -17,6 +17,17 @@
 
     <!-- Botón de refresh y analytics -->
     <div class="col-md-auto pt-1 d-flex gap-2 justify-content-end">
+      <button
+        v-if="canDelete && itemsSelected.length > 0"
+        class="btn btn-sm btn-danger"
+        @click="bulkDelete"
+        :disabled="deletingBulk"
+        :title="`Delete ${itemsSelected.length} selected`"
+      >
+        <span v-if="deletingBulk" class="spinner-border spinner-border-sm"></span>
+        <i v-else class="bi bi-trash"></i>
+        ({{ itemsSelected.length }})
+      </button>
       <button class="btn btn-sm btn-success" @click="exportModalVisible = true" title="Export CSV">
         <i class="bi bi-download"></i> Export
       </button>
@@ -53,6 +64,14 @@
       </select>
     </div>
     <div class="col-md-3">
+      <label class="form-label small">Contact Info</label>
+      <select v-model="filterContact" @change="applyFilters" class="form-select form-select-sm">
+        <option value="">All</option>
+        <option value="missing">Missing (N/A)</option>
+        <option value="has">Has email or phone</option>
+      </select>
+    </div>
+    <div class="col-md-3">
       <label class="form-label small">Date From</label>
       <input
         v-model="filterDateFrom"
@@ -61,6 +80,8 @@
         class="form-control form-control-sm"
       />
     </div>
+  </div>
+  <div class="row mt-2">
     <div class="col-md-3">
       <label class="form-label small">Date To</label>
       <input
@@ -76,6 +97,7 @@
   <div class="row mt-3">
     <div class="col-md-12">
       <EasyDataTable
+        v-model:items-selected="itemsSelected"
         :headers="headers"
         :items="filteredData"
         :search-field="searchField"
@@ -154,6 +176,14 @@
             <i v-if="sendingId === item.id" class="bi bi-hourglass-split"></i>
             <i v-else class="bi bi-envelope-arrow-up"></i>
           </button>
+          <button
+            v-if="canDelete"
+            class="btn btn-sm btn-action-icon btn-danger ms-1"
+            :title="'Delete this draft'"
+            @click="confirmSingleDelete(item)"
+          >
+            <i class="bi bi-trash"></i>
+          </button>
         </template>
       </EasyDataTable>
     </div>
@@ -211,6 +241,24 @@
     :stats="stats"
     @close="modalAnalyticsVisible = false"
   />
+
+  <ConfirmModal
+    :show="bulkDeleteModalVisible"
+    title="Delete Abandoned Carts"
+    :message="`You are about to delete <strong>${itemsSelected.length} draft(s)</strong>. This action cannot be undone.`"
+    confirmLabel="Delete Drafts"
+    @confirm="executeBulkDelete"
+    @cancel="bulkDeleteModalVisible = false"
+  />
+
+  <ConfirmModal
+    :show="singleDeleteModalVisible"
+    title="Delete Abandoned Cart"
+    message="You are about to delete this draft. This action cannot be undone."
+    confirmLabel="Delete Draft"
+    @confirm="executeSingleDelete"
+    @cancel="singleDeleteModalVisible = false"
+  />
 </template>
 
 <script setup>
@@ -218,9 +266,13 @@ import { inject, ref, onMounted, computed, watch } from "vue";
 import api from "@/services/axios";
 import DraftDetails from "./DraftDetails.vue";
 import AnalyticsModal from "./AnalyticsModal.vue";
+import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
+import { useMenuPermissions } from "@/composables/useMenuPermissions";
 
 const updateHeaderData = inject("updateHeaderData");
 updateHeaderData({ title: "Abandoned Carts", icon: "bi-cart-x" });
+
+const { canDelete } = useMenuPermissions("/admin/abandoned-carts");
 
 const tableHelpers = inject("tableHelpers");
 const data = ref([]);
@@ -230,6 +282,7 @@ const searchValue = ref("");
 // Filtros
 const filterStatus = ref("");
 const filterStep = ref("");
+const filterContact = ref("");
 const filterDateFrom = ref("");
 const filterDateTo = ref("");
 
@@ -238,6 +291,13 @@ const modalDetailsVisible = ref(false);
 const modalAnalyticsVisible = ref(false);
 const selectedData = ref(null);
 const sendingId = ref(null);
+
+// Borrado
+const itemsSelected = ref([]);
+const deletingBulk = ref(false);
+const bulkDeleteModalVisible = ref(false);
+const singleDeleteModalVisible = ref(false);
+const singleDeleteTarget = ref(null);
 
 const viewDetails = (item) => {
   selectedData.value = { ...item };
@@ -289,6 +349,12 @@ const filteredData = computed(() => {
 
   if (filterStep.value) {
     filtered = filtered.filter(draft => draft.current_step == filterStep.value);
+  }
+
+  if (filterContact.value === 'missing') {
+    filtered = filtered.filter(draft => !draft.email && !draft.phone);
+  } else if (filterContact.value === 'has') {
+    filtered = filtered.filter(draft => draft.email || draft.phone);
   }
 
   if (filterDateFrom.value) {
@@ -346,6 +412,47 @@ const calculateStats = () => {
 
 const applyFilters = () => {
   // Filters are applied reactively via computed property
+};
+
+// Borrado individual
+const confirmSingleDelete = (item) => {
+  singleDeleteTarget.value = item;
+  singleDeleteModalVisible.value = true;
+};
+
+const executeSingleDelete = async () => {
+  if (!singleDeleteTarget.value) return;
+  singleDeleteModalVisible.value = false;
+  try {
+    await api.delete(`/reservation-drafts/${singleDeleteTarget.value.id}`);
+    data.value = data.value.filter((draft) => draft.id !== singleDeleteTarget.value.id);
+    calculateStats();
+  } catch (error) {
+    console.error('Error deleting draft:', error);
+  } finally {
+    singleDeleteTarget.value = null;
+  }
+};
+
+// Borrado masivo
+const bulkDelete = () => {
+  if (!itemsSelected.value.length) return;
+  bulkDeleteModalVisible.value = true;
+};
+
+const executeBulkDelete = async () => {
+  bulkDeleteModalVisible.value = false;
+  deletingBulk.value = true;
+  try {
+    const ids = itemsSelected.value.map((item) => item.id);
+    await api.post('/reservation-drafts/bulk-delete', { ids });
+    itemsSelected.value = [];
+    await getData();
+  } catch (error) {
+    console.error('Error bulk deleting drafts:', error);
+  } finally {
+    deletingBulk.value = false;
+  }
 };
 
 // Format datetime helper
