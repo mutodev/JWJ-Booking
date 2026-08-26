@@ -580,8 +580,9 @@ class ReservationService
                 'is_invoiced' => false,
                 'is_paid' => false,
                 'arrival_parking_instructions' => $information['instructions'] ?? null,
-                'entertainment_start_time' => $information['entertainmentStartTime']
-                    ?? $this->addMinutesToTime($information['startTime'] ?? null, 30),
+                'entertainment_start_time' => !empty($information['entertainmentStartTime'])
+                    ? $information['entertainmentStartTime']
+                    : $this->addMinutesToTime($information['startTime'] ?? null, 30),
                 'birthday_child_name' => $information['birthdayChildName'] ?? null,
                 'birthday_child_age' => intval($information['childAge'] ?? 0),
                 'children_age_range' => $information['ageRange'] ?? null,
