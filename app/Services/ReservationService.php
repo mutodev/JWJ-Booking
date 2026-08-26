@@ -1260,6 +1260,34 @@ class ReservationService
         return $eventTime !== '' ? $eventTime : $fallback;
     }
 
+    private function buildAddonsRow(string $reservationId): string
+    {
+        $addons = $this->reservationAddonRepository->getDetailedByReservation($reservationId);
+        if (empty($addons)) {
+            return '';
+        }
+
+        $labels = [];
+        foreach ($addons as $addon) {
+            $name = trim((string) ($addon->name ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $suboption = trim((string) ($addon->suboption ?? ''));
+            $quantity  = intval($addon->quantity ?? 1);
+
+            $label = $suboption !== '' ? "{$name} ({$suboption})" : $name;
+            if ($quantity > 1) {
+                $label .= " x{$quantity}";
+            }
+
+            $labels[] = $label;
+        }
+
+        return $this->buildOptionalSummaryRow('Add-ons', implode(', ', $labels), true);
+    }
+
     private function buildOptionalSummaryRow(string $label, mixed $value, bool $shaded): string
     {
         $value = trim((string) ($value ?? ''));
@@ -1569,6 +1597,7 @@ class ReservationService
             'event_time'         => $eventTime,
             'event_address'      => $reservation->event_address ?? 'To be confirmed',
             'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
+            'addons_row'         => $this->buildAddonsRow($reservation->id),
             'total_duration_row' => $this->buildDurationRow($reservation->duration_hours ?? 0),
             'duration_hours'     => $totalDurationLabel,
             'total_duration'     => $totalDurationLabel,
