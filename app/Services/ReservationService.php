@@ -580,7 +580,8 @@ class ReservationService
                 'is_invoiced' => false,
                 'is_paid' => false,
                 'arrival_parking_instructions' => $information['instructions'] ?? null,
-                'entertainment_start_time' => $information['entertainmentStartTime'] ?? null,
+                'entertainment_start_time' => $information['entertainmentStartTime']
+                    ?? $this->addMinutesToTime($information['startTime'] ?? null, 30),
                 'birthday_child_name' => $information['birthdayChildName'] ?? null,
                 'birthday_child_age' => intval($information['childAge'] ?? 0),
                 'children_age_range' => $information['ageRange'] ?? null,
@@ -1258,6 +1259,21 @@ class ReservationService
 
         $eventTime = trim((string) ($reservation->event_time ?? ''));
         return $eventTime !== '' ? $eventTime : $fallback;
+    }
+
+    private function addMinutesToTime(?string $time, int $minutes): ?string
+    {
+        $time = trim((string) $time);
+        if ($time === '') {
+            return null;
+        }
+
+        $timestamp = strtotime($time);
+        if ($timestamp === false) {
+            return null;
+        }
+
+        return date('H:i', $timestamp + ($minutes * 60));
     }
 
     private function buildAddonsRow(string $reservationId): string

@@ -393,17 +393,22 @@ async function submitReservation() {
     // Extraer fecha y hora del eventDateTime
     let eventDate = '';
     let startTime = '';
+    let entertainmentStartTime = '';
     if (customer?.eventDateTime) {
       const dateTime = new Date(customer.eventDateTime);
       eventDate = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
       startTime = dateTime.toTimeString().slice(0, 5); // HH:MM
+      // Default: entertainment starts 30 min after the event start time
+      // (customer can still adjust this later in the confirmation form).
+      const entertainmentDateTime = new Date(dateTime.getTime() + 30 * 60000);
+      entertainmentStartTime = entertainmentDateTime.toTimeString().slice(0, 5);
     }
 
     const information = {
       eventDate: eventDate,
       startTime: startTime,
       fullAddress: customer?.fullAddress || 'To be confirmed',
-      entertainmentStartTime: startTime,
+      entertainmentStartTime: entertainmentStartTime,
       birthdayChildName: null, // No se recolecta sin Step5
       childAge: null, // No se recolecta sin Step5
       ageRange: customer?.childrenRange || null,
