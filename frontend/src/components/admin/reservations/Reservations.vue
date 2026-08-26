@@ -37,8 +37,8 @@
           table-class-name="table table-hover"
           header-text-direction="center"
           body-text-direction="center"
-          :rows-per-page="10"
-          :rows-per-page-options="[5, 10, 25, 50]"
+          :rows-per-page="20"
+          :rows-per-page-options="[10, 20, 50, 100]"
           show-index
         >
           <template #item-status="{ status }">
