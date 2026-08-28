@@ -82,7 +82,7 @@
               <h6 class="segment-title">Event Details</h6>
               <div class="row g-3">
                 <DetailField label="Total Children" :value="childrenValue" class="col-md-3" />
-                <DetailField label="Age Range" :value="data.children_age_range" class="col-md-3" />
+                <DetailField label="Children & Age Range" :value="ageRangeValue" class="col-md-3" />
                 <DetailField label="Performers" :value="data.performers_count" class="col-md-3" />
                 <DetailField label="Duration (hours)" :value="data.duration_hours" class="col-md-3" />
                 <DetailField label="Birthday Child's Name" :value="data.birthday_child_name" class="col-md-4" />
@@ -344,6 +344,11 @@ const totalWithGratuity = computed(() => (
 const childrenValue = computed(() => {
   const count = data.value.children_count ?? 0;
   return `${count} children`;
+});
+
+const ageRangeValue = computed(() => {
+  const raw = (data.value.children_age_range ?? "").toString().trim();
+  return raw !== "" ? raw : "Pending (captured after payment)";
 });
 
 const happyBirthdayLabel = computed(() => {

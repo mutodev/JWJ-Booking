@@ -73,7 +73,7 @@
                     v-model="editData.children_age_range"
                     type="text"
                     class="form-control"
-                    placeholder="e.g., 11-30 kids"
+                    placeholder="e.g., 12 children, ages 4-8"
                   />
                 </div>
                 <div class="col-md-3">

@@ -241,6 +241,7 @@ function getCurrentStepProps() {
       props.active = activeStep.value === 2;
       props.service = form.value?.service;
       props.childrenRange = form.value?.customer?.childrenRange || null;
+      props.exactChildrenCount = form.value?.customer?.exactChildrenCount ?? null;
       break;
     case 3:
       // Step 3: Select Add-ons
@@ -411,7 +412,9 @@ async function submitReservation() {
       entertainmentStartTime: entertainmentStartTime,
       birthdayChildName: null, // No se recolecta sin Step5
       childAge: null, // No se recolecta sin Step5
-      ageRange: customer?.childrenRange || null,
+      // La edad de los niños se captura después del pago en ConfirmationUpdate.vue.
+      // Aquí NO se copia el rango de cantidad (childrenRange) como si fuera edad.
+      ageRange: null,
       songRequests: null, // No se recolecta sin Step5
       happyBirthdayRequest: 'no',
       instructions: null, // No se recolecta sin Step5

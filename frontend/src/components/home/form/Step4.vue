@@ -298,24 +298,21 @@ function getMaxKidsIncluded() {
   return parseInt(props.service.max_kids_included || 40);
 }
 
+// Número exacto de niños elegido por el cliente en el Step 1.
+// 0 si no hay dato (p. ej. el rango "31+ kids" va al formulario de inquiry).
+function selectedKidsCount() {
+  return parseInt(props.customer?.exactChildrenCount ?? 0) || 0;
+}
+
 // Calcular niños extra y su costo
 const extraChildrenTotal = computed(() => {
   if (!props.customer) return 0;
-
-  let selectedKids = 0;
-
-  if (props.customer.childrenRange === "11-30 kids") {
-    selectedKids = 20;
-  } else if (props.customer.childrenRange === "1-10 kids") {
-    selectedKids = 5;
-  }
-  // 31+ kids va al formulario de inquiry, no se calcula precio aquí
 
   // Límite de niños incluidos en el servicio
   const maxKidsIncluded = getMaxKidsIncluded();
 
   // Calcular niños extra solo después del límite
-  const extraKids = Math.max(0, selectedKids - maxKidsIncluded);
+  const extraKids = Math.max(0, selectedKidsCount() - maxKidsIncluded);
 
   // Calcular costo de niños extra
   const extraChildFee = parseFloat(props.service?.extra_child_fee || 0);
@@ -365,16 +362,7 @@ const subtotal = computed(() => {
 // Función para obtener la cantidad de niños extra
 function getExtraChildrenCount() {
   if (!props.customer) return 0;
-
-  let selectedKids = 0;
-
-  if (props.customer.childrenRange === "11-30 kids") {
-    selectedKids = 20;
-  } else if (props.customer.childrenRange === "1-10 kids") {
-    selectedKids = 5;
-  }
-
-  return Math.max(0, selectedKids - getMaxKidsIncluded());
+  return Math.max(0, selectedKidsCount() - getMaxKidsIncluded());
 }
 
 // Función para obtener el nombre de la zona

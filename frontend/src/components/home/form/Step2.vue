@@ -123,6 +123,10 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  exactChildrenCount: {
+    type: [Number, String],
+    default: null,
+  },
 });
 
 const emit = defineEmits(["setData"]);
@@ -131,9 +135,20 @@ const services = ref([]);
 const selectedService = ref(null);
 const defaultServiceImage = "/img/default.jpg";
 
-// Filter out 1-performer services when 11+ kids is selected
+// Filter out 1-performer services when more than 10 kids are attending.
+// Prefer the exact number when the customer provided it; otherwise fall back
+// to the selected range.
 const filteredServices = computed(() => {
-  if (props.childrenRange && props.childrenRange !== '1-10 kids') {
+  const exact = Number(props.exactChildrenCount);
+  const hasExact = props.exactChildrenCount !== null
+    && props.exactChildrenCount !== ''
+    && !Number.isNaN(exact);
+
+  const needsMultiPerformer = hasExact
+    ? exact > 10
+    : Boolean(props.childrenRange) && props.childrenRange !== '1-10 kids';
+
+  if (needsMultiPerformer) {
     return services.value.filter(s => s.performers_count > 1);
   }
   return services.value;
@@ -287,7 +302,7 @@ watch(
 
 // Clear selection if the selected service is no longer in the filtered list
 watch(
-  () => props.childrenRange,
+  () => [props.childrenRange, props.exactChildrenCount],
   () => {
     if (selectedService.value && !filteredServices.value.find(s => s.id === selectedService.value.id)) {
       selectedService.value = null;

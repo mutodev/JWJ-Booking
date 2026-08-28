@@ -111,6 +111,28 @@
             {{ errors.childrenRange }}
           </div>
 
+          <!-- Exact number of children (only for bounded ranges) -->
+          <div
+            v-if="form.childrenRange === '1-10 kids' || form.childrenRange === '11-30 kids'"
+            class="mt-3"
+          >
+            <label class="form-label mb-2">
+              Exact number of children <span class="text-danger">*</span>
+            </label>
+            <el-input-number
+              v-model="form.exactChildrenCount"
+              :min="childrenBounds.min"
+              :max="childrenBounds.max"
+              :step="1"
+              step-strictly
+              controls-position="right"
+              @change="validateField('exactChildrenCount')"
+            />
+            <div v-if="errors.exactChildrenCount" class="text-danger small mt-2">
+              {{ errors.exactChildrenCount }}
+            </div>
+          </div>
+
         </div>
 
         <!-- First name -->
@@ -291,7 +313,7 @@
 </template>
 
 <script setup>
-import { reactive, watch, getCurrentInstance, ref, onMounted } from "vue";
+import { reactive, watch, getCurrentInstance, ref, onMounted, computed } from "vue";
 import * as yup from "yup";
 import api from "@/services/axios";
 import Multiselect from "vue-multiselect";
@@ -305,6 +327,7 @@ const form = reactive({
   eventType: "",
   eventDateTime: "",
   childrenRange: "",
+  exactChildrenCount: "",
   fullAddress: "",
   areaId: "",
   zipcode: "",
@@ -316,10 +339,48 @@ const form = reactive({
 const errors = reactive({});
 const zipcodeData = ref(null);
 
+// Límites de niños por rango. El "31+ kids" se deriva al formulario de inquiry,
+// por eso no pide número exacto aquí.
+const RANGE_BOUNDS = {
+  "1-10 kids": { min: 1, max: 10 },
+  "11-30 kids": { min: 11, max: 30 },
+};
+
+function boundsForRange(range) {
+  return RANGE_BOUNDS[range] || null;
+}
+
+const childrenBounds = computed(
+  () => boundsForRange(form.childrenRange) || { min: 1, max: 999 }
+);
+
 const schema = yup.object({
   eventType: yup.string().required("Event type is required"),
   eventDateTime: yup.string().required("Date and time are required"),
   childrenRange: yup.string().required("Number of children is required"),
+  exactChildrenCount: yup
+    .number()
+    .transform((value, original) =>
+      original === "" || original === null ? undefined : value
+    )
+    .when("childrenRange", {
+      is: (range) => range === "1-10 kids" || range === "11-30 kids",
+      then: (rule) =>
+        rule
+          .typeError("Number of children is required")
+          .required("Number of children is required")
+          .integer("Must be a whole number")
+          .test(
+            "within-selected-range",
+            "Number of children must match the selected range",
+            function (value) {
+              const bounds = boundsForRange(this.parent.childrenRange);
+              if (!bounds || value === undefined || value === null) return true;
+              return value >= bounds.min && value <= bounds.max;
+            }
+          ),
+      otherwise: (rule) => rule.notRequired(),
+    }),
   fullAddress: yup.string().required("Full address is required"),
   areaId: yup.string().required("Metropolitan area is required"),
   zipcode: yup
@@ -358,6 +419,9 @@ function onChildrenRangeChange(value) {
   if (value === "31+ kids") {
     showCustomQuoteDialog.value = true;
   }
+  // Cambiar de rango invalida el número exacto capturado previamente.
+  form.exactChildrenCount = "";
+  errors.exactChildrenCount = "";
   emitData();
 }
 
@@ -375,7 +439,15 @@ function areAllFieldsFilled() {
     form.phone.trim() !== "" &&
     zipcodeData.value !== null;
 
-  return baseFieldsFilled;
+  // Si el rango exige número exacto, debe ser un entero dentro de los límites.
+  const bounds = boundsForRange(form.childrenRange);
+  const exactChildrenValid =
+    !bounds ||
+    (Number.isInteger(form.exactChildrenCount) &&
+      form.exactChildrenCount >= bounds.min &&
+      form.exactChildrenCount <= bounds.max);
+
+  return baseFieldsFilled && exactChildrenValid;
 }
 
 const getDataMetropolitan = async () => {

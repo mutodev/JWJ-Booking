@@ -436,16 +436,36 @@ class ReservationService
         // Validar campos numéricos - leer desde customer (nuevo formulario)
         $selectedKids = 0;
 
+        // Límites de niños por rango del formulario público. exactChildrenCount
+        // se valida SIEMPRE contra estos límites: este endpoint es público y sin
+        // auth, así que el clamp server-side es obligatorio.
+        $childrenRangeBounds = [
+            '1-10 kids'  => [1, 10],
+            '11-30 kids' => [11, 30],
+            '31+ kids'   => [31, 999],
+        ];
+        $childrenRangeMidpoint = [
+            '1-10 kids'  => 5,
+            '11-30 kids' => 20,
+            '31+ kids'   => 31,
+        ];
+
         // Nuevo formulario: childrenRange y exactChildrenCount en customer
         if (isset($customer['childrenRange'])) {
             $childrenRange = $customer['childrenRange'];
+            $bounds = $childrenRangeBounds[$childrenRange] ?? null;
 
-            if ($childrenRange === '31+ kids' && isset($customer['exactChildrenCount'])) {
+            if (isset($customer['exactChildrenCount']) && is_numeric($customer['exactChildrenCount'])) {
                 $selectedKids = intval($customer['exactChildrenCount']);
-            } elseif ($childrenRange === '11-30 kids') {
-                $selectedKids = 20; // Punto medio del rango
-            } elseif ($childrenRange === '1-10 kids') {
-                $selectedKids = 5; // Punto medio del rango
+                if ($bounds !== null) {
+                    // Clamp al rango elegido para que nunca se guarde un valor
+                    // fuera de lo que el cliente seleccionó en el formulario.
+                    $selectedKids = max($bounds[0], min($bounds[1], $selectedKids));
+                }
+            } elseif ($bounds !== null) {
+                // Fallback legacy: sin número exacto usamos el punto medio del rango.
+                $selectedKids = $childrenRangeMidpoint[$childrenRange] ?? $bounds[0];
+                log_message('warning', 'createFromForm: exactChildrenCount missing, falling back to range midpoint');
             }
         }
         // Formulario antiguo: kids con selectedKids o count
@@ -566,7 +586,6 @@ class ReservationService
                 'event_date' => $eventDate,
                 'event_time' => $information['startTime'] ?? null,
                 'children_count' => $selectedKids,
-                'children_age_range' => $customer['childrenRange'] ?? null,
                 'performers_count' => intval($service['performers_count'] ?? 1),
                 'duration_hours' => $totalDurationHours,
                 'price_type' => $this->determinePriceType($addons),

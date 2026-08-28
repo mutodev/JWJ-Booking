@@ -82,6 +82,7 @@
             v-model="extraChildren"
             min="0"
           />
+          <small class="text-muted">Additional children beyond the base package — each one is charged the extra-child fee.</small>
           <span v-if="errors.extraChildren" class="text-danger small">
             {{ errors.extraChildren }}
           </span>
