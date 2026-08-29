@@ -87,6 +87,43 @@ class ReservationDraftModel extends Model
     }
 
     /**
+     * Get abandoned drafts eligible for the one-time follow-up email (B4).
+     *
+     * Frozen definition of "abandoned" for the automated follow-up:
+     *   - completed = 0
+     *   - email present and not blank
+     *   - last_activity_at is 7 days old or more
+     *   - follow_up_sent_at IS NULL (a draft gets exactly one follow-up, ever)
+     *
+     * Ordered by last_activity_at ASC so the oldest carts are contacted first.
+     *
+     * NOTE: this is intentionally separate from getAbandoned() (used by the
+     * admin endpoint GET /api/reservation-drafts/abandoned), which keeps its
+     * hours-based window and does NOT filter follow_up_sent_at.
+     *
+     * @param int $daysOld Inactivity window in days. Cast to int; values below 1
+     *                     are normalised to the frozen default of 7.
+     * @return array<int,object>
+     */
+    public function getAbandonedForFollowUp(int $daysOld = 7): array
+    {
+        $daysOld = (int) $daysOld;
+        if ($daysOld < 1) {
+            $daysOld = 7;
+        }
+
+        $cutoff = date('Y-m-d H:i:s', strtotime("-{$daysOld} days"));
+
+        return $this->where('completed', 0)
+            ->where('email IS NOT NULL')
+            ->where('email !=', '')
+            ->where('last_activity_at <=', $cutoff)
+            ->where('follow_up_sent_at IS NULL')
+            ->orderBy('last_activity_at', 'ASC')
+            ->findAll();
+    }
+
+    /**
      * Get funnel analytics
      */
     public function getFunnelStats()

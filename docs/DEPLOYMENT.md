@@ -323,6 +323,19 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 echo "0 12 * * * /usr/bin/certbot renew --quiet" | sudo crontab -
 ```
 
+#### 7. Scheduled Tasks (Cron)
+
+Some transactional emails are driven by spark commands that must run on a
+schedule. Register them in the deploy user's crontab (`crontab -e`). The cron
+deployment is intentionally **not** automated from application code.
+
+```bash
+# Abandoned cart follow-up — once per day at 09:15 (B4).
+# Emails drafts inactive for 7+ days that were never contacted. Idempotent:
+# the 7-day window + follow_up_sent_at marker send at most one email per draft.
+15 9 * * * cd /var/www/jamwithjamie && /usr/bin/php spark carts:followup >> /var/www/jamwithjamie/writable/logs/cron.log 2>&1
+```
+
 ---
 
 ## 🔧 Server Configuration

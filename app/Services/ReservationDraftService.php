@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ReservationDraftModel;
-use App\Models\ReservationEmailHistoryModel;
 use App\Services\BrevoEmailService;
 use App\Services\EmailTemplateService;
 
@@ -11,9 +10,40 @@ class ReservationDraftService
 {
     protected ReservationDraftModel $draftModel;
 
+    /**
+     * Collaborators used by the follow-up flow. Kept as nullable properties and
+     * resolved through lazy getters so tests can substitute doubles via
+     * Reflection without touching the database or Brevo (same pattern as
+     * ReservationService::historyModel()).
+     */
+    protected ?EmailTemplateService $templateService = null;
+    protected ?BrevoEmailService $emailService = null;
+
     public function __construct()
     {
         $this->draftModel = new ReservationDraftModel();
+    }
+
+    /**
+     * Email template renderer (lazy, substitutable in tests).
+     */
+    protected function templateService(): EmailTemplateService
+    {
+        if ($this->templateService === null) {
+            $this->templateService = new EmailTemplateService();
+        }
+        return $this->templateService;
+    }
+
+    /**
+     * Transactional email sender (lazy, substitutable in tests).
+     */
+    protected function emailService(): BrevoEmailService
+    {
+        if ($this->emailService === null) {
+            $this->emailService = new BrevoEmailService();
+        }
+        return $this->emailService;
     }
 
     /**
@@ -179,7 +209,14 @@ class ReservationDraftService
     }
 
     /**
-     * Send follow-up email to an abandoned cart
+     * Send the follow-up email to a single abandoned cart (manual admin action).
+     *
+     * Public contract (relied on by ReservationDraftController::sendFollowUp):
+     *   - returns the refreshed draft object on success;
+     *   - returns false when the draft does not exist, is already completed,
+     *     has no email, or Brevo rejects the send;
+     *   - throws RuntimeException when the email was sent but the
+     *     follow_up_sent_at timestamp could not be persisted.
      *
      * @param string $id Draft ID
      * @return object|false
@@ -192,54 +229,139 @@ class ReservationDraftService
             return false;
         }
 
+        if (!$this->dispatchFollowUp($draft)) {
+            return false;
+        }
+
+        return $this->draftModel->find($draft->id);
+    }
+
+    /**
+     * Send the automated one-time follow-up to every abandoned cart (B4 cron).
+     *
+     * "Abandoned" is the frozen definition enforced by
+     * ReservationDraftModel::getAbandonedForFollowUp(): not completed, has an
+     * email, inactive for $daysOld+ days, never contacted before.
+     *
+     * Safety / anti-spam:
+     *   - follow_up_sent_at is written and then re-verified per draft; a draft
+     *     is only counted once the marker is confirmed persisted;
+     *   - a single failing draft is logged and skipped — it never aborts the run
+     *     (criterion 5);
+     *   - the batch is capped so a backlog cannot flood Brevo in one run.
+     *
+     * Idempotent: running it twice in a row sends 0 the second time.
+     *
+     * @param int $daysOld Inactivity window in days (cast to int; values < 1 are
+     *                     normalised to the frozen default of 7).
+     * @return int Number of drafts to which the email was sent AND for which
+     *             follow_up_sent_at was successfully marked.
+     */
+    public function sendAbandonedFollowUps(int $daysOld = 7): int
+    {
+        $daysOld = (int) $daysOld;
+        if ($daysOld < 1) {
+            $daysOld = 7;
+        }
+
+        $batchLimit = 200;
+
+        $drafts = $this->draftModel->getAbandonedForFollowUp($daysOld);
+
+        if (count($drafts) > $batchLimit) {
+            log_message(
+                'info',
+                'Abandoned cart follow-up: ' . count($drafts) . ' eligible drafts, processing '
+                . $batchLimit . ' this run; the rest will be picked up on the next run.'
+            );
+            $drafts = array_slice($drafts, 0, $batchLimit);
+        }
+
+        $sent = 0;
+
+        foreach ($drafts as $draft) {
+            // Defensive re-check: the model already filters these out.
+            if (empty($draft->email) || $draft->completed || !empty($draft->follow_up_sent_at)) {
+                continue;
+            }
+
+            try {
+                if ($this->dispatchFollowUp($draft)) {
+                    $sent++;
+                }
+            } catch (\Throwable $e) {
+                log_message(
+                    'error',
+                    "Abandoned cart follow-up failed for draft {$draft->id}: " . $e->getMessage()
+                );
+                // Keep going: one failure must not abort the batch (criterion 5).
+            }
+        }
+
+        return $sent;
+    }
+
+    /**
+     * Render, send and mark a single abandoned-cart follow-up.
+     *
+     * Shared body of the manual (sendFollowUpEmail) and batch
+     * (sendAbandonedFollowUps) paths. The caller is responsible for filtering
+     * the draft (not completed, has an email, not already contacted).
+     *
+     * @return bool true when Brevo accepted the send AND follow_up_sent_at was
+     *              persisted; false when Brevo rejected the send.
+     * @throws \RuntimeException when the email was sent but follow_up_sent_at
+     *              could not be saved (critical: the next run may re-send).
+     *
+     * F1 (B4) — dead-code removal: the previous version registered an
+     * "Abandoned Cart Follow-Up" row in reservation_email_history when
+     * $draft->reservation_id was set. That branch is unreachable in the real
+     * flow: completeDraft() always writes reservation_id together with
+     * completed = 1, and both entry points bail on $draft->completed before
+     * reaching here. The history registration was removed rather than
+     * replicated; re-introduce only when a genuine converted-draft follow-up
+     * case exists.
+     */
+    private function dispatchFollowUp(object $draft): bool
+    {
         $formData = is_string($draft->form_data)
             ? (json_decode($draft->form_data, true) ?? [])
             : (array) $draft->form_data;
 
         $customerName = $formData['full_name'] ?? $formData['name'] ?? 'there';
 
-        $templateService = new EmailTemplateService();
-        $emailService    = new BrevoEmailService();
-
-        $rendered = $templateService->render('abandoned_cart_followup', [
+        $rendered = $this->templateService()->render('abandoned_cart_followup', [
             'customer_name' => $customerName,
             'resume_url'    => base_url(),
         ]);
 
-        $emailResult = $emailService->sendEmail($draft->email, $rendered['subject'], $rendered['body']);
+        $emailResult = $this->emailService()->sendEmail(
+            $draft->email,
+            $rendered['subject'],
+            $rendered['body']
+        );
+
         if (!$emailResult) {
             return false;
         }
 
+        // Mark first, then verify — the marker is the only spam protection, so a
+        // silent persistence failure must be loud and must stop this draft from
+        // being counted as sent.
         $sentAt = date('Y-m-d H:i:s');
-        if (!$this->draftModel->update($draft->id, ['follow_up_sent_at' => $sentAt])) {
+        $this->draftModel->update($draft->id, ['follow_up_sent_at' => $sentAt]);
+
+        $fresh = $this->draftModel->find($draft->id);
+        if (!$fresh || empty($fresh->follow_up_sent_at)) {
+            log_message(
+                'critical',
+                "Abandoned cart follow-up was sent for draft {$draft->id} but follow_up_sent_at "
+                . 'could not be persisted; the next run may re-send.'
+            );
             throw new \RuntimeException('Follow-up email was sent, but the sent timestamp could not be saved.');
         }
 
-        // Timeline registration (B3): only when the draft is already linked to a
-        // reservation — reservation_email_history.reservation_id is a mandatory FK.
-        // Never let a history failure break the follow-up flow.
-        if (!empty($draft->reservation_id)) {
-            try {
-                (new ReservationEmailHistoryModel())->insert([
-                    'reservation_id'  => $draft->reservation_id,
-                    'template_id'     => null,
-                    'template_name'   => 'Abandoned Cart Follow-Up',
-                    'event_type'      => 'email',
-                    'sent_by'         => 'System',
-                    'recipient_email' => $draft->email,
-                    'cc_emails'       => null,
-                    'email_subject'   => $rendered['subject'] ?? '',
-                    'email_body'      => ($rendered['body'] ?? '') !== '' ? $rendered['body'] : '—',
-                    'status'          => 'Sent',
-                    'sent_at'         => $sentAt,
-                ]);
-            } catch (\Throwable $e) {
-                log_message('error', 'Failed to record abandoned cart follow-up history: ' . $e->getMessage());
-            }
-        }
-
-        return $this->draftModel->find($draft->id);
+        return true;
     }
 
     /**
