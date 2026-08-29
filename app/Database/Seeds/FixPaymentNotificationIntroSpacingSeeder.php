@@ -2,10 +2,13 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 class FixPaymentNotificationIntroSpacingSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $template = $this->db->table('email_templates')
@@ -25,9 +28,7 @@ class FixPaymentNotificationIntroSpacingSeeder extends Seeder
             . 'The payment link and temporary reservation will be active for the next 3 days. After this period, the link will expire, and your reservation will be automatically cancelled.<br><br>'
             . 'We do our very best to accommodate requests for changes to location or time; however, we cannot guarantee modifications once the booking is finalized.';
 
-        $this->db->table('email_templates')
-            ->where('slug', 'payment_notification')
-            ->update(['content' => json_encode($content)]);
+        $this->safeUpdateTemplate('payment_notification', ['content' => json_encode($content)]);
 
         echo "payment_notification intro spacing fixed.\n";
     }

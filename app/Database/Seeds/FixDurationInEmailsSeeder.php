@@ -2,10 +2,13 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 class FixDurationInEmailsSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $db = \Config\Database::connect();
@@ -44,7 +47,7 @@ class FixDurationInEmailsSeeder extends Seeder
             $inject  = "{{total_duration_row}}\n{{promo_code_row}}\n{{discount_row}}\n";
             $newBody = substr($body, 0, $trPos) . $inject . substr($body, $trPos);
 
-            $db->table('email_templates')->where('slug', $slug)->update(['body' => $newBody]);
+            $this->safeUpdateTemplate($slug, ['body' => $newBody]);
             echo "Updated '{$slug}' — duration row injected.\n";
         }
     }

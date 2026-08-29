@@ -2,6 +2,7 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 /**
@@ -11,6 +12,8 @@ use CodeIgniter\Database\Seeder;
  */
 class PatchEmailTemplatesSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $db = \Config\Database::connect();
@@ -27,9 +30,7 @@ class PatchEmailTemplatesSeeder extends Seeder
             $correctSubject = 'Payment Information for Your Event Reservation';
 
             if ($currentSubject !== $correctSubject) {
-                $db->table('email_templates')
-                    ->where('slug', 'payment_notification')
-                    ->update(['subject' => $correctSubject]);
+                $this->safeUpdateTemplate('payment_notification', ['subject' => $correctSubject]);
                 echo "[OK]   payment_notification subject fixed.\n";
             } else {
                 echo "[SKIP] payment_notification subject already correct.\n";
@@ -51,9 +52,7 @@ class PatchEmailTemplatesSeeder extends Seeder
 
             if (($content['intro'] ?? '') !== $correctIntro) {
                 $content['intro'] = $correctIntro;
-                $db->table('email_templates')
-                    ->where('slug', 'payment_notification')
-                    ->update(['content' => json_encode($content)]);
+                $this->safeUpdateTemplate('payment_notification', ['content' => json_encode($content)]);
                 echo "[OK]   payment_notification intro spacing fixed.\n";
             } else {
                 echo "[SKIP] payment_notification intro already correct.\n";
@@ -67,13 +66,14 @@ class PatchEmailTemplatesSeeder extends Seeder
         $logoSizes = [140, 160, 220];
         $target    = 300;
         $changed   = false;
+        $guard     = $this->customizationGuardSql(true);
 
         foreach ($logoSizes as $size) {
             $old = "width=\"{$size}\" style=\"display: inline-block; max-width: {$size}px; height: auto;\"";
             $new = "width=\"{$target}\" style=\"display: inline-block; max-width: {$target}px; height: auto;\"";
 
             $db->query(
-                "UPDATE email_templates SET body = REPLACE(body, ?, ?) WHERE body LIKE ?",
+                "UPDATE email_templates SET body = REPLACE(body, ?, ?) WHERE body LIKE ?{$guard}",
                 [$old, $new, "%width=\"{$size}\"%"]
             );
 
@@ -129,7 +129,7 @@ class PatchEmailTemplatesSeeder extends Seeder
             $inject  = "{{total_duration_row}}\n{{promo_code_row}}\n{{discount_row}}\n";
             $newBody = substr($body, 0, $trPos) . $inject . substr($body, $trPos);
 
-            $db->table('email_templates')->where('slug', $slug)->update(['body' => $newBody]);
+            $this->safeUpdateTemplate($slug, ['body' => $newBody]);
             echo "[OK]   '{$slug}' — duration/promo/discount rows injected.\n";
         }
 

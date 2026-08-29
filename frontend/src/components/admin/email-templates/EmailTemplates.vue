@@ -36,6 +36,17 @@
           <span v-else class="badge bg-danger">Inactive</span>
         </template>
 
+        <template #item-is_customized="{ is_customized, customized_by, customized_at }">
+          <span
+            v-if="is_customized"
+            class="badge bg-info text-dark"
+            :title="customizedTitle(customized_by, customized_at)"
+          >
+            <i class="bi bi-person-check me-1"></i>Customized
+          </span>
+          <span v-else class="text-muted">—</span>
+        </template>
+
         <template #item-actions="item">
           <div class="d-flex gap-1 justify-content-center">
             <button v-if="canUpdate" class="btn btn-sm btn-warning" @click="editTemplate(item)">
@@ -93,12 +104,19 @@ const { canCreate, canUpdate } = useMenuPermissions("/admin/config/email-templat
 
 const headers = computed(() => {
   return tableHelpers.generateTableHeaders(data.value, {
-    excludeColumns: ["available_variables", "body"],
+    excludeColumns: [
+      "available_variables",
+      "body",
+      "content",
+      "customized_at",
+      "customized_by",
+    ],
     customLabels: {
       name: "Template Name",
       slug: "Slug",
       subject: "Subject",
       is_active: "Status",
+      is_customized: "Customized",
     },
   });
 });
@@ -114,6 +132,13 @@ const getData = async () => {
   } catch (error) {
     console.error("Error fetching email templates:", error);
   }
+};
+
+const customizedTitle = (by, at) => {
+  const parts = [];
+  if (by) parts.push(`Edited by ${by}`);
+  if (at) parts.push(`on ${new Date(at).toLocaleString()}`);
+  return parts.join(" ") || "Edited from the admin panel";
 };
 
 const editTemplate = (item) => {

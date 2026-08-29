@@ -2,11 +2,14 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 use CodeIgniter\I18n\Time;
 
 class EmailTemplateSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $now = Time::now()->toDateTimeString();
@@ -187,9 +190,7 @@ class EmailTemplateSeeder extends Seeder
 
             if ($existing) {
                 unset($template['id'], $template['created_at']);
-                $this->db->table('email_templates')
-                    ->where('slug', $existing->slug)
-                    ->update($template);
+                $this->safeUpdateTemplate($existing->slug, $template);
             } else {
                 $this->db->table('email_templates')->insert($template);
             }

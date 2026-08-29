@@ -2,6 +2,7 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 /**
@@ -17,8 +18,15 @@ use CodeIgniter\Database\Seeder;
  */
 class AddAddonsRowToReservationConfirmationSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
+        if ($this->templateIsCustomized('reservation_confirmation')) {
+            echo "reservation_confirmation was customized in the admin panel — skipping.\n";
+            return;
+        }
+
         $row = $this->db->table('email_templates')
             ->select('id, body')
             ->where('slug', 'reservation_confirmation')

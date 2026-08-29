@@ -2,10 +2,13 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 class AbandonedCartFollowUpEmailSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $content = json_encode([
@@ -94,15 +97,13 @@ class AbandonedCartFollowUpEmailSeeder extends Seeder
             ->getRow();
 
         if ($existing) {
-            $this->db->table('email_templates')
-                ->where('slug', 'abandoned_cart_followup')
-                ->update([
-                    'name'      => $template['name'],
-                    'subject'   => $template['subject'],
-                    'body'      => $template['body'],
-                    'content'   => $template['content'],
-                    'is_active' => 1,
-                ]);
+            $this->safeUpdateTemplate('abandoned_cart_followup', [
+                'name'      => $template['name'],
+                'subject'   => $template['subject'],
+                'body'      => $template['body'],
+                'content'   => $template['content'],
+                'is_active' => 1,
+            ]);
             echo "abandoned_cart_followup template updated.\n";
         } else {
             $this->db->table('email_templates')->insert(array_merge($template, [

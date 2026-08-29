@@ -21,6 +21,9 @@ class EmailTemplateModel extends Model
         'available_variables',
         'content',
         'is_active',
+        'is_customized',
+        'customized_at',
+        'customized_by',
     ];
 
     protected $useTimestamps = true;

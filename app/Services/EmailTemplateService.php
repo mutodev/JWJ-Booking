@@ -36,12 +36,101 @@ class EmailTemplateService
             throw new HTTPException('Email template not found', Response::HTTP_NOT_FOUND);
         }
 
-        $updated = $this->repository->update($id, $data);
+        $this->validateSubject($data);
+        $this->validateContent($data);
+        $data = $this->normalizeIsActive($data);
+
+        // Server-generated audit fields. Merged by the repository AFTER its
+        // whitelist filter, so nothing in $data can forge or clear them.
+        $systemFields = [
+            'is_customized' => 1,
+            'customized_at' => date('Y-m-d H:i:s'),
+            'customized_by' => $this->resolveCustomizedBy(),
+        ];
+
+        $updated = $this->repository->update($id, $data, $systemFields);
         if (!$updated) {
             throw new HTTPException('Failed to update email template', Response::HTTP_BAD_REQUEST);
         }
 
         return true;
+    }
+
+    /**
+     * Subject, when present, must be a non-empty string of at most 255
+     * characters (multibyte-aware).
+     */
+    private function validateSubject(array $data): void
+    {
+        if (!array_key_exists('subject', $data)) {
+            return;
+        }
+
+        $subject = $data['subject'];
+        if (!is_string($subject) || trim($subject) === '' || mb_strlen($subject) > 255) {
+            throw new HTTPException(
+                'Subject must be a non-empty string of at most 255 characters.',
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+    }
+
+    /**
+     * Content, when present, must be a non-empty string holding valid JSON.
+     */
+    private function validateContent(array $data): void
+    {
+        if (!array_key_exists('content', $data)) {
+            return;
+        }
+
+        $content = $data['content'];
+        if (!is_string($content) || trim($content) === '') {
+            throw new HTTPException(
+                'Content must be a non-empty JSON string.',
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        json_decode($content);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new HTTPException(
+                'Content must be valid JSON.',
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+    }
+
+    /**
+     * Normalize is_active, when present, to an integer 0/1.
+     * Truthy: true, 1, "1", "on". Falsy: false, 0, "0", "".
+     */
+    private function normalizeIsActive(array $data): array
+    {
+        if (array_key_exists('is_active', $data)) {
+            $data['is_active'] = filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+        }
+
+        return $data;
+    }
+
+    /**
+     * Human identity for the customized_by audit column: authenticated user's
+     * full name, else their email, else "System".
+     */
+    private function resolveCustomizedBy(): string
+    {
+        $user = service('auth')->user();
+        if (!$user) {
+            return 'System';
+        }
+
+        $name = trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''));
+        if ($name !== '') {
+            return $name;
+        }
+
+        return $user->email ?? 'System';
     }
 
     /**

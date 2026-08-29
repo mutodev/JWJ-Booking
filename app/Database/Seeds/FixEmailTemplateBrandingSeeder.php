@@ -2,15 +2,22 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 class FixEmailTemplateBrandingSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $templates = $this->db->table('email_templates')->get()->getResult();
 
         foreach ($templates as $template) {
+            if ($this->templateIsCustomized($template->slug)) {
+                continue;
+            }
+
             $updates = [];
 
             if (!empty($template->subject) && str_contains($template->subject, 'JamWithJamie')) {

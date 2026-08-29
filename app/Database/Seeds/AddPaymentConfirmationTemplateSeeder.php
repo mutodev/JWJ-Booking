@@ -2,11 +2,17 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 use CodeIgniter\I18n\Time;
 
 class AddPaymentConfirmationTemplateSeeder extends Seeder
 {
+    // Insert-only seeder: it never updates an existing row, so there is
+    // nothing for the guard to protect. The trait is kept for consistency
+    // with the rest of the email-template seeder family.
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $existing = $this->db->table('email_templates')

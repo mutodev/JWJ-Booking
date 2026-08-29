@@ -7,7 +7,7 @@ use CodeIgniter\Entity\Entity;
 class EmailTemplate extends Entity
 {
     protected $datamap = [];
-    protected $dates   = ['created_at', 'updated_at'];
+    protected $dates   = ['created_at', 'updated_at', 'customized_at'];
     protected $casts   = [
         'id'                  => 'string',
         'slug'                => 'string',
@@ -17,5 +17,7 @@ class EmailTemplate extends Entity
         'available_variables' => 'string',
         'content'             => 'string',
         'is_active'           => 'boolean',
+        'is_customized'       => 'boolean',
+        'customized_by'       => '?string',
     ];
 }

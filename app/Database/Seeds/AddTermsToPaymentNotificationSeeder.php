@@ -2,10 +2,13 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 class AddTermsToPaymentNotificationSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $termsHtml = '
@@ -67,9 +70,7 @@ class AddTermsToPaymentNotificationSeeder extends Seeder
 
         $newBody = str_replace('<!-- Footer -->', $termsHtml, $template->body);
 
-        $this->db->table('email_templates')
-            ->where('slug', 'payment_notification')
-            ->update(['body' => $newBody]);
+        $this->safeUpdateTemplate('payment_notification', ['body' => $newBody]);
 
         echo "Terms & Conditions added to payment_notification email template.\n";
     }

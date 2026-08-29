@@ -2,10 +2,13 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 class WeekReminderEmailSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $content = json_encode([
@@ -105,15 +108,13 @@ class WeekReminderEmailSeeder extends Seeder
             ->getRow();
 
         if ($existing) {
-            $this->db->table('email_templates')
-                ->where('slug', 'week_reminder')
-                ->update([
-                    'name'      => $template['name'],
-                    'subject'   => $template['subject'],
-                    'body'      => $template['body'],
-                    'content'   => $template['content'],
-                    'is_active' => 1,
-                ]);
+            $this->safeUpdateTemplate('week_reminder', [
+                'name'      => $template['name'],
+                'subject'   => $template['subject'],
+                'body'      => $template['body'],
+                'content'   => $template['content'],
+                'is_active' => 1,
+            ]);
             echo "week_reminder template updated.\n";
         } else {
             $this->db->table('email_templates')->insert(array_merge($template, [

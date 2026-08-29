@@ -2,6 +2,7 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 /**
@@ -11,6 +12,8 @@ use CodeIgniter\Database\Seeder;
  */
 class FixEmailPromoDiscountSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $this->fixPaymentNotification();
@@ -53,9 +56,7 @@ class FixEmailPromoDiscountSeeder extends Seeder
         }
 
         if (!empty($updates)) {
-            $this->db->table('email_templates')
-                ->where('slug', 'payment_notification')
-                ->update($updates);
+            $this->safeUpdateTemplate('payment_notification', $updates);
         }
     }
 
@@ -86,9 +87,7 @@ class FixEmailPromoDiscountSeeder extends Seeder
             $body
         );
 
-        $this->db->table('email_templates')
-            ->where('slug', 'reservation_confirmation')
-            ->update(['body' => $body]);
+        $this->safeUpdateTemplate('reservation_confirmation', ['body' => $body]);
 
         echo "reservation_confirmation promo rows added.\n";
     }
@@ -120,9 +119,7 @@ class FixEmailPromoDiscountSeeder extends Seeder
             $body
         );
 
-        $this->db->table('email_templates')
-            ->where('slug', 'payment_confirmation')
-            ->update(['body' => $body]);
+        $this->safeUpdateTemplate('payment_confirmation', ['body' => $body]);
 
         echo "payment_confirmation promo rows added.\n";
     }

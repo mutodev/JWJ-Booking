@@ -18,6 +18,9 @@
             <p class="text-muted small mb-0 mt-1">
               Edit the text of this email. The design and layout are preserved automatically.
             </p>
+            <p v-if="lastEditedLabel" class="small mb-0 mt-1 text-info">
+              <i class="bi bi-person-check me-1"></i>{{ lastEditedLabel }}
+            </p>
           </div>
           <button type="button" class="btn-close" @click="closeModal"></button>
         </div>
@@ -535,6 +538,25 @@ const successMsg        = ref("");
 const errorMsg          = ref("");
 
 // ── Computed ───────────────────────────────────────────────────────────────
+// Normalizes a datetime that may arrive as an ISO string or as a serialized
+// CodeIgniter Time object ({ date: "YYYY-MM-DD HH:MM:SS.u", ... }).
+const normalizeDate = (value) => {
+  if (!value) return null;
+  const raw = typeof value === "object" ? value.date || value.datetime || null : value;
+  if (!raw) return null;
+  const parsed = new Date(String(raw).replace(" ", "T"));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const lastEditedLabel = computed(() => {
+  const when = normalizeDate(templateData.value?.customized_at);
+  if (!when) return "";
+  const who = templateData.value?.customized_by;
+  return who
+    ? `Last edited by ${who} on ${when.toLocaleString()}`
+    : `Last edited on ${when.toLocaleString()}`;
+});
+
 const contentSchema = computed(() => {
   const slug = templateData.value?.slug;
   return getContentSchema(slug, content.value, body.value);

@@ -2,6 +2,7 @@
 
 namespace App\Database\Seeds;
 
+use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 /**
@@ -11,6 +12,8 @@ use CodeIgniter\Database\Seeder;
  */
 class FixEmailTemplateBodiesSeeder extends Seeder
 {
+    use EmailTemplateSeedGuard;
+
     public function run()
     {
         $this->fixPaymentNotification();
@@ -169,9 +172,7 @@ class FixEmailTemplateBodiesSeeder extends Seeder
 </body>
 </html>';
 
-        $this->db->table('email_templates')
-            ->where('slug', 'payment_notification')
-            ->update(['body' => $body]);
+        $this->safeUpdateTemplate('payment_notification', ['body' => $body]);
 
         echo "payment_notification body updated.\n";
     }
@@ -292,9 +293,7 @@ class FixEmailTemplateBodiesSeeder extends Seeder
 </body>
 </html>';
 
-        $this->db->table('email_templates')
-            ->where('slug', 'reservation_confirmation')
-            ->update(['body' => $body]);
+        $this->safeUpdateTemplate('reservation_confirmation', ['body' => $body]);
 
         echo "reservation_confirmation body updated.\n";
     }
@@ -398,9 +397,7 @@ class FixEmailTemplateBodiesSeeder extends Seeder
             ->getRow();
 
         if ($existing) {
-            $this->db->table('email_templates')
-                ->where('slug', 'payment_confirmation')
-                ->update(['body' => $body]);
+            $this->safeUpdateTemplate('payment_confirmation', ['body' => $body]);
             echo "payment_confirmation body updated.\n";
         } else {
             $now = date('Y-m-d H:i:s');
