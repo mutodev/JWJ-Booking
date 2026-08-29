@@ -1333,31 +1333,77 @@ class ReservationService
      */
     private function recordPaymentReceivedEvent(object $reservation, string $paymentIntentId): void
     {
-        $gratuity  = (float) ($reservation->gratuity_amount ?? 0);
-        $amountDue = (float) ($reservation->total_amount ?? 0);
-        $totalPaid = $amountDue + $gratuity;
+        // F2 (B1 hardening): el cuerpo completo va dentro de try/catch. Antes solo
+        // el insert estaba protegido; los casts / number_format / esc / concat
+        // podían lanzar y romper el camino de pago. Nada aquí debe propagar.
+        try {
+            $gratuity  = (float) ($reservation->gratuity_amount ?? 0);
+            $amountDue = (float) ($reservation->total_amount ?? 0);
+            $totalPaid = $amountDue + $gratuity;
 
-        $summary = '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #1F2937;">'
-            . '<p style="margin: 0 0 8px;"><strong>Payment received via Stripe.</strong></p>'
-            . '<p style="margin: 0 0 4px;">Total paid: $' . esc(number_format($totalPaid, 2)) . '</p>'
-            . '<p style="margin: 0 0 4px;">Gratuity / tip: $' . esc(number_format($gratuity, 2)) . '</p>'
-            . '<p style="margin: 0 0 4px;">Service: ' . esc($reservation->service_name ?? 'N/A') . '</p>'
-            . '<p style="margin: 0;">Payment intent: ' . esc($paymentIntentId !== '' ? $paymentIntentId : 'N/A') . '</p>'
+            $summary = '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #1F2937;">'
+                . '<p style="margin: 0 0 8px;"><strong>Payment received via Stripe.</strong></p>'
+                . '<p style="margin: 0 0 4px;">Total paid: $' . esc(number_format($totalPaid, 2)) . '</p>'
+                . '<p style="margin: 0 0 4px;">Gratuity / tip: $' . esc(number_format($gratuity, 2)) . '</p>'
+                . '<p style="margin: 0 0 4px;">Service: ' . esc($reservation->service_name ?? 'N/A') . '</p>'
+                . '<p style="margin: 0;">Payment intent: ' . esc($paymentIntentId !== '' ? $paymentIntentId : 'N/A') . '</p>'
+                . '</div>';
+
+            $this->recordEmailHistory([
+                'reservation_id'  => (string) $reservation->id,
+                'template_id'     => null,
+                'template_name'   => 'Payment Received',
+                'event_type'      => 'payment',
+                'sent_by'         => 'System',
+                'recipient_email' => (string) ($reservation->email ?? ''),
+                'cc_emails'       => null,
+                'email_subject'   => 'Payment received',
+                'email_body'      => $summary,
+                'status'          => 'Sent',
+                'sent_at'         => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to record payment received event: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Motivo de fallo seguro para persistir y renderizar en el admin.
+     *
+     * Seguridad (B1): el getMessage() de una excepción de Brevo puede incluir
+     * fragmentos de la API key o de headers. Se guarda SOLO la clase de la
+     * excepción y el mensaje truncado a 255 caracteres. El escape con esc() lo
+     * aplica buildEmailFailureBody() al construir el HTML.
+     */
+    private function sanitizeThrowableReason(\Throwable $e): string
+    {
+        $message = trim($e->getMessage());
+        if ($message !== '') {
+            $message = mb_substr($message, 0, 255);
+        }
+
+        $reason = get_class($e);
+        if ($message !== '') {
+            $reason .= ': ' . $message;
+        }
+
+        return $reason;
+    }
+
+    /**
+     * Antepone al cuerpo renderizado del email un bloque HTML con el motivo del
+     * fallo. Cada valor dinámico se escapa con esc() porque este body se
+     * renderiza dentro del iframe del historial en el admin (XSS almacenado).
+     */
+    private function buildEmailFailureBody(string $reason, string $originalBody): string
+    {
+        $block = '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #991B1B; '
+            . 'background-color: #FEE2E2; border-left: 4px solid #DC2626; padding: 12px 16px; margin-bottom: 16px;">'
+            . '<p style="margin: 0 0 4px; font-weight: 700;">Payment confirmation email failed to send.</p>'
+            . '<p style="margin: 0;">Reason: ' . esc($reason) . '</p>'
             . '</div>';
 
-        $this->recordEmailHistory([
-            'reservation_id'  => (string) $reservation->id,
-            'template_id'     => null,
-            'template_name'   => 'Payment Received',
-            'event_type'      => 'payment',
-            'sent_by'         => 'System',
-            'recipient_email' => (string) ($reservation->email ?? ''),
-            'cc_emails'       => null,
-            'email_subject'   => 'Payment received',
-            'email_body'      => $summary,
-            'status'          => 'Sent',
-            'sent_at'         => date('Y-m-d H:i:s'),
-        ]);
+        return $originalBody !== '' ? $block . $originalBody : $block;
     }
 
     /**
@@ -1708,63 +1754,142 @@ class ReservationService
     }
 
     /**
-     * Envía email de confirmación al cliente cuando se crea una reserva desde el Home
+     * Envía al cliente el email "Payment Confirmed" cuando Stripe confirma el pago.
      *
-     * @param object $reservation Reserva creada (con JOINs: full_name, email, service_name)
+     * Instrumentación (B1): cada intento queda registrado en
+     * reservation_email_history como fila event_type = 'email',
+     * template_name = 'Payment Received', sent_by = 'System', con
+     * status = 'Sent' | 'Failed'. Es una fila DISTINTA de la que inserta
+     * recordPaymentReceivedEvent() (event_type = 'payment'): una documenta el
+     * evento de cobro y esta documenta el envío del correo de confirmación.
+     *
+     * Este método NUNCA propaga excepciones (criterio 6, innegociable): se
+     * invoca desde handlePaymentCompleted(), en el camino del webhook de Stripe
+     * (ReservationController::stripeWebhook) y de verifyPayment(). Si lanzara,
+     * el webhook devolvería HTTP 500 y Stripe reintentaría el evento de pago.
+     * El resultado de handlePaymentCompleted() (reserva marcada como pagada) no
+     * depende en absoluto de lo que pase aquí.
+     *
+     * --- Acciones EXTERNAS de infraestructura (FUERA del alcance de este código) ---
+     * Si un cliente reporta que no recibió este email, además de mirar el
+     * historial en el admin hay que, por fuera del flujo de código:
+     *  - Coordinar con Cristian la configuración de infra (Stripe / Brevo / VPS).
+     *  - Stripe dashboard -> Developers -> Webhooks: verificar que el endpoint
+     *    POST /api/stripe/webhook está registrado y sin intentos fallidos.
+     *  - Revisar writable/logs/ del VPS por "Failed to send payment confirmation email".
+     *  - Revisar el log transaccional de Brevo (bounce / spam / nunca enviado) y
+     *    la validación del sender.
+     *  - Verificar brevo.apiKey y stripe.webhookSecret en el .env del VPS.
+     * Cola / reintento automático de emails fallidos: diferido, no entra aquí.
+     *
+     * @param object $reservation Reserva pagada (con JOINs: full_name, email, service_name)
      * @return void
      */
     public function sendPaymentConfirmationEmail($reservation): void
     {
-        if (empty($reservation->email)) {
+        $reservationId = (string) ($reservation->id ?? '');
+        $recipient     = (string) ($reservation->email ?? '');
+
+        // Criterio 3: email del cliente vacío -> fila Failed explícita en vez de
+        // salir en silencio.
+        if ($recipient === '') {
+            log_message('error', 'Failed to send payment confirmation email: customer email is empty for reservation ' . $reservationId);
+            $this->recordSystemEmail(
+                $reservationId,
+                'Payment Received',
+                '',
+                $this->paymentConfirmationSubject(''),
+                $this->buildEmailFailureBody('Customer email is empty', ''),
+                'Failed'
+            );
             return;
         }
 
-        $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
-        $eventTime = $this->getEmailEventTime($reservation, 'To be confirmed');
-
-        $totalDurationLabel = $this->formatDurationLabel($reservation->duration_hours ?? 0);
-        $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
-
-        $promoBlockPc    = '';
-        $discountBlockPc = '';
-        if (!empty($reservation->promo_code)) {
-            $promoBlockPc    = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Promo Code</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><span style="background-color: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 13px;">' . esc($reservation->promo_code) . '</span></td></tr>';
-            $discountBlockPc = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
-        }
-
-        $gratuityAmount = (float) ($reservation->gratuity_amount ?? 0);
-        $gratuityRow    = $gratuityAmount > 0
-            ? '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Gratuity / Tip</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">$' . number_format($gratuityAmount, 2) . '</td></tr>'
-            : '';
-        $totalPaid = number_format((float) $reservation->total_amount + $gratuityAmount, 2);
-
-        $templateVars = [
-            'customer_name'      => strtok(trim($reservation->full_name ?? ''), ' '),
-            'reservation_id'     => $reservation->id,
-            'service_name'       => $reservation->service_name ?? '',
-            'event_date'         => $eventDate,
-            'event_time'         => $eventTime,
-            'event_address'      => $reservation->event_address ?? 'To be confirmed',
-            'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
-            'total_duration_row' => $totalDurationRow,
-            'duration_hours'     => $totalDurationLabel,
-            'total_duration'     => $totalDurationLabel,
-            'total_duration_label' => $totalDurationLabel,
-            'promo_code_row'     => $promoBlockPc,
-            'discount_row'       => $discountBlockPc,
-            'gratuity_row'       => $gratuityRow,
-            'total_amount'       => number_format($reservation->total_amount, 2),
-            'total_paid'         => $totalPaid,
-            '_reservation'       => $reservation,
-        ];
-
-        $rendered = $this->emailTemplateService->render('payment_confirmation', $templateVars);
+        // Todo el cuerpo va dentro de try/catch (\Throwable): el render, los
+        // number_format sobre montos posiblemente nulos, o el envío pueden
+        // lanzar, y nada de eso debe propagar (criterio 6).
+        $rendered = ['subject' => '', 'body' => ''];
 
         try {
-            $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
+            $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+            $eventTime = $this->getEmailEventTime($reservation, 'To be confirmed');
+
+            $totalDurationLabel = $this->formatDurationLabel($reservation->duration_hours ?? 0);
+            $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
+
+            $promoBlockPc    = '';
+            $discountBlockPc = '';
+            if (!empty($reservation->promo_code)) {
+                $promoBlockPc    = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Promo Code</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;"><span style="background-color: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 13px;">' . esc($reservation->promo_code) . '</span></td></tr>';
+                $discountBlockPc = '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Discount</td><td style="padding: 12px 16px; font-size: 14px; font-weight: 700; color: #059669; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">-$' . number_format((float)($reservation->discount_amount ?? 0), 2) . '</td></tr>';
+            }
+
+            $gratuityAmount = (float) ($reservation->gratuity_amount ?? 0);
+            $gratuityRow    = $gratuityAmount > 0
+                ? '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Gratuity / Tip</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">$' . number_format($gratuityAmount, 2) . '</td></tr>'
+                : '';
+            $totalPaid = number_format((float) ($reservation->total_amount ?? 0) + $gratuityAmount, 2);
+
+            $templateVars = [
+                'customer_name'      => strtok(trim($reservation->full_name ?? ''), ' '),
+                'reservation_id'     => $reservation->id,
+                'service_name'       => $reservation->service_name ?? '',
+                'event_date'         => $eventDate,
+                'event_time'         => $eventTime,
+                'event_address'      => $reservation->event_address ?? 'To be confirmed',
+                'children_count'     => $reservation->children_age_range ?: ($reservation->children_count ?? ''),
+                'total_duration_row' => $totalDurationRow,
+                'duration_hours'     => $totalDurationLabel,
+                'total_duration'     => $totalDurationLabel,
+                'total_duration_label' => $totalDurationLabel,
+                'promo_code_row'     => $promoBlockPc,
+                'discount_row'       => $discountBlockPc,
+                'gratuity_row'       => $gratuityRow,
+                'total_amount'       => number_format((float) ($reservation->total_amount ?? 0), 2),
+                'total_paid'         => $totalPaid,
+                '_reservation'       => $reservation,
+            ];
+
+            $rendered = $this->emailTemplateService->render('payment_confirmation', $templateVars);
+
+            $this->emailService->sendEmail($recipient, $rendered['subject'], $rendered['body']);
+
+            // Criterio 1: camino feliz -> fila del EMAIL de confirmación.
+            $this->recordSystemEmail(
+                $reservationId,
+                'Payment Received',
+                $recipient,
+                $this->paymentConfirmationSubject($rendered['subject'] ?? ''),
+                (string) ($rendered['body'] ?? ''),
+                'Sent'
+            );
         } catch (\Throwable $e) {
+            // Criterio 4: se conserva el log de error existente.
             log_message('error', 'Failed to send payment confirmation email: ' . $e->getMessage());
+
+            // Criterio 2: misma fila con status Failed, anteponiendo al body un
+            // bloque con el motivo (clase + mensaje truncado a 255, escapado).
+            $this->recordSystemEmail(
+                $reservationId,
+                'Payment Received',
+                $recipient,
+                $this->paymentConfirmationSubject($rendered['subject'] ?? ''),
+                $this->buildEmailFailureBody($this->sanitizeThrowableReason($e), (string) ($rendered['body'] ?? '')),
+                'Failed'
+            );
         }
+    }
+
+    /**
+     * Subject de la fila de historial del email de confirmación de pago. Deja
+     * claro que la fila representa el CORREO (no el evento de cobro). Usa el
+     * subject renderizado si existe; si no (fallo antes del render), un texto fijo.
+     */
+    private function paymentConfirmationSubject(string $renderedSubject): string
+    {
+        $subject = trim($renderedSubject);
+
+        return $subject !== '' ? $subject : 'Payment confirmation email';
     }
 
     public function sendConfirmationEmail($reservation): void

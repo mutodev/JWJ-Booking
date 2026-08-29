@@ -427,15 +427,27 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
 
     public function testHandlePaymentCompletedInsertsPaymentEventExactlyOnce(): void
     {
-        $this->repo->reservation = $this->reservation(['email' => '']); // salta el email de confirmacion
+        // B1 criterio 3 cambio el contrato de sendPaymentConfirmationEmail():
+        // un email de cliente vacio ya NO sale en silencio, ahora registra
+        // legitimamente una fila 'Payment Received' con event_type='email' y
+        // status='Failed'. Por eso este test ya no puede afirmar "exactamente
+        // una fila Payment Received": ahora hay dos (la del email fallido +
+        // la del evento de pago). Lo que este test realmente verifica es que
+        // handlePaymentCompleted() no DUPLICA el EVENTO de pago cuando se lo
+        // invoca dos veces (idempotencia por is_paid), asi que la asercion se
+        // ajusta para filtrar solo event_type === 'payment'.
+        $this->repo->reservation = $this->reservation(['email' => '']);
 
         $this->service->handlePaymentCompleted('res-1', 'pi_123');
         $this->service->handlePaymentCompleted('res-1', 'pi_123');
 
-        $rows = $this->insertsNamed('Payment Received');
-        $this->assertCount(1, $rows);
-        $this->assertSame('payment', $rows[0]['event_type']);
-        $this->assertSame('Sent', $rows[0]['status']);
+        $paymentRows = array_values(array_filter(
+            $this->insertsNamed('Payment Received'),
+            static fn (array $row) => ($row['event_type'] ?? null) === 'payment'
+        ));
+        $this->assertCount(1, $paymentRows);
+        $this->assertSame('payment', $paymentRows[0]['event_type']);
+        $this->assertSame('Sent', $paymentRows[0]['status']);
     }
 
     // -------------------------------------------------------------------------
