@@ -108,14 +108,17 @@ class WeekReminderEmailSeeder extends Seeder
             ->getRow();
 
         if ($existing) {
-            $this->safeUpdateTemplate('week_reminder', [
+            if ($this->safeUpdateTemplate('week_reminder', [
                 'name'      => $template['name'],
                 'subject'   => $template['subject'],
                 'body'      => $template['body'],
                 'content'   => $template['content'],
                 'is_active' => 1,
-            ]);
-            echo "week_reminder template updated.\n";
+            ])) {
+                echo "week_reminder template updated.\n";
+            } else {
+                echo "week_reminder skipped — customized in admin panel.\n";
+            }
         } else {
             $this->db->table('email_templates')->insert(array_merge($template, [
                 'id'         => esc(bin2hex(random_bytes(9))),

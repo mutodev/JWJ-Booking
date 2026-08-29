@@ -172,9 +172,11 @@ class FixEmailTemplateBodiesSeeder extends Seeder
 </body>
 </html>';
 
-        $this->safeUpdateTemplate('payment_notification', ['body' => $body]);
-
-        echo "payment_notification body updated.\n";
+        if ($this->safeUpdateTemplate('payment_notification', ['body' => $body])) {
+            echo "payment_notification body updated.\n";
+        } else {
+            echo "payment_notification skipped — customized in admin panel.\n";
+        }
     }
 
     // ── reservation_confirmation ──────────────────────────────────────────
@@ -293,9 +295,11 @@ class FixEmailTemplateBodiesSeeder extends Seeder
 </body>
 </html>';
 
-        $this->safeUpdateTemplate('reservation_confirmation', ['body' => $body]);
-
-        echo "reservation_confirmation body updated.\n";
+        if ($this->safeUpdateTemplate('reservation_confirmation', ['body' => $body])) {
+            echo "reservation_confirmation body updated.\n";
+        } else {
+            echo "reservation_confirmation skipped — customized in admin panel.\n";
+        }
     }
 
     // ── payment_confirmation ──────────────────────────────────────────────
@@ -397,8 +401,11 @@ class FixEmailTemplateBodiesSeeder extends Seeder
             ->getRow();
 
         if ($existing) {
-            $this->safeUpdateTemplate('payment_confirmation', ['body' => $body]);
-            echo "payment_confirmation body updated.\n";
+            if ($this->safeUpdateTemplate('payment_confirmation', ['body' => $body])) {
+                echo "payment_confirmation body updated.\n";
+            } else {
+                echo "payment_confirmation skipped — customized in admin panel.\n";
+            }
         } else {
             $now = date('Y-m-d H:i:s');
             $this->db->table('email_templates')->insert([

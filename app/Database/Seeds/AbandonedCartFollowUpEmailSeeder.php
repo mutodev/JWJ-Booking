@@ -97,14 +97,17 @@ class AbandonedCartFollowUpEmailSeeder extends Seeder
             ->getRow();
 
         if ($existing) {
-            $this->safeUpdateTemplate('abandoned_cart_followup', [
+            if ($this->safeUpdateTemplate('abandoned_cart_followup', [
                 'name'      => $template['name'],
                 'subject'   => $template['subject'],
                 'body'      => $template['body'],
                 'content'   => $template['content'],
                 'is_active' => 1,
-            ]);
-            echo "abandoned_cart_followup template updated.\n";
+            ])) {
+                echo "abandoned_cart_followup template updated.\n";
+            } else {
+                echo "abandoned_cart_followup skipped — customized in admin panel.\n";
+            }
         } else {
             $this->db->table('email_templates')->insert(array_merge($template, [
                 'id'         => esc(bin2hex(random_bytes(9))),

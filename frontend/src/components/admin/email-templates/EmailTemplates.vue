@@ -134,10 +134,21 @@ const getData = async () => {
   }
 };
 
+// Normalizes a datetime that may arrive as an ISO string or as a serialized
+// CodeIgniter Time object ({ date: "YYYY-MM-DD HH:MM:SS.u", ... }).
+const normalizeDate = (value) => {
+  if (!value) return null;
+  const raw = typeof value === "object" ? value.date || value.datetime || null : value;
+  if (!raw) return null;
+  const parsed = new Date(String(raw).replace(" ", "T"));
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
 const customizedTitle = (by, at) => {
   const parts = [];
   if (by) parts.push(`Edited by ${by}`);
-  if (at) parts.push(`on ${new Date(at).toLocaleString()}`);
+  const when = normalizeDate(at);
+  if (when) parts.push(`on ${when.toLocaleString()}`);
   return parts.join(" ") || "Edited from the admin panel";
 };
 

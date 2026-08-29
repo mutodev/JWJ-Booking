@@ -47,8 +47,11 @@ class FixDurationInEmailsSeeder extends Seeder
             $inject  = "{{total_duration_row}}\n{{promo_code_row}}\n{{discount_row}}\n";
             $newBody = substr($body, 0, $trPos) . $inject . substr($body, $trPos);
 
-            $this->safeUpdateTemplate($slug, ['body' => $newBody]);
-            echo "Updated '{$slug}' — duration row injected.\n";
+            if ($this->safeUpdateTemplate($slug, ['body' => $newBody])) {
+                echo "Updated '{$slug}' — duration row injected.\n";
+            } else {
+                echo "{$slug} skipped — customized in admin panel.\n";
+            }
         }
     }
 }

@@ -32,13 +32,14 @@ class FixEmailPromoDiscountSeeder extends Seeder
             return;
         }
 
-        $updates = [];
+        $updates  = [];
+        $messages = [];
 
         // Fix subject: remove " - ID: {{reservation_id}}"
         $fixedSubject = str_replace(' - ID: {{reservation_id}}', '', $row->subject);
         if ($fixedSubject !== $row->subject) {
             $updates['subject'] = $fixedSubject;
-            echo "payment_notification subject fixed.\n";
+            $messages[]         = "payment_notification subject fixed.";
         }
 
         // Insert promo/discount rows before Total Amount
@@ -52,11 +53,17 @@ class FixEmailPromoDiscountSeeder extends Seeder
                 $body
             );
             $updates['body'] = $body;
-            echo "payment_notification promo rows added.\n";
+            $messages[]      = "payment_notification promo rows added.";
         }
 
         if (!empty($updates)) {
-            $this->safeUpdateTemplate('payment_notification', $updates);
+            if ($this->safeUpdateTemplate('payment_notification', $updates)) {
+                foreach ($messages as $message) {
+                    echo $message . "\n";
+                }
+            } else {
+                echo "payment_notification skipped — customized in admin panel.\n";
+            }
         }
     }
 
@@ -87,9 +94,11 @@ class FixEmailPromoDiscountSeeder extends Seeder
             $body
         );
 
-        $this->safeUpdateTemplate('reservation_confirmation', ['body' => $body]);
-
-        echo "reservation_confirmation promo rows added.\n";
+        if ($this->safeUpdateTemplate('reservation_confirmation', ['body' => $body])) {
+            echo "reservation_confirmation promo rows added.\n";
+        } else {
+            echo "reservation_confirmation skipped — customized in admin panel.\n";
+        }
     }
 
     private function fixPaymentConfirmation(): void
@@ -119,8 +128,10 @@ class FixEmailPromoDiscountSeeder extends Seeder
             $body
         );
 
-        $this->safeUpdateTemplate('payment_confirmation', ['body' => $body]);
-
-        echo "payment_confirmation promo rows added.\n";
+        if ($this->safeUpdateTemplate('payment_confirmation', ['body' => $body])) {
+            echo "payment_confirmation promo rows added.\n";
+        } else {
+            echo "payment_confirmation skipped — customized in admin panel.\n";
+        }
     }
 }

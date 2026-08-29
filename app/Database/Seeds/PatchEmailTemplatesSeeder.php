@@ -30,8 +30,11 @@ class PatchEmailTemplatesSeeder extends Seeder
             $correctSubject = 'Payment Information for Your Event Reservation';
 
             if ($currentSubject !== $correctSubject) {
-                $this->safeUpdateTemplate('payment_notification', ['subject' => $correctSubject]);
-                echo "[OK]   payment_notification subject fixed.\n";
+                if ($this->safeUpdateTemplate('payment_notification', ['subject' => $correctSubject])) {
+                    echo "[OK]   payment_notification subject fixed.\n";
+                } else {
+                    echo "[SKIP] payment_notification skipped — customized in admin panel.\n";
+                }
             } else {
                 echo "[SKIP] payment_notification subject already correct.\n";
             }
@@ -52,8 +55,11 @@ class PatchEmailTemplatesSeeder extends Seeder
 
             if (($content['intro'] ?? '') !== $correctIntro) {
                 $content['intro'] = $correctIntro;
-                $this->safeUpdateTemplate('payment_notification', ['content' => json_encode($content)]);
-                echo "[OK]   payment_notification intro spacing fixed.\n";
+                if ($this->safeUpdateTemplate('payment_notification', ['content' => json_encode($content)])) {
+                    echo "[OK]   payment_notification intro spacing fixed.\n";
+                } else {
+                    echo "[SKIP] payment_notification skipped — customized in admin panel.\n";
+                }
             } else {
                 echo "[SKIP] payment_notification intro already correct.\n";
             }
@@ -129,8 +135,11 @@ class PatchEmailTemplatesSeeder extends Seeder
             $inject  = "{{total_duration_row}}\n{{promo_code_row}}\n{{discount_row}}\n";
             $newBody = substr($body, 0, $trPos) . $inject . substr($body, $trPos);
 
-            $this->safeUpdateTemplate($slug, ['body' => $newBody]);
-            echo "[OK]   '{$slug}' — duration/promo/discount rows injected.\n";
+            if ($this->safeUpdateTemplate($slug, ['body' => $newBody])) {
+                echo "[OK]   '{$slug}' — duration/promo/discount rows injected.\n";
+            } else {
+                echo "[SKIP] '{$slug}' skipped — customized in admin panel.\n";
+            }
         }
 
         echo "\nDone. All patches applied.\n";

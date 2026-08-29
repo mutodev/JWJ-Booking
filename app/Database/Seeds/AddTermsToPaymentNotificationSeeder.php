@@ -70,8 +70,10 @@ class AddTermsToPaymentNotificationSeeder extends Seeder
 
         $newBody = str_replace('<!-- Footer -->', $termsHtml, $template->body);
 
-        $this->safeUpdateTemplate('payment_notification', ['body' => $newBody]);
-
-        echo "Terms & Conditions added to payment_notification email template.\n";
+        if ($this->safeUpdateTemplate('payment_notification', ['body' => $newBody])) {
+            echo "Terms & Conditions added to payment_notification email template.\n";
+        } else {
+            echo "payment_notification skipped — customized in admin panel.\n";
+        }
     }
 }
