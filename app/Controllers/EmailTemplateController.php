@@ -69,6 +69,7 @@ class EmailTemplateController extends ResourceController
             $recipientIds = $data['recipient_ids'] ?? [];
             $sendToAll   = $data['send_to_all'] ?? false;
             $isFullHtml  = (bool) ($data['is_full_html'] ?? false);
+            $cc          = BrevoEmailService::assertValidClientCc($data['cc'] ?? []);
 
             if (empty($subject)) {
                 return $this->response->setStatusCode(400)->setJSON(['message' => 'Subject is required']);
@@ -91,7 +92,7 @@ class EmailTemplateController extends ResourceController
             foreach ($customers as $customer) {
                 $email = is_array($customer) ? ($customer['email'] ?? null) : ($customer->email ?? null);
                 if ($email) {
-                    $this->brevo->sendEmail($email, $subject, $body);
+                    $this->brevo->sendEmail($email, $subject, $body, $cc);
                     $sent++;
                 }
             }

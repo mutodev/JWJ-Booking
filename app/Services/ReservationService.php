@@ -1166,7 +1166,7 @@ class ReservationService
         );
     }
 
-    public function sendTemplateEmail(string $reservationId, string $templateId, string $subject, string $body, bool $isFullHtml = false): array
+    public function sendTemplateEmail(string $reservationId, string $templateId, string $subject, string $body, bool $isFullHtml = false, array $cc = []): array
     {
         $reservation = $this->repository->getById($reservationId);
         if (!$reservation) {
@@ -1198,8 +1198,10 @@ class ReservationService
         }
         $html = $isFullHtml ? $body : $this->emailTemplateService->wrapContent($body);
 
+        $effectiveCc = $this->emailService->resolveCc($cc, $reservation->email);
+
         try {
-            $this->emailService->sendEmail($reservation->email, $subject, $html);
+            $this->emailService->sendEmail($reservation->email, $subject, $html, $cc);
         } catch (\Throwable $e) {
             throw new HTTPException('Failed to send email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
@@ -1210,6 +1212,7 @@ class ReservationService
             'template_name'   => $template->name ?? '',
             'sent_by'         => $this->getAuthenticatedUserName(),
             'recipient_email' => $reservation->email,
+            'cc_emails'       => $this->ccEmailsForHistory($effectiveCc),
             'email_subject'   => $subject,
             'email_body'      => $html,
             'status'          => 'Sent',
@@ -1238,6 +1241,22 @@ class ReservationService
     private function recordEmailHistory(array $data): void
     {
         (new ReservationEmailHistoryModel())->insert($data);
+    }
+
+    /**
+     * Serialize the CC list actually used into the string stored in
+     * reservation_email_history.cc_emails. Truncated to the column width (500)
+     * so an oversized list can never fail the insert.
+     *
+     * @param string[] $cc
+     */
+    private function ccEmailsForHistory(array $cc): ?string
+    {
+        if (empty($cc)) {
+            return null;
+        }
+
+        return substr(implode(', ', $cc), 0, 500);
     }
 
     private function getAuthenticatedUserName(): string

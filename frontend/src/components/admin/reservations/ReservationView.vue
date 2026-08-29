@@ -235,6 +235,7 @@
               <DetailField label="Template" :value="selectedHistory.template_name" class="col-md-6" />
               <DetailField label="Subject" :value="selectedHistory.email_subject" class="col-md-6" />
               <DetailField label="Recipient" :value="selectedHistory.recipient_email" class="col-md-6" />
+              <DetailField v-if="selectedHistory.cc_emails" label="CC" :value="selectedHistory.cc_emails" class="col-md-6" />
               <DetailField label="Sent By" :value="selectedHistory.sent_by" class="col-md-6" />
               <DetailField label="Date Sent" :value="formatDateTime(selectedHistory.sent_at)" class="col-md-6" />
               <DetailField label="Status" :value="selectedHistory.status" class="col-md-6" />

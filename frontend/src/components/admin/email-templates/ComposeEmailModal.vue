@@ -105,6 +105,26 @@
                   </div>
                 </div>
               </div>
+
+              <div class="field-card mb-3">
+                <div class="field-icon-label">
+                  <span class="field-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-people-fill"></i>
+                  </span>
+                  <div>
+                    <div class="field-label">CC (optional)</div>
+                    <div class="field-hint">Separate multiple addresses with commas. Max {{ MAX_CC }}.</div>
+                  </div>
+                </div>
+                <input
+                  v-model="ccInput"
+                  type="text"
+                  class="form-control mt-2"
+                  :class="{ 'is-invalid': ccError }"
+                  placeholder="name@example.com, other@example.com"
+                />
+                <div v-if="ccError" class="invalid-feedback d-block">{{ ccError }}</div>
+              </div>
             </div>
 
             <div class="preview-panel d-flex flex-column flex-grow-1 overflow-auto bg-light">
@@ -218,6 +238,20 @@
             </div>
           </div>
 
+          <!-- CC -->
+          <div class="mb-4">
+            <label class="form-label fw-semibold">CC <span class="text-muted small">(optional)</span></label>
+            <input
+              v-model="ccInput"
+              type="text"
+              class="form-control"
+              :class="{ 'is-invalid': ccError }"
+              placeholder="name@example.com, other@example.com"
+            />
+            <div v-if="ccError" class="invalid-feedback d-block">{{ ccError }}</div>
+            <div v-else class="form-text">Separate multiple addresses with commas. Max {{ MAX_CC }}.</div>
+          </div>
+
           <!-- Variable chips -->
           <div class="mb-3">
             <label class="form-label fw-semibold small text-muted">Insert dynamic value:</label>
@@ -295,7 +329,38 @@ const emit = defineEmits(['close', 'sent']);
 // ── State ─────────────────────────────────────────────────────────────────
 const subject = ref('');
 const content = ref('');
+const ccInput = ref('');
 const sendToAll = ref(false);
+
+const MAX_CC = 10;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Parsed, de-duplicated CC list from the free-text input.
+const ccList = computed(() => {
+  const seen = new Set();
+  const out = [];
+  for (const raw of ccInput.value.split(/[,;\n]+/)) {
+    const value = raw.trim();
+    if (!value) continue;
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+  }
+  return out;
+});
+
+// Client-side format guard. The backend re-validates and normalizes.
+const ccError = computed(() => {
+  const invalid = ccList.value.filter((email) => !EMAIL_RE.test(email));
+  if (invalid.length) {
+    return `Invalid email address: ${invalid.join(', ')}`;
+  }
+  if (ccList.value.length > MAX_CC) {
+    return `A maximum of ${MAX_CC} CC recipients is allowed.`;
+  }
+  return '';
+});
 const selectedRecipients = ref([]);
 const searchModel = ref(null);
 const searchResults = ref([]);
@@ -488,7 +553,7 @@ function normalizeEditableContent(html) {
 const canSend = computed(() => {
   const hasRecipients = sendToAll.value || selectedRecipients.value.length > 0;
   const hasRequiredTemplate = !props.reservation || props.templateId;
-  return subject.value.trim() && content.value.trim() && hasRecipients && hasRequiredTemplate;
+  return subject.value.trim() && content.value.trim() && hasRecipients && hasRequiredTemplate && !ccError.value;
 });
 
 const reservationPreviewBody = computed(() => {
@@ -548,6 +613,7 @@ async function send() {
         subject: replaceReservationPlaceholders(subject.value),
         body: replaceReservationPlaceholders(content.value),
         is_full_html: isFullHtml.value,
+        cc: ccList.value,
       });
       toast.success('Email sent successfully');
     } else {
@@ -557,6 +623,7 @@ async function send() {
         send_to_all: sendToAll.value,
         recipient_ids: selectedRecipients.value.map(r => r.id),
         is_full_html: isFullHtml.value,
+        cc: ccList.value,
       };
       const res = await api.post('/email-templates/send', payload);
       const sent = res.data?.sent ?? res.sent ?? '?';
@@ -576,6 +643,7 @@ async function send() {
 function reset() {
   subject.value = '';
   content.value = '';
+  ccInput.value = '';
   sendToAll.value = false;
   selectedRecipients.value = [];
   searchModel.value = null;

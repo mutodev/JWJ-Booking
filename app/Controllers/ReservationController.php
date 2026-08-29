@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\ReservationService;
 use App\Services\ReservationDraftService;
+use App\Services\BrevoEmailService;
 use CodeIgniter\RESTful\ResourceController;
 
 class ReservationController extends ResourceController
@@ -220,6 +221,7 @@ class ReservationController extends ResourceController
             $subject = $data['subject'] ?? '';
             $body = $data['body'] ?? '';
             $isFullHtml = (bool) ($data['is_full_html'] ?? false);
+            $cc = BrevoEmailService::assertValidClientCc($data['cc'] ?? []);
 
             if (empty($reservationId)) {
                 return $this->response->setStatusCode(400)
@@ -231,7 +233,7 @@ class ReservationController extends ResourceController
                     ->setJSON(['message' => 'Template is required']);
             }
 
-            $result = $this->service->sendTemplateEmail($reservationId, $templateId, $subject, $body, $isFullHtml);
+            $result = $this->service->sendTemplateEmail($reservationId, $templateId, $subject, $body, $isFullHtml, $cc);
 
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Email sent successfully', $result));

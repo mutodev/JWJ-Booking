@@ -19,6 +19,7 @@ class ReservationEmailHistoryModel extends Model
         'template_name',
         'sent_by',
         'recipient_email',
+        'cc_emails',
         'email_subject',
         'email_body',
         'status',
