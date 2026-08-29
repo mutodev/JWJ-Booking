@@ -94,6 +94,13 @@ class ReservationService
     protected $stripeService = null;
 
     /**
+     * Modelo del historial/timeline de la reserva (lazy-loaded).
+     * Se expone vía historyModel() para poder sustituirlo en tests.
+     * @var ReservationEmailHistoryModel|null
+     */
+    protected $historyModel = null;
+
+    /**
      * Constructor del servicio
      * Inicializa todos los repositories necesarios
      */
@@ -122,6 +129,19 @@ class ReservationService
             $this->stripeService = new StripeService();
         }
         return $this->stripeService;
+    }
+
+    /**
+     * Instancia del modelo del historial de emails / timeline de la reserva.
+     * Aislada en un método protegido para que los tests puedan sustituirla
+     * por un doble vía Reflection sin tocar la base de datos.
+     */
+    protected function historyModel(): ReservationEmailHistoryModel
+    {
+        if ($this->historyModel === null) {
+            $this->historyModel = new ReservationEmailHistoryModel();
+        }
+        return $this->historyModel;
     }
 
     /**
@@ -1142,8 +1162,25 @@ class ReservationService
         try {
             $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
         } catch (\Throwable $e) {
+            $this->recordSystemEmail(
+                $reservationId,
+                'Payment Link Sent',
+                (string) $reservation->email,
+                (string) ($rendered['subject'] ?? ''),
+                (string) ($rendered['body'] ?? ''),
+                'Failed'
+            );
             throw new HTTPException('Failed to send payment email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+
+        $this->recordSystemEmail(
+            $reservationId,
+            'Payment Link Sent',
+            (string) $reservation->email,
+            (string) $rendered['subject'],
+            (string) $rendered['body'],
+            'Sent'
+        );
 
         return [
             'confirmation_url' => $confirmationUrl,
@@ -1232,15 +1269,95 @@ class ReservationService
             throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
         }
 
-        return (new ReservationEmailHistoryModel())
+        return $this->historyModel()
             ->where('reservation_id', $reservationId)
             ->orderBy('sent_at', 'DESC')
             ->findAll();
     }
 
+    /**
+     * Inserta una fila en el historial/timeline de la reserva.
+     *
+     * NUNCA lanza hacia arriba: un fallo del historial jamás debe impedir un
+     * envío ni marcar un pago. Cualquier excepción se registra y se traga.
+     */
     private function recordEmailHistory(array $data): void
     {
-        (new ReservationEmailHistoryModel())->insert($data);
+        try {
+            if (! isset($data['event_type']) || $data['event_type'] === '') {
+                $data['event_type'] = 'email';
+            }
+
+            // email_body es LONGTEXT NOT NULL: nunca persistir string vacío.
+            if (! isset($data['email_body']) || $data['email_body'] === '') {
+                $data['email_body'] = '—';
+            }
+
+            $this->historyModel()->insert($data);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to record reservation email history: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Registra un email automático del sistema (sent_by = System, sin plantilla).
+     */
+    private function recordSystemEmail(
+        string $reservationId,
+        string $name,
+        string $recipient,
+        string $subject,
+        string $body,
+        string $status,
+        string $eventType = 'email'
+    ): void {
+        $this->recordEmailHistory([
+            'reservation_id'  => $reservationId,
+            'template_id'     => null,
+            'template_name'   => $name,
+            'event_type'      => $eventType,
+            'sent_by'         => 'System',
+            'recipient_email' => $recipient,
+            'cc_emails'       => null,
+            'email_subject'   => $subject,
+            'email_body'      => $body,
+            'status'          => $status,
+            'sent_at'         => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /**
+     * Registra la fila de evento "pago recibido" en el timeline de la reserva.
+     * event_type = payment, siempre status Sent. El cuerpo es un resumen HTML
+     * corto con cada valor dinámico escapado con esc().
+     */
+    private function recordPaymentReceivedEvent(object $reservation, string $paymentIntentId): void
+    {
+        $gratuity  = (float) ($reservation->gratuity_amount ?? 0);
+        $amountDue = (float) ($reservation->total_amount ?? 0);
+        $totalPaid = $amountDue + $gratuity;
+
+        $summary = '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #1F2937;">'
+            . '<p style="margin: 0 0 8px;"><strong>Payment received via Stripe.</strong></p>'
+            . '<p style="margin: 0 0 4px;">Total paid: $' . esc(number_format($totalPaid, 2)) . '</p>'
+            . '<p style="margin: 0 0 4px;">Gratuity / tip: $' . esc(number_format($gratuity, 2)) . '</p>'
+            . '<p style="margin: 0 0 4px;">Service: ' . esc($reservation->service_name ?? 'N/A') . '</p>'
+            . '<p style="margin: 0;">Payment intent: ' . esc($paymentIntentId !== '' ? $paymentIntentId : 'N/A') . '</p>'
+            . '</div>';
+
+        $this->recordEmailHistory([
+            'reservation_id'  => (string) $reservation->id,
+            'template_id'     => null,
+            'template_name'   => 'Payment Received',
+            'event_type'      => 'payment',
+            'sent_by'         => 'System',
+            'recipient_email' => (string) ($reservation->email ?? ''),
+            'cc_emails'       => null,
+            'email_subject'   => 'Payment received',
+            'email_body'      => $summary,
+            'status'          => 'Sent',
+            'sent_at'         => date('Y-m-d H:i:s'),
+        ]);
     }
 
     /**
@@ -1504,6 +1621,10 @@ class ReservationService
 
         if ($result !== null) {
             $this->sendPaymentConfirmationEmail($result);
+            // Timeline event: "payment received". Se inserta después de marcar
+            // is_paid y solo una vez (la guarda de idempotencia por is_paid de
+            // arriba impide que webhook + verifyPayment lo dupliquen).
+            $this->recordPaymentReceivedEvent($result, $paymentIntentId);
             return true;
         }
 
@@ -1683,12 +1804,29 @@ class ReservationService
             '_reservation'       => $reservation,
         ];
 
-        $rendered = $this->emailTemplateService->render('reservation_confirmation', $templateVars);
+        $rendered = ['subject' => '', 'body' => ''];
 
         try {
+            $rendered = $this->emailTemplateService->render('reservation_confirmation', $templateVars);
             $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
+            $this->recordSystemEmail(
+                (string) $reservation->id,
+                'Reservation Received',
+                (string) $reservation->email,
+                (string) ($rendered['subject'] ?? ''),
+                (string) ($rendered['body'] ?? ''),
+                'Sent'
+            );
         } catch (\Throwable $e) {
             log_message('error', 'Failed to send confirmation email: ' . $e->getMessage());
+            $this->recordSystemEmail(
+                (string) $reservation->id,
+                'Reservation Received',
+                (string) $reservation->email,
+                (string) ($rendered['subject'] ?? ''),
+                (string) ($rendered['body'] ?? ''),
+                'Failed'
+            );
         }
     }
 
@@ -1733,14 +1871,31 @@ class ReservationService
             }
 
             $templateVars = $this->buildReservationEmailVariables($reservation);
+            $rendered = ['subject' => '', 'body' => ''];
 
             try {
                 $rendered = $this->emailTemplateService->render('week_reminder', $templateVars);
                 $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
                 $this->repository->update($reservation->id, ['week_reminder_sent' => 1]);
+                $this->recordSystemEmail(
+                    (string) $reservation->id,
+                    'Week Reminder',
+                    (string) $reservation->email,
+                    (string) ($rendered['subject'] ?? ''),
+                    (string) ($rendered['body'] ?? ''),
+                    'Sent'
+                );
                 $sent++;
             } catch (\Throwable $e) {
                 log_message('error', "Failed to send week reminder to {$reservation->email}: " . $e->getMessage());
+                $this->recordSystemEmail(
+                    (string) $reservation->id,
+                    'Week Reminder',
+                    (string) $reservation->email,
+                    (string) ($rendered['subject'] ?? ''),
+                    (string) ($rendered['body'] ?? ''),
+                    'Failed'
+                );
             }
         }
 

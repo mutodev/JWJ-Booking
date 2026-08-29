@@ -187,6 +187,18 @@
               <template #item-sent_at="{ sent_at }">
                 {{ formatDateTime(sent_at) }}
               </template>
+              <template #item-event_type="{ event_type }">
+                <span
+                  class="badge"
+                  :class="(event_type || 'email') === 'payment' ? 'bg-info text-dark' : 'bg-light text-dark'"
+                >
+                  <i
+                    class="me-1"
+                    :class="(event_type || 'email') === 'payment' ? 'bi bi-credit-card' : 'bi bi-envelope'"
+                  ></i>
+                  {{ (event_type || 'email') === 'payment' ? 'Payment' : 'Email' }}
+                </span>
+              </template>
               <template #item-status="{ status }">
                 <span class="badge" :class="status === 'Sent' ? 'bg-success' : 'bg-danger'">{{ status }}</span>
               </template>
@@ -227,12 +239,15 @@
       <div class="modal-dialog modal-lg modal-dialog-scrollable" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title"><i class="bi bi-envelope-open me-2"></i>Email Sent</h5>
+            <h5 class="modal-title">
+              <i class="me-2" :class="isPaymentEvent ? 'bi bi-credit-card' : 'bi bi-envelope-open'"></i>
+              {{ isPaymentEvent ? "Payment Event" : "Email Sent" }}
+            </h5>
             <button type="button" class="btn-close" @click="selectedHistory = null"></button>
           </div>
           <div class="modal-body">
             <div class="row g-3 mb-3">
-              <DetailField label="Template" :value="selectedHistory.template_name" class="col-md-6" />
+              <DetailField label="Event" :value="selectedHistory.template_name" class="col-md-6" />
               <DetailField label="Subject" :value="selectedHistory.email_subject" class="col-md-6" />
               <DetailField label="Recipient" :value="selectedHistory.recipient_email" class="col-md-6" />
               <DetailField v-if="selectedHistory.cc_emails" label="CC" :value="selectedHistory.cc_emails" class="col-md-6" />
@@ -240,8 +255,8 @@
               <DetailField label="Date Sent" :value="formatDateTime(selectedHistory.sent_at)" class="col-md-6" />
               <DetailField label="Status" :value="selectedHistory.status" class="col-md-6" />
             </div>
-            <label class="form-label">Body</label>
-            <iframe class="history-body-frame" :srcdoc="selectedHistory.email_body"></iframe>
+            <label class="form-label">{{ isPaymentEvent ? "Summary" : "Body" }}</label>
+            <iframe class="history-body-frame" sandbox :srcdoc="selectedHistory.email_body"></iframe>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" @click="selectedHistory = null">Close</button>
@@ -295,12 +310,17 @@ const DetailField = defineComponent({
 
 const historyHeaders = [
   { text: "Date Sent", value: "sent_at" },
-  { text: "Template", value: "template_name" },
+  { text: "Event", value: "template_name" },
+  { text: "Type", value: "event_type" },
   { text: "Sent By", value: "sent_by" },
   { text: "Recipient", value: "recipient_email" },
   { text: "Status", value: "status" },
   { text: "Actions", value: "actions" },
 ];
+
+const isPaymentEvent = computed(
+  () => (selectedHistory.value?.event_type ?? "email") === "payment"
+);
 
 const statusLabels = {
   new: "New",

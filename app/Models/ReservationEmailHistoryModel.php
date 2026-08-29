@@ -17,6 +17,7 @@ class ReservationEmailHistoryModel extends Model
         'reservation_id',
         'template_id',
         'template_name',
+        'event_type',
         'sent_by',
         'recipient_email',
         'cc_emails',

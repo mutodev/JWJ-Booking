@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ReservationDraftModel;
+use App\Models\ReservationEmailHistoryModel;
 use App\Services\BrevoEmailService;
 use App\Services\EmailTemplateService;
 
@@ -213,6 +214,29 @@ class ReservationDraftService
         $sentAt = date('Y-m-d H:i:s');
         if (!$this->draftModel->update($draft->id, ['follow_up_sent_at' => $sentAt])) {
             throw new \RuntimeException('Follow-up email was sent, but the sent timestamp could not be saved.');
+        }
+
+        // Timeline registration (B3): only when the draft is already linked to a
+        // reservation — reservation_email_history.reservation_id is a mandatory FK.
+        // Never let a history failure break the follow-up flow.
+        if (!empty($draft->reservation_id)) {
+            try {
+                (new ReservationEmailHistoryModel())->insert([
+                    'reservation_id'  => $draft->reservation_id,
+                    'template_id'     => null,
+                    'template_name'   => 'Abandoned Cart Follow-Up',
+                    'event_type'      => 'email',
+                    'sent_by'         => 'System',
+                    'recipient_email' => $draft->email,
+                    'cc_emails'       => null,
+                    'email_subject'   => $rendered['subject'] ?? '',
+                    'email_body'      => ($rendered['body'] ?? '') !== '' ? $rendered['body'] : '—',
+                    'status'          => 'Sent',
+                    'sent_at'         => $sentAt,
+                ]);
+            } catch (\Throwable $e) {
+                log_message('error', 'Failed to record abandoned cart follow-up history: ' . $e->getMessage());
+            }
         }
 
         return $this->draftModel->find($draft->id);
