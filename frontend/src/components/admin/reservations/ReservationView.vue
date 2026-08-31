@@ -117,6 +117,16 @@
                 <DetailField label="Discount" :value="formatCurrency(data.discount_amount)" class="col-md-3" />
                 <DetailField label="Total Amount" :value="formatCurrency(totalWithGratuity)" class="col-md-3" />
                 <DetailField label="Gratuity / Tip" :value="formatCurrency(data.gratuity_amount)" class="col-md-3" />
+                <DetailField label="Amount Paid" :value="data.amount_paid == null ? 'Not recorded' : formatCurrency(data.amount_paid)" class="col-md-3" />
+                <DetailField label="Balance Due" :value="formatCurrency(data.balance_due)" class="col-md-3" />
+              </div>
+              <div v-if="Number(data.balance_due) > 0" class="alert alert-warning mt-3 mb-0 py-2">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Balance due: {{ formatCurrency(data.balance_due) }}</strong> after a post-payment change. Generate a payment link for the difference from the edit screen.
+              </div>
+              <div v-if="refundDue > 0" class="alert alert-info mt-3 mb-0 py-2">
+                <i class="bi bi-cash-coin me-2"></i>
+                <strong>Refund required: {{ formatCurrency(refundDue) }}</strong> — process it manually in Stripe.
               </div>
             </div>
 
@@ -361,6 +371,14 @@ watch(
 const totalWithGratuity = computed(() => (
   (parseFloat(data.value.total_amount) || 0) + (parseFloat(data.value.gratuity_amount) || 0)
 ));
+
+const refundDue = computed(() => {
+  if (data.value.amount_paid == null || data.value.amount_paid === "") return 0;
+  // Stripe cobra total y propina como line items separados: el monto adeudado
+  // real es total_amount + gratuity_amount.
+  const diff = (parseFloat(data.value.amount_paid) || 0) - ((parseFloat(data.value.total_amount) || 0) + (parseFloat(data.value.gratuity_amount) || 0));
+  return diff > 0.009 ? Math.round(diff * 100) / 100 : 0;
+});
 
 const childrenValue = computed(() => {
   const count = data.value.children_count ?? 0;

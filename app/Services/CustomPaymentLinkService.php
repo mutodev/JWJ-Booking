@@ -111,6 +111,26 @@ class CustomPaymentLinkService
         $reservationId = $this->assertValidReservationId($data['reservation_id'] ?? null);
         $currency    = $this->normalizeCurrency($data['currency'] ?? null);
 
+        // B6 double-charge guard: never issue a second pending link for the same
+        // reservation (e.g. two admins generating a balance link at once). The
+        // lookup itself must not hard-fail link creation, but a real hit is a
+        // hard stop.
+        if ($reservationId !== null) {
+            $pending = null;
+            try {
+                $pending = $this->repo->findPendingByReservation($reservationId);
+            } catch (\Throwable $e) {
+                log_message('error', 'Custom payment link: pending-link lookup failed: ' . $e->getMessage());
+            }
+
+            if ($pending) {
+                throw new HTTPException(
+                    'A pending payment link already exists for this reservation. Cancel it before creating a new one.',
+                    Response::HTTP_CONFLICT
+                );
+            }
+        }
+
         // Pre-generate the id so it can travel in the Stripe metadata before the
         // row exists.
         $id = Uuid::uuid4()->toString();

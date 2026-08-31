@@ -47,6 +47,8 @@ class ReservationModel extends Model
         'base_price',
         'addons_total',
         'total_amount',
+        'amount_paid',
+        'balance_due',
         'gratuity_amount',
         'status',
         'is_invoiced',

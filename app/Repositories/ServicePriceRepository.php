@@ -43,6 +43,24 @@ class ServicePriceRepository
     }
 
     /**
+     * B6 — fila de precio de servicio con la duración base del servicio
+     * (`services.duration_hours`), que el recálculo usa como duración base
+     * antes de aplicar el mínimo de zona y la duración de los add-ons.
+     * Devuelve un array plano o null.
+     */
+    public function getByIdWithService(string $id): ?array
+    {
+        $row = $this->model
+            ->select('service_prices.*, services.duration_hours as service_duration_hours')
+            ->join('services', 'services.id = service_prices.service_id', 'left')
+            ->where('service_prices.id', $id)
+            ->asArray()
+            ->first();
+
+        return $row ?: null;
+    }
+
+    /**
      * Obtener un precio por servicio y condado
      */
     public function getByServiceAndCounty(string $serviceId, string $countyId)

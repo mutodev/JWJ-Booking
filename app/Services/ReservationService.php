@@ -35,6 +35,8 @@ use App\Repositories\ReservationRepository;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ReservationAddonRepository;
 use App\Repositories\PromoCodeRepository;
+use App\Repositories\ServicePriceRepository;
+use App\Repositories\ZipCodeRepository;
 use App\Services\BrevoEmailService;
 use App\Services\BrevoContactService;
 use App\Services\EmailTemplateService;
@@ -88,6 +90,18 @@ class ReservationService
     protected $promoCodeRepository;
 
     /**
+     * Repository de precios de servicio (B6, recálculo de totales).
+     * @var ServicePriceRepository
+     */
+    protected $servicePriceRepository;
+
+    /**
+     * Repository de zipcodes (B6, recálculo de travel fee / zona).
+     * @var ZipCodeRepository
+     */
+    protected $zipCodeRepository;
+
+    /**
      * Servicio para integración con Stripe (lazy-loaded)
      * @var StripeService|null
      */
@@ -117,6 +131,8 @@ class ReservationService
         $this->customerRepository = new CustomerRepository();
         $this->reservationAddonRepository = new ReservationAddonRepository();
         $this->promoCodeRepository = new PromoCodeRepository();
+        $this->servicePriceRepository = new ServicePriceRepository();
+        $this->zipCodeRepository = new ZipCodeRepository();
         $this->emailService = new BrevoEmailService();
         try {
             $this->brevoContactService = new BrevoContactService();
@@ -207,10 +223,6 @@ class ReservationService
         $servicePrice = $data['price']['amount'] ?? 0;
         $addons = $data['addons'] ?? [];
         $bookingDate = isset($data['form']['date']) ? new \DateTime($data['form']['date']) : null;
-        $today = new \DateTime();
-
-        // Calcular totales usando funciones centralizadas
-        $addonsTotal = $this->calculateAddonsTotal($addons);
 
         // Calcular niños extra
         // Admin form envía form.extraChildren directamente; customer form envía selectedKids (total - 40)
@@ -223,38 +235,34 @@ class ReservationService
         }
         $extraChildFee = floatval($data['price']['extra_child_fee'] ?? 0);
         $extraChildrenTotal = $extraChildren * $extraChildFee;
-        $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
 
         $eventDateStr = $bookingDate ? $bookingDate->format('Y-m-d') : null;
-        $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDateStr);
 
-        $zipcode = $data['areas']['zipcode'] ?? null;
-        $performers = intval($data['price']['performers_count'] ?? 1);
-        $travelFee = $this->resolveTravelFee(
-            $zipcode ?? [],
-            $performers,
-            floatval($data['price']['travel_fee'] ?? 0)
-        );
-
-        // Descuento de promo code (solo aplica al baseTotal, no al surcharge)
+        // Descuento de promo code (solo aplica a la base, no al surcharge/fees)
         $discountAmount = floatval($data['promoCode']['discount_amount'] ?? 0);
         $promoCodeUsed = $data['promoCode']['code'] ?? null;
 
-        $grandTotal = $baseTotal + $travelFee + $surchargeAmount - $discountAmount;
-
-        // Calcular duración total incluyendo addons.
-        // La duración base viene del type service; el precio queda como fallback legacy.
+        // Duración base: type service primero, precio como fallback legacy.
         $baseDurationHours = floatval(
             $data['service']['duration_hours']
             ?? $data['price']['duration_hours']
             ?? $data['price']['min_duration_hours']
             ?? 1
         );
-        if (($data['areas']['zipcode']['zone_type'] ?? '') === 'minimum_2h') {
-            $baseDurationHours = max($baseDurationHours, 2.0);
-        }
-        $durationCalculation = $this->calculateTotalDuration($baseDurationHours, $addons);
-        $totalDurationHours = $durationCalculation['total_hours'];
+
+        // Núcleo de precios compartido (B6). El array resultante replica al centavo
+        // lo que este método calculaba inline antes del refactor.
+        $pricing = $this->computeReservationPricing([
+            'base_price'          => floatval($servicePrice),
+            'addons'              => $addons,
+            'extra_children_fee'  => $extraChildrenTotal,
+            'zipcode'             => $data['areas']['zipcode'] ?? [],
+            'performers_count'    => intval($data['price']['performers_count'] ?? 1),
+            'service_travel_fee'  => floatval($data['price']['travel_fee'] ?? 0),
+            'base_duration_hours' => $baseDurationHours,
+            'event_date'          => $eventDateStr,
+            'discount_amount'     => $discountAmount,
+        ]);
 
         $reservationData = [
             'customer_id' => $data['customer']['id'] ?? null,
@@ -265,17 +273,17 @@ class ReservationService
             'event_time' => $data['form']['startTime'] ?? null,
             'children_count' => $selectedKids,
             'performers_count' => $data['price']['performers_count'] ?? null,
-            'duration_hours' => $totalDurationHours,
-            'price_type' => $this->determinePriceType($data['addons'] ?? []),
-            'base_price' => $servicePrice,
-            'addons_total' => $addonsTotal,
-            'expedition_fee' => $travelFee + $surchargeAmount,
-            'travel_fee' => $travelFee,
-            'expedite_fee' => $surchargeAmount,
-            'extra_children_fee' => $extraChildrenTotal,
-            'discount_amount' => $discountAmount,
+            'duration_hours' => $pricing['duration_hours'],
+            'price_type' => $pricing['price_type'],
+            'base_price' => $pricing['base_price'],
+            'addons_total' => $pricing['addons_total'],
+            'expedition_fee' => $pricing['expedition_fee'],
+            'travel_fee' => $pricing['travel_fee'],
+            'expedite_fee' => $pricing['expedite_fee'],
+            'extra_children_fee' => $pricing['extra_children_fee'],
+            'discount_amount' => $pricing['discount_amount'],
             'promo_code' => $promoCodeUsed,
-            'total_amount' => $grandTotal,
+            'total_amount' => $pricing['total_amount'],
             'status' => 'new',
             'is_invoiced' => false,
             'is_paid' => false,
@@ -559,37 +567,24 @@ class ReservationService
             $baseTotal = 0;
             $surchargeAmount = 0;
 
+            $addonsTotalPrecomputed = null;
             if ($subtotal) {
                 // Nuevo formulario: usar valores ya calculados
                 $servicePrice = floatval($subtotal['servicePrice'] ?? $serviceAmount);
                 $addonsTotal = floatval($subtotal['addonsTotal'] ?? 0);
+                $addonsTotalPrecomputed = $addonsTotal;
                 $extraChildrenTotal = floatval($subtotal['extraChildrenTotal'] ?? 0);
-                $travelFee = $this->resolveTravelFee(
-                    $zipcode,
-                    intval($service['performers_count'] ?? 1),
-                    floatval($service['travel_fee'] ?? 0)
-                );
                 $discount = floatval($subtotal['discount'] ?? 0);
 
                 // Calcular extraChildren count para el reporte
                 $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
                 $extraChildren = max(0, $selectedKids - $maxKidsIncluded);
 
-                // Recalcular el total y el expedite fee con la misma regla del
-                // flujo administrativo; el backend conserva la fuente de verdad.
                 $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal - $discount;
-                $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDate);
-                $grandTotal = $baseTotal + $travelFee + $surchargeAmount;
             } else {
                 // Formulario antiguo: calcular usando funciones centralizadas
                 $addonsTotal = $this->calculateAddonsTotal($addons);
-
-                // Obtener travel_fee del servicio
-                $travelFee = $this->resolveTravelFee(
-                    $zipcode,
-                    intval($service['performers_count'] ?? 1),
-                    floatval($service['travel_fee'] ?? 0)
-                );
+                $addonsTotalPrecomputed = $addonsTotal;
 
                 // Calcular recargo por niños adicionales
                 $maxKidsIncluded = intval($service['max_kids_included'] ?? 40);
@@ -598,21 +593,32 @@ class ReservationService
                 $extraChildrenTotal = $extraChildren * $extraChildFee;
 
                 $baseTotal = $servicePrice + $addonsTotal + $extraChildrenTotal;
-
-                // Calcular recargo por proximidad de fecha
-                $surchargeAmount = $this->calculateSurcharge($baseTotal, $eventDate);
-                $grandTotal = $baseTotal + $surchargeAmount + $travelFee;
             }
 
-            // Calcular duración total incluyendo addons.
-            // La duración base viene del type service; min_duration_hours queda como fallback legacy.
+            // Duración base: type service primero, min_duration_hours como fallback legacy.
             $baseDurationHours = floatval($service['duration_hours'] ?? $service['min_duration_hours'] ?? $price['min_duration_hours'] ?? 1);
-            if (($zipcode['zone_type'] ?? '') === 'minimum_2h') {
-                $baseDurationHours = max($baseDurationHours, 2.0);
-            }
-            $durationCalculation = $this->calculateTotalDuration($baseDurationHours, $addons);
-            $totalDurationHours = $durationCalculation['total_hours'];
-            $addonsDurationMinutes = $durationCalculation['addons_minutes'];
+
+            // Núcleo de precios compartido (B6). Replica al centavo el cálculo
+            // inline previo: el descuento del promo sigue aplicando solo a la base,
+            // el expedite fee es plano por fecha y expedition_fee = travel + expedite.
+            $pricing = $this->computeReservationPricing([
+                'base_price'          => floatval($servicePrice),
+                'addons'              => $addons,
+                'addons_total'        => $addonsTotalPrecomputed,
+                'extra_children_fee'  => $extraChildrenTotal,
+                'zipcode'             => $zipcode,
+                'performers_count'    => intval($service['performers_count'] ?? 1),
+                'service_travel_fee'  => floatval($service['travel_fee'] ?? 0),
+                'base_duration_hours' => $baseDurationHours,
+                'event_date'          => $eventDate,
+                'discount_amount'     => $discount,
+            ]);
+
+            $travelFee             = $pricing['travel_fee'];
+            $surchargeAmount       = $pricing['expedite_fee'];
+            $grandTotal            = $pricing['total_amount'];
+            $totalDurationHours    = $pricing['duration_hours'];
+            $addonsDurationMinutes = $pricing['addons_duration_minutes'];
 
             // Mapear datos a la estructura de la BD
             $reservationData = [
@@ -625,17 +631,17 @@ class ReservationService
                 'event_time' => $information['startTime'] ?? null,
                 'children_count' => $selectedKids,
                 'performers_count' => intval($service['performers_count'] ?? 1),
-                'duration_hours' => $totalDurationHours,
-                'price_type' => $this->determinePriceType($addons),
-                'base_price' => $servicePrice,
-                'addons_total' => $addonsTotal,
-                'expedition_fee' => $surchargeAmount + $travelFee, // Incluir travel fee en expedition_fee
-                'travel_fee' => $travelFee,
-                'expedite_fee' => $surchargeAmount,
-                'extra_children_fee' => $extraChildrenTotal,
-                'discount_amount' => $discount, // Descuento del promo code
+                'duration_hours' => $pricing['duration_hours'],
+                'price_type' => $pricing['price_type'],
+                'base_price' => $pricing['base_price'],
+                'addons_total' => $pricing['addons_total'],
+                'expedition_fee' => $pricing['expedition_fee'], // travel fee + expedite fee
+                'travel_fee' => $pricing['travel_fee'],
+                'expedite_fee' => $pricing['expedite_fee'],
+                'extra_children_fee' => $pricing['extra_children_fee'],
+                'discount_amount' => $pricing['discount_amount'], // Descuento del promo code
                 'promo_code' => $subtotal['promoCode'] ?? null, // Código promocional usado
-                'total_amount' => $grandTotal,
+                'total_amount' => $pricing['total_amount'],
                 'status' => 'new',
                 'is_invoiced' => false,
                 'is_paid' => false,
@@ -749,7 +755,13 @@ class ReservationService
      */
     public function update(string $id, array $data): bool
     {
-        $updated = $this->repository->update($id, $data);
+        // B6 mass-assignment guard: PUT /api/reservations/{id} can never set
+        // base_price, addons_total, extra_children_fee, travel_fee, expedite_fee,
+        // expedition_fee, discount_amount, promo_code, total_amount, amount_paid,
+        // balance_due, gratuity_amount, paid_at or any stripe_* column. Those are
+        // written exclusively by recalculateTotals(), handlePaymentCompleted(),
+        // applyPromoCode(), regeneratePaymentSession() and updateGratuity().
+        $updated = $this->repository->updateEditable($id, $data);
 
         if (!$updated) {
             throw new HTTPException(lang('Reservation.updateFailed'), Response::HTTP_BAD_REQUEST);
@@ -860,6 +872,487 @@ class ReservationService
             'discount_type'   => $validation['discount_type'],
             'discount_value'  => $validation['discount_value'],
         ];
+    }
+
+    /**
+     * B6 — Núcleo de precios PURO, compartido por create(), createFromForm() y
+     * recalculateTotals().
+     *
+     * No accede a la base de datos ni lee NADA del request: el llamador resuelve
+     * cada importe y lo pasa en el array de contexto. La fórmula que fija es
+     * EXACTAMENTE la que create()/createFromForm() producían antes de B6
+     * (criterio de aceptación 1 — "no cambió ni un centavo"):
+     *
+     *   total = base_price + addons_total + extra_children_fee
+     *         + travel_fee + expedite_fee - discount_amount
+     *
+     * Reglas que conserva del histórico:
+     *  - zona `minimum_2h` eleva la duración base a 2h;
+     *  - `resolveTravelFee()` aplica el override del zipcode por nº de performers
+     *    y cae al fee del service price;
+     *  - `calculateSurcharge()` decide el expedite fee SOLO por la fecha del
+     *    evento (plano por proximidad), nunca por el monto;
+     *  - `expedition_fee` = travel_fee + expedite_fee;
+     *  - el descuento del promo se resta solo al final (ya viene calculado
+     *    contra la base por el llamador).
+     *
+     * @param array $ctx {
+     *   base_price:          float   precio del servicio (service_prices.amount)
+     *   addons:              array   filas de add-on; cada una puede traer
+     *                                selectedPrice|base_price, quantity,
+     *                                estimated_duration_minutes, price_type
+     *   addons_total:        ?float  subtotal de add-ons ya calculado (ruta
+     *                                `subtotal` de createFromForm). Si es null se
+     *                                deriva de `addons` con calculateAddonsTotal()
+     *   extra_children_fee:  float   cargo por niños extra ya resuelto
+     *   zipcode:             array   zone_type, travel_fee_1_performer,
+     *                                travel_fee_2_performers
+     *   performers_count:    int
+     *   service_travel_fee:  float   fallback (service_prices.travel_fee)
+     *   base_duration_hours: float   duración base ya resuelta
+     *   event_date:          ?string Y-m-d — determina el expedite fee
+     *   discount_amount:     float   descuento del promo (aplica solo a la base)
+     * }
+     *
+     * @return array {
+     *   base_price, addons_total, extra_children_fee, travel_fee, expedite_fee,
+     *   expedition_fee, discount_amount, total_amount: float — todos round(_, 2);
+     *   duration_hours: float — sin redondear (conserva horas fraccionarias);
+     *   addons_duration_minutes: int;
+     *   price_type: 'standard'|'jukebox'
+     * }
+     */
+    private function computeReservationPricing(array $ctx): array
+    {
+        $addons  = is_array($ctx['addons'] ?? null) ? $ctx['addons'] : [];
+        $zipcode = is_array($ctx['zipcode'] ?? null) ? $ctx['zipcode'] : [];
+
+        $basePrice = (float) ($ctx['base_price'] ?? 0);
+
+        $addonsTotal = array_key_exists('addons_total', $ctx) && $ctx['addons_total'] !== null
+            ? (float) $ctx['addons_total']
+            : $this->calculateAddonsTotal($addons);
+
+        $extraChildrenFee = (float) ($ctx['extra_children_fee'] ?? 0);
+
+        $travelFee = $this->resolveTravelFee(
+            $zipcode,
+            (int) ($ctx['performers_count'] ?? 1),
+            (float) ($ctx['service_travel_fee'] ?? 0)
+        );
+
+        $preSurchargeSubtotal = $basePrice + $addonsTotal + $extraChildrenFee;
+        $expediteFee = $this->calculateSurcharge($preSurchargeSubtotal, $ctx['event_date'] ?? null);
+
+        $discountAmount = (float) ($ctx['discount_amount'] ?? 0);
+
+        $total = $preSurchargeSubtotal + $travelFee + $expediteFee - $discountAmount;
+
+        $baseDurationHours = (float) ($ctx['base_duration_hours'] ?? 1);
+        if (($zipcode['zone_type'] ?? '') === 'minimum_2h') {
+            $baseDurationHours = max($baseDurationHours, 2.0);
+        }
+        $durationCalculation = $this->calculateTotalDuration($baseDurationHours, $addons);
+
+        return [
+            'base_price'              => round($basePrice, 2),
+            'addons_total'            => round($addonsTotal, 2),
+            'extra_children_fee'      => round($extraChildrenFee, 2),
+            'travel_fee'              => round($travelFee, 2),
+            'expedite_fee'            => round($expediteFee, 2),
+            'expedition_fee'          => round($travelFee + $expediteFee, 2),
+            'discount_amount'         => round($discountAmount, 2),
+            'total_amount'            => round($total, 2),
+            'duration_hours'          => $durationCalculation['total_hours'],
+            'addons_duration_minutes' => $durationCalculation['addons_minutes'],
+            'price_type'              => $this->determinePriceType($addons),
+        ];
+    }
+
+    /**
+     * B6 — Recalcula TODOS los importes de una reserva releyendo servicio,
+     * add-ons, zipcode y promo code DESDE LA BASE DE DATOS. Ni un solo importe
+     * proviene del request (riesgo de seguridad principal del proyecto).
+     *
+     * Recompone base_price, addons_total, extra_children_fee, travel_fee,
+     * expedite_fee, expedition_fee, discount_amount, total_amount, duration_hours,
+     * price_type y balance_due, todo dentro de una transacción para que dos
+     * admins editando add-ons de la misma reserva no se pisen.
+     *
+     * Reglas:
+     *  - Respeta el promo code YA aplicado y su regla de exclusiones vigente
+     *    (commit 4169b7a: Custom Song, travel fee y expedite fee no reciben
+     *    descuento). NO incrementa el contador de uso del promo (criterio 3).
+     *  - El expedite fee NO se recalcula: se CONGELA con el valor que la reserva
+     *    ya tenía, para que no cambie de forma retroactiva por el mero paso del
+     *    tiempo (criterio 4). El total se recompone con ese valor congelado.
+     *  - Si la reserva está pagada:
+     *      · con `amount_paid` no nulo -> balance_due = max(0, nuevoTotal - amount_paid);
+     *      · con `amount_paid` NULL (reserva histórica) -> se toma como que se
+     *        pagó exactamente el `total_amount` vigente justo antes de este
+     *        primer recálculo y se hace snapshot de ese valor en `amount_paid`
+     *        para esta fila (criterio 7, sin backfill masivo).
+     *    Un delta negativo (hay que reembolsar) se guarda como balance_due = 0;
+     *    el reembolso se resuelve manualmente en Stripe.
+     *
+     * @throws HTTPException 404 si la reserva no existe.
+     */
+    public function recalculateTotals(string $reservationId): object
+    {
+        $reservation = $this->repository->getById($reservationId);
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+
+        $db = $this->db();
+        $db->transStart();
+
+        try {
+            // 1. Precio base + duración base desde service_prices / services.
+            $servicePriceRow = null;
+            if (!empty($reservation->service_price_id)) {
+                $servicePriceRow = $this->servicePriceRepository->getByIdWithService((string) $reservation->service_price_id);
+            }
+
+            $basePrice        = $servicePriceRow !== null
+                ? (float) ($servicePriceRow['amount'] ?? 0)
+                : (float) ($reservation->base_price ?? 0);
+            $serviceTravelFee = $servicePriceRow !== null ? (float) ($servicePriceRow['travel_fee'] ?? 0) : 0.0;
+            $extraChildFee    = $servicePriceRow !== null ? (float) ($servicePriceRow['extra_child_fee'] ?? 0) : 0.0;
+            $baseDurationHours = $servicePriceRow !== null
+                ? (float) ($servicePriceRow['service_duration_hours'] ?? $servicePriceRow['min_duration_hours'] ?? 1)
+                : (float) ($reservation->duration_hours ?? 1);
+
+            // 2. Zipcode (zona + overrides de travel fee).
+            $zipcodeCtx = [];
+            if (!empty($reservation->zipcode_id)) {
+                $zip = $this->zipCodeRepository->getById((string) $reservation->zipcode_id);
+                if ($zip) {
+                    $zipcodeCtx = [
+                        'zone_type'               => $zip->zone_type ?? null,
+                        'travel_fee_1_performer'  => $zip->travel_fee_1_performer ?? null,
+                        'travel_fee_2_performers' => $zip->travel_fee_2_performers ?? null,
+                    ];
+                }
+            }
+
+            // 3. Add-ons directamente de la tabla pivote (price_at_time congelado).
+            $addonRows = $this->reservationAddonRepository->getForRecalculation($reservationId);
+            $addonsForPricing = [];
+            foreach ($addonRows as $row) {
+                $r = (array) $row;
+                $isJukebox = stripos((string) ($r['type_name'] ?? ''), 'jukebox') !== false;
+                $addonsForPricing[] = [
+                    'base_price'                 => (float) ($r['price_at_time'] ?? 0),
+                    'quantity'                   => (int) ($r['quantity'] ?? 1),
+                    'estimated_duration_minutes' => (int) ($r['estimated_duration_minutes'] ?? 0),
+                    'price_type'                 => $isJukebox ? 'jukebox' : 'standard',
+                ];
+            }
+
+            // 4. Niños extra. El modelo público incluye 40; no hay columna por reserva.
+            $includedKids     = 40;
+            $childrenCount    = (int) ($reservation->children_count ?? 0);
+            $extraChildren    = max(0, $childrenCount - $includedKids);
+            $extraChildrenFee = round($extraChildren * $extraChildFee, 2);
+
+            // 5. Performers.
+            $performers = (int) ($reservation->performers_count ?? 1);
+            if ($performers < 1) {
+                $performers = 1;
+            }
+
+            $baseCtx = [
+                'base_price'          => $basePrice,
+                'addons'              => $addonsForPricing,
+                'extra_children_fee'  => $extraChildrenFee,
+                'zipcode'             => $zipcodeCtx,
+                'performers_count'    => $performers,
+                'service_travel_fee'  => $serviceTravelFee,
+                'base_duration_hours' => $baseDurationHours,
+                'event_date'          => $reservation->event_date ?? null,
+            ];
+
+            // 6. Pricing provisional SIN descuento (para dimensionar el promo contra
+            //    la base fresca).
+            $provisional = $this->computeReservationPricing($baseCtx + ['discount_amount' => 0.0]);
+
+            // 7. Re-tarificar el promo code ya aplicado (sin tocar su contador).
+            $discountAmount = $this->repriceExistingPromo($reservation, $addonRows, $provisional);
+
+            // 8. Pricing final con el descuento aplicado.
+            $pricing = $this->computeReservationPricing($baseCtx + ['discount_amount' => $discountAmount]);
+
+            // Criterio 4: el expedite fee NO cambia retroactivamente "por el mero
+            // paso del tiempo". computeReservationPricing() -> calculateSurcharge()
+            // lo recalcula contra la fecha de hoy, así que aquí lo CONGELAMOS con el
+            // valor que la reserva ya tenía y recomponemos el total a mano:
+            //   total = total_recalculado - expedite_recalculado + expedite_congelado
+            $frozenExpediteFee    = round((float) ($reservation->expedite_fee ?? 0), 2);
+            $recalculatedExpedite = (float) $pricing['expedite_fee'];
+
+            // 9. Balance.
+            $newTotal   = round((float) $pricing['total_amount'] - $recalculatedExpedite + $frozenExpediteFee, 2);
+            $isPaid     = (bool) ($reservation->is_paid ?? false);
+            $rawPaid    = $reservation->amount_paid ?? null;
+            $amountPaid = ($rawPaid === null || $rawPaid === '') ? null : (float) $rawPaid;
+
+            $update = [
+                'base_price'         => $pricing['base_price'],
+                'addons_total'       => $pricing['addons_total'],
+                'extra_children_fee' => $pricing['extra_children_fee'],
+                'travel_fee'         => $pricing['travel_fee'],
+                'expedite_fee'       => $frozenExpediteFee,
+                'expedition_fee'     => round((float) $pricing['travel_fee'] + $frozenExpediteFee, 2),
+                'discount_amount'    => $pricing['discount_amount'],
+                'total_amount'       => $newTotal,
+                'duration_hours'     => $pricing['duration_hours'],
+                'price_type'         => $pricing['price_type'],
+            ];
+
+            // Stripe cobra total_amount y gratuity_amount como dos line items
+            // separados: lo realmente cobrado es total_amount + gratuity_amount y
+            // el balance debe compararse contra ese monto adeudado TOTAL, nunca
+            // contra total_amount solo (si no, la propina aparece como reembolso
+            // fantasma / absorbe cargos nuevos).
+            $gratuityAmount = (float) ($reservation->gratuity_amount ?? 0);
+
+            if ($amountPaid === null && $isPaid) {
+                // Snapshot de reserva histórica (criterio 7): se pagó exactamente
+                // el total vigente + la propina justo antes de este recálculo.
+                $amountPaid = round((float) ($reservation->total_amount ?? 0) + $gratuityAmount, 2);
+                $update['amount_paid'] = $amountPaid;
+            }
+
+            $owed = $newTotal + $gratuityAmount;
+            $update['balance_due'] = $amountPaid !== null
+                ? round(max(0, $owed - $amountPaid), 2)
+                : 0.00;
+
+            $updated = $this->repository->update($reservationId, $update);
+
+            $db->transComplete();
+
+            if ($db->transStatus() === false) {
+                throw new HTTPException('Failed to recalculate reservation totals', Response::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            $result = $updated ?: $this->repository->getById($reservationId);
+
+            // Timeline (B3): deja constancia del recálculo y el delta de total.
+            $this->recordRecalculationEvent($reservation, $result);
+
+            return $result;
+        } catch (\Throwable $e) {
+            // Mismo patrón que createFromForm(): con transStart/transComplete no
+            // hace falta rollback manual, pero lo forzamos para garantizar que una
+            // excepción entre transStart y transComplete no deje la transacción
+            // abierta.
+            $db->transRollback();
+
+            if ($e instanceof HTTPException) {
+                throw $e;
+            }
+
+            throw new HTTPException('Failed to recalculate reservation totals: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * B6 — costura para tests: permite doblar la conexión de BD por Reflection
+     * (recalculateTotals envuelve su trabajo en una transacción).
+     */
+    protected function db()
+    {
+        return \Config\Database::connect();
+    }
+
+    /**
+     * Re-tarifica el promo code que la reserva ya tiene aplicado usando la base
+     * recién recalculada. Mismas exclusiones que applyPromoCode() (commit
+     * 4169b7a). NO incrementa el contador de uso. Devuelve 0.0 si no hay promo
+     * o el código ya no existe.
+     */
+    private function repriceExistingPromo(object $reservation, array $addonRows, array $provisional): float
+    {
+        $promoCode = $reservation->promo_code ?? null;
+        if (!$promoCode) {
+            return 0.0;
+        }
+
+        $promo = $this->promoCodeRepository->findByCode((string) $promoCode);
+        if (!$promo) {
+            return 0.0;
+        }
+
+        // "Custom Song" nunca participa del descuento.
+        $customSongTotal = 0.0;
+        foreach ($addonRows as $row) {
+            $r = (array) $row;
+            if (($r['name'] ?? null) === 'Custom Song') {
+                $customSongTotal += (float) ($r['price_at_time'] ?? 0) * (int) ($r['quantity'] ?? 1);
+            }
+        }
+
+        $discountEligibleAddons = max(0, $provisional['addons_total'] - $customSongTotal);
+        $discountBase = $provisional['base_price'] + $discountEligibleAddons + $provisional['extra_children_fee'];
+        if (!empty($promo['applies_to_travel_fee'])) {
+            $discountBase += $provisional['travel_fee'];
+        }
+
+        if (($promo['discount_type'] ?? '') === 'percentage') {
+            $discount = $discountBase * (float) ($promo['discount_value'] ?? 0) / 100;
+        } else {
+            $discount = min((float) ($promo['discount_value'] ?? 0), $discountBase);
+        }
+
+        return round(max(0, $discount), 2);
+    }
+
+    /**
+     * B6 — Registra en el timeline (reservation_email_history) el evento de
+     * recálculo, con event_type = 'update', template_name = 'Reservation Updated'
+     * y el delta de total. Nunca propaga: un fallo del historial no debe romper
+     * un recálculo.
+     */
+    private function recordRecalculationEvent(object $before, object $after): void
+    {
+        try {
+            $oldTotal = (float) ($before->total_amount ?? 0);
+            $newTotal = (float) ($after->total_amount ?? 0);
+            $delta    = round($newTotal - $oldTotal, 2);
+            $balance  = (float) ($after->balance_due ?? 0);
+
+            $deltaLabel = ($delta >= 0 ? '+$' : '-$') . number_format(abs($delta), 2);
+
+            $summary = '<div style="font-family: Arial, sans-serif; font-size: 14px; color: #1F2937;">'
+                . '<p style="margin: 0 0 8px;"><strong>Reservation totals recalculated.</strong></p>'
+                . '<p style="margin: 0 0 4px;">Previous total: $' . esc(number_format($oldTotal, 2)) . '</p>'
+                . '<p style="margin: 0 0 4px;">New total: $' . esc(number_format($newTotal, 2)) . '</p>'
+                . '<p style="margin: 0 0 4px;">Change: ' . esc($deltaLabel) . '</p>'
+                . '<p style="margin: 0;">Balance due: $' . esc(number_format(max(0, $balance), 2)) . '</p>'
+                . '</div>';
+
+            $this->recordEmailHistory([
+                'reservation_id'  => (string) ($after->id ?? $before->id ?? ''),
+                'template_id'     => null,
+                'template_name'   => 'Reservation Updated',
+                'event_type'      => 'update',
+                'sent_by'         => $this->getAuthenticatedUserName(),
+                'recipient_email' => (string) ($after->email ?? ''),
+                'cc_emails'       => null,
+                'email_subject'   => 'Reservation totals recalculated',
+                'email_body'      => $summary,
+                'status'          => 'Sent',
+                'sent_at'         => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to record reservation recalculation event: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * B6 — Envía al cliente el email `reservation_updated` con el desglose
+     * actualizado. Envío MANUAL (acción explícita del admin), nunca automático.
+     * Registra el envío en el historial (criterio 10).
+     *
+     * @throws HTTPException 404 si la reserva no existe; 400 si no hay email;
+     *                       500 si el envío falla.
+     */
+    public function sendReservationUpdatedEmail(string $reservationId): array
+    {
+        $reservation = $this->repository->getById($reservationId);
+        if (!$reservation) {
+            throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
+        }
+        if (empty($reservation->email)) {
+            throw new HTTPException('Customer email is required', Response::HTTP_BAD_REQUEST);
+        }
+
+        $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
+
+        $money = static fn ($v): string => number_format((float) ($v ?? 0), 2);
+
+        $balanceDue   = round((float) ($reservation->balance_due ?? 0), 2);
+        $amountPaid   = $reservation->amount_paid;
+        $totalAmount  = (float) ($reservation->total_amount ?? 0);
+        // Stripe cobra total y propina como line items separados: el monto
+        // realmente adeudado es total_amount + gratuity_amount. Comparar contra
+        // total_amount solo haría aparecer la propina como reembolso fantasma.
+        $gratuity     = (float) ($reservation->gratuity_amount ?? 0);
+        $overpaid     = ($amountPaid !== null && $amountPaid !== '')
+            ? round(max(0, (float) $amountPaid - ($totalAmount + $gratuity)), 2)
+            : 0.0;
+
+        $balanceRow = $balanceDue > 0.009
+            ? '<tr><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#991B1B;background-color:#FEE2E2;width:40%;border-bottom:1px solid #e5e7eb;">Balance Due</td>'
+                . '<td style="padding:12px 16px;font-size:14px;font-weight:700;color:#991B1B;background-color:#FEE2E2;border-bottom:1px solid #e5e7eb;">$' . esc($money($balanceDue)) . '</td></tr>'
+            : '';
+        $refundRow = $overpaid > 0.009
+            ? '<tr><td style="padding:12px 16px;font-size:14px;font-weight:700;color:#065F46;background-color:#D1FAE5;width:40%;border-bottom:1px solid #e5e7eb;">Refund Due</td>'
+                . '<td style="padding:12px 16px;font-size:14px;font-weight:700;color:#065F46;background-color:#D1FAE5;border-bottom:1px solid #e5e7eb;">$' . esc($money($overpaid)) . '</td></tr>'
+            : '';
+
+        $discountRow = ((float) ($reservation->discount_amount ?? 0)) > 0.009
+            ? '<tr><td style="padding:12px 16px;font-size:14px;font-weight:600;color:#6b7280;background-color:#f9fafb;width:40%;border-bottom:1px solid #e5e7eb;">Discount</td>'
+                . '<td style="padding:12px 16px;font-size:14px;font-weight:700;color:#059669;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">-$' . esc($money($reservation->discount_amount)) . '</td></tr>'
+            : '';
+
+        // La propina se cobra como line item separado en Stripe y suma a
+        // "Amount Paid"; sin esta fila el desglose no cuadra contra ese total.
+        $gratuityRow = $gratuity > 0.009
+            ? '<tr><td style="padding:12px 16px;font-size:14px;font-weight:600;color:#6b7280;background-color:#f9fafb;width:40%;border-bottom:1px solid #e5e7eb;">Gratuity / Tip</td>'
+                . '<td style="padding:12px 16px;font-size:14px;color:#1F2937;background-color:#f9fafb;border-bottom:1px solid #e5e7eb;">$' . esc($money($gratuity)) . '</td></tr>'
+            : '';
+
+        $templateVars = [
+            'customer_name'      => strtok(trim($reservation->full_name ?? ''), ' ') ?: 'Customer',
+            'reservation_id'     => esc((string) $reservation->id),
+            'service_name'       => esc((string) ($reservation->service_name ?? '')),
+            'event_date'         => esc($eventDate),
+            'base_price'         => esc($money($reservation->base_price)),
+            'addons_total'       => esc($money($reservation->addons_total)),
+            'extra_children_fee' => esc($money($reservation->extra_children_fee)),
+            'travel_fee'         => esc($money($reservation->travel_fee)),
+            'expedite_fee'       => esc($money($reservation->expedite_fee)),
+            'discount_amount'    => esc($money($reservation->discount_amount)),
+            'total_amount'       => esc($money($reservation->total_amount)),
+            'amount_paid'        => esc($money($reservation->amount_paid)),
+            'balance_due'        => esc($money($balanceDue)),
+            'discount_row'       => $discountRow,
+            'gratuity_row'       => $gratuityRow,
+            'balance_due_row'    => $balanceRow,
+            'refund_row'         => $refundRow,
+            '_reservation'       => $reservation,
+        ];
+
+        $rendered = ['subject' => '', 'body' => ''];
+        try {
+            $rendered = $this->emailTemplateService->render('reservation_updated', $templateVars);
+            $this->emailService->sendEmail($reservation->email, $rendered['subject'], $rendered['body']);
+        } catch (\Throwable $e) {
+            log_message('error', 'Failed to send reservation updated email: ' . $e->getMessage());
+            $this->recordSystemEmail(
+                $reservationId,
+                'Reservation Updated',
+                (string) $reservation->email,
+                (string) ($rendered['subject'] ?? 'Your reservation has been updated'),
+                (string) ($rendered['body'] ?? ''),
+                'Failed'
+            );
+            throw new HTTPException('Failed to send update email: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        $this->recordSystemEmail(
+            $reservationId,
+            'Reservation Updated',
+            (string) $reservation->email,
+            (string) ($rendered['subject'] ?? 'Your reservation has been updated'),
+            (string) ($rendered['body'] ?? ''),
+            'Sent'
+        );
+
+        return ['sent' => 1, 'email' => $reservation->email];
     }
 
     /**
@@ -1677,10 +2170,22 @@ class ReservationService
             return true;
         }
 
+        // B6: snapshot what was actually charged. Stripe collects
+        // total_amount + gratuity_amount, so that is `amount_paid`. With that
+        // snapshot a later recalculation (recalculateTotals) can size the
+        // balance_due exactly (criterion 7). balance_due is 0 here because
+        // amount_paid always covers total_amount at this point (criterion 6).
+        $chargedAmount = round(
+            (float) ($reservation->total_amount ?? 0) + (float) ($reservation->gratuity_amount ?? 0),
+            2
+        );
+
         $result = $this->repository->update($reservationId, [
             'is_paid'                   => true,
             'stripe_payment_intent_id'  => $paymentIntentId,
             'paid_at'                   => date('Y-m-d H:i:s'),
+            'amount_paid'               => $chargedAmount,
+            'balance_due'               => round(max(0, (float) ($reservation->total_amount ?? 0) - $chargedAmount), 2),
         ]);
 
         if ($result !== null) {

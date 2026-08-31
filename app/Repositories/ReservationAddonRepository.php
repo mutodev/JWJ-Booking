@@ -61,6 +61,33 @@ class ReservationAddonRepository
     }
 
     /**
+     * B6 — filas de add-on de una reserva con los datos de catálogo que el
+     * recálculo de precios necesita: precio congelado (`price_at_time`),
+     * cantidad, duración estimada y el nombre del tipo (para decidir si la
+     * reserva es de tipo `jukebox`). Todo sale de la base de datos: ni un
+     * importe proviene del request.
+     */
+    public function getForRecalculation(string $reservationId): array
+    {
+        return $this->model
+            ->select([
+                'reservation_addons.id',
+                'reservation_addons.addon_id',
+                'reservation_addons.quantity',
+                'reservation_addons.suboption',
+                'reservation_addons.price_at_time',
+                'addons.name',
+                'addons.base_price',
+                'addons.estimated_duration_minutes',
+                'type_addons.name as type_name',
+            ])
+            ->join('addons', 'addons.id = reservation_addons.addon_id', 'left')
+            ->join('type_addons', 'type_addons.id = addons.type_addon_id', 'left')
+            ->where('reservation_addons.reservation_id', $reservationId)
+            ->findAll();
+    }
+
+    /**
      * Crear un registro. Con UUID generado en beforeInsert.
      * Retorna el ID insertado (UUID) o false si falla.
      */

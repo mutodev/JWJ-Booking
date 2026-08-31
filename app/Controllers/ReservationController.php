@@ -96,6 +96,43 @@ class ReservationController extends ResourceController
         }
     }
 
+    /**
+     * B6 — POST /api/reservations/{id}/recalculate
+     * Fuerza el recálculo de todos los importes (servicio + add-ons + zipcode +
+     * promo, todo releído de la BD) y devuelve la reserva con el desglose nuevo.
+     */
+    public function recalculate($id)
+    {
+        try {
+            $reservation = $this->service->recalculateTotals($id);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Reservation totals recalculated', $reservation));
+        } catch (\Throwable $th) {
+            $statusCode = ($th->getCode() >= 400 && $th->getCode() < 600) ? $th->getCode() : 500;
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    /**
+     * B6 — POST /api/reservations/{id}/send-update-email
+     * Envía al cliente la plantilla `reservation_updated` con el desglose actual.
+     */
+    public function sendUpdateEmail($id)
+    {
+        try {
+            $result = $this->service->sendReservationUpdatedEmail($id);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Update email sent successfully', $result));
+        } catch (\Throwable $th) {
+            $statusCode = ($th->getCode() >= 400 && $th->getCode() < 600) ? $th->getCode() : 500;
+            return $this->response->setStatusCode($statusCode)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
     public function bulkDelete()
     {
         try {

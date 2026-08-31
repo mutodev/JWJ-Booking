@@ -79,13 +79,70 @@ class ReservationRepository
     }
 
     /**
-     * Actualizar reserva
+     * Actualizar reserva (uso interno de confianza).
+     *
+     * Los servicios que escriben importes, estado de pago o balances
+     * (recalculateTotals, handlePaymentCompleted, applyPromoCode,
+     * regeneratePaymentSession, updateGratuity) llaman a este método
+     * directamente. NUNCA debe recibir input crudo del request: para eso está
+     * updateEditable().
      */
     public function update(string $id, array $data)
     {
         $this->model->update($id, $data);
         return $this->getById($id);
     }
+
+    /**
+     * B6 mass-assignment guard for PUT /api/reservations/{id}.
+     *
+     * The generic admin edit endpoint routes here. Only non-financial,
+     * admin-editable columns survive the whitelist; every price / balance /
+     * payment-identifier column (base_price, addons_total, extra_children_fee,
+     * travel_fee, expedite_fee, expedition_fee, discount_amount, promo_code,
+     * total_amount, amount_paid, balance_due, gratuity_amount, paid_at,
+     * stripe_*, payment_url) is written exclusively by the dedicated service
+     * methods and can never be forged from the request body.
+     */
+    public function updateEditable(string $id, array $data)
+    {
+        $clean = array_intersect_key($data, array_flip(self::EDITABLE_FIELDS));
+        if (!empty($clean)) {
+            $this->model->update($id, $clean);
+        }
+        return $this->getById($id);
+    }
+
+    /**
+     * Columns an authenticated admin may set through PUT /api/reservations/{id}.
+     * is_paid / is_invoiced / status stay editable because the admin edit form
+     * legitimately toggles them; the financial columns are deliberately absent.
+     */
+    private const EDITABLE_FIELDS = [
+        'service_price_id',
+        'zipcode_id',
+        'event_address',
+        'event_date',
+        'event_time',
+        'entertainment_start_time',
+        'arrival_parking_instructions',
+        'children_count',
+        'children_age_range',
+        'birthday_child_name',
+        'birthday_child_age',
+        'song_requests',
+        'sing_happy_birthday',
+        'performers_count',
+        'duration_hours',
+        'status',
+        'is_invoiced',
+        'is_paid',
+        'customer_confirmed',
+        'customer_notes',
+        'internal_notes',
+        'event_type',
+        'description',
+    ];
 
     /**
      * Eliminar (soft delete)

@@ -123,6 +123,122 @@
               </div>
             </div>
 
+            <!-- Segment: Service & Pricing (B6) -->
+            <div class="segment mb-3">
+              <h6 class="segment-title">Service &amp; Pricing</h6>
+              <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                  <label class="form-label">Service</label>
+                  <select
+                    v-model="editData.service_price_id"
+                    class="form-select"
+                    :disabled="loadingServices"
+                  >
+                    <option v-if="!servicePrices.length" :value="editData.service_price_id">
+                      {{ editData.service_name || 'Current service' }}
+                    </option>
+                    <option
+                      v-for="sp in servicePrices"
+                      :key="sp.id"
+                      :value="sp.id"
+                    >
+                      {{ sp.name }} — {{ sp.performers_count }} performer(s) — {{ formatCurrency(sp.amount) }}
+                    </option>
+                  </select>
+                  <small v-if="loadingServices" class="text-muted">Loading services…</small>
+                </div>
+                <div class="col-md-4">
+                  <button
+                    type="button"
+                    class="btn btn-outline-primary w-100"
+                    :disabled="recalculating"
+                    @click="recalcTotals"
+                  >
+                    <span v-if="recalculating" class="spinner-border spinner-border-sm me-1"></span>
+                    <i v-else class="bi bi-arrow-repeat me-1"></i>
+                    Recalculate totals
+                  </button>
+                </div>
+              </div>
+
+              <div class="row g-3 mt-1">
+                <div class="col-md-3">
+                  <label class="form-label">Base Service</label>
+                  <input :value="formatCurrency(editData.base_price)" type="text" class="form-control" readonly />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Add-ons</label>
+                  <input :value="formatCurrency(editData.addons_total)" type="text" class="form-control" readonly />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Additional Children</label>
+                  <input :value="formatCurrency(editData.extra_children_fee)" type="text" class="form-control" readonly />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Travel Fee</label>
+                  <input :value="formatCurrency(editData.travel_fee)" type="text" class="form-control" readonly />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Expedite Fee</label>
+                  <input :value="formatCurrency(editData.expedite_fee)" type="text" class="form-control" readonly />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Discount</label>
+                  <input
+                    :value="editData.discount_amount > 0 ? '-' + formatCurrency(editData.discount_amount) : '$0.00'"
+                    type="text"
+                    class="form-control text-success fw-bold"
+                    readonly
+                  />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Total Amount</label>
+                  <input :value="formatCurrency(editData.total_amount)" type="text" class="form-control fw-bold" readonly />
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Amount Paid</label>
+                  <input :value="editData.amount_paid == null ? 'Not recorded' : formatCurrency(editData.amount_paid)" type="text" class="form-control" readonly />
+                </div>
+              </div>
+
+              <div v-if="balanceDue > 0" class="alert alert-warning d-flex justify-content-between align-items-center mt-3 mb-0">
+                <span><i class="bi bi-exclamation-triangle me-2"></i><strong>Balance due: {{ formatCurrency(balanceDue) }}</strong> — the customer owes the difference after the recalculation.</span>
+                <button type="button" class="btn btn-sm btn-warning" :disabled="generatingLink" @click="confirmAction = 'link'">
+                  <span v-if="generatingLink" class="spinner-border spinner-border-sm me-1"></span>
+                  <i v-else class="bi bi-link-45deg me-1"></i>
+                  Generate payment link for difference
+                </button>
+              </div>
+
+              <div v-if="refundDue > 0" class="alert alert-info mt-3 mb-0">
+                <i class="bi bi-cash-coin me-2"></i>
+                <strong>Refund required: {{ formatCurrency(refundDue) }}</strong> — the new total is lower than what was paid. Process the refund manually in Stripe.
+              </div>
+
+              <div v-if="paymentLinkUrl" class="alert alert-success mt-3 mb-0">
+                <i class="bi bi-check-circle me-2"></i>
+                Payment link created and emailed to the customer.
+                <div class="input-group input-group-sm mt-2">
+                  <input type="text" class="form-control" :value="paymentLinkUrl" readonly />
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary" :disabled="sendingEmail" @click="confirmAction = 'email'">
+                  <span v-if="sendingEmail" class="spinner-border spinner-border-sm me-1"></span>
+                  <i v-else class="bi bi-envelope me-1"></i>
+                  Send update email
+                </button>
+              </div>
+
+              <div v-if="actionMessage" class="mt-2 small text-success">
+                <i class="bi bi-check-circle me-1"></i>{{ actionMessage }}
+              </div>
+              <div v-if="actionError" class="mt-2 small text-danger">
+                <i class="bi bi-x-circle me-1"></i>{{ actionError }}
+              </div>
+            </div>
+
             <!-- Segment: Status & Payments -->
             <div class="segment mb-3">
               <h6 class="segment-title">Status & Payments</h6>
@@ -328,32 +444,66 @@
         </div>
 
         <!-- Footer -->
-        <div class="modal-footer">
-          <button type="button" class="btn btn-light" @click="closeModal">
-            <i class="bi bi-x-circle"></i> Cancel
-          </button>
-          <button type="button" class="btn btn-warning" @click="saveReservation" :disabled="saving">
-            <i class="bi bi-check-circle"></i>
-            {{ saving ? 'Saving...' : 'Save Changes' }}
-          </button>
+        <div class="modal-footer flex-column align-items-stretch">
+          <div v-if="saveError" class="alert alert-danger py-2 small mb-2">
+            <i class="bi bi-x-circle me-1"></i>{{ saveError }}
+          </div>
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-light me-2" @click="closeModal">
+              <i class="bi bi-x-circle"></i> Cancel
+            </button>
+            <button type="button" class="btn btn-warning" @click="saveReservation" :disabled="saving">
+              <i class="bi bi-check-circle"></i>
+              {{ saving ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
     <div class="modal-backdrop fade show"></div>
+
+    <ConfirmModal
+      :show="confirmAction === 'link'"
+      title="Generate payment link"
+      :message="`This will create a Stripe payment link for <strong>${formatCurrency(balanceDue)}</strong> and email it to the customer. Only one pending link per reservation is allowed.`"
+      confirm-label="Generate link"
+      @cancel="confirmAction = null"
+      @confirm="doGenerateLink"
+    />
+    <ConfirmModal
+      :show="confirmAction === 'email'"
+      title="Send update email"
+      message="This will email the customer the updated reservation breakdown (including any balance due)."
+      confirm-label="Send email"
+      @cancel="confirmAction = null"
+      @confirm="doSendEmail"
+    />
   </div>
 </template>
 
 <script setup>
-import { watch, ref } from "vue";
+import { watch, ref, computed } from "vue";
 import api from "@/services/axios";
+import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
 
 const editData = ref({});
 const saving = ref(false);
+const saveError = ref("");
 const statusChangedByPayment = ref(false);
 const promoCodeInput = ref('');
 const applyingPromo = ref(false);
 const promoMessage = ref('');
 const promoSuccess = ref(false);
+
+const servicePrices = ref([]);
+const loadingServices = ref(false);
+const recalculating = ref(false);
+const generatingLink = ref(false);
+const sendingEmail = ref(false);
+const actionMessage = ref('');
+const actionError = ref('');
+const confirmAction = ref(null);
+const paymentLinkUrl = ref('');
 
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
@@ -364,6 +514,18 @@ const props = defineProps({
   },
 });
 
+const num = (v) => (v == null || v === '' ? 0 : parseFloat(v) || 0);
+
+const balanceDue = computed(() => Math.round(num(editData.value.balance_due) * 100) / 100);
+
+const refundDue = computed(() => {
+  if (editData.value.amount_paid == null || editData.value.amount_paid === '') return 0;
+  // Stripe cobra total y propina como line items separados: el monto adeudado
+  // real es total_amount + gratuity_amount.
+  const diff = num(editData.value.amount_paid) - (num(editData.value.total_amount) + num(editData.value.gratuity_amount));
+  return diff > 0.009 ? Math.round(diff * 100) / 100 : 0;
+});
+
 watch(
   () => props.data,
   (newData) => {
@@ -371,10 +533,17 @@ watch(
     statusChangedByPayment.value = false;
     promoCodeInput.value = '';
     promoMessage.value = '';
+    actionMessage.value = '';
+    actionError.value = '';
+    saveError.value = '';
+    paymentLinkUrl.value = '';
+    servicePrices.value = [];
+    confirmAction.value = null;
     if (editData.value.event_date && typeof editData.value.event_date === 'object') {
       const date = new Date(editData.value.event_date);
       editData.value.event_date = date.toISOString().split('T')[0];
     }
+    loadServicePrices();
   },
   { deep: true, immediate: true }
 );
@@ -395,8 +564,95 @@ const handlePaymentChange = () => {
   }
 };
 
+const loadServicePrices = async () => {
+  const zipcodeId = editData.value.zipcode_id;
+  if (!zipcodeId) return;
+  loadingServices.value = true;
+  try {
+    const res = await api.get(`/home/services/${zipcodeId}`);
+    const list = res.data?.data ?? res.data ?? [];
+    servicePrices.value = Array.isArray(list) ? list : [];
+  } catch {
+    servicePrices.value = [];
+  } finally {
+    loadingServices.value = false;
+  }
+};
+
+const applyRecalcResult = (reservation) => {
+  if (!reservation || typeof reservation !== 'object') return;
+  const keep = ['base_price', 'addons_total', 'extra_children_fee', 'travel_fee',
+    'expedite_fee', 'expedition_fee', 'discount_amount', 'total_amount', 'amount_paid',
+    'balance_due', 'duration_hours', 'price_type', 'promo_code', 'performers_count',
+    'service_price_id', 'service_name'];
+  keep.forEach((k) => {
+    if (k in reservation) editData.value[k] = reservation[k];
+  });
+};
+
+const recalcTotals = async () => {
+  actionMessage.value = '';
+  actionError.value = '';
+  recalculating.value = true;
+  try {
+    // Persist a service change first so the recalculation reads it from the DB.
+    if (editData.value.service_price_id && editData.value.service_price_id !== props.data.service_price_id) {
+      await api.put(`/reservations/${editData.value.id}`, {
+        service_price_id: editData.value.service_price_id,
+      });
+    }
+    const res = await api.post(`/reservations/${editData.value.id}/recalculate`);
+    applyRecalcResult(res.data?.data ?? res.data);
+    actionMessage.value = 'Totals recalculated.';
+  } catch (err) {
+    actionError.value = err?.response?.data?.message ?? 'Could not recalculate totals.';
+  } finally {
+    recalculating.value = false;
+  }
+};
+
+const doGenerateLink = async () => {
+  confirmAction.value = null;
+  actionMessage.value = '';
+  actionError.value = '';
+  generatingLink.value = true;
+  try {
+    const payload = {
+      reservation_id: editData.value.id,
+      amount: balanceDue.value,
+      description: `Balance due for reservation ${editData.value.id}`,
+      customer_email: editData.value.email || editData.value.customer_email,
+      customer_name: editData.value.customer_name || editData.value.full_name || '',
+    };
+    const res = await api.post('/payment-links', payload);
+    const link = res.data?.data ?? res.data;
+    paymentLinkUrl.value = link?.payment_url ?? '';
+    actionMessage.value = 'Payment link generated.';
+  } catch (err) {
+    actionError.value = err?.response?.data?.message ?? 'Could not generate the payment link.';
+  } finally {
+    generatingLink.value = false;
+  }
+};
+
+const doSendEmail = async () => {
+  confirmAction.value = null;
+  actionMessage.value = '';
+  actionError.value = '';
+  sendingEmail.value = true;
+  try {
+    await api.post(`/reservations/${editData.value.id}/send-update-email`);
+    actionMessage.value = 'Update email sent to the customer.';
+  } catch (err) {
+    actionError.value = err?.response?.data?.message ?? 'Could not send the update email.';
+  } finally {
+    sendingEmail.value = false;
+  }
+};
+
 const saveReservation = async () => {
   saving.value = true;
+  saveError.value = '';
   try {
     const dataToSave = {
       event_address: editData.value.event_address,
@@ -419,12 +675,16 @@ const saveReservation = async () => {
       internal_notes: editData.value.internal_notes,
     };
 
+    if (editData.value.service_price_id && editData.value.service_price_id !== props.data.service_price_id) {
+      dataToSave.service_price_id = editData.value.service_price_id;
+    }
+
     await api.put(`/reservations/${editData.value.id}`, dataToSave);
     emit("saved");
     emit("close");
   } catch (error) {
     console.error("Error saving reservation:", error);
-    alert("Error saving reservation. Please try again.");
+    saveError.value = "Error saving reservation. Please try again.";
   } finally {
     saving.value = false;
   }
@@ -481,4 +741,3 @@ const removePromoCode = async () => {
   }
 };
 </script>
-
