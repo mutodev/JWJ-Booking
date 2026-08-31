@@ -5,6 +5,7 @@ use App\Controllers\ChildrenAgeRangeController;
 use App\Controllers\CityController;
 use App\Controllers\CountyController;
 use App\Controllers\CustomerController;
+use App\Controllers\CustomPaymentLinkController;
 use App\Controllers\DashboardController;
 use App\Controllers\DurationController;
 use App\Controllers\HomeController;
@@ -254,6 +255,16 @@ $routes->group('api', function ($routes) {
         $routes->post('/', [PromoCodeController::class, 'create']);
         $routes->put('(:segment)', [PromoCodeController::class, 'update']);
         $routes->delete('(:segment)', [PromoCodeController::class, 'delete']);
+    });
+
+    // Custom Payment Links (Admin) — B5
+    $routes->group('payment-links', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [CustomPaymentLinkController::class, 'index']);
+        $routes->post('/', [CustomPaymentLinkController::class, 'create']);
+        $routes->get('(:segment)', [CustomPaymentLinkController::class, 'show']);
+        $routes->post('(:segment)/send-email', [CustomPaymentLinkController::class, 'sendEmail']);
+        $routes->post('(:segment)/cancel', [CustomPaymentLinkController::class, 'cancel']);
+        $routes->delete('(:segment)', [CustomPaymentLinkController::class, 'delete']);
     });
 
     // Abandoned Carts / Reservation Drafts (Admin)

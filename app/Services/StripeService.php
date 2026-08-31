@@ -29,6 +29,12 @@ class StripeService
      * @param string $customerEmail Customer email
      * @param string $reservationId Reservation UUID
      * @param string $description Line item description
+     * @param float $gratuity Optional gratuity line item
+     * @param array $metadata Extra Stripe metadata merged on top of the defaults.
+     *                        Used by B5 custom payment links
+     *                        (type = 'custom_payment_link', payment_link_id).
+     *                        Added at the end with a default to keep the existing
+     *                        signature backwards compatible.
      * @return Session
      */
     public function createCheckoutSession(
@@ -36,7 +42,8 @@ class StripeService
         string $customerEmail,
         string $reservationId,
         string $description = 'Event Reservation',
-        float $gratuity = 0.0
+        float $gratuity = 0.0,
+        array $metadata = []
     ): Session {
         $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:8080';
 
@@ -60,14 +67,26 @@ class StripeService
             ];
         }
 
+        // Default metadata is unchanged for reservation payments; B5 links pass
+        // an empty $reservationId and supply their own metadata instead.
+        $meta = [];
+        if ($reservationId !== '') {
+            $meta['reservation_id'] = $reservationId;
+        }
+        $meta = array_merge($meta, $metadata);
+
+        $cancelUrl = $reservationId !== ''
+            ? rtrim($frontendUrl, '/') . '/payment-cancel?reservation_id=' . $reservationId
+            : rtrim($frontendUrl, '/') . '/payment-cancel';
+
         $session = Session::create([
             'payment_method_types' => ['card'],
             'mode'           => 'payment',
             'customer_email' => $customerEmail,
             'line_items'     => $lineItems,
-            'metadata'       => ['reservation_id' => $reservationId],
+            'metadata'       => $meta,
             'success_url'    => rtrim($frontendUrl, '/') . '/payment-success?session_id={CHECKOUT_SESSION_ID}',
-            'cancel_url'     => rtrim($frontendUrl, '/') . '/payment-cancel?reservation_id=' . $reservationId,
+            'cancel_url'     => $cancelUrl,
         ]);
 
         return $session;

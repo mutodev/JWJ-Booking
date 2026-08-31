@@ -94,6 +94,13 @@ class ReservationService
     protected $stripeService = null;
 
     /**
+     * Servicio de links de pago personalizados (B5, lazy-loaded).
+     * Aislado en getCustomPaymentLinkService() para sustituirlo en tests.
+     * @var \App\Services\CustomPaymentLinkService|null
+     */
+    protected $customPaymentLinkService = null;
+
+    /**
      * Modelo del historial/timeline de la reserva (lazy-loaded).
      * Se expone vía historyModel() para poder sustituirlo en tests.
      * @var ReservationEmailHistoryModel|null
@@ -129,6 +136,17 @@ class ReservationService
             $this->stripeService = new StripeService();
         }
         return $this->stripeService;
+    }
+
+    /**
+     * Get CustomPaymentLinkService instance (lazy initialization, B5).
+     */
+    protected function getCustomPaymentLinkService(): \App\Services\CustomPaymentLinkService
+    {
+        if ($this->customPaymentLinkService === null) {
+            $this->customPaymentLinkService = new \App\Services\CustomPaymentLinkService();
+        }
+        return $this->customPaymentLinkService;
     }
 
     /**
@@ -1686,6 +1704,25 @@ class ReservationService
     public function verifyPayment(string $sessionId): array
     {
         $session = $this->getStripeService()->retrieveSession($sessionId);
+
+        // B5: a custom payment link session carries metadata.type. Recognize it
+        // and do NOT throw a 404 for the missing reservation_id (criterion 6).
+        $metadataType = null;
+        if (isset($session->metadata) && is_object($session->metadata)) {
+            $metadataType = $session->metadata->type ?? null;
+        }
+
+        if ($metadataType === 'custom_payment_link') {
+            if ($session->payment_status === 'paid') {
+                $this->getCustomPaymentLinkService()->handlePaidSession($session);
+            }
+
+            return [
+                'type'           => 'custom_payment_link',
+                'payment_status' => $session->payment_status,
+                'is_paid'        => $session->payment_status === 'paid',
+            ];
+        }
 
         $reservationId = $session->metadata->reservation_id ?? null;
 

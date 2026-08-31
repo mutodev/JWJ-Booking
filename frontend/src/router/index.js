@@ -22,6 +22,7 @@ import AddOns from "@/components/admin/services/add-ons/AddOns.vue";
 import TypeAddons from "@/components/admin/services/type-addons/TypeAddons.vue";
 import PromoCodes from "@/components/admin/promo-codes/PromoCodes.vue";
 import AbandonedCarts from "@/components/admin/abandoned-carts/AbandonedCarts.vue";
+import PaymentLinks from "@/components/admin/payment-links/PaymentLinks.vue";
 import EmailTemplates from "@/components/admin/email-templates/EmailTemplates.vue";
 import ConfirmationUpdate from "@/components/home/confirmation/ConfirmationUpdate.vue";
 import PaymentSuccess from "@/components/home/payment/PaymentSuccess.vue";
@@ -81,6 +82,7 @@ const routes = [
       },
       { path: "promo-codes", component: PromoCodes },
       { path: "abandoned-carts", component: AbandonedCarts },
+      { path: "payment-links", component: PaymentLinks },
       { path: "maintenance/clean-reservations", component: CleanReservations },
     ],
   },

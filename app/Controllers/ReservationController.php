@@ -315,11 +315,25 @@ class ReservationController extends ResourceController
 
             if ($event->type === 'checkout.session.completed') {
                 $session = $event->data->object;
-                $reservationId = $session->metadata->reservation_id ?? null;
-                $paymentIntentId = $session->payment_intent ?? null;
 
-                if ($reservationId) {
-                    $this->service->handlePaymentCompleted($reservationId, $paymentIntentId);
+                // B5: branch on metadata.type AFTER signature verification.
+                // metadata is untrusted — the service re-checks that the
+                // payment_link_id exists in our DB. If type is not
+                // 'custom_payment_link' the flow below is identical to before.
+                $metadataType = null;
+                if (isset($session->metadata) && is_object($session->metadata)) {
+                    $metadataType = $session->metadata->type ?? null;
+                }
+
+                if ($metadataType === 'custom_payment_link') {
+                    (new \App\Services\CustomPaymentLinkService())->handlePaidSession($session);
+                } else {
+                    $reservationId = $session->metadata->reservation_id ?? null;
+                    $paymentIntentId = $session->payment_intent ?? null;
+
+                    if ($reservationId) {
+                        $this->service->handlePaymentCompleted($reservationId, $paymentIntentId);
+                    }
                 }
             }
 
