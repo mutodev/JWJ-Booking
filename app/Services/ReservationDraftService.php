@@ -241,7 +241,8 @@ class ReservationDraftService
      *
      * "Abandoned" is the frozen definition enforced by
      * ReservationDraftModel::getAbandonedForFollowUp(): not completed, has an
-     * email, inactive for $daysOld+ days, never contacted before.
+     * email, inactive for exactly [$daysOld, $daysOld + 1) days (the 7-day
+     * mark only, not older), never contacted before.
      *
      * Safety / anti-spam:
      *   - follow_up_sent_at is written and then re-verified per draft; a draft
@@ -252,8 +253,8 @@ class ReservationDraftService
      *
      * Idempotent: running it twice in a row sends 0 the second time.
      *
-     * @param int $daysOld Inactivity window in days (cast to int; values < 1 are
-     *                     normalised to the frozen default of 7).
+     * @param int $daysOld Lower bound of the inactivity window in days (cast to
+     *                     int; values < 1 are normalised to the default of 7).
      * @return int Number of drafts to which the email was sent AND for which
      *             follow_up_sent_at was successfully marked.
      */

@@ -92,8 +92,15 @@ class ReservationDraftModel extends Model
      * Frozen definition of "abandoned" for the automated follow-up:
      *   - completed = 0
      *   - email present and not blank
-     *   - last_activity_at is 7 days old or more
+     *   - last_activity_at is EXACTLY in the [daysOld, daysOld + 1) window,
+     *     i.e. inactive for 7 full days but less than 8. A draft older than
+     *     that is NOT contacted (business rule: exactly the 7-day mark).
      *   - follow_up_sent_at IS NULL (a draft gets exactly one follow-up, ever)
+     *
+     * The command runs once per day (crontab 0 1 * * *), so every draft lands
+     * in this 24h window on exactly one run. If the cron does not run on that
+     * day the draft is skipped permanently — an accepted trade-off for the
+     * "exactly 7 days" rule.
      *
      * Ordered by last_activity_at ASC so the oldest carts are contacted first.
      *
@@ -101,8 +108,9 @@ class ReservationDraftModel extends Model
      * admin endpoint GET /api/reservation-drafts/abandoned), which keeps its
      * hours-based window and does NOT filter follow_up_sent_at.
      *
-     * @param int $daysOld Inactivity window in days. Cast to int; values below 1
-     *                     are normalised to the frozen default of 7.
+     * @param int $daysOld Lower bound of the inactivity window in days. Cast to
+     *                     int; values below 1 are normalised to the default 7.
+     *                     The upper bound is always $daysOld + 1.
      * @return array<int,object>
      */
     public function getAbandonedForFollowUp(int $daysOld = 7): array
@@ -112,12 +120,15 @@ class ReservationDraftModel extends Model
             $daysOld = 7;
         }
 
-        $cutoff = date('Y-m-d H:i:s', strtotime("-{$daysOld} days"));
+        // Window: last_activity_at in (now - (daysOld + 1) days, now - daysOld days].
+        $lowerCutoff = date('Y-m-d H:i:s', strtotime("-{$daysOld} days"));
+        $upperCutoff = date('Y-m-d H:i:s', strtotime('-' . ($daysOld + 1) . ' days'));
 
         return $this->where('completed', 0)
             ->where('email IS NOT NULL')
             ->where('email !=', '')
-            ->where('last_activity_at <=', $cutoff)
+            ->where('last_activity_at <=', $lowerCutoff)
+            ->where('last_activity_at >', $upperCutoff)
             ->where('follow_up_sent_at IS NULL')
             ->orderBy('last_activity_at', 'ASC')
             ->findAll();

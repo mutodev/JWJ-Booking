@@ -330,10 +330,12 @@ schedule. Register them in the deploy user's crontab (`crontab -e`). The cron
 deployment is intentionally **not** automated from application code.
 
 ```bash
-# Abandoned cart follow-up — once per day at 09:15 (B4).
-# Emails drafts inactive for 7+ days that were never contacted. Idempotent:
-# the 7-day window + follow_up_sent_at marker send at most one email per draft.
-15 9 * * * cd /var/www/jamwithjamie && /usr/bin/php spark carts:followup >> /var/www/jamwithjamie/writable/logs/cron.log 2>&1
+# Abandoned cart follow-up — MUST run once per day at 01:00 (B4).
+# Emails drafts inactive for exactly 7 days (the [7, 8) day window) that were
+# never contacted; drafts older than 8 days are skipped. Idempotent: the 24h
+# window + follow_up_sent_at marker send at most one email per draft. Because
+# the window is a single day, a missed run permanently skips that day's drafts.
+0 1 * * * cd /var/www/jamwithjamie && /usr/bin/php spark carts:followup >> /var/www/jamwithjamie/writable/logs/cron.log 2>&1
 ```
 
 ---

@@ -78,11 +78,23 @@ final class ReservationDraftModelFollowUpTest extends CIUnitTestCase
         );
     }
 
-    /** @return array{0:mixed,1:mixed}|null */
+    /** @return array{0:mixed,1:mixed}|null first where() whose key starts with $keyStartsWith */
     private function whereFor(object $model, string $keyStartsWith): ?array
     {
         foreach ($model->wheres as $row) {
             if (is_string($row[0]) && str_starts_with($row[0], $keyStartsWith)) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array{0:mixed,1:mixed}|null the where() with this exact operator key */
+    private function whereWithOperator(object $model, string $key): ?array
+    {
+        foreach ($model->wheres as $row) {
+            if ($row[0] === $key) {
                 return $row;
             }
         }
@@ -105,7 +117,7 @@ final class ReservationDraftModelFollowUpTest extends CIUnitTestCase
         $this->assertSame(1, $model->findAllCalls);
     }
 
-    public function testAppliesTheFourFrozenFilters(): void
+    public function testAppliesTheFrozenFilters(): void
     {
         $model = $this->fakeModel();
         $model->getAbandonedForFollowUp(7);
@@ -115,11 +127,37 @@ final class ReservationDraftModelFollowUpTest extends CIUnitTestCase
         $this->assertContains(['email !=', ''], $model->wheres, 'falta filtro email != ""');
         $this->assertContains(['follow_up_sent_at IS NULL', null], $model->wheres, 'falta filtro follow_up_sent_at IS NULL');
 
-        $activity = $this->whereFor($model, 'last_activity_at');
-        $this->assertNotNull($activity, 'falta filtro por last_activity_at');
-        $this->assertSame('last_activity_at <=', $activity[0]);
-        $this->assertIsString($activity[1]);
-        $this->assertCutoffDaysAgo($activity[1], 7);
+        $lower = $this->whereWithOperator($model, 'last_activity_at <=');
+        $this->assertNotNull($lower, 'falta el corte inferior last_activity_at <=');
+        $this->assertIsString($lower[1]);
+        $this->assertCutoffDaysAgo($lower[1], 7);
+    }
+
+    public function testAppliesExactSevenDayWindowWithUpperBound(): void
+    {
+        $model = $this->fakeModel();
+        $model->getAbandonedForFollowUp(7);
+
+        // Lower bound: at least 7 days old.
+        $lower = $this->whereWithOperator($model, 'last_activity_at <=');
+        $this->assertNotNull($lower, 'falta el corte inferior (>= 7 dias)');
+        $this->assertCutoffDaysAgo($lower[1], 7);
+
+        // Upper bound: strictly less than 8 days old — drafts older than that
+        // are NOT contacted (business rule: exactly the 7-day mark).
+        $upper = $this->whereWithOperator($model, 'last_activity_at >');
+        $this->assertNotNull($upper, 'falta el corte superior (< 8 dias) — regla "exactamente 7 dias"');
+        $this->assertIsString($upper[1]);
+        $this->assertCutoffDaysAgo($upper[1], 8);
+    }
+
+    public function testCustomWindowUpperBoundIsLowerBoundPlusOneDay(): void
+    {
+        $model = $this->fakeModel();
+        $model->getAbandonedForFollowUp(14);
+
+        $this->assertCutoffDaysAgo($this->whereWithOperator($model, 'last_activity_at <=')[1], 14);
+        $this->assertCutoffDaysAgo($this->whereWithOperator($model, 'last_activity_at >')[1], 15);
     }
 
     public function testOrdersByLastActivityAscending(): void
