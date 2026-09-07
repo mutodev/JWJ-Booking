@@ -44,6 +44,67 @@ final class BrevoContactServiceTest extends CIUnitTestCase
         }
     }
 
+    public function testForFollowUpTargetsListFromEnvAndDefaultsTo58(): void
+    {
+        $api = new class extends ContactsApi {
+            public $payload;
+
+            public function createContact($body)
+            {
+                $this->payload = $body;
+                return (object) ['id' => 1];
+            }
+        };
+
+        $prevKey = getenv('brevo.apiKey');
+        $prevEnabled = getenv('brevo.contacts.followUpEnabled');
+        $prevList = getenv('brevo.contacts.followUpListId');
+        putenv('brevo.apiKey=test-key');
+        putenv('brevo.contacts.followUpEnabled=true');
+        putenv('brevo.contacts.followUpListId'); // unset -> falls back to the 58 default
+
+        try {
+            $service = BrevoContactService::forFollowUp($api);
+
+            $this->assertTrue($service->isEnabled());
+            $this->assertTrue($service->syncContact([
+                'full_name' => 'Jamie Buyer',
+                'email' => 'buyer@example.com',
+            ]));
+            $this->assertSame([58], $api->payload->getListIds());
+        } finally {
+            putenv($prevKey === false ? 'brevo.apiKey' : 'brevo.apiKey=' . $prevKey);
+            putenv($prevEnabled === false ? 'brevo.contacts.followUpEnabled' : 'brevo.contacts.followUpEnabled=' . $prevEnabled);
+            putenv($prevList === false ? 'brevo.contacts.followUpListId' : 'brevo.contacts.followUpListId=' . $prevList);
+        }
+    }
+
+    public function testForFollowUpIsDisabledByDefault(): void
+    {
+        $prevEnabled = getenv('brevo.contacts.followUpEnabled');
+        putenv('brevo.contacts.followUpEnabled'); // unset
+
+        try {
+            $api = new class extends ContactsApi {
+                public bool $called = false;
+
+                public function createContact($body)
+                {
+                    $this->called = true;
+                    return null;
+                }
+            };
+
+            $service = BrevoContactService::forFollowUp($api);
+
+            $this->assertFalse($service->isEnabled());
+            $this->assertFalse($service->syncContact(['email' => 'buyer@example.com']));
+            $this->assertFalse($api->called);
+        } finally {
+            putenv($prevEnabled === false ? 'brevo.contacts.followUpEnabled' : 'brevo.contacts.followUpEnabled=' . $prevEnabled);
+        }
+    }
+
     public function testDisabledSyncMakesNoApiCall(): void
     {
         $api = new class extends ContactsApi {

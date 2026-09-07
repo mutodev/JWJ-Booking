@@ -11,6 +11,12 @@ class BrevoContactService
 {
     private const DEFAULT_LIST_ID = 25;
 
+    /**
+     * Default Brevo list for the automated-email audience (abandoned-cart
+     * follow-up recipients). Overridable with brevo.contacts.followUpListId.
+     */
+    private const FOLLOW_UP_LIST_ID = 58;
+
     protected ContactsApi $apiInstance;
     protected bool $enabled;
     protected int $listId;
@@ -42,6 +48,23 @@ class BrevoContactService
             'timeout' => $timeout,
             'verify' => $verify,
         ]), $config);
+    }
+
+    /**
+     * Contact-sync configured for the automated-email audience: the
+     * abandoned-cart follow-up subscribes each recipient to a Brevo list that
+     * is separate from the reservation newsletter one. Reads its own on/off
+     * flag and list id so the two audiences never mix.
+     */
+    public static function forFollowUp(?ContactsApi $apiInstance = null): self
+    {
+        $enabled = filter_var(
+            getenv('brevo.contacts.followUpEnabled') ?: 'false',
+            FILTER_VALIDATE_BOOLEAN
+        );
+        $listId = (int) (getenv('brevo.contacts.followUpListId') ?: self::FOLLOW_UP_LIST_ID);
+
+        return new self($apiInstance, $enabled, $listId);
     }
 
     public function isEnabled(): bool

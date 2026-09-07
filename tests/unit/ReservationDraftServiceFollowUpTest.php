@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\ReservationDraftModel;
+use App\Services\BrevoContactService;
 use App\Services\BrevoEmailService;
 use App\Services\EmailTemplateService;
 use App\Services\ReservationDraftService;
@@ -31,6 +32,7 @@ final class ReservationDraftServiceFollowUpTest extends CIUnitTestCase
     private object $model;
     private object $template;
     private object $email;
+    private object $contacts;
     private int $seq = 0;
 
     protected function setUp(): void
@@ -141,10 +143,32 @@ final class ReservationDraftServiceFollowUpTest extends CIUnitTestCase
             }
         };
 
+        $this->contacts = new class extends BrevoContactService {
+            /** @var array<int,array> */
+            public array $synced = [];
+            public bool $throwOnSync = false;
+
+            public function __construct()
+            {
+            }
+
+            public function syncContact(array $contact): bool
+            {
+                $this->synced[] = $contact;
+
+                if ($this->throwOnSync) {
+                    throw new \RuntimeException('brevo contacts unavailable');
+                }
+
+                return true;
+            }
+        };
+
         $this->service = new ReservationDraftService();
         $this->setProp('draftModel', $this->model);
         $this->setProp('templateService', $this->template);
         $this->setProp('emailService', $this->email);
+        $this->setProp('brevoContacts', $this->contacts);
     }
 
     private function setProp(string $name, $value): void
@@ -438,5 +462,78 @@ final class ReservationDraftServiceFollowUpTest extends CIUnitTestCase
 
         $this->assertIsObject($result);
         $this->assertCount(1, $this->email->sent);
+    }
+
+    // -------------------------------------------------------------------------
+    // Sync a la lista de Brevo del follow-up (list 58) — igual que al crear reserva
+    // -------------------------------------------------------------------------
+
+    public function testRecipientIsSyncedToBrevoWithNamePhoneAndEmail(): void
+    {
+        $this->addDraft([
+            'email'     => 'buyer@example.com',
+            'phone'     => '(212) 555-0100',
+            'form_data' => ['full_name' => 'Alice Wong'],
+        ]);
+
+        $this->service->sendAbandonedFollowUps();
+
+        $this->assertCount(1, $this->contacts->synced);
+        $this->assertSame('Alice Wong', $this->contacts->synced[0]['full_name']);
+        $this->assertSame('buyer@example.com', $this->contacts->synced[0]['email']);
+        $this->assertSame('(212) 555-0100', $this->contacts->synced[0]['phone']);
+    }
+
+    public function testContactIsSyncedOncePerSuccessfulSendInABatch(): void
+    {
+        $this->addDraft();
+        $this->addDraft();
+        $this->addDraft();
+
+        $this->service->sendAbandonedFollowUps();
+
+        $this->assertCount(3, $this->contacts->synced);
+    }
+
+    public function testContactSyncFailureDoesNotAbortSendOrMarking(): void
+    {
+        $d = $this->addDraft();
+        $this->contacts->throwOnSync = true;
+
+        $sent = $this->service->sendAbandonedFollowUps();
+
+        $this->assertSame(1, $sent, 'el envio se cuenta aunque Brevo contacts falle');
+        $this->assertNotEmpty($this->model->store[$d->id]->follow_up_sent_at);
+        $this->assertLogContains('error', "Failed to sync Brevo follow-up contact for draft {$d->id}");
+    }
+
+    public function testNoContactSyncWhenBrevoRejectsTheSend(): void
+    {
+        $this->addDraft(['email' => 'reject@example.com']);
+        $this->email->returnFalseFor = ['reject@example.com'];
+
+        $this->service->sendAbandonedFollowUps();
+
+        $this->assertSame([], $this->contacts->synced);
+    }
+
+    public function testManualFollowUpAlsoSyncsTheContact(): void
+    {
+        $d = $this->addDraft(['form_data' => ['name' => 'Bob Manual']]);
+
+        $this->service->sendFollowUpEmail($d->id);
+
+        $this->assertCount(1, $this->contacts->synced);
+        $this->assertSame('Bob Manual', $this->contacts->synced[0]['full_name']);
+    }
+
+    public function testMissingNameIsSyncedAsEmptyStringNotThePlaceholder(): void
+    {
+        $this->addDraft(['form_data' => []]);
+
+        $this->service->sendAbandonedFollowUps();
+
+        $this->assertCount(1, $this->contacts->synced);
+        $this->assertSame('', $this->contacts->synced[0]['full_name']);
     }
 }

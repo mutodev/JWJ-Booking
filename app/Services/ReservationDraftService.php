@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\ReservationDraftModel;
+use App\Services\BrevoContactService;
 use App\Services\BrevoEmailService;
 use App\Services\EmailTemplateService;
 
@@ -18,6 +19,14 @@ class ReservationDraftService
      */
     protected ?EmailTemplateService $templateService = null;
     protected ?BrevoEmailService $emailService = null;
+    protected ?BrevoContactService $brevoContacts = null;
+
+    /**
+     * Set once building the Brevo contact-sync client fails (bad API key, CA
+     * bundle missing, …) so a whole follow-up batch does not log the same
+     * construction error 200 times.
+     */
+    private bool $brevoContactsUnavailable = false;
 
     public function __construct()
     {
@@ -44,6 +53,25 @@ class ReservationDraftService
             $this->emailService = new BrevoEmailService();
         }
         return $this->emailService;
+    }
+
+    /**
+     * Brevo contact-sync for the follow-up audience (lazy, substitutable in
+     * tests). Returns null when the client cannot be built — callers must treat
+     * the sync as best-effort and never let its absence break a send.
+     */
+    protected function brevoContacts(): ?BrevoContactService
+    {
+        if ($this->brevoContacts === null && ! $this->brevoContactsUnavailable) {
+            try {
+                $this->brevoContacts = BrevoContactService::forFollowUp();
+            } catch (\Throwable $e) {
+                $this->brevoContactsUnavailable = true;
+                log_message('error', 'Brevo follow-up contact sync unavailable: ' . $e->getMessage());
+            }
+        }
+
+        return $this->brevoContacts;
     }
 
     /**
@@ -329,7 +357,8 @@ class ReservationDraftService
             ? (json_decode($draft->form_data, true) ?? [])
             : (array) $draft->form_data;
 
-        $customerName = $formData['full_name'] ?? $formData['name'] ?? 'there';
+        $rawName = trim((string) ($formData['full_name'] ?? $formData['name'] ?? ''));
+        $customerName = $rawName !== '' ? $rawName : 'there';
 
         $rendered = $this->templateService()->render('abandoned_cart_followup', [
             'customer_name' => $customerName,
@@ -345,6 +374,11 @@ class ReservationDraftService
         if (!$emailResult) {
             return false;
         }
+
+        // The recipient just received an automated email — register them in the
+        // dedicated Brevo follow-up list, the same way reservation creation
+        // syncs the customer. Best-effort: never breaks or delays the send flow.
+        $this->syncFollowUpContactSafely($draft, $rawName);
 
         // Mark first, then verify — the marker is the only spam protection, so a
         // silent persistence failure must be loud and must stop this draft from
@@ -363,6 +397,37 @@ class ReservationDraftService
         }
 
         return true;
+    }
+
+    /**
+     * Subscribe a followed-up recipient to the dedicated Brevo list.
+     *
+     * Best-effort mirror of ReservationService::syncBrevoContactSafely(): a
+     * Brevo outage, a rejected contact or a misconfigured list must never
+     * affect the follow-up send or its bookkeeping.
+     *
+     * @param object $draft   The abandoned-cart draft (email + phone).
+     * @param string $rawName The customer name pulled from form_data ('' when absent).
+     */
+    private function syncFollowUpContactSafely(object $draft, string $rawName): void
+    {
+        $contacts = $this->brevoContacts();
+        if ($contacts === null) {
+            return;
+        }
+
+        try {
+            $contacts->syncContact([
+                'full_name' => $rawName,
+                'email'     => (string) ($draft->email ?? ''),
+                'phone'     => (string) ($draft->phone ?? ''),
+            ]);
+        } catch (\Throwable $e) {
+            log_message(
+                'error',
+                "Failed to sync Brevo follow-up contact for draft {$draft->id}: " . $e->getMessage()
+            );
+        }
     }
 
     /**
