@@ -512,6 +512,15 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->assertSame('there', $this->templateService->renderCalls[0][1]['customer_name']);
     }
 
+    public function testDispatchEmailGreetsWithFirstNameOnly(): void
+    {
+        $this->seededLink(['id' => 'link-fn', 'customer_name' => 'Vilma Garcia Lopez']);
+
+        $this->service->sendLinkEmail('link-fn');
+
+        $this->assertSame('Vilma', $this->templateService->renderCalls[0][1]['customer_name']);
+    }
+
     public function testSendLinkEmailThrows404WhenLinkMissing(): void
     {
         [$threw, $e] = $this->catchHttp(fn () => $this->service->sendLinkEmail('nope'));

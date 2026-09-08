@@ -223,12 +223,16 @@ class CustomPaymentLinkService
 
         $amountLabel = number_format((float) $link->amount, 2);
 
+        // Saludo con SOLO el primer nombre, igual que el resto de las plantillas
+        // (patrón `strtok(trim($fullName), ' ')` usado en ReservationService).
+        $firstName = strtok(trim((string) ($link->customer_name ?? '')), ' ') ?: 'there';
+
         // XSS: description and customer_name are free admin text that lands in
         // the email HTML. EmailTemplateService::render() does a plain
         // str_replace, so escape here. payment_url is a Stripe URL; encode it
         // for an attribute context.
         $vars = [
-            'customer_name' => esc($link->customer_name ?: 'there'),
+            'customer_name' => esc($firstName),
             'description'   => esc((string) $link->description),
             'amount'        => esc($amountLabel),
             'payment_url'   => esc((string) ($link->payment_url ?? ''), 'attr'),
