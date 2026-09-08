@@ -135,6 +135,7 @@
               <div class="row g-3">
                 <DetailField label="Client" :value="data.customer_name || data.full_name" class="col-md-4" />
                 <DetailField label="Email" :value="data.email" class="col-md-4" />
+                <DetailField label="Phone" :value="data.phone || data.customer_phone" class="col-md-4" />
                 <DetailField label="Service" :value="data.service_name" class="col-md-4" />
                 <DetailField label="Location" :value="locationLabel" class="col-md-4" />
                 <DetailField label="County" :value="data.county_name" class="col-md-4" />

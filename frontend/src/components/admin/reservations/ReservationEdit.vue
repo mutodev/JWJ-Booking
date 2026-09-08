@@ -509,6 +509,24 @@
                   />
                 </div>
                 <div class="col-md-4">
+                  <label class="form-label">Email</label>
+                  <input
+                    :value="editData.email || editData.customer_email || 'N/A'"
+                    type="text"
+                    class="form-control"
+                    readonly
+                  />
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Phone</label>
+                  <input
+                    :value="editData.phone || editData.customer_phone || 'N/A'"
+                    type="text"
+                    class="form-control"
+                    readonly
+                  />
+                </div>
+                <div class="col-md-4">
                   <label class="form-label">Service</label>
                   <input
                     :value="editData.service_name || 'N/A'"
