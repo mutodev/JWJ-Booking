@@ -31,7 +31,7 @@ class CustomPaymentLinkController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment links retrieved successfully', $links));
         } catch (\Throwable $th) {
-            return $this->fail($th);
+            return $this->failFromException($th);
         }
     }
 
@@ -46,7 +46,7 @@ class CustomPaymentLinkController extends ResourceController
             return $this->response->setStatusCode(201)
                 ->setJSON(create_response('Payment link created successfully', $link));
         } catch (\Throwable $th) {
-            return $this->fail($th);
+            return $this->failFromException($th);
         }
     }
 
@@ -59,7 +59,7 @@ class CustomPaymentLinkController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment link retrieved successfully', $link));
         } catch (\Throwable $th) {
-            return $this->fail($th);
+            return $this->failFromException($th);
         }
     }
 
@@ -72,7 +72,7 @@ class CustomPaymentLinkController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment link email sent', $link));
         } catch (\Throwable $th) {
-            return $this->fail($th);
+            return $this->failFromException($th);
         }
     }
 
@@ -85,7 +85,7 @@ class CustomPaymentLinkController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment link cancelled', $link));
         } catch (\Throwable $th) {
-            return $this->fail($th);
+            return $this->failFromException($th);
         }
     }
 
@@ -98,14 +98,18 @@ class CustomPaymentLinkController extends ResourceController
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment link deleted', null));
         } catch (\Throwable $th) {
-            return $this->fail($th);
+            return $this->failFromException($th);
         }
     }
 
     /**
      * Map an exception to a JSON error response, honoring HTTPException codes.
+     *
+     * NOTE: must not be named `fail()` — that collides with the `protected`
+     * ResourceController::fail() and reducing its visibility is a fatal error
+     * that takes down every route on this controller.
      */
-    private function fail(\Throwable $th)
+    private function failFromException(\Throwable $th)
     {
         $statusCode = 500;
         if ($th instanceof HTTPException && $th->getCode() >= 400 && $th->getCode() < 600) {

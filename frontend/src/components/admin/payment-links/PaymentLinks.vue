@@ -301,8 +301,14 @@ const formatAmount = (amount) => {
 
 const formatDateTime = (datetime) => {
   if (!datetime) return "N/A";
-  const d = new Date(datetime);
-  if (Number.isNaN(d.getTime())) return String(datetime);
+  // La API serializa las fechas como objeto CodeIgniter\I18n\Time
+  // ({ date, timezone_type, timezone }); `new Date(obj)` daría "Invalid Date".
+  let value = datetime;
+  if (typeof datetime === "object" && datetime.date) {
+    value = String(datetime.date).replace(" ", "T");
+  }
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return typeof datetime === "string" ? datetime : "N/A";
   return d.toLocaleString("en-US", {
     year: "numeric",
     month: "short",

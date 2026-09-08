@@ -134,7 +134,10 @@
                     class="form-select"
                     :disabled="loadingServices"
                   >
-                    <option v-if="!servicePrices.length" :value="editData.service_price_id">
+                    <option
+                      v-if="!servicePrices.some((sp) => sp.id === editData.service_price_id)"
+                      :value="editData.service_price_id"
+                    >
                       {{ editData.service_name || 'Current service' }}
                     </option>
                     <option
@@ -236,6 +239,98 @@
               </div>
               <div v-if="actionError" class="mt-2 small text-danger">
                 <i class="bi bi-x-circle me-1"></i>{{ actionError }}
+              </div>
+            </div>
+
+            <!-- Segment: Add-ons (B6) -->
+            <div class="segment mb-3">
+              <h6 class="segment-title">Add-ons</h6>
+
+              <div v-if="loadingAddons" class="text-muted small">
+                <span class="spinner-border spinner-border-sm me-1"></span> Loading add-ons…
+              </div>
+
+              <div v-else>
+                <div v-if="reservationAddons.length" class="table-responsive mb-3">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Add-on</th>
+                        <th style="width: 120px" class="text-center">Qty</th>
+                        <th style="width: 120px" class="text-end">Unit price</th>
+                        <th style="width: 120px" class="text-end">Subtotal</th>
+                        <th style="width: 48px"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in reservationAddons" :key="row.id">
+                        <td>{{ addonName(row.addon_id) }}<span v-if="row.suboption" class="text-muted"> — {{ row.suboption }}</span></td>
+                        <td class="text-center">
+                          <input
+                            type="number"
+                            min="1"
+                            class="form-control form-control-sm text-center"
+                            :value="row.quantity"
+                            :disabled="addonBusy"
+                            @change="updateAddonQuantity(row, $event.target.value)"
+                          />
+                        </td>
+                        <td class="text-end">{{ formatCurrency(row.price_at_time) }}</td>
+                        <td class="text-end">{{ formatCurrency((Number(row.price_at_time) || 0) * (Number(row.quantity) || 1)) }}</td>
+                        <td class="text-end">
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            :disabled="addonBusy"
+                            title="Remove add-on"
+                            @click="removeAddon(row)"
+                          >
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p v-else class="text-muted small mb-3">No add-ons on this reservation yet.</p>
+
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-6">
+                    <label class="form-label">Add an add-on</label>
+                    <select v-model="newAddonId" class="form-select form-select-sm" :disabled="addonBusy || !addonCatalog.length">
+                      <option value="">{{ addonCatalog.length ? 'Select an add-on…' : 'No active add-ons available' }}</option>
+                      <option v-for="a in addonCatalog" :key="a.id" :value="a.id">
+                        {{ a.label }} — {{ formatCurrency(a.base_price) }}
+                      </option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Quantity</label>
+                    <input v-model.number="newAddonQty" type="number" min="1" class="form-control form-control-sm" :disabled="addonBusy" />
+                  </div>
+                  <div class="col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary w-100"
+                      :disabled="addonBusy || !newAddonId"
+                      @click="addAddon"
+                    >
+                      <span v-if="addonBusy" class="spinner-border spinner-border-sm me-1"></span>
+                      <i v-else class="bi bi-plus-lg me-1"></i>
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="addonMessage" class="mt-2 small text-success">
+                  <i class="bi bi-check-circle me-1"></i>{{ addonMessage }}
+                </div>
+                <div v-if="addonError" class="mt-2 small text-danger">
+                  <i class="bi bi-x-circle me-1"></i>{{ addonError }}
+                </div>
+                <p class="text-muted small mt-2 mb-0">
+                  Adding, changing or removing an add-on recalculates the reservation totals automatically.
+                </p>
               </div>
             </div>
 
@@ -505,6 +600,16 @@ const actionError = ref('');
 const confirmAction = ref(null);
 const paymentLinkUrl = ref('');
 
+// Add-ons (B6)
+const reservationAddons = ref([]);
+const addonCatalog = ref([]);        // catálogo plano: { id, label, base_price }
+const loadingAddons = ref(false);
+const addonBusy = ref(false);
+const newAddonId = ref('');
+const newAddonQty = ref(1);
+const addonMessage = ref('');
+const addonError = ref('');
+
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
   show: Boolean,
@@ -539,11 +644,17 @@ watch(
     paymentLinkUrl.value = '';
     servicePrices.value = [];
     confirmAction.value = null;
+    reservationAddons.value = [];
+    newAddonId.value = '';
+    newAddonQty.value = 1;
+    addonMessage.value = '';
+    addonError.value = '';
     if (editData.value.event_date && typeof editData.value.event_date === 'object') {
       const date = new Date(editData.value.event_date);
       editData.value.event_date = date.toISOString().split('T')[0];
     }
     loadServicePrices();
+    loadAddons();
   },
   { deep: true, immediate: true }
 );
@@ -569,8 +680,10 @@ const loadServicePrices = async () => {
   if (!zipcodeId) return;
   loadingServices.value = true;
   try {
+    // El interceptor de axios.js ya devuelve el body desempaquetado; este
+    // endpoint responde un array plano, así que `res` ES la lista.
     const res = await api.get(`/home/services/${zipcodeId}`);
-    const list = res.data?.data ?? res.data ?? [];
+    const list = Array.isArray(res) ? res : (res?.data?.data ?? res?.data ?? []);
     servicePrices.value = Array.isArray(list) ? list : [];
   } catch {
     servicePrices.value = [];
@@ -588,6 +701,113 @@ const applyRecalcResult = (reservation) => {
   keep.forEach((k) => {
     if (k in reservation) editData.value[k] = reservation[k];
   });
+};
+
+// --- Add-ons (B6) -----------------------------------------------------------
+// El interceptor de axios.js devuelve el body ya desempaquetado.
+const unwrap = (res) => (res?.data?.data ?? res?.data ?? res);
+
+const addonName = (addonId) => {
+  const hit = addonCatalog.value.find((a) => a.id === addonId);
+  return hit ? hit.label : 'Add-on';
+};
+
+const loadAddons = async () => {
+  const reservationId = editData.value.id;
+  if (!reservationId) return;
+  loadingAddons.value = true;
+  try {
+    const [catalogRes, currentRes] = await Promise.all([
+      api.get('/addons/active'),
+      api.get(`/reservation-addons/by-reservation/${reservationId}`),
+    ]);
+
+    // El catálogo llega agrupado por tipo: [{ name, addons: [...] }]. Lo aplanamos.
+    const grouped = unwrap(catalogRes);
+    const flat = [];
+    (Array.isArray(grouped) ? grouped : []).forEach((type) => {
+      (type.addons || []).forEach((addon) => {
+        flat.push({
+          id: addon.id,
+          label: type.name ? `${type.name}: ${addon.name}` : addon.name,
+          base_price: Number(addon.base_price) || 0,
+        });
+      });
+    });
+    addonCatalog.value = flat;
+
+    const current = unwrap(currentRes);
+    reservationAddons.value = Array.isArray(current) ? current : [];
+  } catch {
+    addonCatalog.value = [];
+    reservationAddons.value = [];
+  } finally {
+    loadingAddons.value = false;
+  }
+};
+
+const addAddon = async () => {
+  if (!newAddonId.value) return;
+  const catalogEntry = addonCatalog.value.find((a) => a.id === newAddonId.value);
+  const qty = Math.max(1, parseInt(newAddonQty.value, 10) || 1);
+  addonBusy.value = true;
+  addonMessage.value = '';
+  addonError.value = '';
+  try {
+    const res = await api.post('/reservation-addons', {
+      reservation_id: editData.value.id,
+      addon_id: newAddonId.value,
+      quantity: qty,
+      price_at_time: catalogEntry ? catalogEntry.base_price : 0,
+    });
+    applyRecalcResult(unwrap(res)?.totals);
+    newAddonId.value = '';
+    newAddonQty.value = 1;
+    addonMessage.value = 'Add-on added and totals recalculated.';
+    await loadAddons();
+    setTimeout(() => { addonMessage.value = ''; }, 4000);
+  } catch (err) {
+    addonError.value = err?.response?.data?.message ?? 'Could not add the add-on.';
+  } finally {
+    addonBusy.value = false;
+  }
+};
+
+const updateAddonQuantity = async (row, rawValue) => {
+  const qty = Math.max(1, parseInt(rawValue, 10) || 1);
+  if (qty === Number(row.quantity)) return;
+  addonBusy.value = true;
+  addonMessage.value = '';
+  addonError.value = '';
+  try {
+    const res = await api.put(`/reservation-addons/${row.id}`, { quantity: qty });
+    applyRecalcResult(unwrap(res)?.totals);
+    addonMessage.value = 'Quantity updated and totals recalculated.';
+    await loadAddons();
+    setTimeout(() => { addonMessage.value = ''; }, 4000);
+  } catch (err) {
+    addonError.value = err?.response?.data?.message ?? 'Could not update the quantity.';
+    await loadAddons();
+  } finally {
+    addonBusy.value = false;
+  }
+};
+
+const removeAddon = async (row) => {
+  addonBusy.value = true;
+  addonMessage.value = '';
+  addonError.value = '';
+  try {
+    const res = await api.delete(`/reservation-addons/${row.id}`);
+    applyRecalcResult(unwrap(res)?.totals);
+    addonMessage.value = 'Add-on removed and totals recalculated.';
+    await loadAddons();
+    setTimeout(() => { addonMessage.value = ''; }, 4000);
+  } catch (err) {
+    addonError.value = err?.response?.data?.message ?? 'Could not remove the add-on.';
+  } finally {
+    addonBusy.value = false;
+  }
 };
 
 const recalcTotals = async () => {

@@ -1037,10 +1037,9 @@ class ReservationService
             }
 
             // 3. Add-ons directamente de la tabla pivote (price_at_time congelado).
-            $addonRows = $this->reservationAddonRepository->getForRecalculation($reservationId);
+            $addonRows = array_map([$this, 'normalizeRow'], $this->reservationAddonRepository->getForRecalculation($reservationId));
             $addonsForPricing = [];
-            foreach ($addonRows as $row) {
-                $r = (array) $row;
+            foreach ($addonRows as $r) {
                 $isJukebox = stripos((string) ($r['type_name'] ?? ''), 'jukebox') !== false;
                 $addonsForPricing[] = [
                     'base_price'                 => (float) ($r['price_at_time'] ?? 0),
@@ -1168,6 +1167,32 @@ class ReservationService
     }
 
     /**
+     * Normaliza una fila del repositorio a un array asociativo. El repo devuelve
+     * entidades `App\Entities\ReservationAddon` (no arrays): un `(array)` crudo
+     * sobre una Entity produce claves con el prefijo de propiedad protegida
+     * (`\0*\0attributes`), no los datos — hay que pasar por `toArray()`.
+     *
+     * @param mixed $row
+     * @return array<string, mixed>
+     */
+    private function normalizeRow($row): array
+    {
+        if (is_array($row)) {
+            return $row;
+        }
+
+        if ($row instanceof \CodeIgniter\Entity\Entity) {
+            return $row->toArray();
+        }
+
+        if (is_object($row)) {
+            return get_object_vars($row);
+        }
+
+        return [];
+    }
+
+    /**
      * Re-tarifica el promo code que la reserva ya tiene aplicado usando la base
      * recién recalculada. Mismas exclusiones que applyPromoCode() (commit
      * 4169b7a). NO incrementa el contador de uso. Devuelve 0.0 si no hay promo
@@ -1188,7 +1213,7 @@ class ReservationService
         // "Custom Song" nunca participa del descuento.
         $customSongTotal = 0.0;
         foreach ($addonRows as $row) {
-            $r = (array) $row;
+            $r = $this->normalizeRow($row);
             if (($r['name'] ?? null) === 'Custom Song') {
                 $customSongTotal += (float) ($r['price_at_time'] ?? 0) * (int) ($r['quantity'] ?? 1);
             }

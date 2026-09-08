@@ -427,6 +427,62 @@ final class ReservationServiceRecalculateTotalsTest extends CIUnitTestCase
     }
 
     // -------------------------------------------------------------------------
+    // El repositorio real devuelve entidades, no arrays
+    // -------------------------------------------------------------------------
+
+    /**
+     * getForRecalculation() devuelve objetos App\Entities\ReservationAddon. Un
+     * `(array)` crudo sobre una Entity produce claves con el prefijo de propiedad
+     * protegida (no los datos) -> los add-ons se tarificaban a 0. El precio debe
+     * salir de la entidad igual que de un array.
+     */
+    public function testAddonsTotalIsComputedWhenRepositoryReturnsEntities(): void
+    {
+        $this->seed(['_servicePrice' => ['amount' => 500.0]]);
+
+        $this->addonRepo->addonRows = [
+            new \App\Entities\ReservationAddon([
+                'price_at_time'              => 75.0,
+                'quantity'                   => 3,
+                'name'                       => 'Additional Time (1 Performer)',
+                'type_name'                  => 'Additional Time',
+                'estimated_duration_minutes' => 15,
+            ]),
+        ];
+
+        $this->service->recalculateTotals('res-1');
+        $update = $this->lastUpdate();
+
+        $this->assertSame(225.0, $update['addons_total'], 'add-on entity: 75 * 3');
+        $this->assertSame(725.0, $update['total_amount'], '500 base + 225 add-ons');
+    }
+
+    /**
+     * El mismo cálculo debe funcionar con add-ons pasados como stdClass
+     * (defensa del normalizeRow contra objetos que no sean Entity).
+     */
+    public function testAddonsTotalIsComputedWhenRepositoryReturnsStdClass(): void
+    {
+        $this->seed(['_servicePrice' => ['amount' => 500.0]]);
+
+        $this->addonRepo->addonRows = [
+            (object) [
+                'price_at_time'              => 40.0,
+                'quantity'                   => 2,
+                'name'                       => 'Balloons',
+                'type_name'                  => 'Decor',
+                'estimated_duration_minutes' => 0,
+            ],
+        ];
+
+        $this->service->recalculateTotals('res-1');
+        $update = $this->lastUpdate();
+
+        $this->assertSame(80.0, $update['addons_total']);
+        $this->assertSame(580.0, $update['total_amount']);
+    }
+
+    // -------------------------------------------------------------------------
     // Balance exactamente 0.01
     // -------------------------------------------------------------------------
 

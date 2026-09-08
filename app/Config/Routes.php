@@ -28,6 +28,14 @@ use CodeIgniter\Router\RouteCollection;
  * Rutas API - DEBEN IR ANTES que el catch-all de Vue
  * @var RouteCollection $routes
  */
+
+// CodeIgniter no trae un placeholder `uuid` de fábrica: sin esto, rutas como
+// `reservation-addons/(:uuid)` nunca hacen match y caen al catch-all de Vue.
+$routes->addPlaceholder(
+    'uuid',
+    '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}'
+);
+
 $routes->group('api', function ($routes) {
 
     //home
