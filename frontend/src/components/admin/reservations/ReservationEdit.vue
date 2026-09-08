@@ -135,17 +135,11 @@
                     :disabled="loadingServices"
                   >
                     <option
-                      v-if="!servicePrices.some((sp) => sp.id === editData.service_price_id)"
-                      :value="editData.service_price_id"
-                    >
-                      {{ editData.service_name || 'Current service' }}
-                    </option>
-                    <option
-                      v-for="sp in servicePrices"
+                      v-for="sp in serviceOptions"
                       :key="sp.id"
                       :value="sp.id"
                     >
-                      {{ sp.name }} — {{ sp.performers_count }} performer(s) — {{ formatCurrency(sp.amount) }}
+                      {{ sp.label }}
                     </option>
                   </select>
                   <small v-if="loadingServices" class="text-muted">Loading services…</small>
@@ -592,6 +586,13 @@ const promoSuccess = ref(false);
 
 const servicePrices = ref([]);
 const loadingServices = ref(false);
+// Servicio ya guardado en BD. props.data no se refresca dentro del modal, así
+// que si el admin cambia el servicio, recalcula, y lo vuelve a cambiar en la
+// misma sesión, comparar contra props.data mandaría el valor equivocado.
+const persistedServicePriceId = ref(null);
+// Servicio original de la reserva al abrir el modal (id + etiqueta); se mantiene
+// siempre como opción aunque no esté en el catálogo del zipcode.
+const originalService = ref(null);
 const recalculating = ref(false);
 const generatingLink = ref(false);
 const sendingEmail = ref(false);
@@ -623,6 +624,23 @@ const num = (v) => (v == null || v === '' ? 0 : parseFloat(v) || 0);
 
 const balanceDue = computed(() => Math.round(num(editData.value.balance_due) * 100) / 100);
 
+// El servicio actual de la reserva puede no estar en el catálogo del zipcode
+// (dato legacy, precio desactivado…). Lo mantenemos SIEMPRE como opción para que
+// se pueda volver a él tras cambiarlo.
+const serviceOptions = computed(() => {
+  const opts = servicePrices.value.map((sp) => ({
+    id: sp.id,
+    label: `${sp.name} — ${sp.performers_count} performer(s) — ${formatCurrency(sp.amount)}`,
+  }));
+  const extras = [originalService.value, { id: editData.value.service_price_id, label: editData.value.service_name || 'Current service' }];
+  extras.forEach((extra) => {
+    if (extra?.id && !opts.some((o) => o.id === extra.id)) {
+      opts.unshift({ id: extra.id, label: extra.label });
+    }
+  });
+  return opts;
+});
+
 const refundDue = computed(() => {
   if (editData.value.amount_paid == null || editData.value.amount_paid === '') return 0;
   // Stripe cobra total y propina como line items separados: el monto adeudado
@@ -643,6 +661,10 @@ watch(
     saveError.value = '';
     paymentLinkUrl.value = '';
     servicePrices.value = [];
+    persistedServicePriceId.value = newData?.service_price_id ?? null;
+    originalService.value = newData?.service_price_id
+      ? { id: newData.service_price_id, label: newData.service_name || 'Current service' }
+      : null;
     confirmAction.value = null;
     reservationAddons.value = [];
     newAddonId.value = '';
@@ -816,10 +838,11 @@ const recalcTotals = async () => {
   recalculating.value = true;
   try {
     // Persist a service change first so the recalculation reads it from the DB.
-    if (editData.value.service_price_id && editData.value.service_price_id !== props.data.service_price_id) {
+    if (editData.value.service_price_id && editData.value.service_price_id !== persistedServicePriceId.value) {
       await api.put(`/reservations/${editData.value.id}`, {
         service_price_id: editData.value.service_price_id,
       });
+      persistedServicePriceId.value = editData.value.service_price_id;
     }
     const res = await api.post(`/reservations/${editData.value.id}/recalculate`);
     applyRecalcResult(res.data?.data ?? res.data);
@@ -895,11 +918,12 @@ const saveReservation = async () => {
       internal_notes: editData.value.internal_notes,
     };
 
-    if (editData.value.service_price_id && editData.value.service_price_id !== props.data.service_price_id) {
+    if (editData.value.service_price_id && editData.value.service_price_id !== persistedServicePriceId.value) {
       dataToSave.service_price_id = editData.value.service_price_id;
     }
 
     await api.put(`/reservations/${editData.value.id}`, dataToSave);
+    persistedServicePriceId.value = editData.value.service_price_id ?? persistedServicePriceId.value;
     emit("saved");
     emit("close");
   } catch (error) {
