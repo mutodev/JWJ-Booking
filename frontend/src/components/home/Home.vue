@@ -399,10 +399,9 @@ async function submitReservation() {
       const dateTime = new Date(customer.eventDateTime);
       eventDate = dateTime.toISOString().split('T')[0]; // YYYY-MM-DD
       startTime = dateTime.toTimeString().slice(0, 5); // HH:MM
-      // Default: entertainment starts 30 min after the event start time
+      // Entertainment starts at the time the customer selected
       // (customer can still adjust this later in the confirmation form).
-      const entertainmentDateTime = new Date(dateTime.getTime() + 30 * 60000);
-      entertainmentStartTime = entertainmentDateTime.toTimeString().slice(0, 5);
+      entertainmentStartTime = startTime;
     }
 
     const information = {

@@ -92,6 +92,7 @@
               @change="validateField('eventDateTime')"
             />
           </el-tooltip>
+          <small class="text-muted d-block mt-1">This is the party start time. We recommend having the entertainment begin at least 30 minutes after.</small>
           <div v-if="errors.eventDateTime" class="text-danger small">
             {{ errors.eventDateTime }}
           </div>

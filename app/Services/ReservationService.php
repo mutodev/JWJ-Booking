@@ -290,7 +290,7 @@ class ReservationService
             'arrival_parking_instructions' => $data['form']['arrivalParkingInstructions'] ?? "-",
             'entertainment_start_time' => !empty($data['form']['entertainmentStartTime'])
                 ? $data['form']['entertainmentStartTime']
-                : $this->addMinutesToTime($data['form']['startTime'] ?? null, 30),
+                : ($data['form']['startTime'] ?? null),
             'birthday_child_name' => $data['form']['birthdayChildName'] ?? null,
             'birthday_child_age' => $data['form']['childAge'] ?? $data['form']['birthdayChildAge'] ?? null,
             'children_age_range' => $data['form']['childrenAgeRange'] ?? "-",
@@ -648,7 +648,7 @@ class ReservationService
                 'arrival_parking_instructions' => $information['instructions'] ?? null,
                 'entertainment_start_time' => !empty($information['entertainmentStartTime'])
                     ? $information['entertainmentStartTime']
-                    : $this->addMinutesToTime($information['startTime'] ?? null, 30),
+                    : ($information['startTime'] ?? null),
                 'birthday_child_name' => $information['birthdayChildName'] ?? null,
                 'birthday_child_age' => intval($information['childAge'] ?? 0),
                 'children_age_range' => $information['ageRange'] ?? null,
@@ -2017,21 +2017,6 @@ class ReservationService
 
         $eventTime = trim((string) ($reservation->event_time ?? ''));
         return $eventTime !== '' ? $eventTime : $fallback;
-    }
-
-    private function addMinutesToTime(?string $time, int $minutes): ?string
-    {
-        $time = trim((string) $time);
-        if ($time === '') {
-            return null;
-        }
-
-        $timestamp = strtotime($time);
-        if ($timestamp === false) {
-            return null;
-        }
-
-        return date('H:i', $timestamp + ($minutes * 60));
     }
 
     private function buildAddonsRow(string $reservationId): string

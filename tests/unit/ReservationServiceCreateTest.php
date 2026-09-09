@@ -224,21 +224,20 @@ final class ReservationServiceCreateTest extends CIUnitTestCase
         $this->assertEquals('14:30', $saved['entertainment_start_time']);
     }
 
-    public function testEntertainmentStartTimeDefaultsTo30MinutesAfterStartTime(): void
+    public function testEntertainmentStartTimeDefaultsToStartTime(): void
     {
-        // If entertainmentStartTime is not provided, default to startTime + 30 min
-        // (matches the "recommended at least 30 minutes after" hint shown to
-        // customers) instead of duplicating the event start time.
+        // If entertainmentStartTime is not provided, default to startTime as-is
+        // (the time the customer entered), not an auto-shifted value.
         unset($this->baseData['form']['entertainmentStartTime']);
         $this->baseData['form']['startTime'] = '15:00';
 
         $this->service->create($this->baseData);
 
         $saved = $this->repoMock->lastCreated;
-        $this->assertEquals('15:30', $saved['entertainment_start_time']);
+        $this->assertEquals('15:00', $saved['entertainment_start_time']);
     }
 
-    public function testEntertainmentStartTimeEmptyStringAlsoDefaultsTo30Minutes(): void
+    public function testEntertainmentStartTimeEmptyStringAlsoDefaultsToStartTime(): void
     {
         // The admin's manual reservation form initializes this field as "" rather
         // than omitting it, so the default must apply for empty strings too.
@@ -248,7 +247,7 @@ final class ReservationServiceCreateTest extends CIUnitTestCase
         $this->service->create($this->baseData);
 
         $saved = $this->repoMock->lastCreated;
-        $this->assertEquals('15:30', $saved['entertainment_start_time']);
+        $this->assertEquals('15:00', $saved['entertainment_start_time']);
     }
 
     // -------------------------------------------------------------------------
