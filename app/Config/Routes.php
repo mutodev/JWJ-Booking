@@ -11,6 +11,7 @@ use App\Controllers\DurationController;
 use App\Controllers\HomeController;
 use App\Controllers\LoginController;
 use App\Controllers\MetropolitanAreaController;
+use App\Controllers\PaymentGatewayController;
 use App\Controllers\PromoCodeController;
 use App\Controllers\ReservationAddonController;
 use App\Controllers\ReservationController;
@@ -205,6 +206,10 @@ $routes->group('api', function ($routes) {
     // Stripe (no auth)
     $routes->post('stripe/webhook', [ReservationController::class, 'stripeWebhook']);
     $routes->get('stripe/verify-payment', [ReservationController::class, 'verifyPayment']);
+
+    // Payment gateway — redeems a `/pay/{token}` link into a fresh Stripe
+    // Checkout Session (no auth; token itself is the credential).
+    $routes->get('pay/(:segment)', [PaymentGatewayController::class, 'redeem/$1']);
 
     $routes->group('reservation-addons', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [ReservationAddonController::class, 'getAll']);

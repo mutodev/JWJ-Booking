@@ -8,6 +8,7 @@ use App\Repositories\ReservationRepository;
 use App\Services\BrevoEmailService;
 use App\Services\CustomPaymentLinkService;
 use App\Services\EmailTemplateService;
+use App\Services\PaymentAccessService;
 use App\Services\StripeService;
 use Stripe\Checkout\Session;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
@@ -28,6 +29,8 @@ use CodeIgniter\Test\CIUnitTestCase;
  *  - $stripeService      -> stub anonimo (propiedad sin type hint, getStripeService() lazy).
  *  - $historyModel       -> SUBCLASE de ReservationEmailHistoryModel (el type hint de
  *                           historyModel() lo exige).
+ *  - $access             -> subclase de PaymentAccessService (URLs deterministas,
+ *                           sin tocar payment_access_tokens).
  *
  * Cubre criterios de aceptacion B5: 2 (validacion), 3 (sin fila huerfana si
  * Stripe falla), 4 (nunca toca una reserva), 7 (idempotencia del marcado),
@@ -44,6 +47,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
     private object $emailService;
     private object $stripe;
     private object $history;
+    private object $access;
 
     protected function setUp(): void
     {
@@ -241,9 +245,10 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
                 string $reservationId,
                 string $description = 'Event Reservation',
                 float $gratuity = 0.0,
-                array $metadata = []
+                array $metadata = [],
+                ?int $expiresInSeconds = null
             ): Session {
-                $this->calls[] = compact('amount', 'customerEmail', 'reservationId', 'description', 'gratuity', 'metadata');
+                $this->calls[] = compact('amount', 'customerEmail', 'reservationId', 'description', 'gratuity', 'metadata', 'expiresInSeconds');
                 if ($this->throw !== null) {
                     throw $this->throw;
                 }
@@ -270,6 +275,30 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
             }
         };
 
+        $this->access = new class extends PaymentAccessService {
+            /** @var array<int,array{0:string,1:string,2:string}> */
+            public array $calls = [];
+
+            public function __construct()
+            {
+                // Skip parent (would build a real Model / DB handle).
+            }
+
+            public function buildLink(string $targetType, string $targetId): string
+            {
+                $this->calls[] = [$targetType, $targetId, 'build'];
+
+                return 'https://front.test/pay/fake-token';
+            }
+
+            public function ensureLink(string $targetType, string $targetId): string
+            {
+                $this->calls[] = [$targetType, $targetId, 'ensure'];
+
+                return 'https://front.test/pay/fake-token';
+            }
+        };
+
         $this->service = new CustomPaymentLinkService();
         $this->setProp('repo', $this->repo);
         $this->setProp('reservationRepository', $this->reservationRepo);
@@ -277,6 +306,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->setProp('emailService', $this->emailService);
         $this->setProp('stripeService', $this->stripe);
         $this->setProp('historyModel', $this->history);
+        $this->setProp('accessService', $this->access);
     }
 
     private function setProp(string $name, $value): void

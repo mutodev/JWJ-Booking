@@ -27,6 +27,7 @@ import EmailTemplates from "@/components/admin/email-templates/EmailTemplates.vu
 import ConfirmationUpdate from "@/components/home/confirmation/ConfirmationUpdate.vue";
 import PaymentSuccess from "@/components/home/payment/PaymentSuccess.vue";
 import PaymentCancel from "@/components/home/payment/PaymentCancel.vue";
+import PayGateway from "@/components/home/payment/PayGateway.vue";
 import CleanReservations from "@/components/admin/maintenance/CleanReservations.vue";
 import NotFound from "@/components/not-found/NotFound.vue";
 
@@ -41,6 +42,7 @@ const routes = [
   { path: "/confirmation/:id", name: "confirmation-update", component: ConfirmationUpdate },
   { path: "/payment-success", name: "payment-success", component: PaymentSuccess },
   { path: "/payment-cancel", name: "payment-cancel", component: PaymentCancel },
+  { path: "/pay/:token", name: "pay-gateway", component: PayGateway },
   {
     path: "/admin",
     name: "admin",

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ReservationEmailHistoryModel;
 use App\Repositories\CustomPaymentLinkRepository;
+use App\Services\PaymentAccessService;
 use App\Repositories\ReservationRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\HTTP\Response;
@@ -40,6 +41,9 @@ class CustomPaymentLinkService
     /** @var ReservationEmailHistoryModel|null Lazy — see historyModel(). */
     protected $historyModel = null;
 
+    /** @var PaymentAccessService|null Lazy — see getAccessService(). */
+    protected $accessService = null;
+
     public function __construct()
     {
         $this->repo                  = new CustomPaymentLinkRepository();
@@ -66,6 +70,40 @@ class CustomPaymentLinkService
         return $this->historyModel;
     }
 
+    protected function getAccessService(): PaymentAccessService
+    {
+        if ($this->accessService === null) {
+            $this->accessService = new PaymentAccessService();
+        }
+
+        return $this->accessService;
+    }
+
+    /**
+     * Attach the platform gateway URL (`/pay/{token}`) that admins should copy
+     * / see instead of the raw Stripe URL. Reuses the currently active token
+     * rather than renewing it — renewal only happens when an email actually
+     * goes out (see dispatchLinkEmail()). Only meaningful while the link is
+     * still collectable.
+     */
+    private function attachAccessUrl(object $link): object
+    {
+        $link->access_url = null;
+
+        if ($link->status === 'pending') {
+            try {
+                $link->access_url = $this->getAccessService()->ensureLink('custom_payment_link', (string) $link->id);
+            } catch (\Throwable $e) {
+                // Best-effort: a gateway-token hiccup must never break listing
+                // or fetching a link. The admin loses the "copy URL" shortcut
+                // for this row, not the whole page.
+                log_message('error', 'Custom payment link: access URL lookup failed: ' . $e->getMessage());
+            }
+        }
+
+        return $link;
+    }
+
     // ---------------------------------------------------------------------
     // Queries
     // ---------------------------------------------------------------------
@@ -75,7 +113,7 @@ class CustomPaymentLinkService
      */
     public function listLinks(): array
     {
-        return $this->repo->getAll();
+        return array_map(fn (object $link) => $this->attachAccessUrl($link), $this->repo->getAll());
     }
 
     public function getLink(string $id): object
@@ -86,7 +124,7 @@ class CustomPaymentLinkService
             throw new HTTPException('Payment link not found', Response::HTTP_NOT_FOUND);
         }
 
-        return $link;
+        return $this->attachAccessUrl($link);
     }
 
     // ---------------------------------------------------------------------
@@ -182,7 +220,7 @@ class CustomPaymentLinkService
             log_message('error', 'Custom payment link: initial email send failed: ' . $e->getMessage());
         }
 
-        return $link;
+        return $this->attachAccessUrl($this->repo->findById($id));
     }
 
     // ---------------------------------------------------------------------
@@ -229,13 +267,19 @@ class CustomPaymentLinkService
 
         // XSS: description and customer_name are free admin text that lands in
         // the email HTML. EmailTemplateService::render() does a plain
-        // str_replace, so escape here. payment_url is a Stripe URL; encode it
+        // str_replace, so escape here. payment_url is our own URL; encode it
         // for an attribute context.
+        //
+        // Probe with ensureLink() (non-destructive — reuses the current token,
+        // or mints one without invalidating anything) so a broken/missing
+        // template is caught BEFORE we touch the token. Renewing eagerly and
+        // then failing to render would kill the customer's still-working link
+        // for nothing.
         $vars = [
             'customer_name' => esc($firstName),
             'description'   => esc((string) $link->description),
             'amount'        => esc($amountLabel),
-            'payment_url'   => esc((string) ($link->payment_url ?? ''), 'attr'),
+            'payment_url'   => esc($this->getAccessService()->ensureLink('custom_payment_link', (string) $link->id), 'attr'),
         ];
 
         // render() throws (via fallback()) when the slug is unknown and has no
@@ -257,6 +301,12 @@ class CustomPaymentLinkService
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
+
+        // The template renders fine — now it's safe to actually renew the
+        // token (every real send, resend included, gets a fresh 6-day
+        // window). Re-render with the freshly-renewed URL for the real send.
+        $vars['payment_url'] = esc($this->getAccessService()->buildLink('custom_payment_link', (string) $link->id), 'attr');
+        $rendered = $this->emailTemplateService->render(self::TEMPLATE_SLUG, $vars);
 
         try {
             $this->emailService->sendEmail($recipient, $rendered['subject'], $rendered['body']);
@@ -304,6 +354,62 @@ class CustomPaymentLinkService
     {
         $this->getLink($id);
         $this->repo->delete($id);
+    }
+
+    // ---------------------------------------------------------------------
+    // Payment gateway (token redemption — see PaymentAccessService)
+    // ---------------------------------------------------------------------
+
+    /**
+     * Create a fresh, short-lived Stripe Checkout Session for a still-pending
+     * link. Called only from PaymentAccessService::redeem() when the customer
+     * clicks the gateway link — recomputes nothing (the amount/description are
+     * frozen at link-creation time by design, unlike a reservation's total),
+     * but always mints a brand-new Stripe session so a stale/expired one never
+     * blocks payment.
+     *
+     * @throws HTTPException 404 not found, 400 cancelled, 409 already paid.
+     * @return array{session_id: string, payment_url: string}
+     */
+    public function regenerateSession(string $id, int $expiresInSeconds = 7200): array
+    {
+        $link = $this->repo->findById($id);
+
+        if (!$link) {
+            throw new HTTPException('Payment link not found', Response::HTTP_NOT_FOUND);
+        }
+
+        if ($link->status === 'paid') {
+            throw new HTTPException('This payment link has already been paid', Response::HTTP_CONFLICT);
+        }
+
+        if ($link->status === 'cancelled') {
+            throw new HTTPException('This payment link has been cancelled', Response::HTTP_BAD_REQUEST);
+        }
+
+        $session = $this->getStripeService()->createCheckoutSession(
+            (float) $link->amount,
+            (string) $link->customer_email,
+            '',
+            (string) $link->description,
+            0.0,
+            [
+                'type'            => 'custom_payment_link',
+                'payment_link_id' => $id,
+            ],
+            $expiresInSeconds
+        );
+
+        $expiresAt = isset($session->expires_at) && $session->expires_at
+            ? date('Y-m-d H:i:s', (int) $session->expires_at)
+            : null;
+
+        $this->repo->attachSession($id, (string) $session->id, (string) $session->url, $expiresAt);
+
+        return [
+            'session_id'  => (string) $session->id,
+            'payment_url' => (string) $session->url,
+        ];
     }
 
     // ---------------------------------------------------------------------

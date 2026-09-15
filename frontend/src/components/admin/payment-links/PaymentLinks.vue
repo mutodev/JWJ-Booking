@@ -84,7 +84,7 @@
         <template #item-actions="item">
           <div class="d-flex gap-1 justify-content-center flex-wrap">
             <button
-              v-if="item.payment_url"
+              v-if="item.access_url"
               class="btn btn-sm btn-outline-primary"
               :title="'Copy payment URL'"
               @click="copyUrl(item)"
@@ -213,9 +213,9 @@ const getData = async () => {
 };
 
 const copyUrl = async (item) => {
-  if (!item.payment_url) return;
+  if (!item.access_url) return;
   try {
-    await navigator.clipboard.writeText(item.payment_url);
+    await navigator.clipboard.writeText(item.access_url);
     copiedId.value = item.id;
     toast.success("Payment URL copied to clipboard");
     setTimeout(() => {

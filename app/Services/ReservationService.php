@@ -122,6 +122,12 @@ class ReservationService
     protected $historyModel = null;
 
     /**
+     * Servicio del gateway de pago (lazy-loaded). Ver getAccessService().
+     * @var PaymentAccessService|null
+     */
+    protected $accessService = null;
+
+    /**
      * Constructor del servicio
      * Inicializa todos los repositories necesarios
      */
@@ -163,6 +169,18 @@ class ReservationService
             $this->customPaymentLinkService = new \App\Services\CustomPaymentLinkService();
         }
         return $this->customPaymentLinkService;
+    }
+
+    /**
+     * Payment gateway service (lazy-loaded) — mints the `/pay/{token}` links
+     * that replace the raw Stripe/confirmation URL in outbound emails.
+     */
+    protected function getAccessService(): PaymentAccessService
+    {
+        if ($this->accessService === null) {
+            $this->accessService = new PaymentAccessService();
+        }
+        return $this->accessService;
     }
 
     /**
@@ -1670,6 +1688,7 @@ class ReservationService
 
         $totalDurationLabel = $this->formatDurationLabel($reservation->duration_hours ?? 0);
         $totalDurationRow = $this->buildDurationRow($reservation->duration_hours ?? 0);
+        $gatewayUrl = $this->getAccessService()->buildLink('reservation', $reservationId);
 
         $templateVars = [
             'customer_name'       => strtok(trim($reservation->full_name ?? ''), ' '),
@@ -1689,7 +1708,7 @@ class ReservationService
             'total_amount'        => number_format($reservation->total_amount, 2),
             'description'         => $descriptionBlock,
             'confirmation_url'    => $confirmationUrl,
-            'payment_url'         => $confirmationUrl,
+            'payment_url'         => $gatewayUrl,
             '_reservation'        => $reservation,
         ];
 
@@ -1720,7 +1739,7 @@ class ReservationService
 
         return [
             'confirmation_url' => $confirmationUrl,
-            'payment_url'      => $confirmationUrl,
+            'payment_url'      => $gatewayUrl,
         ];
     }
 
@@ -1735,7 +1754,8 @@ class ReservationService
 
         return $this->emailTemplateService->composePreview(
             $templateId,
-            $this->buildReservationEmailVariables($reservation)
+            // Preview only — never renew the customer's live payment token.
+            $this->buildReservationEmailVariables($reservation, false)
         );
     }
 
@@ -1973,12 +1993,21 @@ class ReservationService
         return $user->email ?? 'System';
     }
 
-    private function buildReservationEmailVariables(object $reservation): array
+    /**
+     * @param bool $renewPaymentLink Renew (invalidate + reissue) the gateway
+     *             token — must be true for a real send (initial, resend, week
+     *             reminder) so every send gets a fresh 6-day window, and false
+     *             for a non-sending preview (renderTemplateEmail/composePreview)
+     *             so opening a preview never invalidates the customer's live link.
+     */
+    private function buildReservationEmailVariables(object $reservation, bool $renewPaymentLink = true): array
     {
         $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:5173';
         $confirmationUrl = rtrim($frontendUrl, '/') . '/confirmation/' . $reservation->id;
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
-        $paymentUrl = $reservation->payment_url ?? $confirmationUrl;
+        $paymentUrl = $renewPaymentLink
+            ? $this->getAccessService()->buildLink('reservation', (string) $reservation->id)
+            : $this->getAccessService()->ensureLink('reservation', (string) $reservation->id);
         $customerName = strtok(trim($reservation->full_name ?? ''), ' ');
         $entertainmentStartTime = $reservation->entertainment_start_time ?? '';
         $eventTime = $this->getEmailEventTime($reservation);
@@ -2116,10 +2145,14 @@ class ReservationService
      * Regenerates a Stripe Checkout Session for an unpaid reservation (no email sent)
      *
      * @param string $reservationId ID de la reserva
+     * @param int|null $expiresInSeconds Caps the new session's lifetime (e.g. 7200
+     *                 for the 2h payment-gateway flow). Omitted keeps Stripe's
+     *                 default 24h expiry, as used by the existing admin/customer
+     *                 "regenerate" action.
      * @return array Stripe session data with payment_url
      * @throws HTTPException Si la reserva no existe, ya está pagada o está cancelada
      */
-    public function regeneratePaymentSession(string $reservationId): array
+    public function regeneratePaymentSession(string $reservationId, ?int $expiresInSeconds = null): array
     {
         $reservation = $this->repository->getById($reservationId);
 
@@ -2141,7 +2174,9 @@ class ReservationService
             $reservation->email,
             $reservationId,
             'Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie'),
-            (float) ($reservation->gratuity_amount ?? 0)
+            (float) ($reservation->gratuity_amount ?? 0),
+            [],
+            $expiresInSeconds
         );
 
         $paymentUrl = $session->url;

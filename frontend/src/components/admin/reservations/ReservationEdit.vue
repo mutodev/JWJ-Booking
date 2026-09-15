@@ -887,7 +887,7 @@ const doGenerateLink = async () => {
     };
     const res = await api.post('/payment-links', payload);
     const link = res.data?.data ?? res.data;
-    paymentLinkUrl.value = link?.payment_url ?? '';
+    paymentLinkUrl.value = link?.access_url ?? '';
     actionMessage.value = 'Payment link generated.';
   } catch (err) {
     actionError.value = err?.response?.data?.message ?? 'Could not generate the payment link.';

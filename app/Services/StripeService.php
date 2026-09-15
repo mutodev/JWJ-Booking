@@ -35,6 +35,11 @@ class StripeService
      *                        (type = 'custom_payment_link', payment_link_id).
      *                        Added at the end with a default to keep the existing
      *                        signature backwards compatible.
+     * @param int|null $expiresInSeconds When set, caps the session's lifetime
+     *                        (Stripe allows 30min-24h). Used by the payment
+     *                        gateway (PaymentAccessService) to mint short-lived
+     *                        sessions on demand. Omitted keeps Stripe's default
+     *                        24h expiry for existing callers.
      * @return Session
      */
     public function createCheckoutSession(
@@ -43,7 +48,8 @@ class StripeService
         string $reservationId,
         string $description = 'Event Reservation',
         float $gratuity = 0.0,
-        array $metadata = []
+        array $metadata = [],
+        ?int $expiresInSeconds = null
     ): Session {
         $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:8080';
 
@@ -79,7 +85,7 @@ class StripeService
             ? rtrim($frontendUrl, '/') . '/payment-cancel?reservation_id=' . $reservationId
             : rtrim($frontendUrl, '/') . '/payment-cancel';
 
-        $session = Session::create([
+        $params = [
             'payment_method_types' => ['card'],
             'mode'           => 'payment',
             'customer_email' => $customerEmail,
@@ -87,7 +93,13 @@ class StripeService
             'metadata'       => $meta,
             'success_url'    => rtrim($frontendUrl, '/') . '/payment-success?session_id={CHECKOUT_SESSION_ID}',
             'cancel_url'     => $cancelUrl,
-        ]);
+        ];
+
+        if ($expiresInSeconds !== null) {
+            $params['expires_at'] = time() + $expiresInSeconds;
+        }
+
+        $session = Session::create($params);
 
         return $session;
     }

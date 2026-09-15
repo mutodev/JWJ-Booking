@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\ReservationEmailHistoryModel;
+use App\Services\PaymentAccessService;
 use App\Services\ReservationService;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -159,6 +160,23 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
             }
         };
 
+        $access = new class extends PaymentAccessService {
+            public function __construct()
+            {
+                // Skip parent (would build a real Model / DB handle).
+            }
+
+            public function buildLink(string $targetType, string $targetId): string
+            {
+                return 'https://front.test/pay/fake-token';
+            }
+
+            public function ensureLink(string $targetType, string $targetId): string
+            {
+                return 'https://front.test/pay/fake-token';
+            }
+        };
+
         $this->service = new ReservationService();
         $this->setProp('historyModel', $this->history);
         $this->setProp('emailService', $this->emailService);
@@ -166,6 +184,7 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
         $this->setProp('repository', $this->repo);
         $this->setProp('reservationAddonRepository', $addonRepo);
         $this->setProp('brevoContactService', null);
+        $this->setProp('accessService', $access);
     }
 
     private function setProp(string $name, $value): void
