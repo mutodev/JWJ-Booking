@@ -13,6 +13,12 @@ use CodeIgniter\Database\Migration;
  *
  * One active token per (target_type, target_id): issuing a new one for the
  * same target deletes the previous row (sliding renewal on every resend).
+ *
+ * NOTE: `token` was widened from VARCHAR(64) to VARCHAR(500) by a later
+ * migration — see AlterPaymentAccessTokensTokenLength — once the token
+ * stopped being a random hex string and became an encrypted payload. This
+ * file is left as originally deployed so it stays a correct history of what
+ * already ran.
  */
 class CreatePaymentAccessTokensTable extends Migration
 {

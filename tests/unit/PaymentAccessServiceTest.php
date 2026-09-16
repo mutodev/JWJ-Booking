@@ -73,6 +73,13 @@ final class PaymentAccessServiceTest extends CIUnitTestCase
 
                 return null;
             }
+
+            public function decodeToken(string $token): ?array
+            {
+                $row = $this->tokens[$token] ?? null;
+
+                return $row ? ['target_type' => $row->target_type, 'target_id' => $row->target_id] : null;
+            }
         };
 
         $this->reservationService = new class extends ReservationService {

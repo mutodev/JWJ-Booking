@@ -88,15 +88,24 @@ class PaymentAccessService
      */
     public function redeem(string $token, int $sessionLifetimeSeconds = 7200): string
     {
-        $record = $this->tokenModel->findValid($token);
-
-        if (!$record) {
+        // findValid() only confirms the token is still active (issued, not
+        // superseded by a resend, within its 6-day window) — it is NOT the
+        // source of truth for what the token grants access to. That comes
+        // from decoding the token itself, below.
+        if (!$this->tokenModel->findValid($token)) {
             throw new HTTPException('This payment link has expired or is no longer valid.', Response::HTTP_GONE);
         }
 
-        $result = $record->target_type === 'custom_payment_link'
-            ? $this->getCustomLinkService()->regenerateSession((string) $record->target_id, $sessionLifetimeSeconds)
-            : $this->getReservationService()->regeneratePaymentSession((string) $record->target_id, $sessionLifetimeSeconds);
+        $payload = $this->tokenModel->decodeToken($token);
+        if ($payload === null) {
+            // Decryption failed: wrong/rotated encryption.key or a tampered
+            // value. Fail exactly like an unknown token — never say why.
+            throw new HTTPException('This payment link has expired or is no longer valid.', Response::HTTP_GONE);
+        }
+
+        $result = $payload['target_type'] === 'custom_payment_link'
+            ? $this->getCustomLinkService()->regenerateSession($payload['target_id'], $sessionLifetimeSeconds)
+            : $this->getReservationService()->regeneratePaymentSession($payload['target_id'], $sessionLifetimeSeconds);
 
         return (string) $result['payment_url'];
     }
