@@ -37,6 +37,7 @@ use App\Repositories\ReservationAddonRepository;
 use App\Repositories\PromoCodeRepository;
 use App\Repositories\ServicePriceRepository;
 use App\Repositories\ZipCodeRepository;
+use App\Repositories\CustomPaymentLinkRepository;
 use App\Services\BrevoEmailService;
 use App\Services\BrevoContactService;
 use App\Services\EmailTemplateService;
@@ -113,6 +114,7 @@ class ReservationService
      * @var \App\Services\CustomPaymentLinkService|null
      */
     protected $customPaymentLinkService = null;
+    protected $customPaymentLinkRepository = null;
 
     /**
      * Modelo del historial/timeline de la reserva (lazy-loaded).
@@ -171,6 +173,14 @@ class ReservationService
         return $this->customPaymentLinkService;
     }
 
+    protected function customPaymentLinkRepository(): CustomPaymentLinkRepository
+    {
+        if ($this->customPaymentLinkRepository === null) {
+            $this->customPaymentLinkRepository = new CustomPaymentLinkRepository();
+        }
+        return $this->customPaymentLinkRepository;
+    }
+
     /**
      * Payment gateway service (lazy-loaded) — mints the `/pay/{token}` links
      * that replace the raw Stripe/confirmation URL in outbound emails.
@@ -203,7 +213,14 @@ class ReservationService
      */
     public function getAll(): array
     {
-        return $this->repository->getAll();
+        $reservations = $this->repository->getAll();
+        $ids = array_map(static fn ($reservation) => (string) $reservation->id, $reservations);
+        $customTotals = $this->customPaymentLinkRepository()->paidTotalsByReservation($ids);
+
+        return array_map(function ($reservation) use ($customTotals) {
+            $reservation->custom_payment_paid = $customTotals[(string) $reservation->id] ?? 0.0;
+            return $this->attachOutstanding($reservation);
+        }, $reservations);
     }
 
     /**
@@ -225,6 +242,34 @@ class ReservationService
         // Incluirlo aquí permite que cualquier consumidor del detalle sepa qué se compró.
         $reservation->addons = $this->reservationAddonRepository->getDetailedByReservation($id);
 
+        $reservation->custom_payment_paid = $this->customPaymentLinkRepository()
+            ->paidTotalsByReservation([(string) $reservation->id])[(string) $reservation->id] ?? 0.0;
+        return $this->attachOutstanding($reservation);
+    }
+
+    /** The single source of truth for both original and custom payments. */
+    public function computeOutstanding(object $reservation): float
+    {
+        if (!empty($reservation->is_paid)) {
+            return 0.0;
+        }
+
+        $total = (float) ($reservation->total_amount ?? 0);
+        $tip = (float) ($reservation->gratuity_amount ?? 0);
+        $paid = $this->amountPaidOf($reservation);
+
+        return max(0.0, round($total + $tip - $paid, 2));
+    }
+
+    private function amountPaidOf(object $reservation): float
+    {
+        $raw = $reservation->amount_paid ?? null;
+        return ($raw === null || $raw === '' || !is_numeric($raw)) ? 0.0 : round((float) $raw, 2);
+    }
+
+    private function attachOutstanding(object $reservation): object
+    {
+        $reservation->outstanding_balance = $this->computeOutstanding($reservation);
         return $reservation;
     }
 
@@ -1705,7 +1750,7 @@ class ReservationService
             'duration_hours'      => $totalDurationLabel,
             'total_duration'      => $totalDurationLabel,
             'total_duration_label' => $totalDurationLabel,
-            'total_amount'        => number_format($reservation->total_amount, 2),
+            'total_amount'        => number_format($this->computeOutstanding($reservation), 2),
             'description'         => $descriptionBlock,
             'confirmation_url'    => $confirmationUrl,
             'payment_url'         => $gatewayUrl,
@@ -2168,13 +2213,19 @@ class ReservationService
             throw new HTTPException('Reservation is cancelled', Response::HTTP_BAD_REQUEST);
         }
 
-        // Create new Stripe Checkout Session
+        $outstanding = $this->computeOutstanding($reservation);
+        if ($outstanding <= 0.0) {
+            throw new HTTPException('Reservation has no outstanding balance', Response::HTTP_BAD_REQUEST);
+        }
+
+        // The original payment link always collects only what remains after any
+        // paid custom link; it remains available until the reservation is paid.
         $session = $this->getStripeService()->createCheckoutSession(
-            (float) $reservation->total_amount,
+            $outstanding,
             $reservation->email,
             $reservationId,
-            'Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie'),
-            (float) ($reservation->gratuity_amount ?? 0),
+            'Remaining balance - Event Reservation - ' . ($reservation->service_name ?? 'JamWithJamie'),
+            0.0,
             [],
             $expiresInSeconds
         );
@@ -2200,7 +2251,7 @@ class ReservationService
      * @param string $paymentIntentId Stripe Payment Intent ID
      * @return bool
      */
-    public function handlePaymentCompleted(string $reservationId, string $paymentIntentId): bool
+    public function handlePaymentCompleted(string $reservationId, string $paymentIntentId, ?float $chargedAmount = null): bool
     {
         $reservation = $this->repository->getById($reservationId);
 
@@ -2215,26 +2266,31 @@ class ReservationService
             return true;
         }
 
-        // B6: snapshot what was actually charged. Stripe collects
-        // total_amount + gratuity_amount, so that is `amount_paid`. With that
-        // snapshot a later recalculation (recalculateTotals) can size the
-        // balance_due exactly (criterion 7). balance_due is 0 here because
-        // amount_paid always covers total_amount at this point (criterion 6).
-        $chargedAmount = round(
-            (float) ($reservation->total_amount ?? 0) + (float) ($reservation->gratuity_amount ?? 0),
-            2
-        );
+        $chargedAmount = $chargedAmount === null
+            ? $this->computeOutstanding($reservation)
+            : round(max(0.0, $chargedAmount), 2);
+        $newPaid = round($this->amountPaidOf($reservation) + $chargedAmount, 2);
+        $probe = (object) [
+            'total_amount' => $reservation->total_amount ?? 0,
+            'gratuity_amount' => $reservation->gratuity_amount ?? 0,
+            'amount_paid' => $newPaid,
+            'is_paid' => false,
+        ];
+        $outstanding = $this->computeOutstanding($probe);
+        $settled = $outstanding <= 0.0;
 
         $result = $this->repository->update($reservationId, [
-            'is_paid'                   => true,
+            'is_paid'                   => $settled,
             'stripe_payment_intent_id'  => $paymentIntentId,
-            'paid_at'                   => date('Y-m-d H:i:s'),
-            'amount_paid'               => $chargedAmount,
-            'balance_due'               => round(max(0, (float) ($reservation->total_amount ?? 0) - $chargedAmount), 2),
+            'paid_at'                   => $settled ? date('Y-m-d H:i:s') : null,
+            'amount_paid'               => $newPaid,
+            'balance_due'               => $outstanding,
         ]);
 
         if ($result !== null) {
-            $this->sendPaymentConfirmationEmail($result);
+            if ($settled) {
+                $this->sendPaymentConfirmationEmail($result);
+            }
             // Timeline event: "payment received". Se inserta después de marcar
             // is_paid y solo una vez (la guarda de idempotencia por is_paid de
             // arriba impide que webhook + verifyPayment lo dupliquen).
@@ -2243,6 +2299,35 @@ class ReservationService
         }
 
         return false;
+    }
+
+    /** Apply one paid custom link to the existing reservation payment fields. */
+    public function applyCustomPayment(string $reservationId, float $amount, string $paymentIntentId): bool
+    {
+        $reservation = $this->repository->getById($reservationId);
+        if (!$reservation || !empty($reservation->is_paid) || $amount <= 0.0) {
+            return false;
+        }
+
+        $newPaid = round($this->amountPaidOf($reservation) + $amount, 2);
+        $probe = (object) [
+            'total_amount' => $reservation->total_amount ?? 0,
+            'gratuity_amount' => $reservation->gratuity_amount ?? 0,
+            'amount_paid' => $newPaid,
+            'is_paid' => false,
+        ];
+        $outstanding = $this->computeOutstanding($probe);
+        $settled = $outstanding <= 0.0;
+
+        $this->repository->update($reservationId, [
+            'amount_paid' => $newPaid,
+            'balance_due' => $outstanding,
+            'stripe_payment_intent_id' => $paymentIntentId,
+            'is_paid' => $settled,
+            'paid_at' => $settled ? date('Y-m-d H:i:s') : null,
+        ]);
+
+        return true;
     }
 
     /**
@@ -2281,7 +2366,11 @@ class ReservationService
         }
 
         if ($session->payment_status === 'paid') {
-            $this->handlePaymentCompleted($reservationId, $session->payment_intent ?? '');
+            $this->handlePaymentCompleted(
+                $reservationId,
+                $session->payment_intent ?? '',
+                isset($session->amount_total) ? ((float) $session->amount_total / 100) : null
+            );
         }
 
         return [

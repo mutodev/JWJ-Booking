@@ -232,9 +232,11 @@ final class CustomPaymentLinkServiceEdgeCasesTest extends CIUnitTestCase
     // -------------------------------------------------------------------------
 
     /** @dataProvider emptyReservationIds */
-    public function testEmptyReservationIdBecomesNull($value): void
+    public function testEmptyReservationIdIsRejected($value): void
     {
-        $this->assertNull($this->invoke('assertValidReservationId', $value));
+        [$threw, $e] = $this->rejects('assertValidReservationId', $value);
+        $this->assertTrue($threw);
+        $this->assertSame(400, $e->getCode());
     }
 
     public static function emptyReservationIds(): array
@@ -268,7 +270,7 @@ final class CustomPaymentLinkServiceEdgeCasesTest extends CIUnitTestCase
     {
         [$threw, $e] = $this->rejects('assertValidReservationId', 'does-not-exist');
         $this->assertTrue($threw);
-        $this->assertSame(400, $e->getCode());
+        $this->assertSame(404, $e->getCode());
         $this->assertStringContainsString('does not exist', $e->getMessage());
     }
 

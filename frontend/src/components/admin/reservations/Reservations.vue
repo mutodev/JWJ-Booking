@@ -89,9 +89,12 @@
             </span>
           </template>
 
-          <template #item-is_paid="{ is_paid }">
+          <template #item-is_paid="{ is_paid, custom_payment_paid }">
             <span v-if="is_paid" class="badge bg-success">Paid</span>
             <span v-else class="badge bg-danger">Unpaid</span>
+            <small v-if="custom_payment_paid > 0" class="d-block text-success mt-1">
+              <i class="bi bi-check-circle"></i> Personalized: {{ formatCurrency(custom_payment_paid) }} paid
+            </small>
           </template>
 
           <template #item-total_amount="{ total_amount }">
@@ -117,6 +120,9 @@
               </button>
               <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-success" @click="paymentUrlModal(item)" :disabled="item.is_paid" title="Send payment link">
                 <i class="bi bi-credit-card"></i>
+              </button>
+              <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-info" @click="customPaymentModal(item)" :disabled="item.is_paid || item.status === 'cancelled'" title="Create personalized payment link">
+                <i class="bi bi-sliders"></i>
               </button>
               <div v-if="canUpdate" class="dropdown">
                 <button
@@ -181,6 +187,13 @@
       :initial-is-full-html="composeInitialIsFullHtml"
       :selected-template-name="composeTemplateName"
       @close="closeComposeModal"
+    />
+
+    <ReservationCustomPaymentModal
+      :show="modalCustomPaymentVisible"
+      :reservation="selectedData"
+      @close="modalCustomPaymentVisible = false"
+      @saved="getData()"
     />
 
     <!-- Send Payment Modal -->
@@ -284,6 +297,7 @@ import api from "@/services/axios";
 import ReservationCreate from "./ReservationCreate.vue";
 import ReservationEdit from "./ReservationEdit.vue";
 import ReservationView from "./ReservationView.vue";
+import ReservationCustomPaymentModal from "./ReservationCustomPaymentModal.vue";
 import ComposeEmailModal from "@/components/admin/email-templates/ComposeEmailModal.vue";
 import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
 import { useToast } from "vue-toastification";
@@ -306,6 +320,7 @@ const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
 const modalViewVisible = ref(false);
 const modalPaymentUrlVisible = ref(false);
+const modalCustomPaymentVisible = ref(false);
 const composeEmailVisible = ref(false);
 const composeLockedRecipient = ref(null);
 const composeReservation = ref(null);
@@ -378,6 +393,11 @@ const paymentUrlModal = (item) => {
   modalPaymentUrlVisible.value = true;
 };
 
+const customPaymentModal = (item) => {
+  selectedData.value = { ...item };
+  modalCustomPaymentVisible.value = true;
+};
+
 const getStatusLabel = (status) => STATUS_LABELS[status] || status || "";
 
 const getStatusBadgeClass = (status) => {
@@ -435,7 +455,6 @@ const closeComposeModal = () => {
 const headers = computed(() => [
   { text: "Customer", value: "customer_name" },
   { text: "Service", value: "service_name" },
-  { text: "Event Type", value: "event_type" },
   { text: "Location", value: "location" },
   { text: "Date", value: "event_date" },
   { text: "Time", value: "event_time" },
@@ -458,12 +477,13 @@ const dataProcessed = computed(() =>
     ...item,
     customer_name: item.full_name || 'N/A',
     service_name: item.service_name || 'N/A',
-    event_type: item.event_type || 'N/A',
     location: `${item.city_name || ''}, ${item.county_name || ''}`.replace(', ', '') ? `${item.city_name || ''}, ${item.county_name || ''}` : item.zipcode || 'N/A',
     event_address: item.event_address ?? "",
     event_date: item.event_date?.date ? new Date(item.event_date.date) : (item.event_date ? new Date(item.event_date) : null),
     event_time: item.event_time ?? "",
     total_amount: parseFloat(item.total_amount) || 0,
+    outstanding_balance: parseFloat(item.outstanding_balance) || 0,
+    custom_payment_paid: parseFloat(item.custom_payment_paid) || 0,
     status: item.status ?? "",
     is_paid: Boolean(item.is_paid),
   }))

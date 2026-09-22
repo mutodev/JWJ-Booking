@@ -689,9 +689,12 @@ watch(
     newAddonQty.value = 1;
     addonMessage.value = '';
     addonError.value = '';
-    if (editData.value.event_date && typeof editData.value.event_date === 'object') {
-      const date = new Date(editData.value.event_date);
-      editData.value.event_date = date.toISOString().split('T')[0];
+    if (editData.value.event_date) {
+      const rawDate = editData.value.event_date?.date ?? editData.value.event_date;
+      const date = new Date(rawDate);
+      if (!Number.isNaN(date.getTime())) {
+        editData.value.event_date = date.toISOString().split('T')[0];
+      }
     }
     loadServicePrices();
     loadAddons();
@@ -715,7 +718,7 @@ const handlePaymentChange = () => {
   }
 };
 
-const loadServicePrices = async () => {
+async function loadServicePrices() {
   const zipcodeId = editData.value.zipcode_id;
   if (!zipcodeId) return;
   loadingServices.value = true;
@@ -730,7 +733,7 @@ const loadServicePrices = async () => {
   } finally {
     loadingServices.value = false;
   }
-};
+}
 
 const applyRecalcResult = (reservation) => {
   if (!reservation || typeof reservation !== 'object') return;
@@ -752,7 +755,7 @@ const addonName = (addonId) => {
   return hit ? hit.label : 'Add-on';
 };
 
-const loadAddons = async () => {
+async function loadAddons() {
   const reservationId = editData.value.id;
   if (!reservationId) return;
   loadingAddons.value = true;
@@ -784,7 +787,7 @@ const loadAddons = async () => {
   } finally {
     loadingAddons.value = false;
   }
-};
+}
 
 const addAddon = async () => {
   if (!newAddonId.value) return;

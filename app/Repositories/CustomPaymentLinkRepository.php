@@ -30,6 +30,11 @@ class CustomPaymentLinkRepository
 
     protected $model;
 
+    public function db()
+    {
+        return \Config\Database::connect();
+    }
+
     public function __construct()
     {
         $this->model = new CustomPaymentLinkModel();
@@ -61,6 +66,38 @@ class CustomPaymentLinkRepository
             ->where('status', 'pending')
             ->orderBy('created_at', 'DESC')
             ->first();
+    }
+
+    /** @return object[] */
+    public function getByReservation(string $reservationId): array
+    {
+        return $this->model
+            ->where('reservation_id', $reservationId)
+            ->orderBy('created_at', 'DESC')
+            ->findAll();
+    }
+
+    /** @return array<string, float> Paid personalized amounts keyed by reservation id. */
+    public function paidTotalsByReservation(array $reservationIds): array
+    {
+        if ($reservationIds === []) {
+            return [];
+        }
+
+        $rows = $this->db()->table('custom_payment_links')
+            ->select('reservation_id, SUM(amount) AS paid_amount')
+            ->whereIn('reservation_id', $reservationIds)
+            ->where('status', 'paid')
+            ->groupBy('reservation_id')
+            ->get()
+            ->getResultArray();
+
+        $totals = [];
+        foreach ($rows as $row) {
+            $totals[(string) $row['reservation_id']] = round((float) $row['paid_amount'], 2);
+        }
+
+        return $totals;
     }
 
     /**
@@ -99,11 +136,18 @@ class CustomPaymentLinkRepository
      */
     public function markPaid(string $id, string $paymentIntentId, string $paidAt): bool
     {
-        return (bool) $this->model->update($id, [
+        // Conditional update is the idempotency gate for webhook + verify-payment.
+        // Model::update() can report true even when no row changed, so use affectedRows.
+        $this->db()->table('custom_payment_links')
+            ->where('id', $id)
+            ->where('status', 'pending')
+            ->update([
             'status'                   => 'paid',
             'stripe_payment_intent_id' => $paymentIntentId,
             'paid_at'                  => $paidAt,
         ]);
+
+        return $this->db()->affectedRows() === 1;
     }
 
     /**

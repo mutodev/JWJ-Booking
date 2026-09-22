@@ -44,6 +44,9 @@ class CustomPaymentLinkService
     /** @var PaymentAccessService|null Lazy — see getAccessService(). */
     protected $accessService = null;
 
+    /** @var ReservationService|null Lazy to avoid circular construction. */
+    protected $reservationService = null;
+
     public function __construct()
     {
         $this->repo                  = new CustomPaymentLinkRepository();
@@ -77,6 +80,15 @@ class CustomPaymentLinkService
         }
 
         return $this->accessService;
+    }
+
+    protected function getReservationService(): ReservationService
+    {
+        if ($this->reservationService === null) {
+            $this->reservationService = new ReservationService();
+        }
+
+        return $this->reservationService;
     }
 
     /**
@@ -127,6 +139,15 @@ class CustomPaymentLinkService
         return $this->attachAccessUrl($link);
     }
 
+    /** @return object[] Links belonging to one reservation, newest first. */
+    public function listLinksForReservation(string $reservationId): array
+    {
+        return array_map(
+            fn (object $link) => $this->attachAccessUrl($link),
+            $this->repo->getByReservation($reservationId)
+        );
+    }
+
     // ---------------------------------------------------------------------
     // Create
     // ---------------------------------------------------------------------
@@ -149,24 +170,31 @@ class CustomPaymentLinkService
         $reservationId = $this->assertValidReservationId($data['reservation_id'] ?? null);
         $currency    = $this->normalizeCurrency($data['currency'] ?? null);
 
+        $reservation = $this->reservationRepository->getById($reservationId);
+        if (!$reservation || $reservation->status === 'cancelled') {
+            throw new HTTPException('The reservation cannot receive a payment link', Response::HTTP_BAD_REQUEST);
+        }
+        $outstanding = $this->getReservationService()->computeOutstanding($reservation);
+        if ($outstanding <= 0.0) {
+            throw new HTTPException('The reservation has no outstanding balance', Response::HTTP_BAD_REQUEST);
+        }
+        if ($amount > $outstanding) {
+            throw new HTTPException(
+                'Amount must not exceed the outstanding balance of $' . number_format($outstanding, 2),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
         // B6 double-charge guard: never issue a second pending link for the same
         // reservation (e.g. two admins generating a balance link at once). The
         // lookup itself must not hard-fail link creation, but a real hit is a
         // hard stop.
-        if ($reservationId !== null) {
-            $pending = null;
-            try {
-                $pending = $this->repo->findPendingByReservation($reservationId);
-            } catch (\Throwable $e) {
-                log_message('error', 'Custom payment link: pending-link lookup failed: ' . $e->getMessage());
-            }
-
-            if ($pending) {
-                throw new HTTPException(
-                    'A pending payment link already exists for this reservation. Cancel it before creating a new one.',
-                    Response::HTTP_CONFLICT
-                );
-            }
+        $pending = $this->repo->findPendingByReservation($reservationId);
+        if ($pending) {
+            throw new HTTPException(
+                'A pending personalized payment link already exists. Resend it or cancel it before creating a new one.',
+                Response::HTTP_CONFLICT
+            );
         }
 
         // Pre-generate the id so it can travel in the Stripe metadata before the
@@ -387,6 +415,14 @@ class CustomPaymentLinkService
             throw new HTTPException('This payment link has been cancelled', Response::HTTP_BAD_REQUEST);
         }
 
+        $reservation = $this->reservationRepository->getById((string) $link->reservation_id);
+        if (!$reservation || $reservation->status === 'cancelled') {
+            throw new HTTPException('The reservation can no longer receive this payment', Response::HTTP_BAD_REQUEST);
+        }
+        if ($this->getReservationService()->computeOutstanding($reservation) < (float) $link->amount) {
+            throw new HTTPException('This payment link amount exceeds the current outstanding balance', Response::HTTP_CONFLICT);
+        }
+
         $session = $this->getStripeService()->createCheckoutSession(
             (float) $link->amount,
             (string) $link->customer_email,
@@ -453,11 +489,23 @@ class CustomPaymentLinkService
         }
 
         $paymentIntentId = (string) ($session->payment_intent ?? '');
-        $this->repo->markPaid((string) $linkId, $paymentIntentId, date('Y-m-d H:i:s'));
+        $won = $this->repo->markPaid((string) $linkId, $paymentIntentId, date('Y-m-d H:i:s'));
+        if (!$won) {
+            log_message('info', 'Custom payment link ' . $linkId . ' was already processed');
+            return true;
+        }
 
         $updated = $this->repo->findById((string) $linkId);
 
         if ($updated && !empty($updated->reservation_id)) {
+            if (!$this->getReservationService()->applyCustomPayment(
+                (string) $updated->reservation_id,
+                (float) $updated->amount,
+                $paymentIntentId
+            )) {
+                log_message('error', 'Custom payment link ' . $linkId . ' was paid but could not be credited to its reservation');
+                return false;
+            }
             $this->recordReservationTimeline(
                 (string) $updated->reservation_id,
                 'Custom Payment Received',
@@ -526,19 +574,15 @@ class CustomPaymentLinkService
         return strtolower(trim($raw));
     }
 
-    private function assertValidReservationId($raw): ?string
+    private function assertValidReservationId($raw): string
     {
-        if ($raw === null || $raw === '' || $raw === false) {
-            return null;
-        }
-
-        if (!is_string($raw)) {
+        if (!is_string($raw) || trim($raw) === '') {
             throw new HTTPException('Invalid reservation reference', Response::HTTP_BAD_REQUEST);
         }
 
         $reservation = $this->reservationRepository->getById($raw);
         if (!$reservation) {
-            throw new HTTPException('The referenced reservation does not exist', Response::HTTP_BAD_REQUEST);
+            throw new HTTPException('The referenced reservation does not exist', Response::HTTP_NOT_FOUND);
         }
 
         return $raw;

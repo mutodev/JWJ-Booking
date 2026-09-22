@@ -30,7 +30,6 @@ class DatabaseSeeder extends Seeder
         $this->call('MenuSeeder');
         $this->call('RoleMenuPermissionSeeder');
         $this->call('PromoCodesAndAbandonedCartsMenuSeeder');
-        $this->call('PaymentLinksMenuSeeder');
         // NOTE: the email-template seeders (CustomPaymentLinkEmailSeeder [B5],
         // ReservationUpdatedEmailSeeder [B6]) are run on deploy alongside the
         // rest of the EmailTemplateSeeder family, not here. Each is insert-only

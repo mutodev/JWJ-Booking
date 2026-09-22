@@ -20,6 +20,9 @@ class PaymentLinksMenuSeeder extends Seeder
 {
     public function run()
     {
+        // The standalone screen was retired. Links are created from Reservations.
+        return;
+
         // Role ids (from RoleSeeder)
         $adminRoleId       = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890'; // Administrador
         $coordinatorRoleId = 'b2c3d4e5-f6g7-8901-bcde-f23456789012'; // Coordinador

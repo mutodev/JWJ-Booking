@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Services\ReservationService;
 use App\Services\ReservationDraftService;
+use App\Services\CustomPaymentLinkService;
 use App\Services\BrevoEmailService;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -11,11 +12,13 @@ class ReservationController extends ResourceController
 {
     protected $service;
     protected $draftService;
+    protected $customPaymentLinkService;
 
     public function __construct()
     {
         $this->service = new ReservationService();
         $this->draftService = new ReservationDraftService();
+        $this->customPaymentLinkService = new CustomPaymentLinkService();
     }
 
     public function getAll()
@@ -34,6 +37,17 @@ class ReservationController extends ResourceController
         try {
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response(lang('Reservation.found'), $this->service->getById($id)));
+        } catch (\Throwable $th) {
+            return $this->response->setStatusCode($th->getCode() ?: 500)
+                ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    public function paymentLinks($id = null)
+    {
+        try {
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Payment links retrieved successfully', $this->customPaymentLinkService->listLinksForReservation((string) $id)));
         } catch (\Throwable $th) {
             return $this->response->setStatusCode($th->getCode() ?: 500)
                 ->setJSON(['message' => $th->getMessage()]);
@@ -369,7 +383,11 @@ class ReservationController extends ResourceController
                     $paymentIntentId = $session->payment_intent ?? null;
 
                     if ($reservationId) {
-                        $this->service->handlePaymentCompleted($reservationId, $paymentIntentId);
+                        $this->service->handlePaymentCompleted(
+                            $reservationId,
+                            $paymentIntentId,
+                            isset($session->amount_total) ? ((float) $session->amount_total / 100) : null
+                        );
                     }
                 }
             }

@@ -88,6 +88,16 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
                 return isset($this->store[$id]) ? clone $this->store[$id] : null;
             }
 
+            public function findPendingByReservation(string $reservationId): ?object
+            {
+                foreach ($this->store as $link) {
+                    if (($link->reservation_id ?? null) === $reservationId && ($link->status ?? null) === 'pending') {
+                        return clone $link;
+                    }
+                }
+                return null;
+            }
+
             public function create(array $data, string $id): string
             {
                 $this->createCalls[] = [$data, $id];
@@ -174,6 +184,10 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
                 return $this->existing[$id] ?? null;
             }
         };
+        $this->reservationRepo->existing['res-1'] = (object) [
+            'id' => 'res-1', 'status' => 'new', 'total_amount' => 200.0,
+            'gratuity_amount' => 0.0, 'amount_paid' => 0.0, 'is_paid' => false,
+        ];
 
         $this->templateService = new class extends EmailTemplateService {
             /** @var array{subject:string,body:string} */
@@ -307,6 +321,20 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->setProp('stripeService', $this->stripe);
         $this->setProp('historyModel', $this->history);
         $this->setProp('accessService', $this->access);
+        $paymentService = new class extends \App\Services\ReservationService {
+            public array $applied = [];
+            public function __construct() {}
+            public function computeOutstanding(object $reservation): float
+            {
+                return max(0.0, (float) ($reservation->total_amount ?? 0) + (float) ($reservation->gratuity_amount ?? 0) - (float) ($reservation->amount_paid ?? 0));
+            }
+            public function applyCustomPayment(string $reservationId, float $amount, string $paymentIntentId): bool
+            {
+                $this->applied[] = [$reservationId, $amount, $paymentIntentId];
+                return true;
+            }
+        };
+        $this->setProp('reservationService', $paymentService);
     }
 
     private function setProp(string $name, $value): void
@@ -335,6 +363,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
             'customer_email' => 'client@example.com',
             'description'    => 'Late fee for the event',
             'amount'         => 75.0,
+            'reservation_id' => 'res-1',
         ], $override);
     }
 
@@ -344,7 +373,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
             'id'                       => 'link-1',
             'status'                   => 'pending',
             'paid_at'                  => null,
-            'reservation_id'           => null,
+            'reservation_id'           => 'res-1',
             'customer_name'            => 'Jamie Client',
             'customer_email'           => 'client@example.com',
             'description'              => 'Late fee',
@@ -410,7 +439,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
     public function testCreateLinkWhitelistsFieldsAndTruncatesCreatedBy(): void
     {
         $this->service->createLink($this->validData([
-            'reservation_id' => null,
+            'reservation_id' => 'res-1',
             'currency'       => 'EUR',
         ]), str_repeat('x', 400));
 
@@ -418,7 +447,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->assertSame(255, strlen($persisted['created_by']));
         $this->assertSame('eur', $persisted['currency']);
         $this->assertSame(75.0, $persisted['amount']);
-        $this->assertNull($persisted['reservation_id']);
+        $this->assertSame('res-1', $persisted['reservation_id']);
     }
 
     public function testCreateLinkDerivesExpiresAtFromSession(): void
@@ -442,7 +471,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
 
     public function testCreateLinkResolvesExistingReservation(): void
     {
-        $this->reservationRepo->existing['res-42'] = (object) ['id' => 'res-42'];
+        $this->reservationRepo->existing['res-42'] = (object) ['id' => 'res-42', 'status' => 'new', 'total_amount' => 200, 'amount_paid' => 0, 'is_paid' => false];
 
         $this->service->createLink($this->validData(['reservation_id' => 'res-42']), 'admin');
 
@@ -739,14 +768,16 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->assertSame($firstPaidAt, $this->repo->store['link-1']->paid_at);
     }
 
-    public function testHandlePaidSessionNeverTouchesAReservation(): void
+    public function testHandlePaidSessionCreditsTheLinkedReservation(): void
     {
-        // Criterio 4: aun con reservation_id, no se consulta ni se toca la reserva.
         $this->seededLink(['id' => 'link-1', 'reservation_id' => 'res-1']);
 
         $this->service->handlePaidSession($this->session());
 
-        $this->assertSame([], $this->reservationRepo->getByIdCalls);
+        $paymentService = (new \ReflectionProperty(CustomPaymentLinkService::class, 'reservationService'));
+        $paymentService->setAccessible(true);
+        $fake = $paymentService->getValue($this->service);
+        $this->assertSame([['res-1', 75.0, 'pi_test_9']], $fake->applied);
     }
 
     public function testHandlePaidSessionRecordsTimelineWhenLinkHasReservation(): void

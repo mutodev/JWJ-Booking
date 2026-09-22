@@ -68,7 +68,7 @@ final class ReservationServiceVerifyPaymentBranchTest extends CIUnitTestCase
             /** @var array<int,array{0:string,1:string}> */
             public array $hpcCalls = [];
 
-            public function handlePaymentCompleted(string $reservationId, string $paymentIntentId): bool
+            public function handlePaymentCompleted(string $reservationId, string $paymentIntentId, ?float $chargedAmount = null): bool
             {
                 $this->hpcCalls[] = [$reservationId, $paymentIntentId];
 

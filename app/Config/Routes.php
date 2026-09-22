@@ -190,6 +190,7 @@ $routes->group('api', function ($routes) {
         $routes->post('bulk-delete', [ReservationController::class, 'bulkDelete']);
         $routes->delete('old', [ReservationController::class, 'deleteOldReservations']);
         $routes->get('(:segment)/email-history', [ReservationController::class, 'getEmailHistory/$1']);
+        $routes->get('(:segment)/payment-links', [ReservationController::class, 'paymentLinks/$1']);
         $routes->post('(:segment)/promo', [ReservationController::class, 'applyPromoCode/$1']);
         $routes->post('(:segment)/recalculate', [ReservationController::class, 'recalculate/$1']);
         $routes->post('(:segment)/send-update-email', [ReservationController::class, 'sendUpdateEmail/$1']);
