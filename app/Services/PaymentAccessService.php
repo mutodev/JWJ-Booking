@@ -8,8 +8,8 @@ use CodeIgniter\HTTP\Response;
 
 /**
  * Payment gateway: turns the durable, emailed link (`/pay/{token}`, 6 days)
- * into a fresh, short-lived Stripe Checkout Session (2h) created only at the
- * moment the customer actually clicks it.
+ * into a fresh Stripe Checkout Session (Stripe's maximum/default 24h lifetime)
+ * created only at the moment the customer actually clicks it.
  *
  * `target_type` is the flag that routes validation to the right flow —
  * `reservation` reuses ReservationService::regeneratePaymentSession(), which
@@ -77,8 +77,9 @@ class PaymentAccessService
     }
 
     /**
-     * Redeem a gateway token: validate it, then mint a fresh ~2h Stripe
-     * Checkout Session for whatever it points to.
+     * Redeem a gateway token: validate it, then mint a fresh Stripe Checkout
+     * Session for whatever it points to. Leaving the lifetime null deliberately
+     * omits `expires_at`, so Stripe applies its maximum/default 24h lifetime.
      *
      * @return string The Stripe Checkout URL to redirect the customer to.
      * @throws HTTPException 404/410 unknown or expired token, or whatever the
@@ -86,7 +87,7 @@ class PaymentAccessService
      *         paid). Never 401/403/419 — this is a public, unauthenticated
      *         endpoint and those codes would bounce the frontend to /login.
      */
-    public function redeem(string $token, int $sessionLifetimeSeconds = 7200): string
+    public function redeem(string $token, ?int $sessionLifetimeSeconds = null): string
     {
         // findValid() only confirms the token is still active (issued, not
         // superseded by a resend, within its 6-day window) — it is NOT the

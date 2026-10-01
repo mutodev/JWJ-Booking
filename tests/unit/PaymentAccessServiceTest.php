@@ -113,7 +113,7 @@ final class PaymentAccessServiceTest extends CIUnitTestCase
                 // Skip parent (would wire real repositories).
             }
 
-            public function regenerateSession(string $id, int $expiresInSeconds = 7200): array
+            public function regenerateSession(string $id, ?int $expiresInSeconds = null): array
             {
                 $this->calls[] = [$id, $expiresInSeconds];
                 if ($this->throw !== null) {
@@ -204,7 +204,7 @@ final class PaymentAccessServiceTest extends CIUnitTestCase
         $url = $this->service->redeem($issued->token);
 
         $this->assertSame('https://checkout.stripe.com/reservation', $url);
-        $this->assertSame([['res-42', 7200]], $this->reservationService->calls);
+        $this->assertSame([['res-42', null]], $this->reservationService->calls);
         $this->assertSame([], $this->customLinkService->calls);
     }
 
@@ -215,7 +215,7 @@ final class PaymentAccessServiceTest extends CIUnitTestCase
         $url = $this->service->redeem($issued->token);
 
         $this->assertSame('https://checkout.stripe.com/link', $url);
-        $this->assertSame([['link-42', 7200]], $this->customLinkService->calls);
+        $this->assertSame([['link-42', null]], $this->customLinkService->calls);
         $this->assertSame([], $this->reservationService->calls);
     }
 

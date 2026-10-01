@@ -36,10 +36,8 @@ class StripeService
      *                        Added at the end with a default to keep the existing
      *                        signature backwards compatible.
      * @param int|null $expiresInSeconds When set, caps the session's lifetime
-     *                        (Stripe allows 30min-24h). Used by the payment
-     *                        gateway (PaymentAccessService) to mint short-lived
-     *                        sessions on demand. Omitted keeps Stripe's default
-     *                        24h expiry for existing callers.
+     *                        (Stripe allows 30min-24h). Omitted keeps Stripe's
+     *                        maximum/default 24h expiry.
      * @return Session
      */
     public function createCheckoutSession(

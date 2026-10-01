@@ -399,7 +399,7 @@ class CustomPaymentLinkService
      * @throws HTTPException 404 not found, 400 cancelled, 409 already paid.
      * @return array{session_id: string, payment_url: string}
      */
-    public function regenerateSession(string $id, int $expiresInSeconds = 7200): array
+    public function regenerateSession(string $id, ?int $expiresInSeconds = null): array
     {
         $link = $this->repo->findById($id);
 

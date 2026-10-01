@@ -2190,10 +2190,8 @@ class ReservationService
      * Regenerates a Stripe Checkout Session for an unpaid reservation (no email sent)
      *
      * @param string $reservationId ID de la reserva
-     * @param int|null $expiresInSeconds Caps the new session's lifetime (e.g. 7200
-     *                 for the 2h payment-gateway flow). Omitted keeps Stripe's
-     *                 default 24h expiry, as used by the existing admin/customer
-     *                 "regenerate" action.
+     * @param int|null $expiresInSeconds Caps the new session's lifetime. Omitted
+     *                 keeps Stripe's maximum/default 24-hour expiry.
      * @return array Stripe session data with payment_url
      * @throws HTTPException Si la reserva no existe, ya está pagada o está cancelada
      */
