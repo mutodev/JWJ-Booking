@@ -82,28 +82,35 @@
           :rows-per-page="20"
           :rows-per-page-options="[10, 20, 50, 100]"
           show-index
+          @expand-row="loadPaymentLinks"
         >
+          <template #item-expand="{ custom_payment_count }">
+            <span v-if="custom_payment_count > 0" class="payment-count-badge" :title="`${custom_payment_count} additional payment links`">
+              {{ custom_payment_count }}
+            </span>
+            <i v-else class="bi bi-dash text-muted"></i>
+          </template>
           <template #item-status="{ status }">
             <span class="badge" :class="getStatusBadgeClass(status)">
               {{ getStatusLabel(status) }}
             </span>
           </template>
 
-          <template #item-is_paid="{ is_paid, custom_payment_paid }">
+          <template #item-is_paid="{ is_paid }">
             <span v-if="is_paid" class="badge bg-success">Paid</span>
             <span v-else class="badge bg-danger">Unpaid</span>
-            <small v-if="custom_payment_paid > 0" class="d-block text-success mt-1">
-              <i class="bi bi-check-circle"></i> Personalized: {{ formatCurrency(custom_payment_paid) }} paid
-            </small>
           </template>
 
           <template #item-total_amount="{ total_amount }">
-            {{
-              total_amount.toLocaleString("en-US", {
-                style: "currency",
-                currency: "USD",
-              })
-            }}
+            {{ formatCurrency(total_amount) }}
+          </template>
+
+          <template #item-custom_payment_paid="{ custom_payment_paid }">
+            <span :class="{ 'text-success fw-semibold': custom_payment_paid > 0 }">{{ formatCurrency(custom_payment_paid) }}</span>
+          </template>
+
+          <template #item-combined_total="{ combined_total }">
+            <strong>{{ formatCurrency(combined_total) }}</strong>
           </template>
 
           <template #item-event_date="{ event_date }">
@@ -121,7 +128,7 @@
               <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-success" @click="paymentUrlModal(item)" :disabled="item.is_paid" title="Send payment link">
                 <i class="bi bi-credit-card"></i>
               </button>
-              <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-info" @click="customPaymentModal(item)" :disabled="item.is_paid || item.status === 'cancelled'" title="Create personalized payment link">
+              <button v-if="canUpdate" class="btn btn-sm btn-action-icon btn-info" @click="customPaymentModal(item)" :disabled="!item.is_paid || item.status === 'cancelled'" title="Manage additional payment">
                 <i class="bi bi-sliders"></i>
               </button>
               <div v-if="canUpdate" class="dropdown">
@@ -146,6 +153,51 @@
                     </button>
                   </li>
                 </ul>
+              </div>
+            </div>
+          </template>
+
+          <template #expand="item">
+            <div class="payment-links-panel">
+              <div class="payment-links-panel__header">
+                <div>
+                  <strong>Additional payments</strong>
+                  <small>Independent Stripe charges linked to this reservation</small>
+                </div>
+                <button v-if="canUpdate && item.is_paid && item.status !== 'cancelled'" class="btn btn-sm btn-primary" @click="customPaymentModal(item)">
+                  <i class="bi bi-plus-lg me-1"></i>{{ hasPendingLink(item.id) ? 'Manage active link' : 'New additional payment' }}
+                </button>
+              </div>
+
+              <div v-if="paymentLinksLoading[item.id]" class="p-4 text-center text-muted">
+                <span class="spinner-border spinner-border-sm me-2"></span>Loading payment links...
+              </div>
+              <div v-else-if="!(paymentLinksByReservation[item.id] || []).length" class="p-4 text-center text-muted">
+                No additional payment links for this reservation.
+              </div>
+              <div v-else class="table-responsive">
+                <table class="table table-sm align-middle mb-0 additional-payments-table">
+                  <thead><tr><th>Description</th><th>Amount</th><th>Status</th><th>Created</th><th>Paid</th><th>Created by</th><th class="text-end">Actions</th></tr></thead>
+                  <tbody>
+                    <tr v-for="link in paymentLinksByReservation[item.id]" :key="link.id">
+                      <td>{{ link.description }}</td>
+                      <td class="fw-semibold">{{ formatCurrency(link.amount) }}</td>
+                      <td><span class="badge" :class="paymentLinkStatusClass(link.status)">{{ paymentLinkStatusLabel(link.status) }}</span></td>
+                      <td>{{ formatDateTime(link.created_at) }}</td>
+                      <td>{{ link.paid_at ? formatDateTime(link.paid_at) : '—' }}</td>
+                      <td>{{ link.created_by || 'System' }}</td>
+                      <td class="text-end">
+                        <div v-if="link.status === 'pending'" class="d-inline-flex gap-1">
+                          <button class="btn btn-sm btn-outline-secondary" title="Copy link" @click="copyPaymentLink(link)"><i class="bi bi-copy"></i></button>
+                          <button class="btn btn-sm btn-outline-secondary" title="Resend email" @click="resendPaymentLink(link, item)"><i class="bi bi-envelope"></i></button>
+                          <button class="btn btn-sm btn-outline-primary" title="Edit" @click="customPaymentModal(item)"><i class="bi bi-pencil"></i></button>
+                          <button class="btn btn-sm btn-outline-danger" title="Cancel" @click="cancelPaymentLink(link, item)"><i class="bi bi-x-circle"></i></button>
+                        </div>
+                        <span v-else class="text-muted">—</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </template>
@@ -193,7 +245,7 @@
       :show="modalCustomPaymentVisible"
       :reservation="selectedData"
       @close="modalCustomPaymentVisible = false"
-      @saved="getData()"
+      @saved="refreshPaymentData"
     />
 
     <!-- Send Payment Modal -->
@@ -367,6 +419,8 @@ const filterPaid = ref("");
 const selectedData = ref(null);
 const sendingEmail = ref(false);
 const paymentDescription = ref("");
+const paymentLinksByReservation = ref({});
+const paymentLinksLoading = ref({});
 
 const editModal = (item) => {
   selectedData.value = { ...item };
@@ -396,6 +450,73 @@ const paymentUrlModal = (item) => {
 const customPaymentModal = (item) => {
   selectedData.value = { ...item };
   modalCustomPaymentVisible.value = true;
+};
+
+const unwrap = (response) => response?.data?.data ?? response?.data ?? response ?? [];
+
+const loadPaymentLinks = async (_index, item) => {
+  if (!item?.id) return;
+  paymentLinksLoading.value[item.id] = true;
+  try {
+    const response = await api.get(`/reservations/${item.id}/payment-links`);
+    const links = unwrap(response);
+    paymentLinksByReservation.value[item.id] = Array.isArray(links) ? links : [];
+  } catch (error) {
+    paymentLinksByReservation.value[item.id] = [];
+    toast.error(error?.response?.data?.message ?? "Failed to load additional payments");
+  } finally {
+    paymentLinksLoading.value[item.id] = false;
+  }
+};
+
+const hasPendingLink = (reservationId) => (paymentLinksByReservation.value[reservationId] || []).some((link) => link.status === "pending");
+const paymentLinkStatusLabel = (status) => ({ pending: "Pending", paid: "Paid", cancelled: "Cancelled" }[status] || status);
+const paymentLinkStatusClass = (status) => ({ pending: "bg-warning text-dark", paid: "bg-success", cancelled: "bg-secondary" }[status] || "bg-secondary");
+const formatDateTime = (value) => {
+  const raw = value?.date ?? value;
+  if (!raw) return "—";
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+};
+
+const copyPaymentLink = async (link) => {
+  if (!link?.access_url) {
+    toast.error("This payment link is not available to copy");
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(link.access_url);
+    toast.success("Payment link copied");
+  } catch {
+    toast.error("Could not copy the payment link");
+  }
+};
+
+const resendPaymentLink = async (link) => {
+  try {
+    await api.post(`/payment-links/${link.id}/send-email`);
+    toast.success("Payment link emailed");
+  } catch (error) {
+    toast.error(error?.response?.data?.message ?? "Could not resend the payment link");
+  }
+};
+
+const cancelPaymentLink = async (link, reservation) => {
+  if (!window.confirm("Cancel this payment link? Its Stripe checkout will stop working.")) return;
+  try {
+    await api.post(`/payment-links/${link.id}/cancel`);
+    await Promise.all([getData(), loadPaymentLinks(0, reservation)]);
+    toast.success("Payment link cancelled");
+  } catch (error) {
+    toast.error(error?.response?.data?.message ?? "Could not cancel the payment link");
+  }
+};
+
+const refreshPaymentData = async () => {
+  await getData();
+  if (selectedData.value?.id && paymentLinksByReservation.value[selectedData.value.id]) {
+    await loadPaymentLinks(0, selectedData.value);
+  }
 };
 
 const getStatusLabel = (status) => STATUS_LABELS[status] || status || "";
@@ -458,7 +579,9 @@ const headers = computed(() => [
   { text: "Location", value: "location" },
   { text: "Date", value: "event_date" },
   { text: "Time", value: "event_time" },
-  { text: "Total", value: "total_amount" },
+  { text: "Reservation Total", value: "total_amount" },
+  { text: "Additional Paid", value: "custom_payment_paid" },
+  { text: "Combined Total", value: "combined_total" },
   { text: "Status", value: "status" },
   { text: "Paid", value: "is_paid" },
   { text: "Actions", value: "actions" },
@@ -484,6 +607,8 @@ const dataProcessed = computed(() =>
     total_amount: parseFloat(item.total_amount) || 0,
     outstanding_balance: parseFloat(item.outstanding_balance) || 0,
     custom_payment_paid: parseFloat(item.custom_payment_paid) || 0,
+    custom_payment_count: parseInt(item.custom_payment_count, 10) || 0,
+    combined_total: parseFloat(item.combined_total) || (parseFloat(item.total_amount) || 0),
     status: item.status ?? "",
     is_paid: Boolean(item.is_paid),
   }))
@@ -570,8 +695,9 @@ const executeBulkDelete = async () => {
 };
 
 const formatCurrency = (amount) => {
-  if (amount == null || amount === 0) return "$0.00";
-  return amount.toLocaleString("en-US", { style: "currency", currency: "USD" });
+  const numericAmount = Number(amount);
+  if (!Number.isFinite(numericAmount)) return "$0.00";
+  return numericAmount.toLocaleString("en-US", { style: "currency", currency: "USD" });
 };
 
 const sendPaymentEmail = async () => {
@@ -637,7 +763,10 @@ const CSV_COLUMNS = [
   { label: 'Extra Children Fee', key: (r) => parseFloat(r.extra_children_fee || 0).toFixed(2) },
   { label: 'Promo Code',         key: (r) => r.promo_code || '' },
   { label: 'Discount',           key: (r) => parseFloat(r.discount_amount || 0).toFixed(2) },
-  { label: 'Total Amount',       key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
+  { label: 'Reservation Total',  key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
+  { label: 'Additional Paid',    key: (r) => parseFloat(r.custom_payment_paid || 0).toFixed(2) },
+  { label: 'Combined Total',     key: (r) => (parseFloat(r.total_amount || 0) + parseFloat(r.custom_payment_paid || 0)).toFixed(2) },
+  { label: 'Additional Links',   key: (r) => parseInt(r.custom_payment_count || 0, 10) },
   { label: 'Birthday Child',     key: (r) => r.birthday_child_name || '' },
   { label: 'Internal Notes',     key: (r) => r.internal_notes || '' },
   { label: 'Created At',         key: (r) => fmtDate(r.created_at) },
@@ -732,5 +861,59 @@ onMounted(() => {
 
 .status-filter-menu .form-check-label {
   font-size: 0.85rem;
+}
+
+.payment-count-badge {
+  display: inline-grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 999px;
+  background: #e7f1ff;
+  color: #0d6efd;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.payment-links-panel {
+  margin: 8px;
+  overflow: hidden;
+  border: 1px solid #dbe3ec;
+  border-radius: 10px;
+  background: #fff;
+  text-align: left;
+}
+
+.payment-links-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.payment-links-panel__header strong,
+.payment-links-panel__header small {
+  display: block;
+}
+
+.payment-links-panel__header small {
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 0.74rem;
+}
+
+.additional-payments-table th,
+.additional-payments-table td {
+  padding: 10px 12px;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.additional-payments-table td:first-child {
+  min-width: 220px;
+  white-space: normal;
 }
 </style>

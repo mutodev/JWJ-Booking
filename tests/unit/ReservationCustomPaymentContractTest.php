@@ -16,8 +16,10 @@ final class ReservationCustomPaymentContractTest extends CIUnitTestCase
         $vue = $this->read('frontend/src/components/admin/reservations/Reservations.vue');
 
         $this->assertStringContainsString('title="Send payment link"', $vue);
-        $this->assertStringContainsString('title="Create personalized payment link"', $vue);
+        $this->assertStringContainsString('title="Manage additional payment"', $vue);
         $this->assertStringContainsString('custom_payment_paid', $vue);
+        $this->assertStringContainsString('combined_total', $vue);
+        $this->assertStringContainsString('#expand="item"', $vue);
         $this->assertStringNotContainsString('{ text: "Event Type", value: "event_type" }', $vue);
     }
 
@@ -27,7 +29,10 @@ final class ReservationCustomPaymentContractTest extends CIUnitTestCase
 
         $this->assertStringContainsString('reservation_id: props.reservation.id', $vue);
         $this->assertStringContainsString('/payment-links/${pending.value.id}/send-email', $vue);
-        $this->assertStringContainsString('outstanding balance', $vue);
+        $this->assertStringContainsString('Additional payment', $vue);
+        $this->assertStringContainsString('api.put(`/payment-links/${pending.value.id}`', $vue);
+        $this->assertStringContainsString('/cancel`', $vue);
+        $this->assertStringContainsString('if (!isEditing) close();', $vue);
     }
 
     public function testStandalonePaymentLinksScreenIsNotRouted(): void

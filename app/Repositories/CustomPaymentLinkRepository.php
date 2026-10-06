@@ -28,6 +28,14 @@ class CustomPaymentLinkRepository
         'created_by',
     ];
 
+    private const EDIT_WHITELIST = [
+        'customer_name',
+        'customer_email',
+        'description',
+        'amount',
+        'currency',
+    ];
+
     protected $model;
 
     public function db()
@@ -100,6 +108,31 @@ class CustomPaymentLinkRepository
         return $totals;
     }
 
+    /** @return array<string, array{paid_total:float,link_count:int}> */
+    public function summariesByReservation(array $reservationIds): array
+    {
+        if ($reservationIds === []) {
+            return [];
+        }
+
+        $rows = $this->db()->table('custom_payment_links')
+            ->select("reservation_id, COUNT(*) AS link_count, SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS paid_total", false)
+            ->whereIn('reservation_id', $reservationIds)
+            ->groupBy('reservation_id')
+            ->get()
+            ->getResultArray();
+
+        $summaries = [];
+        foreach ($rows as $row) {
+            $summaries[(string) $row['reservation_id']] = [
+                'paid_total' => round((float) $row['paid_total'], 2),
+                'link_count' => (int) $row['link_count'],
+            ];
+        }
+
+        return $summaries;
+    }
+
     /**
      * Create a link from admin-supplied data. Only CREATE_WHITELIST keys are
      * persisted; status defaults to 'pending' at the DB level. The id is
@@ -116,6 +149,12 @@ class CustomPaymentLinkRepository
         $this->model->insert($clean);
 
         return $id;
+    }
+
+    public function updateEditable(string $id, array $data): bool
+    {
+        $clean = array_intersect_key($data, array_flip(self::EDIT_WHITELIST));
+        return $clean !== [] && (bool) $this->model->update($id, $clean);
     }
 
     /**

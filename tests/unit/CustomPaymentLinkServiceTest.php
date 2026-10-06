@@ -123,6 +123,15 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
                 return $id;
             }
 
+            public function updateEditable(string $id, array $data): bool
+            {
+                if (!isset($this->store[$id])) return false;
+                foreach (['customer_name', 'customer_email', 'description', 'amount', 'currency'] as $field) {
+                    if (array_key_exists($field, $data)) $this->store[$id]->{$field} = $data[$field];
+                }
+                return true;
+            }
+
             public function attachSession(string $id, string $sessionId, string $paymentUrl, ?string $expiresAt): bool
             {
                 $this->attachCalls[] = [$id, $sessionId, $paymentUrl, $expiresAt];
@@ -186,7 +195,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         };
         $this->reservationRepo->existing['res-1'] = (object) [
             'id' => 'res-1', 'status' => 'new', 'total_amount' => 200.0,
-            'gratuity_amount' => 0.0, 'amount_paid' => 0.0, 'is_paid' => false,
+            'gratuity_amount' => 0.0, 'amount_paid' => 200.0, 'is_paid' => true,
         ];
 
         $this->templateService = new class extends EmailTemplateService {
@@ -237,6 +246,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->stripe = new class extends StripeService {
             /** @var array<int,array<string,mixed>> */
             public array $calls = [];
+            public array $expired = [];
             public ?\Throwable $throw = null;
             public Session $session;
 
@@ -268,6 +278,12 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
                 }
 
                 return $this->session;
+            }
+
+            public function expireCheckoutSession(?string $sessionId): void
+            {
+                $this->expired[] = $sessionId;
+                if ($this->throw !== null) throw $this->throw;
             }
         };
 
@@ -471,11 +487,60 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
 
     public function testCreateLinkResolvesExistingReservation(): void
     {
-        $this->reservationRepo->existing['res-42'] = (object) ['id' => 'res-42', 'status' => 'new', 'total_amount' => 200, 'amount_paid' => 0, 'is_paid' => false];
+        $this->reservationRepo->existing['res-42'] = (object) ['id' => 'res-42', 'status' => 'new', 'total_amount' => 200, 'amount_paid' => 200, 'is_paid' => true];
 
         $this->service->createLink($this->validData(['reservation_id' => 'res-42']), 'admin');
 
         $this->assertSame('res-42', $this->repo->createCalls[0][0]['reservation_id']);
+    }
+
+    public function testCreateLinkRequiresPaidReservation(): void
+    {
+        $this->reservationRepo->existing['res-1']->is_paid = false;
+
+        [$threw, $e] = $this->catchHttp(fn () => $this->service->createLink($this->validData(), 'admin'));
+
+        $this->assertTrue($threw);
+        $this->assertSame(400, $e->getCode());
+        $this->assertSame([], $this->stripe->calls);
+    }
+
+    public function testCreateLinkAllowsOnlyOnePendingLinkPerReservation(): void
+    {
+        $this->seededLink(['id' => 'active-link', 'reservation_id' => 'res-1', 'status' => 'pending']);
+
+        [$threw, $e] = $this->catchHttp(fn () => $this->service->createLink($this->validData(), 'admin'));
+
+        $this->assertTrue($threw);
+        $this->assertSame(409, $e->getCode());
+    }
+
+    public function testUpdatePendingLinkExpiresOldSessionAndEmailsReplacement(): void
+    {
+        $this->seededLink(['id' => 'link-1', 'status' => 'pending']);
+
+        $updated = $this->service->updateLink('link-1', $this->validData([
+            'amount' => 125.50,
+            'description' => 'Extra performer',
+            'customer_email' => 'updated@example.com',
+        ]));
+
+        $this->assertSame(['cs_test_123'], $this->stripe->expired);
+        $this->assertSame(125.50, $updated->amount);
+        $this->assertSame('Extra performer', $updated->description);
+        $this->assertSame('updated@example.com', $updated->customer_email);
+        $this->assertCount(1, $this->emailService->sent);
+    }
+
+    public function testPaidLinkCannotBeUpdated(): void
+    {
+        $this->seededLink(['id' => 'link-1', 'status' => 'paid']);
+
+        [$threw, $e] = $this->catchHttp(fn () => $this->service->updateLink('link-1', $this->validData()));
+
+        $this->assertTrue($threw);
+        $this->assertSame(400, $e->getCode());
+        $this->assertSame([], $this->stripe->expired);
     }
 
     // -------------------------------------------------------------------------
@@ -596,7 +661,18 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
 
         $this->assertTrue($threw);
         $this->assertSame(400, $e->getCode());
-        $this->assertStringContainsString('cancelled', $e->getMessage());
+        $this->assertStringContainsString('pending', $e->getMessage());
+    }
+
+    public function testSendLinkEmailRejectsPaidLink(): void
+    {
+        $this->seededLink(['id' => 'link-paid', 'status' => 'paid']);
+
+        [$threw, $e] = $this->catchHttp(fn () => $this->service->sendLinkEmail('link-paid'));
+
+        $this->assertTrue($threw);
+        $this->assertSame(400, $e->getCode());
+        $this->assertSame([], $this->emailService->sent);
     }
 
     public function testSendLinkEmailRejectsLinkWithoutEmail(): void
@@ -768,7 +844,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->assertSame($firstPaidAt, $this->repo->store['link-1']->paid_at);
     }
 
-    public function testHandlePaidSessionCreditsTheLinkedReservation(): void
+    public function testHandlePaidSessionDoesNotAlterTheLinkedReservationTotals(): void
     {
         $this->seededLink(['id' => 'link-1', 'reservation_id' => 'res-1']);
 
@@ -777,7 +853,7 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $paymentService = (new \ReflectionProperty(CustomPaymentLinkService::class, 'reservationService'));
         $paymentService->setAccessible(true);
         $fake = $paymentService->getValue($this->service);
-        $this->assertSame([['res-1', 75.0, 'pi_test_9']], $fake->applied);
+        $this->assertSame([], $fake->applied);
     }
 
     public function testHandlePaidSessionRecordsTimelineWhenLinkHasReservation(): void
@@ -869,8 +945,21 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
 
         $link = $this->service->cancelLink('link-1');
 
+        $this->assertSame(['cs_test_123'], $this->stripe->expired);
         $this->assertSame([['link-1', 'cancelled']], $this->repo->statusCalls);
         $this->assertSame('cancelled', $link->status);
+    }
+
+    public function testCancelLinkRejectsAlreadyCancelledLink(): void
+    {
+        $this->seededLink(['id' => 'link-1', 'status' => 'cancelled']);
+
+        [$threw, $e] = $this->catchHttp(fn () => $this->service->cancelLink('link-1'));
+
+        $this->assertTrue($threw);
+        $this->assertSame(400, $e->getCode());
+        $this->assertSame([], $this->stripe->expired);
+        $this->assertSame([], $this->repo->statusCalls);
     }
 
     public function testDeleteLinkThrows404WhenMissing(): void
@@ -882,13 +971,16 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->assertSame([], $this->repo->deleteCalls);
     }
 
-    public function testDeleteLinkRemovesExistingLink(): void
+    public function testDeleteLinkPreservesExistingLinkForAuditHistory(): void
     {
         $this->seededLink(['id' => 'link-1']);
 
-        $this->service->deleteLink('link-1');
+        [$threw, $e] = $this->catchHttp(fn () => $this->service->deleteLink('link-1'));
 
-        $this->assertSame(['link-1'], $this->repo->deleteCalls);
+        $this->assertTrue($threw);
+        $this->assertSame(400, $e->getCode());
+        $this->assertSame([], $this->repo->deleteCalls);
+        $this->assertArrayHasKey('link-1', $this->repo->store);
     }
 
     // -------------------------------------------------------------------------

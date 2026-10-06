@@ -63,6 +63,20 @@ class CustomPaymentLinkController extends ResourceController
         }
     }
 
+    /** PUT /api/payment-links/(:segment) */
+    public function update($id = null)
+    {
+        try {
+            $data = $this->request->getJSON(true) ?? [];
+            $link = $this->service->updateLink((string) $id, $data);
+
+            return $this->response->setStatusCode(200)
+                ->setJSON(create_response('Payment link updated and emailed', $link));
+        } catch (\Throwable $th) {
+            return $this->failFromException($th);
+        }
+    }
+
     /** POST /api/payment-links/(:segment)/send-email */
     public function sendEmail($id = null)
     {

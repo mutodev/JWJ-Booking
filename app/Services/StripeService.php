@@ -103,6 +103,22 @@ class StripeService
     }
 
     /**
+     * Expire an open Checkout Session so an edited or cancelled additional
+     * payment can no longer be completed from an older email or browser tab.
+     */
+    public function expireCheckoutSession(?string $sessionId): void
+    {
+        if ($sessionId === null || trim($sessionId) === '') {
+            return;
+        }
+
+        $session = Session::retrieve($sessionId);
+        if (($session->status ?? null) === 'open') {
+            $session->expire();
+        }
+    }
+
+    /**
      * Verify webhook signature and return the event
      *
      * @param string $payload Raw request body

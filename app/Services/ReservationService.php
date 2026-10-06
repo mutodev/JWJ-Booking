@@ -215,10 +215,13 @@ class ReservationService
     {
         $reservations = $this->repository->getAll();
         $ids = array_map(static fn ($reservation) => (string) $reservation->id, $reservations);
-        $customTotals = $this->customPaymentLinkRepository()->paidTotalsByReservation($ids);
+        $customSummaries = $this->customPaymentLinkRepository()->summariesByReservation($ids);
 
-        return array_map(function ($reservation) use ($customTotals) {
-            $reservation->custom_payment_paid = $customTotals[(string) $reservation->id] ?? 0.0;
+        return array_map(function ($reservation) use ($customSummaries) {
+            $summary = $customSummaries[(string) $reservation->id] ?? ['paid_total' => 0.0, 'link_count' => 0];
+            $reservation->custom_payment_paid = $summary['paid_total'];
+            $reservation->custom_payment_count = $summary['link_count'];
+            $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['paid_total'], 2);
             return $this->attachOutstanding($reservation);
         }, $reservations);
     }
@@ -242,8 +245,12 @@ class ReservationService
         // Incluirlo aquí permite que cualquier consumidor del detalle sepa qué se compró.
         $reservation->addons = $this->reservationAddonRepository->getDetailedByReservation($id);
 
-        $reservation->custom_payment_paid = $this->customPaymentLinkRepository()
-            ->paidTotalsByReservation([(string) $reservation->id])[(string) $reservation->id] ?? 0.0;
+        $summary = $this->customPaymentLinkRepository()
+            ->summariesByReservation([(string) $reservation->id])[(string) $reservation->id]
+            ?? ['paid_total' => 0.0, 'link_count' => 0];
+        $reservation->custom_payment_paid = $summary['paid_total'];
+        $reservation->custom_payment_count = $summary['link_count'];
+        $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['paid_total'], 2);
         return $this->attachOutstanding($reservation);
     }
 

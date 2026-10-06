@@ -278,6 +278,7 @@ $routes->group('api', function ($routes) {
         $routes->get('/', [CustomPaymentLinkController::class, 'index']);
         $routes->post('/', [CustomPaymentLinkController::class, 'create']);
         $routes->get('(:segment)', [CustomPaymentLinkController::class, 'show']);
+        $routes->put('(:segment)', [CustomPaymentLinkController::class, 'update']);
         $routes->post('(:segment)/send-email', [CustomPaymentLinkController::class, 'sendEmail']);
         $routes->post('(:segment)/cancel', [CustomPaymentLinkController::class, 'cancel']);
         $routes->delete('(:segment)', [CustomPaymentLinkController::class, 'delete']);

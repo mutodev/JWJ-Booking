@@ -13,9 +13,9 @@ use Ramsey\Uuid\Uuid;
 /**
  * B5 — Custom payment links (arbitrary amount + free description).
  *
- * Standalone lightweight entity. A link may optionally reference a reservation
- * (so B6 can charge differences) but paying it never touches the reservation
- * totals. The amount is defined once here, on the server, and the Stripe
+ * Supplemental payment entity attached to an already-paid reservation. Paying
+ * it never touches the reservation totals or its original invoice. The amount
+ * is defined here, on the server, and the Stripe
  * checkout reads it from the persisted row — never from a URL parameter.
  *
  * Testability: every collaborator lives in a property (or a lazy getter for
@@ -171,18 +171,8 @@ class CustomPaymentLinkService
         $currency    = $this->normalizeCurrency($data['currency'] ?? null);
 
         $reservation = $this->reservationRepository->getById($reservationId);
-        if (!$reservation || $reservation->status === 'cancelled') {
+        if (!$reservation || $reservation->status === 'cancelled' || empty($reservation->is_paid)) {
             throw new HTTPException('The reservation cannot receive a payment link', Response::HTTP_BAD_REQUEST);
-        }
-        $outstanding = $this->getReservationService()->computeOutstanding($reservation);
-        if ($outstanding <= 0.0) {
-            throw new HTTPException('The reservation has no outstanding balance', Response::HTTP_BAD_REQUEST);
-        }
-        if ($amount > $outstanding) {
-            throw new HTTPException(
-                'Amount must not exceed the outstanding balance of $' . number_format($outstanding, 2),
-                Response::HTTP_BAD_REQUEST
-            );
         }
 
         // B6 double-charge guard: never issue a second pending link for the same
@@ -251,6 +241,71 @@ class CustomPaymentLinkService
         return $this->attachAccessUrl($this->repo->findById($id));
     }
 
+    /**
+     * Edit the single active additional payment. Paid/cancelled links are
+     * immutable. The previous Stripe session is expired before a replacement
+     * is generated, then the refreshed link is emailed automatically.
+     */
+    public function updateLink(string $id, array $data): object
+    {
+        $link = $this->getLink($id);
+        if ($link->status !== 'pending') {
+            throw new HTTPException('Only pending payment links can be edited', Response::HTTP_BAD_REQUEST);
+        }
+
+        $amount      = $this->assertValidAmount($data['amount'] ?? null);
+        $description = $this->assertValidDescription($data['description'] ?? null);
+        $email       = $this->assertValidEmail($data['customer_email'] ?? null);
+        $name        = $this->normalizeName($data['customer_name'] ?? null);
+
+        $reservation = $this->reservationRepository->getById((string) $link->reservation_id);
+        if (!$reservation || $reservation->status === 'cancelled' || empty($reservation->is_paid)) {
+            throw new HTTPException('The reservation cannot receive a payment link', Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $this->getStripeService()->expireCheckoutSession($link->stripe_session_id ?? null);
+            $session = $this->createStripeSession((string) $link->id, $amount, $email, $description);
+        } catch (\Throwable $e) {
+            log_message('error', 'Custom payment link: replacement session failed: ' . $e->getMessage());
+            throw new HTTPException('Could not replace the payment session. Please try again.', Response::HTTP_BAD_GATEWAY);
+        }
+
+        $this->repo->updateEditable($id, [
+            'customer_name'  => $name,
+            'customer_email' => $email,
+            'description'    => $description,
+            'amount'         => $amount,
+            'currency'       => $this->normalizeCurrency($data['currency'] ?? $link->currency ?? null),
+        ]);
+
+        $expiresAt = isset($session->expires_at) && $session->expires_at
+            ? date('Y-m-d H:i:s', (int) $session->expires_at)
+            : null;
+        $this->repo->attachSession($id, (string) $session->id, (string) $session->url, $expiresAt);
+
+        $updated = $this->repo->findById($id);
+        try {
+            $this->dispatchLinkEmail($updated);
+        } catch (\Throwable $e) {
+            log_message('error', 'Custom payment link: updated email send failed: ' . $e->getMessage());
+        }
+
+        return $this->attachAccessUrl($this->repo->findById($id));
+    }
+
+    private function createStripeSession(string $linkId, float $amount, string $email, string $description): object
+    {
+        return $this->getStripeService()->createCheckoutSession(
+            $amount,
+            $email,
+            '',
+            $description,
+            0.0,
+            ['type' => 'custom_payment_link', 'payment_link_id' => $linkId]
+        );
+    }
+
     // ---------------------------------------------------------------------
     // Email
     // ---------------------------------------------------------------------
@@ -263,8 +318,8 @@ class CustomPaymentLinkService
     {
         $link = $this->getLink($id);
 
-        if ($link->status === 'cancelled') {
-            throw new HTTPException('Cannot send a cancelled payment link', Response::HTTP_BAD_REQUEST);
+        if ($link->status !== 'pending') {
+            throw new HTTPException('Only pending payment links can be sent', Response::HTTP_BAD_REQUEST);
         }
 
         $this->dispatchLinkEmail($link);
@@ -369,8 +424,15 @@ class CustomPaymentLinkService
     {
         $link = $this->getLink($id);
 
-        if ($link->status === 'paid') {
-            throw new HTTPException('Cannot cancel a paid payment link', Response::HTTP_BAD_REQUEST);
+        if ($link->status !== 'pending') {
+            throw new HTTPException('Only pending payment links can be cancelled', Response::HTTP_BAD_REQUEST);
+        }
+
+        try {
+            $this->getStripeService()->expireCheckoutSession($link->stripe_session_id ?? null);
+        } catch (\Throwable $e) {
+            log_message('error', 'Custom payment link: could not expire cancelled Stripe session: ' . $e->getMessage());
+            throw new HTTPException('Could not cancel the active Stripe session', Response::HTTP_BAD_GATEWAY);
         }
 
         $this->repo->updateStatus($id, 'cancelled');
@@ -381,7 +443,10 @@ class CustomPaymentLinkService
     public function deleteLink(string $id): void
     {
         $this->getLink($id);
-        $this->repo->delete($id);
+        throw new HTTPException(
+            'Payment links are retained for audit history; cancel a pending link instead',
+            Response::HTTP_BAD_REQUEST
+        );
     }
 
     // ---------------------------------------------------------------------
@@ -416,11 +481,8 @@ class CustomPaymentLinkService
         }
 
         $reservation = $this->reservationRepository->getById((string) $link->reservation_id);
-        if (!$reservation || $reservation->status === 'cancelled') {
+        if (!$reservation || $reservation->status === 'cancelled' || empty($reservation->is_paid)) {
             throw new HTTPException('The reservation can no longer receive this payment', Response::HTTP_BAD_REQUEST);
-        }
-        if ($this->getReservationService()->computeOutstanding($reservation) < (float) $link->amount) {
-            throw new HTTPException('This payment link amount exceeds the current outstanding balance', Response::HTTP_CONFLICT);
         }
 
         $session = $this->getStripeService()->createCheckoutSession(
@@ -498,14 +560,6 @@ class CustomPaymentLinkService
         $updated = $this->repo->findById((string) $linkId);
 
         if ($updated && !empty($updated->reservation_id)) {
-            if (!$this->getReservationService()->applyCustomPayment(
-                (string) $updated->reservation_id,
-                (float) $updated->amount,
-                $paymentIntentId
-            )) {
-                log_message('error', 'Custom payment link ' . $linkId . ' was paid but could not be credited to its reservation');
-                return false;
-            }
             $this->recordReservationTimeline(
                 (string) $updated->reservation_id,
                 'Custom Payment Received',
