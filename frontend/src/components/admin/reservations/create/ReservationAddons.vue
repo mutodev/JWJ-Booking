@@ -7,7 +7,7 @@
   </div>
 
   <div class="row justify-content-center g-3 addon-grid">
-    <div v-for="addon in listAddons" :key="addon.id" class="col-12 col-sm-6 col-md-4 col-lg-2">
+    <div v-for="addon in listAddons" :key="addon.id" class="col-12 col-sm-6 col-md-4 col-xl-3">
       <div
         class="card addon-card h-100"
         :class="{
@@ -47,6 +47,52 @@
       </div>
     </div>
   </div>
+
+  <div v-if="selectedAddons.length" class="selected-addon-pricing">
+    <div class="selected-addon-pricing__header">
+      <div>
+        <strong>Prices for this reservation</strong>
+        <small>These amounts only apply to this reservation.</small>
+      </div>
+      <span class="badge rounded-pill text-bg-light">{{ selectedAddons.length }} selected</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-sm align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Add-on</th>
+            <th class="text-end">Configured</th>
+            <th style="width: 190px">Reservation price</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="addon in selectedAddons" :key="`price-${addon.id}`">
+            <td class="fw-semibold">{{ addon.name }}</td>
+            <td class="text-end text-muted">{{ formatCurrency(addon.catalog_base_price) }}</td>
+            <td>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text">$</span>
+                <input
+                  :value="addon.base_price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  inputmode="decimal"
+                  class="form-control"
+                  :class="{ 'is-invalid': addon.price_invalid }"
+                  :aria-label="`${addon.name} price for this reservation`"
+                  @input="updateAddonPrice(addon.id, $event.target.value)"
+                  @blur="normalizeAddonPrice(addon.id)"
+                />
+              </div>
+              <small v-if="addon.price_invalid" class="text-danger">Enter $0.00 or more.</small>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -75,15 +121,60 @@ const toggleSelect = (addon) => {
         (a) => a.id !== addon.id
       );
     } else {
-      selectedAddons.value.push(addon);
+      selectedAddons.value.push(createSelectedAddon(addon));
     }
   } else {
     selectedAddons.value = selectedAddons.value.some((a) => a.id === addon.id)
       ? []
-      : [addon];
+      : [createSelectedAddon(addon)];
   }
 
-  emit("setData", { addons: [...selectedAddons.value] });
+  emitSelection();
+};
+
+const normalizeMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+const createSelectedAddon = (addon) => {
+  const catalogPrice = normalizeMoney(addon.base_price);
+  return {
+    ...addon,
+    base_price: catalogPrice,
+    catalog_base_price: catalogPrice,
+    quantity: 1,
+    is_custom_price: false,
+    price_invalid: false,
+  };
+};
+
+const emitSelection = () => {
+  emit("setData", {
+    addons: selectedAddons.value.map(({ price_invalid, ...addon }) => ({ ...addon })),
+  });
+};
+
+const updateAddonPrice = (addonId, rawValue) => {
+  const addon = selectedAddons.value.find((item) => item.id === addonId);
+  if (!addon) return;
+
+  if (rawValue === "" || !Number.isFinite(Number(rawValue)) || Number(rawValue) < 0) {
+    addon.base_price = rawValue === "" ? null : rawValue;
+    addon.price_invalid = true;
+    emitSelection();
+    return;
+  }
+
+  addon.base_price = Number(rawValue);
+  addon.is_custom_price = normalizeMoney(addon.base_price) !== normalizeMoney(addon.catalog_base_price);
+  addon.price_invalid = false;
+  emitSelection();
+};
+
+const normalizeAddonPrice = (addonId) => {
+  const addon = selectedAddons.value.find((item) => item.id === addonId);
+  if (!addon || addon.price_invalid) return;
+  addon.base_price = normalizeMoney(addon.base_price);
+  addon.is_custom_price = addon.base_price !== normalizeMoney(addon.catalog_base_price);
+  emitSelection();
 };
 
 const formatCurrency = (value) => {
@@ -122,6 +213,40 @@ const formatMinutes = (value) => {
 .addon-grid {
   max-width: 1200px;
   margin: 14px auto 0;
+}
+
+.selected-addon-pricing {
+  max-width: 980px;
+  margin: 18px auto 0;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.selected-addon-pricing__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f8f9fa;
+}
+
+.selected-addon-pricing__header strong,
+.selected-addon-pricing__header small {
+  display: block;
+}
+
+.selected-addon-pricing__header small {
+  margin-top: 2px;
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.selected-addon-pricing .table > :not(caption) > * > * {
+  padding: 10px 16px;
 }
 
 .addon-card {

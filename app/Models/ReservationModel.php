@@ -45,6 +45,7 @@ class ReservationModel extends Model
         'duration_hours',
         'price_type',
         'base_price',
+        'is_base_price_custom',
         'addons_total',
         'total_amount',
         'amount_paid',

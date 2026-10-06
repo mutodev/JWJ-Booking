@@ -246,6 +246,7 @@ final class ReservationServiceRecalculateTotalsTest extends CIUnitTestCase
             'event_date'       => date('Y-m-d', strtotime('+30 days')),
             'duration_hours'   => 2.0,
             'base_price'       => 500.0,
+            'is_base_price_custom' => false,
             'addons_total'     => 0.0,
             'extra_children_fee' => 0.0,
             'travel_fee'       => 0.0,
@@ -329,6 +330,22 @@ final class ReservationServiceRecalculateTotalsTest extends CIUnitTestCase
         $this->assertSame(300.0, $update['total_amount']);
         $this->assertSame(0.0, $update['balance_due']);
         $this->assertGreaterThanOrEqual(0.0, $update['balance_due']);
+    }
+
+    public function testCustomAdminServicePriceSurvivesRecalculation(): void
+    {
+        $this->seed([
+            'base_price'          => 275.0,
+            'total_amount'        => 275.0,
+            'is_base_price_custom' => true,
+            '_servicePrice'       => ['amount' => 500.0],
+        ]);
+
+        $this->service->recalculateTotals('res-1');
+        $update = $this->lastUpdate();
+
+        $this->assertSame(275.0, $update['base_price']);
+        $this->assertSame(275.0, $update['total_amount']);
     }
 
     // -------------------------------------------------------------------------

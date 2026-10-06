@@ -29,6 +29,7 @@ class Reservation extends Entity
         'duration_hours' => 'float',
         'price_type' => 'string',
         'base_price' => 'float',
+        'is_base_price_custom' => 'boolean',
         'addons_total' => 'float',
         'expedition_fee' => 'float',
         'travel_fee' => 'float',

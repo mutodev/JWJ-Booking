@@ -19,6 +19,7 @@
               <small class="text-muted">{{
                 data.price?.price_type?.toUpperCase() || ""
               }}</small>
+              <span v-if="data.price?.is_custom_price" class="badge text-bg-warning ms-2">Custom</span>
             </td>
             <td class="small">{{ formatCurrency(data.price?.amount) }}</td>
             <td class="small">1</td>
@@ -28,7 +29,10 @@
           <!-- Addons -->
           <tr v-for="value in data.addons" :key="value.id" class="small">
             <td class="text-start">{{ value?.name || "-" }}</td>
-            <td>{{ formatCurrency(value.base_price) }}</td>
+            <td>
+              {{ formatCurrency(value.base_price) }}
+              <span v-if="value.is_custom_price" class="badge text-bg-warning ms-1">Custom</span>
+            </td>
             <td>1</td>
             <td>{{ formatCurrency(value.base_price) }}</td>
           </tr>

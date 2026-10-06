@@ -46,6 +46,35 @@
             <span>{{ formatCurrency(price.amount) }}</span>
           </div>
 
+          <div
+            v-if="selectedPrice?.id === price.id"
+            class="custom-price-editor"
+            @click.stop
+            @keydown.stop
+          >
+            <label :for="`service-price-${price.id}`">Price for this reservation</label>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text">$</span>
+              <input
+                :id="`service-price-${price.id}`"
+                :value="selectedPrice.amount"
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                class="form-control"
+                :class="{ 'is-invalid': customPriceError }"
+                aria-label="Service price for this reservation"
+                @input="updateSelectedPrice($event.target.value)"
+                @blur="normalizeSelectedPrice"
+              />
+            </div>
+            <small v-if="customPriceError" class="text-danger">Enter an amount of $0.00 or more.</small>
+            <small v-else class="text-muted">
+              Configured price: {{ formatCurrency(selectedPrice.catalog_amount) }}
+            </small>
+          </div>
+
           <div class="price-card__extra">
             <i class="bi bi-coin" aria-hidden="true"></i>
             {{ formatCurrency(price.extra_child_fee) }} per additional child
@@ -98,6 +127,7 @@ const service = ref(null);
 const serviceList = ref([]);
 const servicePriceList = ref([]);
 const selectedPrice = ref(null);
+const customPriceError = ref(false);
 const county = ref({});
 
 watch(
@@ -136,8 +166,48 @@ const onSelectService = async (selected) => {
 };
 
 const selectPrice = (price) => {
-  selectedPrice.value = price;
-  emit("setData", {service: service.value, price: price});
+  const catalogAmount = normalizeMoney(price.amount);
+  selectedPrice.value = {
+    ...price,
+    amount: catalogAmount,
+    catalog_amount: catalogAmount,
+    is_custom_price: false,
+  };
+  customPriceError.value = false;
+  emitSelection();
+};
+
+const emitSelection = () => {
+  emit("setData", {
+    service: service.value,
+    price: selectedPrice.value ? { ...selectedPrice.value } : null,
+  });
+};
+
+const normalizeMoney = (value) => Math.round((Number(value) || 0) * 100) / 100;
+
+const updateSelectedPrice = (rawValue) => {
+  if (!selectedPrice.value) return;
+
+  if (rawValue === "" || !Number.isFinite(Number(rawValue)) || Number(rawValue) < 0) {
+    selectedPrice.value.amount = rawValue === "" ? null : rawValue;
+    customPriceError.value = true;
+    emitSelection();
+    return;
+  }
+
+  const amount = Number(rawValue);
+  selectedPrice.value.amount = amount;
+  selectedPrice.value.is_custom_price = normalizeMoney(amount) !== normalizeMoney(selectedPrice.value.catalog_amount);
+  customPriceError.value = false;
+  emitSelection();
+};
+
+const normalizeSelectedPrice = () => {
+  if (!selectedPrice.value || customPriceError.value) return;
+  selectedPrice.value.amount = normalizeMoney(selectedPrice.value.amount);
+  selectedPrice.value.is_custom_price = selectedPrice.value.amount !== normalizeMoney(selectedPrice.value.catalog_amount);
+  emitSelection();
 };
 
 const getOptionTitle = (price) => {
@@ -274,6 +344,28 @@ const truncateText = (text, maxLength) => {
 
 .price-card__price i {
   color: #20c997;
+}
+
+.custom-price-editor {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #f3c5dc;
+  border-radius: 8px;
+  background: #fff8fc;
+}
+
+.custom-price-editor label {
+  display: block;
+  margin-bottom: 6px;
+  color: #374151;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.custom-price-editor small {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.7rem;
 }
 
 .price-card__extra i {

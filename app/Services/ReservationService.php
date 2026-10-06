@@ -283,9 +283,34 @@ class ReservationService
      */
     public function create(array $data)
     {
-        $servicePrice = $data['price']['amount'] ?? 0;
+        $rawServicePrice = $data['price']['amount'] ?? null;
+        if ($rawServicePrice === null || $rawServicePrice === '' || !is_numeric($rawServicePrice) || (float) $rawServicePrice < 0) {
+            throw new HTTPException('Service price must be a number greater than or equal to zero', Response::HTTP_BAD_REQUEST);
+        }
+
+        $servicePrice = round((float) $rawServicePrice, 2);
         $addons = $data['addons'] ?? [];
         $bookingDate = isset($data['form']['date']) ? new \DateTime($data['form']['date']) : null;
+
+        // Admin reservations accept reservation-only prices (including zero),
+        // but the same add-on cannot be related more than once.
+        $seenAddonIds = [];
+        foreach ($addons as $addon) {
+            $addonId = (string) ($addon['id'] ?? '');
+            $addonPrice = $addon['selectedPrice'] ?? $addon['base_price'] ?? null;
+            if ($addonId === '' || isset($seenAddonIds[$addonId])) {
+                throw new HTTPException('Each add-on can only be selected once', Response::HTTP_BAD_REQUEST);
+            }
+            if ($addonPrice === null || $addonPrice === '' || !is_numeric($addonPrice) || (float) $addonPrice < 0) {
+                throw new HTTPException('Add-on price must be a number greater than or equal to zero', Response::HTTP_BAD_REQUEST);
+            }
+            $seenAddonIds[$addonId] = true;
+        }
+
+        // This endpoint is authenticated and dedicated to the admin modal. The
+        // UI compares the edited value with its catalogue snapshot and sends
+        // the explicit marker; the public createFromForm() path never does.
+        $isCustomBasePrice = !empty($data['price']['is_custom_price']);
 
         // Calcular niños extra
         // Admin form envía form.extraChildren directamente; customer form envía selectedKids (total - 40)
@@ -339,6 +364,7 @@ class ReservationService
             'duration_hours' => $pricing['duration_hours'],
             'price_type' => $pricing['price_type'],
             'base_price' => $pricing['base_price'],
+            'is_base_price_custom' => $isCustomBasePrice,
             'addons_total' => $pricing['addons_total'],
             'expedition_fee' => $pricing['expedition_fee'],
             'travel_fee' => $pricing['travel_fee'],
@@ -824,7 +850,18 @@ class ReservationService
         // balance_due, gratuity_amount, paid_at or any stripe_* column. Those are
         // written exclusively by recalculateTotals(), handlePaymentCompleted(),
         // applyPromoCode(), regeneratePaymentSession() and updateGratuity().
+        $existing = $this->repository->getById($id);
+        $serviceChanged = $existing
+            && array_key_exists('service_price_id', $data)
+            && (string) ($data['service_price_id'] ?? '') !== (string) ($existing->service_price_id ?? '');
+
         $updated = $this->repository->updateEditable($id, $data);
+
+        // A newly selected service starts from its configured catalogue price.
+        // Other edits must not discard an admin's reservation-only override.
+        if ($serviceChanged) {
+            $updated = $this->repository->update($id, ['is_base_price_custom' => false]);
+        }
 
         if (!$updated) {
             throw new HTTPException(lang('Reservation.updateFailed'), Response::HTTP_BAD_REQUEST);
@@ -1077,9 +1114,12 @@ class ReservationService
                 $servicePriceRow = $this->servicePriceRepository->getByIdWithService((string) $reservation->service_price_id);
             }
 
-            $basePrice        = $servicePriceRow !== null
-                ? (float) ($servicePriceRow['amount'] ?? 0)
-                : (float) ($reservation->base_price ?? 0);
+            $hasCustomBasePrice = (bool) ($reservation->is_base_price_custom ?? false);
+            $basePrice        = $hasCustomBasePrice
+                ? (float) ($reservation->base_price ?? 0)
+                : ($servicePriceRow !== null
+                    ? (float) ($servicePriceRow['amount'] ?? 0)
+                    : (float) ($reservation->base_price ?? 0));
             $serviceTravelFee = $servicePriceRow !== null ? (float) ($servicePriceRow['travel_fee'] ?? 0) : 0.0;
             $extraChildFee    = $servicePriceRow !== null ? (float) ($servicePriceRow['extra_child_fee'] ?? 0) : 0.0;
             $baseDurationHours = $servicePriceRow !== null

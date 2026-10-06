@@ -96,6 +96,38 @@ final class ReservationServiceCreateTest extends CIUnitTestCase
         $this->assertEquals(200.0, $saved['total_amount']);
     }
 
+    public function testAdminCanCreateReservationWithZeroCustomServicePrice(): void
+    {
+        $this->baseData['price']['amount'] = 0;
+        $this->baseData['price']['is_custom_price'] = true;
+
+        $this->service->create($this->baseData);
+
+        $saved = $this->repoMock->lastCreated;
+        $this->assertSame(0.0, $saved['base_price']);
+        $this->assertTrue($saved['is_base_price_custom']);
+        $this->assertSame(0.0, $saved['total_amount']);
+    }
+
+    public function testNegativeServicePriceIsRejected(): void
+    {
+        $this->baseData['price']['amount'] = -0.01;
+
+        $this->expectException(\CodeIgniter\HTTP\Exceptions\HTTPException::class);
+        $this->expectExceptionCode(400);
+        $this->service->create($this->baseData);
+    }
+
+    public function testDuplicateAddonIsRejectedBeforePersistence(): void
+    {
+        $addon = ['id' => 'addon-1', 'base_price' => 0];
+        $this->baseData['addons'] = [$addon, $addon];
+
+        $this->expectException(\CodeIgniter\HTTP\Exceptions\HTTPException::class);
+        $this->expectExceptionCode(400);
+        $this->service->create($this->baseData);
+    }
+
     public function testNegativeExtraChildrenClampedToZero(): void
     {
         $this->baseData['form']['extraChildren'] = -5;

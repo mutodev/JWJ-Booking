@@ -1,6 +1,6 @@
 <template>
   <div v-if="show" class="admin-modal modal fade show d-block" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
+    <div class="modal-dialog modal-dialog-scrollable reservation-create-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title"><i class="bi bi-calendar-plus"></i> Create Reservation</h5>
@@ -8,6 +8,13 @@
         </div>
 
         <div class="modal-body">
+          <div class="reservation-create-intro">
+            <div class="reservation-create-intro__icon"><i class="bi bi-receipt-cutoff"></i></div>
+            <div>
+              <strong>Build the reservation</strong>
+              <p>Select the customer, location and package. Service and add-on prices can be adjusted for this reservation only.</p>
+            </div>
+          </div>
           <ReservationClient :customers="customers" @setData="setData" />
           <ReservationAreas
             v-if="dataForm?.customer"
@@ -65,7 +72,7 @@
                 </button>
               </div>
               <div v-if="promoValid" class="valid-feedback d-block small">
-                Promo applied — {{ promoCodeData?.discount_percentage }}% off (excl. travel fee, expedite fee, Custom Song)
+                Promo applied — {{ promoDescription }} (excl. travel fee, expedite fee, Custom Song)
               </div>
               <div v-if="promoInvalid" class="invalid-feedback d-block small">{{ promoError }}</div>
             </div>
@@ -82,10 +89,11 @@
             type="button"
             class="btn btn-primary"
             @click="saveReservation"
-            :disabled="!dataForm?.form"
+            :disabled="!dataForm?.form || !pricingValid || saving"
           >
-            <i class="bi bi-save"></i>
-            Save
+            <span v-if="saving" class="spinner-border spinner-border-sm me-1"></span>
+            <i v-else class="bi bi-save"></i>
+            {{ saving ? "Saving..." : "Save" }}
           </button>
         </div>
       </div>
@@ -96,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import api from "@/services/axios";
 import ReservationClient from "./create/ReservationClient.vue";
 import ReservationAreas from "./create/ReservationAreas.vue";
@@ -107,6 +115,7 @@ import ReservationTotal from "./create/ReservationTotal.vue";
 
 const emit = defineEmits(["close", "saved"]);
 const dataForm = ref({});
+const saving = ref(false);
 
 const props = defineProps({
   show: Boolean,
@@ -161,6 +170,62 @@ function clearPromo() {
   resetPromo();
 }
 
+const calculatePromoDiscount = () => {
+  if (!promoValid.value || !promoCodeData.value) return 0;
+
+  const baseAmount = parseFloat(dataForm.value.price?.amount || 0);
+  const addonsDiscountEligible = (dataForm.value.addons || []).reduce((sum, addon) => {
+    if (addon.name === "Custom Song") return sum;
+    return sum + (parseFloat(addon.base_price) || 0) * (parseInt(addon.quantity || 1, 10) || 1);
+  }, 0);
+  const extraChildrenQty = parseInt(dataForm.value.form?.extraChildren || 0, 10);
+  const extraChildFee = parseFloat(dataForm.value.price?.extra_child_fee || 0);
+  const discountBase = baseAmount + addonsDiscountEligible + (extraChildrenQty * extraChildFee);
+  const discountType = promoCodeData.value.discount_type || "percentage";
+  const discountValue = parseFloat(promoCodeData.value.discount_value ?? promoCodeData.value.discount_percentage ?? 0);
+
+  return discountType === "fixed_amount"
+    ? Math.min(discountValue, discountBase)
+    : (discountBase * discountValue) / 100;
+};
+
+const syncAppliedPromo = () => {
+  if (!promoValid.value || !appliedCode.value) return;
+  dataForm.value.promoCode = {
+    code: appliedCode.value,
+    discount_amount: calculatePromoDiscount(),
+  };
+};
+
+const promoDescription = computed(() => {
+  if (promoCodeData.value?.discount_type === "fixed_amount") {
+    return `${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(Number(promoCodeData.value.discount_value || 0))} off`;
+  }
+  return `${promoCodeData.value?.discount_percentage || 0}% off`;
+});
+
+const pricingValid = computed(() => {
+  const serviceAmount = dataForm.value.price?.amount;
+  if (serviceAmount === null || serviceAmount === "" || !Number.isFinite(Number(serviceAmount)) || Number(serviceAmount) < 0) {
+    return false;
+  }
+
+  return (dataForm.value.addons || []).every((addon) => (
+    addon.base_price !== null && addon.base_price !== "" &&
+    Number.isFinite(Number(addon.base_price)) && Number(addon.base_price) >= 0
+  ));
+});
+
+watch(
+  () => ({
+    servicePrice: dataForm.value.price?.amount,
+    addons: dataForm.value.addons,
+    extraChildren: dataForm.value.form?.extraChildren,
+  }),
+  syncAppliedPromo,
+  { deep: true }
+);
+
 async function validatePromo() {
   if (!promoCode.value.trim()) return;
   promoValidating.value = true;
@@ -175,25 +240,7 @@ async function validatePromo() {
       promoValid.value = true;
       appliedCode.value = promoCode.value.trim();
 
-      // Descuento sobre precio base + add-ons + niños extra. No aplica a
-      // travel fee, expedite fee, ni al add-on "Custom Song".
-      const baseAmount = parseFloat(dataForm.value.price?.amount || 0);
-      const addonsDiscountEligible = (dataForm.value.addons || []).reduce((sum, addon) => {
-        if (addon.name === 'Custom Song') return sum;
-        return sum + (parseFloat(addon.base_price) || 0);
-      }, 0);
-      const extraChildrenQty = parseInt(dataForm.value.form?.extraChildren || 0);
-      const extraChildFee = parseFloat(dataForm.value.price?.extra_child_fee || 0);
-      const extraChildrenTotal = extraChildrenQty * extraChildFee;
-
-      const pct = parseFloat(response.data.discount_percentage || 0);
-      const discountBase = baseAmount + addonsDiscountEligible + extraChildrenTotal;
-      const discountAmount = (discountBase * pct) / 100;
-
-      dataForm.value.promoCode = {
-        code: appliedCode.value,
-        discount_amount: discountAmount,
-      };
+      syncAppliedPromo();
     } else {
       promoCodeData.value = null;
       promoValid.value = false;
@@ -213,11 +260,15 @@ async function validatePromo() {
 }
 
 const saveReservation = async () => {
+  if (!dataForm.value.form || !pricingValid.value || saving.value) return;
+  saving.value = true;
   try {
     await api.post('/reservations', dataForm.value);
     emit("saved");
   } catch (error) {
     // Error handled by axios interceptor
+  } finally {
+    saving.value = false;
   }
 };
 
@@ -230,5 +281,60 @@ const closeModal = () => {
 .modal-content,
 .modal-body {
   min-height: 500px;
+}
+
+.reservation-create-dialog {
+  width: min(96vw, 1480px);
+  max-width: 1480px;
+}
+
+.modal-header,
+.modal-footer {
+  background: #fff;
+  z-index: 2;
+}
+
+.modal-header {
+  border-bottom-color: #e5e7eb;
+}
+
+.modal-footer {
+  border-top-color: #e5e7eb;
+}
+
+.reservation-create-intro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 980px;
+  margin: 0 auto 18px;
+  padding: 14px 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.reservation-create-intro__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border-radius: 9px;
+  background: #e7f1ff;
+  color: #0d6efd;
+}
+
+.reservation-create-intro p {
+  margin: 2px 0 0;
+  color: #6b7280;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 768px) {
+  .reservation-create-dialog {
+    width: auto;
+    margin: 0.5rem;
+  }
 }
 </style>
