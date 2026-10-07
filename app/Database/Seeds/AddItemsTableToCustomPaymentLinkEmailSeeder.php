@@ -2,35 +2,30 @@
 
 namespace App\Database\Seeds;
 
-use App\Database\Seeds\Support\EmailTemplateSeedGuard;
 use CodeIgniter\Database\Seeder;
 
 /**
  * Inserta {{items_table}} (tabla de add-ons / servicios personalizados del link)
- * en la plantilla `custom_payment_link`, justo después del párrafo de intro.
- * Se renderiza vacío cuando el link no tiene ítems.
+ * en la plantilla `custom_payment_link`. Se renderiza vacío cuando el link no
+ * tiene ítems.
  *
- * No reescribe el cuerpo guardado. Seguro de re-ejecutar: salta si el
- * placeholder ya existe, si no encuentra el ancla o si la plantilla fue
- * personalizada desde el panel.
+ * La plantilla fue editada en producción, así que este seeder es ADITIVO:
+ * aplica también a plantillas personalizadas, pero solo inserta el placeholder
+ * (y agrega la variable a available_variables). No reescribe el cuerpo ni toca
+ * subject, content, is_customized ni ninguna otra columna.
+ *
+ * Seguro de re-ejecutar: salta si el placeholder ya existe y, si no encuentra
+ * ningún punto de inserción conocido, no modifica nada.
  *
  * php spark db:seed AddItemsTableToCustomPaymentLinkEmailSeeder
  */
 class AddItemsTableToCustomPaymentLinkEmailSeeder extends Seeder
 {
-    use EmailTemplateSeedGuard;
-
     private const SLUG = 'custom_payment_link';
-    private const PLACEHOLDER = '{{items_table}}';
-    private const ANCHOR = '{{content_intro}}</p>';
+    public const PLACEHOLDER = '{{items_table}}';
 
     public function run()
     {
-        if ($this->templateIsCustomized(self::SLUG)) {
-            echo self::SLUG . " was customized in the admin panel — skipping (add " . self::PLACEHOLDER . " manually).\n";
-            return;
-        }
-
         $row = $this->db->table('email_templates')
             ->select('id, body, available_variables')
             ->where('slug', self::SLUG)
@@ -42,23 +37,18 @@ class AddItemsTableToCustomPaymentLinkEmailSeeder extends Seeder
             return;
         }
 
-        if (strpos($row->body, self::PLACEHOLDER) !== false) {
+        if (strpos((string) $row->body, self::PLACEHOLDER) !== false) {
             echo self::SLUG . " already has " . self::PLACEHOLDER . " — skipping.\n";
             return;
         }
 
-        if (strpos($row->body, self::ANCHOR) === false) {
-            echo self::SLUG . ": anchor not found — skipping instead of guessing where to insert.\n";
+        $newBody = self::insertPlaceholder((string) $row->body);
+        if ($newBody === null) {
+            echo self::SLUG . ": no known insertion point found — nothing changed. Add " . self::PLACEHOLDER . " manually from the admin panel.\n";
             return;
         }
 
-        $update = [
-            'body' => str_replace(
-                self::ANCHOR,
-                self::ANCHOR . "\n                            " . self::PLACEHOLDER,
-                $row->body
-            ),
-        ];
+        $update = ['body' => $newBody];
 
         $variables = json_decode((string) ($row->available_variables ?? ''), true);
         if (is_array($variables) && !in_array('items_table', $variables, true)) {
@@ -68,6 +58,47 @@ class AddItemsTableToCustomPaymentLinkEmailSeeder extends Seeder
 
         $this->db->table('email_templates')->where('id', $row->id)->update($update);
 
-        echo self::SLUG . ": " . self::PLACEHOLDER . " placeholder added.\n";
+        echo self::SLUG . ": " . self::PLACEHOLDER . " placeholder added (existing content untouched).\n";
+    }
+
+    /**
+     * Devuelve el cuerpo con el placeholder insertado, o null si no hay un punto
+     * de inserción reconocible. Solo agrega texto: el resto del cuerpo queda
+     * byte a byte igual.
+     *
+     * Orden de preferencia:
+     *  1. justo después del párrafo de intro (`{{content_intro}}</p>`);
+     *  2. justo antes de la tabla que contiene `{{description}}`;
+     *  3. justo antes de la tabla que contiene `{{amount}}`;
+     *  4. justo antes de la tabla del botón `{{payment_url}}`.
+     */
+    public static function insertPlaceholder(string $body): ?string
+    {
+        if (strpos($body, self::PLACEHOLDER) !== false) {
+            return null;
+        }
+
+        $intro = '{{content_intro}}</p>';
+        $pos = strpos($body, $intro);
+        if ($pos !== false) {
+            $at = $pos + strlen($intro);
+            return substr($body, 0, $at) . "\n" . self::PLACEHOLDER . substr($body, $at);
+        }
+
+        foreach (['{{description}}', '{{amount}}', '{{payment_url}}'] as $marker) {
+            $markerPos = strpos($body, $marker);
+            if ($markerPos === false) {
+                continue;
+            }
+
+            $tablePos = strripos(substr($body, 0, $markerPos), '<table');
+            if ($tablePos === false) {
+                continue;
+            }
+
+            return substr($body, 0, $tablePos) . self::PLACEHOLDER . "\n" . substr($body, $tablePos);
+        }
+
+        return null;
     }
 }
