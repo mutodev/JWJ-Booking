@@ -92,7 +92,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr v-for="item in form.items" :key="`${item.item_type}-${item.item_id}`">
+                    <tr v-for="item in form.items" :key="`${item.item_type}-${item.item_id}`" :class="{ 'is-zero-price': !(num(item.price) > 0) }">
                       <td>
                         <span class="fw-semibold">{{ item.name }}</span>
                         <span class="badge ms-1" :class="item.item_type === 'addon' ? 'text-bg-info' : 'text-bg-secondary'">

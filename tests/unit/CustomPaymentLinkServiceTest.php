@@ -1214,6 +1214,34 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->assertStringNotContainsString('<Painting>', $vars['items_table']);
     }
 
+    public function testEmailItemsTableOmitsZeroPriceItems(): void
+    {
+        $this->seededLink(['amount' => 190.0, 'extra_amount' => null]);
+        $this->itemRepo->byLink['link-1'] = [
+            ['item_type' => 'addon', 'item_id' => 'addon-1', 'name' => 'Bubble Machine', 'price' => 0.0],
+            ['item_type' => 'custom_service', 'item_id' => 'cs-1', 'name' => 'Face Painting', 'price' => 190.0],
+        ];
+
+        $this->service->sendLinkEmail('link-1');
+
+        $table = $this->templateService->renderCalls[0][1]['items_table'];
+        $this->assertStringContainsString('Face Painting', $table);
+        $this->assertStringNotContainsString('Bubble Machine', $table);
+        $this->assertStringNotContainsString('$0.00', $table);
+    }
+
+    public function testEmailItemsTableIsEmptyWhenAllItemsAreZero(): void
+    {
+        $this->seededLink(['amount' => 0.0, 'extra_amount' => null]);
+        $this->itemRepo->byLink['link-1'] = [
+            ['item_type' => 'addon', 'item_id' => 'addon-1', 'name' => 'Bubble Machine', 'price' => 0.0],
+        ];
+
+        $this->service->sendLinkEmail('link-1');
+
+        $this->assertSame('', $this->templateService->renderCalls[0][1]['items_table']);
+    }
+
     public function testEmailItemsTableIsEmptyWithoutItems(): void
     {
         $this->seededLink();

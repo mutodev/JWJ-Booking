@@ -136,11 +136,11 @@
                 <DetailField label="Client" :value="data.customer_name || data.full_name" class="col-md-4" />
                 <DetailField label="Email" :value="data.email" class="col-md-4" />
                 <DetailField label="Phone" :value="data.phone || data.customer_phone" class="col-md-4" />
-                <DetailField label="Service" :value="data.service_name" class="col-md-4" />
+                <DetailField label="Service" :value="data.service_name" class="col-md-4" :class="{ 'is-zero-price': isZeroPrice(data.base_price) }" />
                 <DetailField label="Location" :value="locationLabel" class="col-md-4" />
                 <DetailField label="County" :value="data.county_name" class="col-md-4" />
                 <DetailField label="Zip Code" :value="data.zipcode" class="col-md-4" />
-                <DetailField label="Base Service" :value="formatCurrency(data.base_price)" class="col-md-3" />
+                <DetailField label="Base Service" :value="formatCurrency(data.base_price)" class="col-md-3" :class="{ 'is-zero-price': isZeroPrice(data.base_price) }" />
                 <DetailField label="Add-ons" :value="formatCurrency(data.addons_total)" class="col-md-3" />
                 <DetailField label="Custom Services" :value="formatCurrency(data.custom_services_total)" class="col-md-3" />
                 <DetailField label="Number of Children" :value="formatCurrency(data.extra_children_fee)" class="col-md-3" />
@@ -161,7 +161,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="addon in data.addons" :key="addon.id || addon.addon_id">
+                      <tr v-for="addon in data.addons" :key="addon.id || addon.addon_id" :class="{ 'is-zero-price': isZeroPrice(addon.price_at_time) }">
                         <td>{{ addon.name || addon.type_name || 'N/A' }}</td>
                         <td>{{ addon.suboption || 'N/A' }}</td>
                         <td class="text-center">{{ addon.quantity || 1 }}</td>
@@ -186,7 +186,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="item in data.custom_services" :key="item.id">
+                      <tr v-for="item in data.custom_services" :key="item.id" :class="{ 'is-zero-price': isZeroPrice(item.price_at_time) }">
                         <td>{{ item.name }}</td>
                         <td>{{ item.detail || 'N/A' }}</td>
                         <td class="text-end">{{ formatCurrency(item.catalog_price) }}</td>
@@ -503,6 +503,9 @@ const formatCurrency = (amount) => {
   const value = parseFloat(amount) || 0;
   return value.toLocaleString("en-US", { style: "currency", currency: "USD" });
 };
+
+// Servicio, add-on o custom service con precio 0 → se muestra en gris.
+const isZeroPrice = (amount) => !(parseFloat(amount) > 0);
 
 const getStatusLabel = (status) => statusLabels[status] || status || "UNKNOWN";
 

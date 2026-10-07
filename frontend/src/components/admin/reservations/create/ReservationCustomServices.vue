@@ -41,7 +41,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="item in selected" :key="item.custom_service_id">
+            <tr v-for="item in selected" :key="item.custom_service_id" :class="{ 'is-zero-price': !(parseFloat(item.price) > 0) }">
               <td>
                 <span class="fw-semibold">{{ item.name }}</span>
                 <span v-if="item.is_custom_price" class="badge text-bg-warning ms-1">Custom</span>

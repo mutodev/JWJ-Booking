@@ -127,7 +127,7 @@
             <div class="segment mb-3">
               <h6 class="segment-title">Service &amp; Pricing</h6>
               <div class="row g-3 align-items-end">
-                <div class="col-md-8">
+                <div class="col-md-8" :class="{ 'is-zero-price': isZeroPrice(editData.base_price) }">
                   <label class="form-label">Service</label>
                   <select
                     v-model="editData.service_price_id"
@@ -159,7 +159,7 @@
               </div>
 
               <div class="row g-3 mt-1">
-                <div class="col-md-3">
+                <div class="col-md-3" :class="{ 'is-zero-price': isZeroPrice(editData.base_price) }">
                   <label class="form-label">Base Service</label>
                   <input :value="formatCurrency(editData.base_price)" type="text" class="form-control" readonly />
                 </div>
@@ -261,7 +261,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="row in reservationAddons" :key="row.id">
+                      <tr v-for="row in reservationAddons" :key="row.id" :class="{ 'is-zero-price': isZeroPrice(row.price_at_time) }">
                         <td>{{ addonName(row.addon_id) }}<span v-if="row.suboption" class="text-muted"> — {{ row.suboption }}</span></td>
                         <td class="text-center">
                           <input
@@ -352,7 +352,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="row in reservationCustomServices" :key="row.id">
+                      <tr v-for="row in reservationCustomServices" :key="row.id" :class="{ 'is-zero-price': isZeroPrice(row.price_at_time) }">
                         <td>
                           {{ row.name }}
                           <span v-if="num(row.price_at_time) !== num(row.catalog_price)" class="badge text-bg-warning ms-1">Custom</span>
@@ -775,6 +775,8 @@ const props = defineProps({
 });
 
 const num = (v) => (v == null || v === '' ? 0 : parseFloat(v) || 0);
+// Servicio, add-on o custom service con precio 0 → se muestra en gris.
+const isZeroPrice = (v) => !(num(v) > 0);
 
 const balanceDue = computed(() => Math.round(num(editData.value.balance_due) * 100) / 100);
 

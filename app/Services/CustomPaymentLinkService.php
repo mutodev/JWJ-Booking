@@ -497,6 +497,10 @@ class CustomPaymentLinkService
         $rows = '';
         foreach ($items as $item) {
             $item = (array) $item;
+            // Ítems con precio 0 (cortesía) no se muestran en el correo.
+            if ((float) ($item['price'] ?? 0) <= 0) {
+                continue;
+            }
             $label = self::ITEM_TYPES[$item['item_type'] ?? ''] ?? 'Item';
             $detail = trim((string) ($item['detail'] ?? ''));
             $rows .= '<tr>'
@@ -516,6 +520,10 @@ class CustomPaymentLinkService
                 . '<td style="' . $td . ' text-align: right;">' . esc($money($extra)) . '</td>'
                 . '<td style="' . $td . ' text-align: right;">' . esc($money($extra)) . '</td>'
                 . '</tr>';
+        }
+
+        if ($rows === '') {
+            return '';
         }
 
         return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; border-collapse: separate;">'

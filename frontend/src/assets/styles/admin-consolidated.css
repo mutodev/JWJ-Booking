@@ -1082,3 +1082,11 @@
 @media (max-width: 480px) {
   .admin-metrics-grid { grid-template-columns: 1fr; }
 }
+
+/* ===== ZERO-PRICE ITEMS =====
+   Servicio (jam), add-on o custom service con precio 0: toda la fila en gris.
+   Se aplica a <tr> y a bloques sueltos (cards / filas flex). */
+.is-zero-price,
+.is-zero-price *:not(.badge):not(.btn):not(.btn *):not(.text-danger) {
+  color: #9ca3af !important;
+}

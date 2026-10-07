@@ -12,7 +12,7 @@
         </thead>
         <tbody>
           <!-- Service -->
-          <tr :key="data.price?.id || 'service'">
+          <tr :key="data.price?.id || 'service'" :class="{ 'is-zero-price': isZero(data.price?.amount) }">
             <td class="text-start fw-medium small">
               {{ data.service?.name || "-" }}
               <br />
@@ -27,7 +27,7 @@
           </tr>
 
           <!-- Addons -->
-          <tr v-for="value in data.addons" :key="value.id" class="small">
+          <tr v-for="value in data.addons" :key="value.id" class="small" :class="{ 'is-zero-price': isZero(value.base_price) }">
             <td class="text-start">{{ value?.name || "-" }}</td>
             <td>
               {{ formatCurrency(value.base_price) }}
@@ -38,7 +38,7 @@
           </tr>
 
           <!-- Custom Services -->
-          <tr v-for="item in data.customServices" :key="`cs-${item.custom_service_id}`" class="small">
+          <tr v-for="item in data.customServices" :key="`cs-${item.custom_service_id}`" class="small" :class="{ 'is-zero-price': isZero(item.price) }">
             <td class="text-start">
               {{ item.name }}
               <small class="text-muted d-block">Custom service</small>
@@ -131,6 +131,9 @@ const formatCurrency = (value) => {
     currency: "USD",
   }).format(num);
 };
+
+// Ítem con precio 0 (servicio, add-on o custom service) → fila en gris.
+const isZero = (value) => !(parseFloat(value) > 0);
 
 const travelFee = computed(() => {
   const zipcode = data.value?.areas?.zipcode;

@@ -1471,6 +1471,8 @@ class ReservationService
         $eventDate = isset($reservation->event_date) ? date('F j, Y', strtotime($reservation->event_date)) : 'TBD';
 
         $money = static fn ($v): string => number_format((float) ($v ?? 0), 2);
+        $hideRowStart = static fn (float $v): string => $v > 0.009 ? '' : '<!--';
+        $hideRowEnd   = static fn (float $v): string => $v > 0.009 ? '' : '-->';
 
         $balanceDue   = round((float) ($reservation->balance_due ?? 0), 2);
         $amountPaid   = $reservation->amount_paid;
@@ -1521,6 +1523,12 @@ class ReservationService
             'discount_row'       => $discountRow,
             'gratuity_row'       => $gratuityRow,
             'balance_due_row'    => $balanceRow,
+            // Filas "Base Service" / "Add-ons" en 0: se comentan en el HTML
+            // (marcadores insertados por HideZeroPriceRowsInReservationUpdatedEmailSeeder).
+            'base_price_row_start'   => $hideRowStart((float) ($reservation->base_price ?? 0)),
+            'base_price_row_end'     => $hideRowEnd((float) ($reservation->base_price ?? 0)),
+            'addons_total_row_start' => $hideRowStart((float) ($reservation->addons_total ?? 0)),
+            'addons_total_row_end'   => $hideRowEnd((float) ($reservation->addons_total ?? 0)),
             'refund_row'         => $refundRow,
             '_reservation'       => $reservation,
         ];
@@ -2271,6 +2279,10 @@ class ReservationService
         foreach ($addons as $addon) {
             $name = trim((string) ($addon->name ?? ''));
             if ($name === '') {
+                continue;
+            }
+            // Add-ons con precio 0 (cortesía) no se muestran en el correo.
+            if ((float) ($addon->price_at_time ?? 0) <= 0) {
                 continue;
             }
 

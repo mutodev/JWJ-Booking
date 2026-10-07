@@ -86,6 +86,11 @@ const sampleVariables = {
   performers_row: '<tr><td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Performer(s)</td><td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">2</td></tr>',
   confirmation_url: "#",
   password: "TempP@ss123",
+  // Marcadores que comentan las filas en 0 (reservation_updated); vacíos = fila visible.
+  base_price_row_start: "",
+  base_price_row_end: "",
+  addons_total_row_start: "",
+  addons_total_row_end: "",
 };
 
 watch(

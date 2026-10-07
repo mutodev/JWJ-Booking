@@ -305,6 +305,33 @@ final class ReservationServiceReservationUpdatedEmailTest extends CIUnitTestCase
     }
 
     // -------------------------------------------------------------------------
+    // Filas "Base Service" / "Add-ons" en 0 — marcadores que las comentan
+    // -------------------------------------------------------------------------
+
+    public function testZeroBasePriceAndAddonsRowsAreCommentedOut(): void
+    {
+        $this->seed(['base_price' => 0.0, 'addons_total' => 0.0]);
+        $this->service->sendReservationUpdatedEmail('res-1');
+
+        $vars = $this->vars();
+        $this->assertSame('<!--', $vars['base_price_row_start']);
+        $this->assertSame('-->', $vars['base_price_row_end']);
+        $this->assertSame('<!--', $vars['addons_total_row_start']);
+        $this->assertSame('-->', $vars['addons_total_row_end']);
+    }
+
+    public function testPositiveBasePriceAndAddonsRowsStayVisible(): void
+    {
+        $this->seed(['base_price' => 200.0, 'addons_total' => 50.0]);
+        $this->service->sendReservationUpdatedEmail('res-1');
+
+        $vars = $this->vars();
+        foreach (['base_price_row_start', 'base_price_row_end', 'addons_total_row_start', 'addons_total_row_end'] as $key) {
+            $this->assertSame('', $vars[$key], $key);
+        }
+    }
+
+    // -------------------------------------------------------------------------
     // gratuity_row — fila "Gratuity / Tip" (fix del certifier, tolerancia 0.009)
     // -------------------------------------------------------------------------
 
