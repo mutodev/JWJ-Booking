@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Models\ReservationEmailHistoryModel;
+use App\Repositories\AddonRepository;
+use App\Repositories\CustomPaymentLinkItemRepository;
 use App\Repositories\CustomPaymentLinkRepository;
+use App\Repositories\CustomServiceRepository;
 use App\Services\PaymentAccessService;
 use App\Repositories\ReservationRepository;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
@@ -47,6 +50,21 @@ class CustomPaymentLinkService
     /** @var ReservationService|null Lazy to avoid circular construction. */
     protected $reservationService = null;
 
+    /** @var CustomPaymentLinkItemRepository|null Lazy — see itemRepository(). */
+    protected $itemRepository = null;
+
+    /** @var AddonRepository|null Lazy — catálogo de add-ons para validar ítems. */
+    protected $addonRepository = null;
+
+    /** @var CustomServiceRepository|null Lazy — catálogo de servicios personalizados. */
+    protected $customServiceRepository = null;
+
+    /** Tipos de ítem permitidos en un link y su etiqueta visible. */
+    private const ITEM_TYPES = [
+        'addon'          => 'Add-on',
+        'custom_service' => 'Custom service',
+    ];
+
     public function __construct()
     {
         $this->repo                  = new CustomPaymentLinkRepository();
@@ -82,6 +100,33 @@ class CustomPaymentLinkService
         return $this->accessService;
     }
 
+    protected function itemRepository()
+    {
+        if ($this->itemRepository === null) {
+            $this->itemRepository = new CustomPaymentLinkItemRepository();
+        }
+
+        return $this->itemRepository;
+    }
+
+    protected function addonRepository()
+    {
+        if ($this->addonRepository === null) {
+            $this->addonRepository = new AddonRepository();
+        }
+
+        return $this->addonRepository;
+    }
+
+    protected function customServiceRepository()
+    {
+        if ($this->customServiceRepository === null) {
+            $this->customServiceRepository = new CustomServiceRepository();
+        }
+
+        return $this->customServiceRepository;
+    }
+
     protected function getReservationService(): ReservationService
     {
         if ($this->reservationService === null) {
@@ -101,6 +146,7 @@ class CustomPaymentLinkService
     private function attachAccessUrl(object $link): object
     {
         $link->access_url = null;
+        $link->items = $this->itemRepository()->getByLink((string) $link->id);
 
         if ($link->status === 'pending') {
             try {
@@ -163,7 +209,7 @@ class CustomPaymentLinkService
      */
     public function createLink(array $data, string $createdBy = 'System'): object
     {
-        $amount      = $this->assertValidAmount($data['amount'] ?? null);
+        [$items, $amount, $extraAmount] = $this->resolvePricing($data);
         $description = $this->assertValidDescription($data['description'] ?? null);
         $email       = $this->assertValidEmail($data['customer_email'] ?? null);
         $name        = $this->normalizeName($data['customer_name'] ?? null);
@@ -192,17 +238,7 @@ class CustomPaymentLinkService
         $id = Uuid::uuid4()->toString();
 
         try {
-            $session = $this->getStripeService()->createCheckoutSession(
-                $amount,
-                $email,
-                '',                 // no reservation_id in the default metadata
-                $description,
-                0.0,
-                [
-                    'type'            => 'custom_payment_link',
-                    'payment_link_id' => $id,
-                ]
-            );
+            $session = $this->createStripeSession($id, $amount, $email, $description, $items, $extraAmount);
         } catch (\Throwable $e) {
             log_message('error', 'Custom payment link: Stripe session creation failed: ' . $e->getMessage());
             throw new HTTPException(
@@ -218,9 +254,14 @@ class CustomPaymentLinkService
             'customer_email' => $email,
             'description'    => $description,
             'amount'         => $amount,
+            'extra_amount'   => $extraAmount,
             'currency'       => $currency,
             'created_by'     => mb_substr($createdBy, 0, 255),
         ], $id);
+
+        if ($items !== []) {
+            $this->itemRepository()->replaceForLink($id, $items);
+        }
 
         $expiresAt = isset($session->expires_at) && $session->expires_at
             ? date('Y-m-d H:i:s', (int) $session->expires_at)
@@ -253,7 +294,7 @@ class CustomPaymentLinkService
             throw new HTTPException('Only pending payment links can be edited', Response::HTTP_BAD_REQUEST);
         }
 
-        $amount      = $this->assertValidAmount($data['amount'] ?? null);
+        [$items, $amount, $extraAmount] = $this->resolvePricing($data);
         $description = $this->assertValidDescription($data['description'] ?? null);
         $email       = $this->assertValidEmail($data['customer_email'] ?? null);
         $name        = $this->normalizeName($data['customer_name'] ?? null);
@@ -265,7 +306,7 @@ class CustomPaymentLinkService
 
         try {
             $this->getStripeService()->expireCheckoutSession($link->stripe_session_id ?? null);
-            $session = $this->createStripeSession((string) $link->id, $amount, $email, $description);
+            $session = $this->createStripeSession((string) $link->id, $amount, $email, $description, $items, $extraAmount);
         } catch (\Throwable $e) {
             log_message('error', 'Custom payment link: replacement session failed: ' . $e->getMessage());
             throw new HTTPException('Could not replace the payment session. Please try again.', Response::HTTP_BAD_GATEWAY);
@@ -276,8 +317,10 @@ class CustomPaymentLinkService
             'customer_email' => $email,
             'description'    => $description,
             'amount'         => $amount,
+            'extra_amount'   => $extraAmount,
             'currency'       => $this->normalizeCurrency($data['currency'] ?? $link->currency ?? null),
         ]);
+        $this->itemRepository()->replaceForLink($id, $items);
 
         $expiresAt = isset($session->expires_at) && $session->expires_at
             ? date('Y-m-d H:i:s', (int) $session->expires_at)
@@ -294,16 +337,200 @@ class CustomPaymentLinkService
         return $this->attachAccessUrl($this->repo->findById($id));
     }
 
-    private function createStripeSession(string $linkId, float $amount, string $email, string $description): object
-    {
-        return $this->getStripeService()->createCheckoutSession(
-            $amount,
+    /**
+     * Sin ítems: una sola línea con la descripción (comportamiento histórico).
+     * Con ítems: una línea por ítem más el cargo extra, que suman exactamente $amount.
+     */
+    private function createStripeSession(
+        string $linkId,
+        float $amount,
+        string $email,
+        string $description,
+        array $items = [],
+        ?float $extraAmount = null,
+        ?int $expiresInSeconds = null
+    ): object {
+        $metadata = ['type' => 'custom_payment_link', 'payment_link_id' => $linkId];
+
+        if ($items === []) {
+            return $this->getStripeService()->createCheckoutSession(
+                $amount,
+                $email,
+                '',
+                $description,
+                0.0,
+                $metadata,
+                $expiresInSeconds
+            );
+        }
+
+        return $this->getStripeService()->createItemizedCheckoutSession(
+            $this->buildStripeLines($items, (float) ($extraAmount ?? 0), $description),
             $email,
-            '',
-            $description,
-            0.0,
-            ['type' => 'custom_payment_link', 'payment_link_id' => $linkId]
+            $metadata,
+            $expiresInSeconds
         );
+    }
+
+    /** @return array<int, array{name:string, amount:float}> */
+    private function buildStripeLines(array $items, float $extraAmount, string $description): array
+    {
+        $lines = [];
+        foreach ($items as $item) {
+            $label = self::ITEM_TYPES[$item['item_type']] ?? 'Item';
+            $lines[] = [
+                'name'   => $label . ': ' . $item['name'],
+                'amount' => (float) $item['price'],
+            ];
+        }
+
+        if ($extraAmount > 0) {
+            $lines[] = ['name' => $description, 'amount' => $extraAmount];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Monto del link. Sin ítems: monto manual (como siempre). Con ítems: suma de
+     * los precios de los ítems + cargo extra opcional; el monto que mande el
+     * cliente se ignora.
+     *
+     * @return array{0: array<int, array<string,mixed>>, 1: float, 2: ?float}
+     */
+    private function resolvePricing(array $data): array
+    {
+        $items = $this->resolveItems($data['items'] ?? []);
+
+        if ($items === []) {
+            return [[], $this->assertValidAmount($data['amount'] ?? null), null];
+        }
+
+        $rawExtra = $data['extra_amount'] ?? null;
+        if ($rawExtra === null || $rawExtra === '') {
+            $extra = 0.0;
+        } elseif (is_bool($rawExtra) || is_array($rawExtra) || !is_numeric($rawExtra) || (float) $rawExtra < 0) {
+            throw new HTTPException('Other charge must be a number greater than or equal to zero', Response::HTTP_BAD_REQUEST);
+        } else {
+            $extra = round((float) $rawExtra, 2);
+        }
+
+        $total = array_sum(array_column($items, 'price')) + $extra;
+
+        return [$items, $this->assertValidAmount(round($total, 2)), $extra];
+    }
+
+    /**
+     * Valida los ítems contra el catálogo (deben existir, estar activos y no
+     * repetirse). Nombre/detalle/precio de catálogo salen de la BD; del request
+     * solo se toma el precio cobrado en el link. Cantidad siempre 1.
+     *
+     * @param mixed $raw [{item_type, item_id, price}]
+     * @return array<int, array<string,mixed>>
+     */
+    private function resolveItems($raw): array
+    {
+        if (!is_array($raw) || $raw === []) {
+            return [];
+        }
+
+        $items = [];
+        foreach ($raw as $entry) {
+            $type = is_array($entry) ? (string) ($entry['item_type'] ?? '') : '';
+            $itemId = is_array($entry) ? trim((string) ($entry['item_id'] ?? '')) : '';
+
+            if (!isset(self::ITEM_TYPES[$type]) || $itemId === '') {
+                throw new HTTPException('Invalid payment link item', Response::HTTP_BAD_REQUEST);
+            }
+
+            $key = $type . ':' . $itemId;
+            if (isset($items[$key])) {
+                throw new HTTPException('Each item can only be added once', Response::HTTP_BAD_REQUEST);
+            }
+
+            if ($type === 'addon') {
+                $catalog = $this->addonRepository()->getById($itemId);
+                $catalogPrice = $catalog ? (float) $catalog->base_price : 0.0;
+                $detail = null;
+            } else {
+                $catalog = $this->customServiceRepository()->getById($itemId);
+                $catalogPrice = $catalog ? (float) $catalog->price : 0.0;
+                $detail = $catalog->detail ?? null;
+            }
+
+            if (!$catalog || !$catalog->is_active) {
+                throw new HTTPException(self::ITEM_TYPES[$type] . ' not found or inactive', Response::HTTP_BAD_REQUEST);
+            }
+
+            $price = $entry['price'] ?? null;
+            if ($price === null || $price === '' || is_bool($price) || is_array($price) || !is_numeric($price) || (float) $price < 0) {
+                throw new HTTPException('Item price must be a number greater than or equal to zero', Response::HTTP_BAD_REQUEST);
+            }
+
+            $items[$key] = [
+                'item_type'     => $type,
+                'item_id'       => $itemId,
+                'name'          => (string) $catalog->name,
+                'detail'        => $detail,
+                'catalog_price' => round($catalogPrice, 2),
+                'price'         => round((float) $price, 2),
+            ];
+        }
+
+        return array_values($items);
+    }
+
+    /**
+     * Tabla HTML de ítems para el correo (vacía si el link no tiene ítems).
+     */
+    private function buildItemsTable(object $link): string
+    {
+        $items = $link->items ?? $this->itemRepository()->getByLink((string) $link->id);
+        if (empty($items)) {
+            return '';
+        }
+
+        $money = static fn ($v): string => '$' . number_format((float) $v, 2);
+        $th = 'padding: 10px 12px; font-size: 12px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.03em; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;';
+        $td = 'padding: 12px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;';
+
+        $rows = '';
+        foreach ($items as $item) {
+            $item = (array) $item;
+            $label = self::ITEM_TYPES[$item['item_type'] ?? ''] ?? 'Item';
+            $detail = trim((string) ($item['detail'] ?? ''));
+            $rows .= '<tr>'
+                . '<td style="' . $td . '"><strong>' . esc((string) $item['name']) . '</strong>'
+                . '<br><span style="font-size: 12px; color: #6b7280;">' . esc($label) . ($detail !== '' ? ' · ' . esc($detail) : '') . '</span></td>'
+                . '<td style="' . $td . ' text-align: center;">1</td>'
+                . '<td style="' . $td . ' text-align: right;">' . esc($money($item['price'])) . '</td>'
+                . '<td style="' . $td . ' text-align: right;">' . esc($money($item['price'])) . '</td>'
+                . '</tr>';
+        }
+
+        $extra = (float) ($link->extra_amount ?? 0);
+        if ($extra > 0) {
+            $rows .= '<tr>'
+                . '<td style="' . $td . '"><strong>Other charge</strong><br><span style="font-size: 12px; color: #6b7280;">' . esc((string) $link->description) . '</span></td>'
+                . '<td style="' . $td . ' text-align: center;">1</td>'
+                . '<td style="' . $td . ' text-align: right;">' . esc($money($extra)) . '</td>'
+                . '<td style="' . $td . ' text-align: right;">' . esc($money($extra)) . '</td>'
+                . '</tr>';
+        }
+
+        return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; border-collapse: separate;">'
+            . '<tr>'
+            . '<td style="' . $th . '">Item</td>'
+            . '<td style="' . $th . ' text-align: center;">Qty</td>'
+            . '<td style="' . $th . ' text-align: right;">Unit Price</td>'
+            . '<td style="' . $th . ' text-align: right;">Total</td>'
+            . '</tr>'
+            . $rows
+            . '<tr>'
+            . '<td colspan="3" style="padding: 12px; font-size: 14px; font-weight: 700; color: #1F2937; text-align: right; background-color: #FFF0F6;">Total</td>'
+            . '<td style="padding: 12px; font-size: 14px; font-weight: 700; color: #FF74B7; text-align: right; background-color: #FFF0F6;">' . esc($money($link->amount)) . '</td>'
+            . '</tr>'
+            . '</table>';
     }
 
     // ---------------------------------------------------------------------
@@ -362,6 +589,7 @@ class CustomPaymentLinkService
             'customer_name' => esc($firstName),
             'description'   => esc((string) $link->description),
             'amount'        => esc($amountLabel),
+            'items_table'   => $this->buildItemsTable($link),
             'payment_url'   => esc($this->getAccessService()->ensureLink('custom_payment_link', (string) $link->id), 'attr'),
         ];
 
@@ -485,16 +713,13 @@ class CustomPaymentLinkService
             throw new HTTPException('The reservation can no longer receive this payment', Response::HTTP_BAD_REQUEST);
         }
 
-        $session = $this->getStripeService()->createCheckoutSession(
+        $session = $this->createStripeSession(
+            $id,
             (float) $link->amount,
             (string) $link->customer_email,
-            '',
             (string) $link->description,
-            0.0,
-            [
-                'type'            => 'custom_payment_link',
-                'payment_link_id' => $id,
-            ],
+            $this->itemRepository()->getByLink($id),
+            $link->extra_amount !== null ? (float) $link->extra_amount : null,
             $expiresInSeconds
         );
 

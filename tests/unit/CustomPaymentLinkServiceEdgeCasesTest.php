@@ -20,6 +20,7 @@ use CodeIgniter\Test\CIUnitTestCase;
  */
 final class CustomPaymentLinkServiceEdgeCasesTest extends CIUnitTestCase
 {
+    public object $itemRepo;
     private CustomPaymentLinkService $service;
     private object $reservationRepo;
 
@@ -50,6 +51,25 @@ final class CustomPaymentLinkServiceEdgeCasesTest extends CIUnitTestCase
         $this->service = new CustomPaymentLinkService();
         $this->setProp('repo', $repo);
         $this->setProp('reservationRepository', $this->reservationRepo);
+
+        $this->itemRepo = new class {
+            /** @var array<string, array<int, array<string,mixed>>> */
+            public array $byLink = [];
+            /** @var array<int, array{0:string,1:array}> */
+            public array $replaceCalls = [];
+
+            public function getByLink(string $linkId): array
+            {
+                return $this->byLink[$linkId] ?? [];
+            }
+
+            public function replaceForLink(string $linkId, array $items): void
+            {
+                $this->replaceCalls[] = [$linkId, $items];
+                $this->byLink[$linkId] = $items;
+            }
+        };
+        $this->setProp('itemRepository', $this->itemRepo);
     }
 
     private function setProp(string $name, $value): void

@@ -27,12 +27,12 @@
     </template>
 
     <template #noResult>
-      <span class="cs-empty">No custom services match your search.</span>
+      <span class="cs-empty">No matches for your search.</span>
     </template>
 
     <template #noOptions>
       <span class="cs-empty">
-        {{ catalog.length ? "All custom services are already added." : "No active custom services available." }}
+        {{ catalog.length ? "All items are already added." : emptyText }}
       </span>
     </template>
   </Multiselect>
@@ -46,6 +46,7 @@ const props = defineProps({
   excludeIds: { type: Array, default: () => [] },
   disabled: { type: Boolean, default: false },
   placeholder: { type: String, default: "Search by name or detail…" },
+  emptyText: { type: String, default: "No active custom services available." },
 });
 
 const emit = defineEmits(["select"]);

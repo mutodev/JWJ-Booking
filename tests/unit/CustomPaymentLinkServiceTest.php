@@ -40,6 +40,9 @@ use CodeIgniter\Test\CIUnitTestCase;
  */
 final class CustomPaymentLinkServiceTest extends CIUnitTestCase
 {
+    public object $itemRepo;
+    public object $addonCatalog;
+    public object $customCatalog;
     private CustomPaymentLinkService $service;
     private object $repo;
     private object $reservationRepo;
@@ -280,6 +283,23 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
                 return $this->session;
             }
 
+            /** @var array<int,array<string,mixed>> */
+            public array $itemizedCalls = [];
+
+            public function createItemizedCheckoutSession(
+                array $items,
+                string $customerEmail,
+                array $metadata = [],
+                ?int $expiresInSeconds = null
+            ): Session {
+                $this->itemizedCalls[] = compact('items', 'customerEmail', 'metadata', 'expiresInSeconds');
+                if ($this->throw !== null) {
+                    throw $this->throw;
+                }
+
+                return $this->session;
+            }
+
             public function expireCheckoutSession(?string $sessionId): void
             {
                 $this->expired[] = $sessionId;
@@ -337,6 +357,46 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
         $this->setProp('stripeService', $this->stripe);
         $this->setProp('historyModel', $this->history);
         $this->setProp('accessService', $this->access);
+
+        $this->itemRepo = new class {
+            /** @var array<string, array<int, array<string,mixed>>> */
+            public array $byLink = [];
+            /** @var array<int, array{0:string,1:array}> */
+            public array $replaceCalls = [];
+
+            public function getByLink(string $linkId): array
+            {
+                return $this->byLink[$linkId] ?? [];
+            }
+
+            public function replaceForLink(string $linkId, array $items): void
+            {
+                $this->replaceCalls[] = [$linkId, $items];
+                $this->byLink[$linkId] = $items;
+            }
+        };
+        $this->setProp('itemRepository', $this->itemRepo);
+
+        $this->addonCatalog = new class {
+            public array $items = [];
+            public function getById(string $id)
+            {
+                return $this->items[$id] ?? null;
+            }
+        };
+        $this->addonCatalog->items['addon-1'] = (object) ['id' => 'addon-1', 'name' => 'Bubble Machine', 'base_price' => 50.0, 'is_active' => true];
+        $this->addonCatalog->items['addon-off'] = (object) ['id' => 'addon-off', 'name' => 'Old', 'base_price' => 10.0, 'is_active' => false];
+        $this->setProp('addonRepository', $this->addonCatalog);
+
+        $this->customCatalog = new class {
+            public array $items = [];
+            public function getById(string $id)
+            {
+                return $this->items[$id] ?? null;
+            }
+        };
+        $this->customCatalog->items['cs-1'] = (object) ['id' => 'cs-1', 'name' => 'Face <Painting>', 'detail' => '1 hour', 'price' => 150.0, 'is_active' => true];
+        $this->setProp('customServiceRepository', $this->customCatalog);
         $paymentService = new class extends \App\Services\ReservationService {
             public array $applied = [];
             public function __construct() {}
@@ -994,5 +1054,172 @@ final class CustomPaymentLinkServiceTest extends CIUnitTestCase
             $this->history->inserts,
             static fn (array $row) => ($row['template_name'] ?? null) === $templateName
         ));
+    }
+
+    // -------------------------------------------------------------------------
+    // Ítems opcionales (add-ons / servicios personalizados)
+    // -------------------------------------------------------------------------
+
+    private function itemData(array $override = []): array
+    {
+        return $this->validData(array_merge([
+            'amount'       => 1.0, // ignorado cuando hay ítems
+            'extra_amount' => 25,
+            'items'        => [
+                ['item_type' => 'addon', 'item_id' => 'addon-1', 'price' => 40],
+                ['item_type' => 'custom_service', 'item_id' => 'cs-1', 'price' => 150],
+            ],
+        ], $override));
+    }
+
+    public function testCreateWithItemsComputesAmountServerSide(): void
+    {
+        $this->service->createLink($this->itemData(), 'admin');
+
+        $created = $this->repo->createCalls[0][0];
+        $this->assertSame(215.0, $created['amount']);
+        $this->assertSame(25.0, $created['extra_amount']);
+    }
+
+    public function testCreateWithItemsUsesOneStripeLinePerItemPlusExtra(): void
+    {
+        $this->service->createLink($this->itemData(), 'admin');
+
+        $this->assertCount(0, $this->stripe->calls, 'no single-line session when there are items');
+        $this->assertCount(1, $this->stripe->itemizedCalls);
+        $call = $this->stripe->itemizedCalls[0];
+        $this->assertSame([
+            ['name' => 'Add-on: Bubble Machine', 'amount' => 40.0],
+            ['name' => 'Custom service: Face <Painting>', 'amount' => 150.0],
+            ['name' => 'Late fee for the event', 'amount' => 25.0],
+        ], $call['items']);
+        $this->assertSame('custom_payment_link', $call['metadata']['type']);
+        $this->assertSame(215.0, array_sum(array_column($call['items'], 'amount')));
+    }
+
+    public function testCreateWithItemsPersistsCatalogSnapshot(): void
+    {
+        $link = $this->service->createLink($this->itemData(['items' => [
+            ['item_type' => 'custom_service', 'item_id' => 'cs-1', 'price' => '99.999', 'name' => 'forged'],
+        ]]), 'admin');
+
+        $this->assertCount(1, $this->itemRepo->replaceCalls);
+        $item = $this->itemRepo->replaceCalls[0][1][0];
+        $this->assertSame('custom_service', $item['item_type']);
+        $this->assertSame('Face <Painting>', $item['name']);
+        $this->assertSame('1 hour', $item['detail']);
+        $this->assertSame(150.0, $item['catalog_price']);
+        $this->assertSame(100.0, $item['price']);
+        $this->assertCount(1, $link->items);
+    }
+
+    public function testCreateWithoutItemsKeepsManualAmountAndSingleLine(): void
+    {
+        $this->service->createLink($this->validData(), 'admin');
+
+        $this->assertCount(1, $this->stripe->calls);
+        $this->assertCount(0, $this->stripe->itemizedCalls);
+        $this->assertSame(75.0, $this->repo->createCalls[0][0]['amount']);
+        $this->assertNull($this->repo->createCalls[0][0]['extra_amount']);
+        $this->assertSame([], $this->itemRepo->replaceCalls);
+    }
+
+    public function testItemsWithoutExtraChargeAreAllowed(): void
+    {
+        $this->service->createLink($this->itemData(['extra_amount' => '']), 'admin');
+
+        $this->assertSame(190.0, $this->repo->createCalls[0][0]['amount']);
+        $this->assertCount(2, $this->stripe->itemizedCalls[0]['items']);
+    }
+
+    /**
+     * @dataProvider invalidItemsProvider
+     */
+    public function testInvalidItemsAreRejectedBeforeStripe(array $override): void
+    {
+        [$thrown, $e] = $this->catchHttp(fn () => $this->service->createLink($this->itemData($override), 'admin'));
+
+        $this->assertTrue($thrown);
+        $this->assertSame(400, $e->getCode());
+        $this->assertCount(0, $this->stripe->itemizedCalls);
+        $this->assertCount(0, $this->repo->createCalls);
+    }
+
+    public static function invalidItemsProvider(): array
+    {
+        return [
+            'unknown type'    => [['items' => [['item_type' => 'service', 'item_id' => 'addon-1', 'price' => 5]]]],
+            'unknown addon'   => [['items' => [['item_type' => 'addon', 'item_id' => 'nope', 'price' => 5]]]],
+            'inactive addon'  => [['items' => [['item_type' => 'addon', 'item_id' => 'addon-off', 'price' => 5]]]],
+            'duplicated'      => [['items' => [['item_type' => 'addon', 'item_id' => 'addon-1', 'price' => 5], ['item_type' => 'addon', 'item_id' => 'addon-1', 'price' => 6]]]],
+            'negative price'  => [['items' => [['item_type' => 'addon', 'item_id' => 'addon-1', 'price' => -1]]]],
+            'missing price'   => [['items' => [['item_type' => 'addon', 'item_id' => 'addon-1']]]],
+            'negative extra'  => [['extra_amount' => -5]],
+            'all zero'        => [['extra_amount' => 0, 'items' => [['item_type' => 'addon', 'item_id' => 'addon-1', 'price' => 0]]]],
+            'over max amount' => [['extra_amount' => 9900]],
+        ];
+    }
+
+    public function testUpdateReplacesItemsAndUsesItemizedSession(): void
+    {
+        $this->seededLink();
+
+        $this->service->updateLink('link-1', $this->itemData());
+
+        $this->assertSame(['cs_test_123'], $this->stripe->expired);
+        $this->assertCount(1, $this->stripe->itemizedCalls);
+        $this->assertSame('link-1', $this->itemRepo->replaceCalls[0][0]);
+        $this->assertCount(2, $this->itemRepo->replaceCalls[0][1]);
+    }
+
+    public function testUpdateWithoutItemsClearsPreviousItems(): void
+    {
+        $this->seededLink();
+        $this->itemRepo->byLink['link-1'] = [['item_type' => 'addon', 'item_id' => 'addon-1', 'name' => 'Bubble Machine', 'price' => 40]];
+
+        $this->service->updateLink('link-1', $this->validData());
+
+        $this->assertSame([['link-1', []]], $this->itemRepo->replaceCalls);
+        $this->assertCount(1, $this->stripe->calls);
+    }
+
+    public function testRegenerateSessionRebuildsItemizedLines(): void
+    {
+        $this->seededLink(['amount' => 215.0, 'extra_amount' => 25.0]);
+        $this->itemRepo->byLink['link-1'] = [
+            ['item_type' => 'addon', 'item_id' => 'addon-1', 'name' => 'Bubble Machine', 'price' => 40.0],
+            ['item_type' => 'custom_service', 'item_id' => 'cs-1', 'name' => 'Face Painting', 'price' => 150.0],
+        ];
+
+        $this->service->regenerateSession('link-1', 3600);
+
+        $this->assertCount(1, $this->stripe->itemizedCalls);
+        $this->assertSame(3600, $this->stripe->itemizedCalls[0]['expiresInSeconds']);
+        $this->assertCount(3, $this->stripe->itemizedCalls[0]['items']);
+    }
+
+    public function testEmailIncludesEscapedItemsTable(): void
+    {
+        $this->seededLink(['amount' => 215.0, 'extra_amount' => 25.0]);
+        $this->itemRepo->byLink['link-1'] = [
+            ['item_type' => 'custom_service', 'item_id' => 'cs-1', 'name' => 'Face <Painting>', 'detail' => '1 hour', 'price' => 190.0],
+        ];
+
+        $this->service->sendLinkEmail('link-1');
+
+        $vars = $this->templateService->renderCalls[0][1];
+        $this->assertStringContainsString('Face &lt;Painting&gt;', $vars['items_table']);
+        $this->assertStringContainsString('Other charge', $vars['items_table']);
+        $this->assertStringContainsString('$215.00', $vars['items_table']);
+        $this->assertStringNotContainsString('<Painting>', $vars['items_table']);
+    }
+
+    public function testEmailItemsTableIsEmptyWithoutItems(): void
+    {
+        $this->seededLink();
+
+        $this->service->sendLinkEmail('link-1');
+
+        $this->assertSame('', $this->templateService->renderCalls[0][1]['items_table']);
     }
 }

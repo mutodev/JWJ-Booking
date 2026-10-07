@@ -27,6 +27,7 @@ class CustomPaymentLinkModel extends Model
         'customer_email',
         'description',
         'amount',
+        'extra_amount',
         'currency',
         'status',
         'stripe_session_id',

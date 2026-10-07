@@ -15,6 +15,7 @@ class CustomPaymentLink extends Entity
         'customer_email' => 'string',
         'description'    => 'string',
         'amount'         => 'float',
+        'extra_amount'   => '?float',
         'currency'       => 'string',
         'status'         => 'string',
     ];

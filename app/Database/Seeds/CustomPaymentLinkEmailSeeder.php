@@ -39,7 +39,7 @@ class CustomPaymentLinkEmailSeeder extends Seeder
             'subject'             => 'Payment Request from Jam with Jamie',
             'body'                => $this->getBody(),
             'available_variables' => json_encode([
-                'customer_name', 'description', 'amount', 'payment_url',
+                'customer_name', 'description', 'amount', 'items_table', 'payment_url',
             ]),
             'content' => json_encode([
                 'title'        => 'Payment Request',
@@ -77,6 +77,7 @@ class CustomPaymentLinkEmailSeeder extends Seeder
                         <td style="padding: 40px 40px 20px;">
                             <h1 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #1F2937; text-align: center;">{{content_title}}</h1>
                             <p style="margin: 0 0 28px; font-size: 15px; line-height: 1.6; color: #6b7280; text-align: center;">{{content_intro}}</p>
+                            {{items_table}}
 
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 28px; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb;">
                                 <tr>

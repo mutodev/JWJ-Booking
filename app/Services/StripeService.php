@@ -103,6 +103,54 @@ class StripeService
     }
 
     /**
+     * Checkout Session con una línea por ítem (links de pago personalizados con
+     * add-ons / servicios personalizados). Cada línea trae su monto en dólares;
+     * las de $0 se omiten porque no suman al cobro.
+     *
+     * @param array<int, array{name:string, amount:float}> $items
+     */
+    public function createItemizedCheckoutSession(
+        array $items,
+        string $customerEmail,
+        array $metadata = [],
+        ?int $expiresInSeconds = null
+    ): Session {
+        $frontendUrl = getenv('app.frontendURL') ?: 'http://localhost:8080';
+
+        $lineItems = [];
+        foreach ($items as $item) {
+            $cents = (int) round(((float) $item['amount']) * 100);
+            if ($cents <= 0) {
+                continue;
+            }
+            $lineItems[] = [
+                'price_data' => [
+                    'currency'     => $this->currency,
+                    'unit_amount'  => $cents,
+                    'product_data' => ['name' => mb_substr((string) $item['name'], 0, 250)],
+                ],
+                'quantity' => 1,
+            ];
+        }
+
+        $params = [
+            'payment_method_types' => ['card'],
+            'mode'           => 'payment',
+            'customer_email' => $customerEmail,
+            'line_items'     => $lineItems,
+            'metadata'       => $metadata,
+            'success_url'    => rtrim($frontendUrl, '/') . '/payment-success?session_id={CHECKOUT_SESSION_ID}',
+            'cancel_url'     => rtrim($frontendUrl, '/') . '/payment-cancel',
+        ];
+
+        if ($expiresInSeconds !== null) {
+            $params['expires_at'] = time() + $expiresInSeconds;
+        }
+
+        return Session::create($params);
+    }
+
+    /**
      * Expire an open Checkout Session so an edited or cancelled additional
      * payment can no longer be completed from an older email or browser tab.
      */

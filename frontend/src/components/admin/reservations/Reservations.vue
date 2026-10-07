@@ -180,7 +180,12 @@
                   <thead><tr><th>Description</th><th>Amount</th><th>Status</th><th>Created</th><th>Paid</th><th>Created by</th><th class="text-end">Actions</th></tr></thead>
                   <tbody>
                     <tr v-for="link in paymentLinksByReservation[item.id]" :key="link.id">
-                      <td>{{ link.description }}</td>
+                      <td>
+                        {{ link.description }}
+                        <small v-if="link.items?.length" class="d-block text-muted">
+                          <i class="bi bi-list-ul me-1"></i>{{ link.items.map((i) => i.name).join(', ') }}
+                        </small>
+                      </td>
                       <td class="fw-semibold">{{ formatCurrency(link.amount) }}</td>
                       <td><span class="badge" :class="paymentLinkStatusClass(link.status)">{{ paymentLinkStatusLabel(link.status) }}</span></td>
                       <td>{{ formatDateTime(link.created_at) }}</td>

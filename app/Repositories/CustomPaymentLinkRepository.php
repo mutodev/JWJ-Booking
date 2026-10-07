@@ -24,6 +24,7 @@ class CustomPaymentLinkRepository
         'customer_email',
         'description',
         'amount',
+        'extra_amount',
         'currency',
         'created_by',
     ];
@@ -33,6 +34,7 @@ class CustomPaymentLinkRepository
         'customer_email',
         'description',
         'amount',
+        'extra_amount',
         'currency',
     ];
 
