@@ -6,6 +6,7 @@ use App\Controllers\CityController;
 use App\Controllers\CountyController;
 use App\Controllers\CustomerController;
 use App\Controllers\CustomPaymentLinkController;
+use App\Controllers\CustomServiceController;
 use App\Controllers\DashboardController;
 use App\Controllers\DurationController;
 use App\Controllers\HomeController;
@@ -125,6 +126,15 @@ $routes->group('api', function ($routes) {
         $routes->post('', [ZipCodeController::class, 'create']);
         $routes->put('(:any)', [ZipCodeController::class, 'updateData']);
         $routes->delete('(:any)', [ZipCodeController::class, 'deleteData']);
+    });
+
+    $routes->group('custom-services', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('/', [CustomServiceController::class, 'getAll']);
+        $routes->get('get-all-active', [CustomServiceController::class, 'getAllActive']);
+        $routes->get('(:segment)', [CustomServiceController::class, 'getById']);
+        $routes->post('/', [CustomServiceController::class, 'create']);
+        $routes->put('(:segment)', [CustomServiceController::class, 'updateData']);
+        $routes->delete('(:segment)', [CustomServiceController::class, 'deleteData']);
     });
 
     $routes->group('services', ['filter' => 'verifyToken'], function ($routes) {

@@ -68,6 +68,18 @@ return [
     'service_updated_successfully' => 'Service updated successfully',
     'service_deleted_successfully' => 'Service deleted successfully',
 
+    // Custom service messages
+    'custom_service_list' => 'Custom service list',
+    'custom_service_detail' => 'Custom service detail',
+    'custom_service_created' => 'Custom service created successfully',
+    'custom_service_updated' => 'Custom service updated successfully',
+    'custom_service_deleted' => 'Custom service deleted successfully',
+    'custom_service_not_found' => 'Custom service not found',
+    'custom_service_create_failed' => 'Custom service could not be created',
+    'custom_service_name_required' => 'Custom service name is required',
+    'custom_service_name_too_long' => 'Custom service name must be 255 characters or less',
+    'custom_service_invalid_price' => 'Price must be a number greater than or equal to 0',
+
     // Login messages
     'login_session' => 'Login session',
     'password_restored' => 'Password restored',

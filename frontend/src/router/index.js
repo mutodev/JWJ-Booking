@@ -20,6 +20,7 @@ import JamTypes from "@/components/admin/services/jam-types/JamTypes.vue";
 import Prices from "@/components/admin/services/prices/Prices.vue";
 import AddOns from "@/components/admin/services/add-ons/AddOns.vue";
 import TypeAddons from "@/components/admin/services/type-addons/TypeAddons.vue";
+import CustomServices from "@/components/admin/services/custom-services/CustomServices.vue";
 import PromoCodes from "@/components/admin/promo-codes/PromoCodes.vue";
 import AbandonedCarts from "@/components/admin/abandoned-carts/AbandonedCarts.vue";
 import EmailTemplates from "@/components/admin/email-templates/EmailTemplates.vue";
@@ -79,6 +80,7 @@ const routes = [
           { path: "prices", component: Prices },
           { path: "type-addons", component: TypeAddons },
           { path: "addons", component: AddOns },
+          { path: "custom-services", component: CustomServices },
         ],
       },
       { path: "promo-codes", component: PromoCodes },
