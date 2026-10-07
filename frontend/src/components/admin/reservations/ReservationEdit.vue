@@ -168,6 +168,10 @@
                   <input :value="formatCurrency(editData.addons_total)" type="text" class="form-control" readonly />
                 </div>
                 <div class="col-md-3">
+                  <label class="form-label">Custom Services</label>
+                  <input :value="formatCurrency(editData.custom_services_total)" type="text" class="form-control" readonly />
+                </div>
+                <div class="col-md-3">
                   <label class="form-label">Additional Children</label>
                   <input :value="formatCurrency(editData.extra_children_fee)" type="text" class="form-control" readonly />
                 </div>
@@ -324,6 +328,127 @@
                 </div>
                 <p class="text-muted small mt-2 mb-0">
                   Adding, changing or removing an add-on recalculates the reservation totals automatically.
+                </p>
+              </div>
+            </div>
+
+            <!-- Segment: Custom Services -->
+            <div class="segment mb-3">
+              <h6 class="segment-title">Custom Services</h6>
+
+              <div v-if="loadingCustomServices" class="text-muted small">
+                <span class="spinner-border spinner-border-sm me-1"></span> Loading custom services…
+              </div>
+
+              <div v-else>
+                <div v-if="reservationCustomServices.length" class="table-responsive mb-3">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Custom service</th>
+                        <th style="width: 120px" class="text-end">Configured</th>
+                        <th style="width: 170px">Reservation price</th>
+                        <th style="width: 48px"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in reservationCustomServices" :key="row.id">
+                        <td>
+                          {{ row.name }}
+                          <span v-if="num(row.price_at_time) !== num(row.catalog_price)" class="badge text-bg-warning ms-1">Custom</span>
+                          <small v-if="row.detail" class="text-muted d-block">{{ row.detail }}</small>
+                        </td>
+                        <td class="text-end text-muted">{{ formatCurrency(row.catalog_price) }}</td>
+                        <td>
+                          <div class="input-group input-group-sm">
+                            <span class="input-group-text">$</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              class="form-control"
+                              :value="row.price_at_time"
+                              :disabled="customServiceBusy"
+                              @change="updateCustomServicePrice(row, $event.target.value)"
+                            />
+                          </div>
+                        </td>
+                        <td class="text-end">
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            :disabled="customServiceBusy"
+                            title="Remove custom service"
+                            @click="removeCustomService(row)"
+                          >
+                            <i class="bi bi-trash"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p v-else class="text-muted small mb-3">No custom services on this reservation yet.</p>
+
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-6">
+                    <label class="form-label">Add a custom service</label>
+                    <CustomServicePicker
+                      v-if="!newCustomService"
+                      :catalog="customServiceCatalog"
+                      :exclude-ids="reservationCustomServices.map((r) => r.custom_service_id)"
+                      :disabled="customServiceBusy"
+                      @select="selectNewCustomService"
+                    />
+                    <div v-else class="input-group input-group-sm">
+                      <span class="form-control text-truncate">{{ newCustomService.name }}</span>
+                      <button type="button" class="btn btn-outline-secondary" :disabled="customServiceBusy" title="Change" @click="newCustomService = null">
+                        <i class="bi bi-x-lg"></i>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label">Reservation price</label>
+                    <div class="input-group input-group-sm">
+                      <span class="input-group-text">$</span>
+                      <input
+                        v-model="newCustomServicePrice"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        class="form-control"
+                        :disabled="customServiceBusy || !newCustomService"
+                      />
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary w-100"
+                      :disabled="customServiceBusy || !newCustomService || !validMoney(newCustomServicePrice)"
+                      @click="addCustomService"
+                    >
+                      <span v-if="customServiceBusy" class="spinner-border spinner-border-sm me-1"></span>
+                      <i v-else class="bi bi-plus-lg me-1"></i>
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div v-if="!customServiceCatalog.length" class="alert alert-warning small py-2 mt-2 mb-0">
+                  <i class="bi bi-info-circle me-1"></i>
+                  There are no <strong>active</strong> custom services. Create or activate them in
+                  <router-link to="/admin/services/custom-services" target="_blank">Services › Custom Services</router-link>.
+                </div>
+
+                <div v-if="customServiceMessage" class="mt-2 small text-success">
+                  <i class="bi bi-check-circle me-1"></i>{{ customServiceMessage }}
+                </div>
+                <div v-if="customServiceError" class="mt-2 small text-danger">
+                  <i class="bi bi-x-circle me-1"></i>{{ customServiceError }}
+                </div>
+                <p class="text-muted small mt-2 mb-0">
+                  Adding, changing the price or removing a custom service recalculates the reservation totals automatically. Promo codes do not apply to custom services.
                 </p>
               </div>
             </div>
@@ -592,6 +717,7 @@
 import { watch, ref, computed } from "vue";
 import api from "@/services/axios";
 import ConfirmModal from "@/components/admin/shared/ConfirmModal.vue";
+import CustomServicePicker from "./create/CustomServicePicker.vue";
 
 const editData = ref({});
 const saving = ref(false);
@@ -628,6 +754,16 @@ const newAddonId = ref('');
 const newAddonQty = ref(1);
 const addonMessage = ref('');
 const addonError = ref('');
+
+// Custom services
+const reservationCustomServices = ref([]);
+const customServiceCatalog = ref([]);
+const loadingCustomServices = ref(false);
+const customServiceBusy = ref(false);
+const newCustomService = ref(null);
+const newCustomServicePrice = ref('');
+const customServiceMessage = ref('');
+const customServiceError = ref('');
 
 const emit = defineEmits(["close", "saved"]);
 const props = defineProps({
@@ -689,6 +825,11 @@ watch(
     newAddonQty.value = 1;
     addonMessage.value = '';
     addonError.value = '';
+    reservationCustomServices.value = [];
+    newCustomService.value = null;
+    newCustomServicePrice.value = '';
+    customServiceMessage.value = '';
+    customServiceError.value = '';
     if (editData.value.event_date) {
       const rawDate = editData.value.event_date?.date ?? editData.value.event_date;
       const date = new Date(rawDate);
@@ -698,6 +839,7 @@ watch(
     }
     loadServicePrices();
     loadAddons();
+    loadCustomServices();
   },
   { deep: true, immediate: true }
 );
@@ -737,7 +879,7 @@ async function loadServicePrices() {
 
 const applyRecalcResult = (reservation) => {
   if (!reservation || typeof reservation !== 'object') return;
-  const keep = ['base_price', 'addons_total', 'extra_children_fee', 'travel_fee',
+  const keep = ['base_price', 'addons_total', 'custom_services_total', 'extra_children_fee', 'travel_fee',
     'expedite_fee', 'expedition_fee', 'discount_amount', 'total_amount', 'amount_paid',
     'balance_due', 'duration_hours', 'price_type', 'promo_code', 'performers_count',
     'service_price_id', 'service_name'];
@@ -850,6 +992,101 @@ const removeAddon = async (row) => {
     addonError.value = err?.response?.data?.message ?? 'Could not remove the add-on.';
   } finally {
     addonBusy.value = false;
+  }
+};
+
+// --- Custom services --------------------------------------------------------
+const validMoney = (value) => value !== null && value !== '' && Number.isFinite(Number(value)) && Number(value) >= 0;
+
+const flashCustomServiceMessage = (message) => {
+  customServiceMessage.value = message;
+  setTimeout(() => { customServiceMessage.value = ''; }, 4000);
+};
+
+async function loadCustomServices() {
+  const reservationId = editData.value.id;
+  if (!reservationId) return;
+  loadingCustomServices.value = true;
+  try {
+    const [catalogRes, currentRes] = await Promise.all([
+      api.get('/custom-services/get-all-active'),
+      api.get(`/reservation-custom-services/by-reservation/${reservationId}`),
+    ]);
+    const catalog = unwrap(catalogRes);
+    customServiceCatalog.value = Array.isArray(catalog) ? catalog : [];
+    const current = unwrap(currentRes);
+    reservationCustomServices.value = Array.isArray(current) ? current : [];
+  } catch {
+    customServiceCatalog.value = [];
+    reservationCustomServices.value = [];
+  } finally {
+    loadingCustomServices.value = false;
+  }
+}
+
+const selectNewCustomService = (item) => {
+  newCustomService.value = item;
+  newCustomServicePrice.value = Math.round((Number(item.price) || 0) * 100) / 100;
+};
+
+const addCustomService = async () => {
+  if (!newCustomService.value || !validMoney(newCustomServicePrice.value)) return;
+  customServiceBusy.value = true;
+  customServiceMessage.value = '';
+  customServiceError.value = '';
+  try {
+    const res = await api.post('/reservation-custom-services', {
+      reservation_id: editData.value.id,
+      custom_service_id: newCustomService.value.id,
+      price_at_time: Number(newCustomServicePrice.value),
+    });
+    applyRecalcResult(unwrap(res)?.totals);
+    newCustomService.value = null;
+    newCustomServicePrice.value = '';
+    await loadCustomServices();
+    flashCustomServiceMessage('Custom service added and totals recalculated.');
+  } catch (err) {
+    customServiceError.value = err?.response?.data?.message ?? 'Could not add the custom service.';
+  } finally {
+    customServiceBusy.value = false;
+  }
+};
+
+const updateCustomServicePrice = async (row, rawValue) => {
+  customServiceMessage.value = '';
+  customServiceError.value = '';
+  if (!validMoney(rawValue)) {
+    customServiceError.value = 'Enter $0.00 or more.';
+    await loadCustomServices();
+    return;
+  }
+  customServiceBusy.value = true;
+  try {
+    const res = await api.put(`/reservation-custom-services/${row.id}`, { price_at_time: Number(rawValue) });
+    applyRecalcResult(unwrap(res)?.totals);
+    await loadCustomServices();
+    flashCustomServiceMessage('Price updated and totals recalculated.');
+  } catch (err) {
+    customServiceError.value = err?.response?.data?.message ?? 'Could not update the price.';
+    await loadCustomServices();
+  } finally {
+    customServiceBusy.value = false;
+  }
+};
+
+const removeCustomService = async (row) => {
+  customServiceBusy.value = true;
+  customServiceMessage.value = '';
+  customServiceError.value = '';
+  try {
+    const res = await api.delete(`/reservation-custom-services/${row.id}`);
+    applyRecalcResult(unwrap(res)?.totals);
+    await loadCustomServices();
+    flashCustomServiceMessage('Custom service removed and totals recalculated.');
+  } catch (err) {
+    customServiceError.value = err?.response?.data?.message ?? 'Could not remove the custom service.';
+  } finally {
+    customServiceBusy.value = false;
   }
 };
 

@@ -38,6 +38,8 @@ use App\Repositories\PromoCodeRepository;
 use App\Repositories\ServicePriceRepository;
 use App\Repositories\ZipCodeRepository;
 use App\Repositories\CustomPaymentLinkRepository;
+use App\Repositories\CustomServiceRepository;
+use App\Repositories\ReservationCustomServiceRepository;
 use App\Services\BrevoEmailService;
 use App\Services\BrevoContactService;
 use App\Services\EmailTemplateService;
@@ -117,6 +119,15 @@ class ReservationService
     protected $customPaymentLinkRepository = null;
 
     /**
+     * Servicios personalizados (catálogo y relación con la reserva), lazy-loaded
+     * para poder sustituirlos en tests vía Reflection.
+     * @var CustomServiceRepository|null
+     */
+    protected $customServiceRepository = null;
+    /** @var ReservationCustomServiceRepository|null */
+    protected $reservationCustomServiceRepository = null;
+
+    /**
      * Modelo del historial/timeline de la reserva (lazy-loaded).
      * Se expone vía historyModel() para poder sustituirlo en tests.
      * @var ReservationEmailHistoryModel|null
@@ -179,6 +190,22 @@ class ReservationService
             $this->customPaymentLinkRepository = new CustomPaymentLinkRepository();
         }
         return $this->customPaymentLinkRepository;
+    }
+
+    protected function customServiceRepository()
+    {
+        if ($this->customServiceRepository === null) {
+            $this->customServiceRepository = new CustomServiceRepository();
+        }
+        return $this->customServiceRepository;
+    }
+
+    protected function reservationCustomServiceRepository()
+    {
+        if ($this->reservationCustomServiceRepository === null) {
+            $this->reservationCustomServiceRepository = new ReservationCustomServiceRepository();
+        }
+        return $this->reservationCustomServiceRepository;
     }
 
     /**
@@ -244,6 +271,7 @@ class ReservationService
         // El total vive en reservations, pero el detalle se guarda en la tabla pivote.
         // Incluirlo aquí permite que cualquier consumidor del detalle sepa qué se compró.
         $reservation->addons = $this->reservationAddonRepository->getDetailedByReservation($id);
+        $reservation->custom_services = $this->reservationCustomServiceRepository()->getByReservation($id);
 
         $summary = $this->customPaymentLinkRepository()
             ->summariesByReservation([(string) $reservation->id])[(string) $reservation->id]
@@ -314,6 +342,12 @@ class ReservationService
             $seenAddonIds[$addonId] = true;
         }
 
+        // Servicios personalizados opcionales (siempre cantidad 1). Nombre,
+        // detalle y precio de catálogo salen de la BD; solo el precio cobrado
+        // en esta reserva viene del request.
+        $customServiceRows = $this->resolveCustomServicesForCreate($data['customServices'] ?? []);
+        $customServicesTotal = array_sum(array_column($customServiceRows, 'price_at_time'));
+
         // This endpoint is authenticated and dedicated to the admin modal. The
         // UI compares the edited value with its catalogue snapshot and sends
         // the explicit marker; the public createFromForm() path never does.
@@ -350,6 +384,7 @@ class ReservationService
         $pricing = $this->computeReservationPricing([
             'base_price'          => floatval($servicePrice),
             'addons'              => $addons,
+            'custom_services_total' => $customServicesTotal,
             'extra_children_fee'  => $extraChildrenTotal,
             'zipcode'             => $data['areas']['zipcode'] ?? [],
             'performers_count'    => intval($data['price']['performers_count'] ?? 1),
@@ -373,6 +408,7 @@ class ReservationService
             'base_price' => $pricing['base_price'],
             'is_base_price_custom' => $isCustomBasePrice,
             'addons_total' => $pricing['addons_total'],
+            'custom_services_total' => $pricing['custom_services_total'],
             'expedition_fee' => $pricing['expedition_fee'],
             'travel_fee' => $pricing['travel_fee'],
             'expedite_fee' => $pricing['expedite_fee'],
@@ -418,6 +454,17 @@ class ReservationService
                     'quantity'       => intval($addon['quantity'] ?? 1),
                     'suboption'      => $addon['suboption'] ?? $addon['selectedOption'] ?? null,
                     'price_at_time'  => floatval($addon['selectedPrice'] ?? $addon['base_price'] ?? 0),
+                ]);
+            }
+        }
+
+        if (!empty($customServiceRows)) {
+            $userLabel = $this->auditUserLabel();
+            foreach ($customServiceRows as $row) {
+                $this->reservationCustomServiceRepository()->create($row + [
+                    'reservation_id' => $response->id,
+                    'created_by'     => $userLabel,
+                    'updated_by'     => $userLabel,
                 ]);
             }
         }
@@ -894,7 +941,9 @@ class ReservationService
         $extraChildrenFee = floatval($reservation->extra_children_fee ?? 0);
         $travelFee        = floatval($reservation->travel_fee ?? 0);
         $expeditionFee    = floatval($reservation->expedition_fee ?? 0);
-        $grossTotal       = $basePrice + $addonsTotal + $extraChildrenFee + $expeditionFee;
+        // Servicios personalizados suman al total pero nunca reciben descuento.
+        $customServicesTotal = floatval($reservation->custom_services_total ?? 0);
+        $grossTotal       = $basePrice + $addonsTotal + $customServicesTotal + $extraChildrenFee + $expeditionFee;
 
         // "Custom Song" nunca participa del descuento, sin importar el promo
         // code. addons_total es un agregado, así que hay que restarle el
@@ -990,8 +1039,8 @@ class ReservationService
      * EXACTAMENTE la que create()/createFromForm() producían antes de B6
      * (criterio de aceptación 1 — "no cambió ni un centavo"):
      *
-     *   total = base_price + addons_total + extra_children_fee
-     *         + travel_fee + expedite_fee - discount_amount
+     *   total = base_price + addons_total + custom_services_total
+     *         + extra_children_fee + travel_fee + expedite_fee - discount_amount
      *
      * Reglas que conserva del histórico:
      *  - zona `minimum_2h` eleva la duración base a 2h;
@@ -1019,6 +1068,8 @@ class ReservationService
      *   base_duration_hours: float   duración base ya resuelta
      *   event_date:          ?string Y-m-d — determina el expedite fee
      *   discount_amount:     float   descuento del promo (aplica solo a la base)
+     *   custom_services_total: float servicios personalizados (opcional, default 0;
+     *                                no reciben descuento del promo)
      * }
      *
      * @return array {
@@ -1040,6 +1091,8 @@ class ReservationService
             ? (float) $ctx['addons_total']
             : $this->calculateAddonsTotal($addons);
 
+        $customServicesTotal = (float) ($ctx['custom_services_total'] ?? 0);
+
         $extraChildrenFee = (float) ($ctx['extra_children_fee'] ?? 0);
 
         $travelFee = $this->resolveTravelFee(
@@ -1053,7 +1106,9 @@ class ReservationService
 
         $discountAmount = (float) ($ctx['discount_amount'] ?? 0);
 
-        $total = $preSurchargeSubtotal + $travelFee + $expediteFee - $discountAmount;
+        // Los servicios personalizados no influyen en el expedite fee (plano por
+        // fecha) ni en el descuento del promo (el llamador lo calcula sin ellos).
+        $total = $preSurchargeSubtotal + $customServicesTotal + $travelFee + $expediteFee - $discountAmount;
 
         $baseDurationHours = (float) ($ctx['base_duration_hours'] ?? 1);
         if (($zipcode['zone_type'] ?? '') === 'minimum_2h') {
@@ -1064,6 +1119,7 @@ class ReservationService
         return [
             'base_price'              => round($basePrice, 2),
             'addons_total'            => round($addonsTotal, 2),
+            'custom_services_total'   => round($customServicesTotal, 2),
             'extra_children_fee'      => round($extraChildrenFee, 2),
             'travel_fee'              => round($travelFee, 2),
             'expedite_fee'            => round($expediteFee, 2),
@@ -1159,6 +1215,12 @@ class ReservationService
                 ];
             }
 
+            // 3b. Servicios personalizados (precio congelado en la tabla pivote).
+            $customServicesTotal = 0.0;
+            foreach ($this->reservationCustomServiceRepository()->getByReservation($reservationId) as $row) {
+                $customServicesTotal += (float) ($this->normalizeRow($row)['price_at_time'] ?? 0);
+            }
+
             // 4. Niños extra. El modelo público incluye 40; no hay columna por reserva.
             $includedKids     = 40;
             $childrenCount    = (int) ($reservation->children_count ?? 0);
@@ -1174,6 +1236,7 @@ class ReservationService
             $baseCtx = [
                 'base_price'          => $basePrice,
                 'addons'              => $addonsForPricing,
+                'custom_services_total' => $customServicesTotal,
                 'extra_children_fee'  => $extraChildrenFee,
                 'zipcode'             => $zipcodeCtx,
                 'performers_count'    => $performers,
@@ -1209,6 +1272,7 @@ class ReservationService
             $update = [
                 'base_price'         => $pricing['base_price'],
                 'addons_total'       => $pricing['addons_total'],
+                'custom_services_total' => $pricing['custom_services_total'],
                 'extra_children_fee' => $pricing['extra_children_fee'],
                 'travel_fee'         => $pricing['travel_fee'],
                 'expedite_fee'       => $frozenExpediteFee,
@@ -1666,6 +1730,62 @@ class ReservationService
         }
 
         return $fallbackFee;
+    }
+
+    /**
+     * Valida los servicios personalizados enviados por el modal de creación del
+     * admin y arma las filas a guardar. Cada servicio debe existir en el
+     * catálogo, estar activo, aparecer una sola vez y traer un precio >= 0.
+     *
+     * @param mixed $items [{custom_service_id|id, price}]
+     * @return array<int, array{custom_service_id:string,name:string,detail:?string,catalog_price:float,price_at_time:float}>
+     * @throws HTTPException 400
+     */
+    private function resolveCustomServicesForCreate($items): array
+    {
+        if (!is_array($items) || empty($items)) {
+            return [];
+        }
+
+        $rows = [];
+        foreach ($items as $item) {
+            $id = trim((string) ($item['custom_service_id'] ?? $item['id'] ?? ''));
+            if ($id === '' || isset($rows[$id])) {
+                throw new HTTPException('Each custom service can only be selected once', Response::HTTP_BAD_REQUEST);
+            }
+
+            $catalog = $this->customServiceRepository()->getById($id);
+            if (!$catalog || !$catalog->is_active) {
+                throw new HTTPException('Custom service not found or inactive', Response::HTTP_BAD_REQUEST);
+            }
+
+            $price = $item['price'] ?? $item['price_at_time'] ?? null;
+            if ($price === null || $price === '' || !is_numeric($price) || (float) $price < 0) {
+                throw new HTTPException('Custom service price must be a number greater than or equal to zero', Response::HTTP_BAD_REQUEST);
+            }
+
+            $rows[$id] = [
+                'custom_service_id' => $id,
+                'name'              => (string) $catalog->name,
+                'detail'            => $catalog->detail,
+                'catalog_price'     => round((float) $catalog->price, 2),
+                'price_at_time'     => round((float) $price, 2),
+            ];
+        }
+
+        return array_values($rows);
+    }
+
+    /**
+     * Etiqueta del admin autenticado para columnas de auditoría; nunca lanza.
+     */
+    private function auditUserLabel(): string
+    {
+        try {
+            return mb_substr($this->getAuthenticatedUserName(), 0, 255);
+        } catch (\Throwable $e) {
+            return 'System';
+        }
     }
 
     /**

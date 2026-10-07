@@ -37,6 +37,20 @@
             <td>{{ formatCurrency(value.base_price) }}</td>
           </tr>
 
+          <!-- Custom Services -->
+          <tr v-for="item in data.customServices" :key="`cs-${item.custom_service_id}`" class="small">
+            <td class="text-start">
+              {{ item.name }}
+              <small class="text-muted d-block">Custom service</small>
+            </td>
+            <td>
+              {{ formatCurrency(item.price) }}
+              <span v-if="item.is_custom_price" class="badge text-bg-warning ms-1">Custom</span>
+            </td>
+            <td>1</td>
+            <td>{{ formatCurrency(item.price) }}</td>
+          </tr>
+
           <!-- Extra Children -->
           <tr v-if="data?.form">
             <td class="text-start">Number of Children</td>
@@ -146,6 +160,9 @@ const totalBase = computed(() => {
   let sum = parseFloat(data.value.price?.amount) || 0;
   if (data.value.addons?.length) {
     sum += data.value.addons.reduce((acc, a) => acc + (parseFloat(a.base_price) || 0), 0);
+  }
+  if (data.value.customServices?.length) {
+    sum += data.value.customServices.reduce((acc, item) => acc + (parseFloat(item.price) || 0), 0);
   }
   const extraChildrenQty = data.value.form?.extraChildren || 0;
   const extraChildFee = parseFloat(data.value.price?.extra_child_fee) || 0;

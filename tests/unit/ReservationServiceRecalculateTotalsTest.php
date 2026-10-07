@@ -45,6 +45,7 @@ final class ReservationServiceRecalculateTotalsTest extends CIUnitTestCase
     private object $promoRepo;
     private object $history;
     private object $dbFake;
+    private object $customServiceRepo;
 
     protected function setUp(): void
     {
@@ -222,6 +223,17 @@ final class ReservationServiceRecalculateTotalsTest extends CIUnitTestCase
         $this->inject('reservationAddonRepository', $this->addonRepo);
         $this->inject('promoCodeRepository', $this->promoRepo);
         $this->inject('historyModel', $this->history);
+
+        $this->customServiceRepo = new class {
+            /** @var array<int,array<string,mixed>> */
+            public array $rows = [];
+
+            public function getByReservation(string $reservationId): array
+            {
+                return $this->rows;
+            }
+        };
+        $this->inject('reservationCustomServiceRepository', $this->customServiceRepo);
     }
 
     private function inject(string $prop, $value): void
@@ -693,5 +705,67 @@ final class ReservationServiceRecalculateTotalsTest extends CIUnitTestCase
         $this->assertSame('Reservation Updated', $row['template_name']);
         $this->assertSame('update', $row['event_type']);
         $this->assertSame('res-1', $row['reservation_id']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Servicios personalizados
+    // -------------------------------------------------------------------------
+
+    public function testCustomServicesAreAddedToTotalInTheirOwnColumn(): void
+    {
+        $this->seed();
+        $this->customServiceRepo->rows = [
+            ['price_at_time' => 120.0],
+            (object) ['price_at_time' => 30.5],
+        ];
+
+        $this->service->recalculateTotals('res-1');
+        $update = $this->lastUpdate();
+
+        $this->assertSame(150.5, $update['custom_services_total']);
+        $this->assertSame(0.0, $update['addons_total']);
+        $this->assertSame(650.5, $update['total_amount']);
+    }
+
+    public function testPromoDiscountIgnoresCustomServices(): void
+    {
+        $this->seed(['promo_code' => 'TEN']);
+        $this->promoRepo->promo = [
+            'code'                  => 'TEN',
+            'discount_type'         => 'percentage',
+            'discount_value'        => 10,
+            'applies_to_travel_fee' => false,
+        ];
+        $this->customServiceRepo->rows = [['price_at_time' => 200.0]];
+
+        $this->service->recalculateTotals('res-1');
+        $update = $this->lastUpdate();
+
+        // 10% solo sobre el servicio base de $500; los $200 personalizados no se descuentan.
+        $this->assertSame(50.0, $update['discount_amount']);
+        $this->assertSame(650.0, $update['total_amount']);
+    }
+
+    public function testAddingCustomServiceToPaidReservationCreatesBalanceDue(): void
+    {
+        $this->seed(['is_paid' => true, 'amount_paid' => 500.0]);
+        $this->customServiceRepo->rows = [['price_at_time' => 75.0]];
+
+        $this->service->recalculateTotals('res-1');
+        $update = $this->lastUpdate();
+
+        $this->assertSame(575.0, $update['total_amount']);
+        $this->assertSame(75.0, $update['balance_due']);
+    }
+
+    public function testNoCustomServicesKeepsTotalUnchanged(): void
+    {
+        $this->seed();
+
+        $this->service->recalculateTotals('res-1');
+        $update = $this->lastUpdate();
+
+        $this->assertSame(0.0, $update['custom_services_total']);
+        $this->assertSame(500.0, $update['total_amount']);
     }
 }

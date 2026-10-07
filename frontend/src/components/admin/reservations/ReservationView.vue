@@ -142,6 +142,7 @@
                 <DetailField label="Zip Code" :value="data.zipcode" class="col-md-4" />
                 <DetailField label="Base Service" :value="formatCurrency(data.base_price)" class="col-md-3" />
                 <DetailField label="Add-ons" :value="formatCurrency(data.addons_total)" class="col-md-3" />
+                <DetailField label="Custom Services" :value="formatCurrency(data.custom_services_total)" class="col-md-3" />
                 <DetailField label="Number of Children" :value="formatCurrency(data.extra_children_fee)" class="col-md-3" />
                 <DetailField v-if="displayTravelFee > 0" label="Travel Fee" :value="formatCurrency(displayTravelFee)" class="col-md-3" />
                 <DetailField v-if="displayExpediteFee > 0" label="Expedite Fee" :value="formatCurrency(displayExpediteFee)" class="col-md-3" />
@@ -171,6 +172,30 @@
                   </table>
                 </div>
                 <div v-else class="detail-value">No add-ons selected</div>
+              </div>
+              <div class="mt-3">
+                <label class="form-label">Custom Services</label>
+                <div v-if="data.custom_services?.length" class="table-responsive">
+                  <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>Custom service</th>
+                        <th>Detail</th>
+                        <th class="text-end">Configured</th>
+                        <th class="text-end">Reservation Price</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="item in data.custom_services" :key="item.id">
+                        <td>{{ item.name }}</td>
+                        <td>{{ item.detail || 'N/A' }}</td>
+                        <td class="text-end">{{ formatCurrency(item.catalog_price) }}</td>
+                        <td class="text-end">{{ formatCurrency(item.price_at_time) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div v-else class="detail-value">No custom services selected</div>
               </div>
             </div>
           </div>

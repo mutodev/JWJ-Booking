@@ -15,6 +15,7 @@ use App\Controllers\MetropolitanAreaController;
 use App\Controllers\PaymentGatewayController;
 use App\Controllers\PromoCodeController;
 use App\Controllers\ReservationAddonController;
+use App\Controllers\ReservationCustomServiceController;
 use App\Controllers\ReservationController;
 use App\Controllers\ReservationDraftController;
 use App\Controllers\RoleController;
@@ -221,6 +222,13 @@ $routes->group('api', function ($routes) {
     // Payment gateway — redeems a `/pay/{token}` link into a fresh Stripe
     // Checkout Session (no auth; token itself is the credential).
     $routes->get('pay/(:segment)', [PaymentGatewayController::class, 'redeem/$1']);
+
+    $routes->group('reservation-custom-services', ['filter' => 'verifyToken'], function ($routes) {
+        $routes->get('by-reservation/(:uuid)', [ReservationCustomServiceController::class, 'getByReservation/$1']);
+        $routes->post('/', [ReservationCustomServiceController::class, 'create']);
+        $routes->put('(:uuid)', [ReservationCustomServiceController::class, 'updateData/$1']);
+        $routes->delete('(:uuid)', [ReservationCustomServiceController::class, 'deleteData/$1']);
+    });
 
     $routes->group('reservation-addons', ['filter' => 'verifyToken'], function ($routes) {
         $routes->get('/', [ReservationAddonController::class, 'getAll']);

@@ -12,7 +12,7 @@
             <div class="reservation-create-intro__icon"><i class="bi bi-receipt-cutoff"></i></div>
             <div>
               <strong>Build the reservation</strong>
-              <p>Select the customer, location and package. Service and add-on prices can be adjusted for this reservation only.</p>
+              <p>Select the customer, location and package. Service, add-on and custom service prices can be adjusted for this reservation only.</p>
             </div>
           </div>
           <ReservationClient :customers="customers" @setData="setData" />
@@ -31,6 +31,11 @@
           <ReservationAddons
             v-if="dataForm?.price"
             :addons="addons"
+            @setData="setData"
+          />
+          <ReservationCustomServices
+            v-if="dataForm?.price"
+            :catalog="customServices"
             @setData="setData"
           />
           <ReservationForm
@@ -110,6 +115,7 @@ import ReservationClient from "./create/ReservationClient.vue";
 import ReservationAreas from "./create/ReservationAreas.vue";
 import ReservationServices from "./create/ReservationServices.vue";
 import ReservationAddons from "./create/ReservationAddons.vue";
+import ReservationCustomServices from "./create/ReservationCustomServices.vue";
 import ReservationForm from "./create/ReservationForm.vue";
 import ReservationTotal from "./create/ReservationTotal.vue";
 
@@ -123,6 +129,7 @@ const props = defineProps({
   areas: { type: Array, default: () => [] },
   services: { type: Array, default: () => [] },
   addons: { type: Array, default: () => [] },
+  customServices: { type: Array, default: () => [] },
 });
 
 const customers = ref([]);
@@ -210,10 +217,12 @@ const pricingValid = computed(() => {
     return false;
   }
 
-  return (dataForm.value.addons || []).every((addon) => (
-    addon.base_price !== null && addon.base_price !== "" &&
-    Number.isFinite(Number(addon.base_price)) && Number(addon.base_price) >= 0
-  ));
+  const validMoney = (value) => (
+    value !== null && value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0
+  );
+
+  return (dataForm.value.addons || []).every((addon) => validMoney(addon.base_price))
+    && (dataForm.value.customServices || []).every((item) => validMoney(item.price));
 });
 
 watch(

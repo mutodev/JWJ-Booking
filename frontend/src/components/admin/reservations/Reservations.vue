@@ -211,6 +211,7 @@
       :areas="areas"
       :services="services"
       :addons="addons"
+      :custom-services="customServices"
       @close="modalCreateVisible = false"
       @saved="handle"
     />
@@ -367,6 +368,7 @@ const customers = ref([]);
 const areas = ref([]);
 const services = ref([]);
 const addons = ref([]);
+const customServices = ref([]);
 
 const modalEditVisible = ref(false);
 const modalCreateVisible = ref(false);
@@ -426,7 +428,17 @@ const editModal = (item) => {
   selectedData.value = { ...item };
   modalEditVisible.value = true;
 };
+const loadCustomServices = async () => {
+  try {
+    const res = await api.get("/custom-services/get-all-active");
+    customServices.value = Array.isArray(res?.data) ? res.data : [];
+  } catch {
+    customServices.value = [];
+  }
+};
+
 const createModal = () => {
+  loadCustomServices();
   modalCreateVisible.value = true;
 };
 const viewModal = async (item) => {
@@ -758,6 +770,7 @@ const CSV_COLUMNS = [
   { label: 'Paid',               key: (r) => r.is_paid ? 'Yes' : 'No' },
   { label: 'Base Price',         key: (r) => parseFloat(r.base_price || 0).toFixed(2) },
   { label: 'Addons Total',       key: (r) => parseFloat(r.addons_total || 0).toFixed(2) },
+  { label: 'Custom Services',    key: (r) => parseFloat(r.custom_services_total || 0).toFixed(2) },
   { label: 'Travel Fee',         key: (r) => getTravelFee(r).toFixed(2) },
   { label: 'Expedite Fee',       key: (r) => getExpediteFee(r).toFixed(2) },
   { label: 'Extra Children Fee', key: (r) => parseFloat(r.extra_children_fee || 0).toFixed(2) },
