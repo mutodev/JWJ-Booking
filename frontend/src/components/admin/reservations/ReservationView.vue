@@ -123,16 +123,16 @@
                 </div>
                 <div class="col-md-4">
                   <div class="payment-total-card payment-total-card--links">
-                    <span>Additional Payment Links</span>
+                    <span>Payment Links Total</span>
                     <strong>{{ formatCurrency(customPaymentTotal) }}</strong>
-                    <small>Charges outside the reservation total</small>
+                    <small>Balance and additional payment links</small>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="payment-total-card payment-total-card--combined">
                     <span>Combined Total</span>
                     <strong>{{ formatCurrency(combinedTotal) }}</strong>
-                    <small>Reservation + additional charges</small>
+                    <small>Reservation + all payment links</small>
                   </div>
                 </div>
               </div>
@@ -425,11 +425,10 @@ watch(
   }
 );
 
-const reservationTotal = computed(() => parseFloat(data.value.total_amount) || 0);
+const reservationTotal = computed(() => parseFloat(data.value.reservation_total ?? data.value.total_amount) || 0);
 const customPaymentTotal = computed(() => parseFloat(data.value.custom_payment_total) || 0);
-const combinedTotal = computed(() => Math.round(
-  (reservationTotal.value + customPaymentTotal.value) * 100
-) / 100);
+const combinedTotal = computed(() => parseFloat(data.value.combined_total)
+  || Math.round((reservationTotal.value + customPaymentTotal.value) * 100) / 100);
 
 const refundDue = computed(() => {
   if (data.value.amount_paid == null || data.value.amount_paid === "") return 0;

@@ -247,11 +247,16 @@ class ReservationService
         return array_map(function ($reservation) use ($customSummaries) {
             $summary = $customSummaries[(string) $reservation->id]
                 ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'balance_link_total' => 0.0, 'link_count' => 0];
+            $currentTotal = (float) ($reservation->total_amount ?? 0);
+            $reservationTotal = round(max(0, $currentTotal - $summary['balance_link_total']), 2);
+            $allLinksTotal = round($summary['link_total'] + $summary['balance_link_total'], 2);
             $reservation->custom_payment_paid = $summary['paid_total'];
-            $reservation->custom_payment_total = $summary['link_total'];
+            $reservation->reservation_total = $reservationTotal;
+            $reservation->custom_payment_total = $allLinksTotal;
+            $reservation->additional_payment_total = $summary['link_total'];
             $reservation->balance_payment_total = $summary['balance_link_total'];
             $reservation->custom_payment_count = $summary['link_count'];
-            $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['link_total'], 2);
+            $reservation->combined_total = round($reservationTotal + $allLinksTotal, 2);
             return $this->attachOutstanding($reservation);
         }, $reservations);
     }
@@ -279,11 +284,16 @@ class ReservationService
         $summary = $this->customPaymentLinkRepository()
             ->summariesByReservation([(string) $reservation->id])[(string) $reservation->id]
             ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'balance_link_total' => 0.0, 'link_count' => 0];
+        $currentTotal = (float) ($reservation->total_amount ?? 0);
+        $reservationTotal = round(max(0, $currentTotal - $summary['balance_link_total']), 2);
+        $allLinksTotal = round($summary['link_total'] + $summary['balance_link_total'], 2);
         $reservation->custom_payment_paid = $summary['paid_total'];
-        $reservation->custom_payment_total = $summary['link_total'];
+        $reservation->reservation_total = $reservationTotal;
+        $reservation->custom_payment_total = $allLinksTotal;
+        $reservation->additional_payment_total = $summary['link_total'];
         $reservation->balance_payment_total = $summary['balance_link_total'];
         $reservation->custom_payment_count = $summary['link_count'];
-        $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['link_total'], 2);
+        $reservation->combined_total = round($reservationTotal + $allLinksTotal, 2);
         return $this->attachOutstanding($reservation);
     }
 

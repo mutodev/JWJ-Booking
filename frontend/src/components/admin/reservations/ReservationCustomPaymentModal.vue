@@ -12,7 +12,7 @@
 
         <div class="modal-body">
           <div class="payment-summary mb-4">
-            <div><span>Reservation total</span><strong>{{ money(reservation?.total_amount) }}</strong></div>
+            <div><span>Reservation total</span><strong>{{ money(reservation?.reservation_total ?? reservation?.total_amount) }}</strong></div>
             <div><span>Additional charges paid</span><strong class="text-success">{{ money(paidAdditional) }}</strong></div>
             <div class="payment-summary__combined"><span>Reservation + additional charges</span><strong>{{ money(combinedTotal) }}</strong></div>
           </div>
@@ -238,8 +238,8 @@ const validMoney = (value) => value !== null && value !== "" && Number.isFinite(
 const pending = computed(() => links.value.find((link) => link.status === "pending") || null);
 const balanceDue = computed(() => round2(props.reservation?.balance_due));
 const paidAdditional = computed(() => num(props.reservation?.custom_payment_paid) || links.value.filter((l) => l.status === "paid" && (l.purpose || "additional") === "additional").reduce((sum, l) => sum + num(l.amount), 0));
-const additionalTotal = computed(() => num(props.reservation?.custom_payment_total) || links.value.filter((l) => ["pending", "paid"].includes(l.status) && (l.purpose || "additional") === "additional").reduce((sum, l) => sum + num(l.amount), 0));
-const combinedTotal = computed(() => num(props.reservation?.total_amount) + additionalTotal.value);
+const paymentLinksTotal = computed(() => num(props.reservation?.custom_payment_total) || links.value.filter((l) => ["pending", "paid"].includes(l.status)).reduce((sum, l) => sum + num(l.amount), 0));
+const combinedTotal = computed(() => num(props.reservation?.reservation_total ?? props.reservation?.total_amount) + paymentLinksTotal.value);
 
 const hasItems = computed(() => form.value.items.length > 0);
 const itemsSubtotal = computed(() => round2(form.value.items.reduce((sum, item) => sum + num(item.price), 0)));

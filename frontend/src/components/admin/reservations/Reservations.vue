@@ -101,8 +101,8 @@
             <span v-else class="badge bg-danger">Unpaid</span>
           </template>
 
-          <template #item-total_amount="{ total_amount }">
-            {{ formatCurrency(total_amount) }}
+          <template #item-reservation_total="{ reservation_total }">
+            {{ formatCurrency(reservation_total) }}
           </template>
 
           <template #item-custom_payment_total="{ custom_payment_total }">
@@ -599,8 +599,8 @@ const headers = computed(() => [
   { text: "Location", value: "location" },
   { text: "Date", value: "event_date" },
   { text: "Time", value: "entertainment_start_time" },
-  { text: "Reservation Total", value: "total_amount" },
-  { text: "Additional Links", value: "custom_payment_total" },
+  { text: "Reservation Total", value: "reservation_total" },
+  { text: "Payment Links Total", value: "custom_payment_total" },
   { text: "Combined Total", value: "combined_total" },
   { text: "Status", value: "status" },
   { text: "Paid", value: "is_paid" },
@@ -626,13 +626,12 @@ const dataProcessed = computed(() =>
     event_time: item.event_time ?? "",
     entertainment_start_time: item.entertainment_start_time ?? "",
     total_amount: parseFloat(item.total_amount) || 0,
+    reservation_total: parseFloat(item.reservation_total ?? item.total_amount) || 0,
     outstanding_balance: parseFloat(item.outstanding_balance) || 0,
     custom_payment_paid: parseFloat(item.custom_payment_paid) || 0,
     custom_payment_total: parseFloat(item.custom_payment_total) || 0,
     custom_payment_count: parseInt(item.custom_payment_count, 10) || 0,
-    combined_total: Math.round(
-      ((parseFloat(item.total_amount) || 0) + (parseFloat(item.custom_payment_total) || 0)) * 100
-    ) / 100,
+    combined_total: parseFloat(item.combined_total) || 0,
     status: item.status ?? "",
     is_paid: Boolean(item.is_paid),
   }))
@@ -788,11 +787,11 @@ const CSV_COLUMNS = [
   { label: 'Extra Children Fee', key: (r) => parseFloat(r.extra_children_fee || 0).toFixed(2) },
   { label: 'Promo Code',         key: (r) => r.promo_code || '' },
   { label: 'Discount',           key: (r) => parseFloat(r.discount_amount || 0).toFixed(2) },
-  { label: 'Reservation Total',  key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
-  { label: 'Additional Links',    key: (r) => parseFloat(r.custom_payment_total || 0).toFixed(2) },
+  { label: 'Reservation Total',  key: (r) => parseFloat(r.reservation_total ?? r.total_amount ?? 0).toFixed(2) },
+  { label: 'Payment Links Total', key: (r) => parseFloat(r.custom_payment_total || 0).toFixed(2) },
   { label: 'Additional Paid',    key: (r) => parseFloat(r.custom_payment_paid || 0).toFixed(2) },
-  { label: 'Combined Total',     key: (r) => (parseFloat(r.total_amount || 0) + parseFloat(r.custom_payment_total || 0)).toFixed(2) },
-  { label: 'Additional Links',   key: (r) => parseInt(r.custom_payment_count || 0, 10) },
+  { label: 'Combined Total',     key: (r) => parseFloat(r.combined_total || 0).toFixed(2) },
+  { label: 'Payment Link Count', key: (r) => parseInt(r.custom_payment_count || 0, 10) },
   { label: 'Birthday Child',     key: (r) => r.birthday_child_name || '' },
   { label: 'Internal Notes',     key: (r) => r.internal_notes || '' },
   { label: 'Created At',         key: (r) => fmtDate(r.created_at) },

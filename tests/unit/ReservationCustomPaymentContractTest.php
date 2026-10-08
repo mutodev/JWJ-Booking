@@ -20,7 +20,7 @@ final class ReservationCustomPaymentContractTest extends CIUnitTestCase
         $this->assertStringContainsString('custom_payment_paid', $vue);
         $this->assertStringContainsString('custom_payment_total', $vue);
         $this->assertStringContainsString('combined_total', $vue);
-        $this->assertStringContainsString('Additional Links', $vue);
+        $this->assertStringContainsString('Payment Links Total', $vue);
         $this->assertStringContainsString('#expand="item"', $vue);
         $this->assertStringNotContainsString('{ text: "Event Type", value: "event_type" }', $vue);
     }
@@ -30,7 +30,7 @@ final class ReservationCustomPaymentContractTest extends CIUnitTestCase
         $vue = $this->read('frontend/src/components/admin/reservations/ReservationView.vue');
 
         $this->assertStringContainsString('Reservation Total', $vue);
-        $this->assertStringContainsString('Additional Payment Links', $vue);
+        $this->assertStringContainsString('Payment Links Total', $vue);
         $this->assertStringContainsString('Combined Total', $vue);
         $this->assertStringContainsString('custom_payment_total', $vue);
     }
