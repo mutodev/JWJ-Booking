@@ -20,7 +20,7 @@ final class ReservationCustomPaymentContractTest extends CIUnitTestCase
         $this->assertStringContainsString('custom_payment_paid', $vue);
         $this->assertStringContainsString('custom_payment_total', $vue);
         $this->assertStringContainsString('combined_total', $vue);
-        $this->assertStringContainsString('Payment Links Total', $vue);
+        $this->assertStringContainsString('Additional Links', $vue);
         $this->assertStringContainsString('#expand="item"', $vue);
         $this->assertStringNotContainsString('{ text: "Event Type", value: "event_type" }', $vue);
     }
@@ -35,12 +35,14 @@ final class ReservationCustomPaymentContractTest extends CIUnitTestCase
         $this->assertStringContainsString('custom_payment_total', $vue);
     }
 
-    public function testCombinedTotalIncludesPendingAndPaidLinksButNotCancelledLinks(): void
+    public function testCombinedTotalOnlyIncludesSupplementalLinks(): void
     {
         $repository = $this->read('app/Repositories/CustomPaymentLinkRepository.php');
         $service = $this->read('app/Services/ReservationService.php');
 
         $this->assertStringContainsString("status IN ('pending', 'paid')", $repository);
+        $this->assertStringContainsString("purpose = 'additional'", $repository);
+        $this->assertStringContainsString("purpose = 'balance'", $repository);
         $this->assertStringContainsString("\$summary['link_total']", $service);
     }
 

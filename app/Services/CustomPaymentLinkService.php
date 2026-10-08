@@ -33,6 +33,8 @@ class CustomPaymentLinkService
     /** Slug of the email template seeded by CustomPaymentLinkEmailSeeder. */
     private const TEMPLATE_SLUG = 'custom_payment_link';
 
+    private const PURPOSES = ['additional', 'balance'];
+
     protected CustomPaymentLinkRepository $repo;
     protected ReservationRepository $reservationRepository;
     protected EmailTemplateService $emailTemplateService;
@@ -215,11 +217,13 @@ class CustomPaymentLinkService
         $name        = $this->normalizeName($data['customer_name'] ?? null);
         $reservationId = $this->assertValidReservationId($data['reservation_id'] ?? null);
         $currency    = $this->normalizeCurrency($data['currency'] ?? null);
+        $purpose     = $this->assertValidPurpose($data['purpose'] ?? 'additional');
 
         $reservation = $this->reservationRepository->getById($reservationId);
         if (!$reservation || $reservation->status === 'cancelled' || empty($reservation->is_paid)) {
             throw new HTTPException('The reservation cannot receive a payment link', Response::HTTP_BAD_REQUEST);
         }
+        $this->assertPurposeMatchesReservation($purpose, $amount, $reservation);
 
         // B6 double-charge guard: never issue a second pending link for the same
         // reservation (e.g. two admins generating a balance link at once). The
@@ -250,6 +254,7 @@ class CustomPaymentLinkService
         // Stripe succeeded: safe to persist. Only whitelisted fields reach the DB.
         $this->repo->create([
             'reservation_id' => $reservationId,
+            'purpose'        => $purpose,
             'customer_name'  => $name,
             'customer_email' => $email,
             'description'    => $description,
@@ -298,11 +303,13 @@ class CustomPaymentLinkService
         $description = $this->assertValidDescription($data['description'] ?? null);
         $email       = $this->assertValidEmail($data['customer_email'] ?? null);
         $name        = $this->normalizeName($data['customer_name'] ?? null);
+        $purpose     = $this->assertValidPurpose($data['purpose'] ?? $link->purpose ?? 'additional');
 
         $reservation = $this->reservationRepository->getById((string) $link->reservation_id);
         if (!$reservation || $reservation->status === 'cancelled' || empty($reservation->is_paid)) {
             throw new HTTPException('The reservation cannot receive a payment link', Response::HTTP_BAD_REQUEST);
         }
+        $this->assertPurposeMatchesReservation($purpose, $amount, $reservation);
 
         try {
             $this->getStripeService()->expireCheckoutSession($link->stripe_session_id ?? null);
@@ -314,6 +321,7 @@ class CustomPaymentLinkService
 
         $this->repo->updateEditable($id, [
             'customer_name'  => $name,
+            'purpose'        => $purpose,
             'customer_email' => $email,
             'description'    => $description,
             'amount'         => $amount,
@@ -751,8 +759,8 @@ class CustomPaymentLinkService
      * Mark a custom payment link as paid from a completed Stripe Checkout
      * Session. Treats the session metadata as untrusted: the referenced link
      * must exist in our DB. Idempotent — a second delivery keeps the first
-     * `paid_at` (acceptance criterion 7). Never touches a reservation
-     * (acceptance criterion 4).
+     * `paid_at` (acceptance criterion 7). Supplemental charges do not alter the
+     * reservation. A balance link, however, settles amount_paid/balance_due.
      *
      * @param object $session The Stripe Checkout Session object.
      * @return bool true when the link is (now or already) paid.
@@ -791,6 +799,14 @@ class CustomPaymentLinkService
         }
 
         $updated = $this->repo->findById((string) $linkId);
+
+        if ($updated && ($updated->purpose ?? 'additional') === 'balance' && !empty($updated->reservation_id)) {
+            $this->getReservationService()->applyCustomPayment(
+                (string) $updated->reservation_id,
+                (float) $updated->amount,
+                $paymentIntentId
+            );
+        }
 
         if ($updated && !empty($updated->reservation_id)) {
             $this->recordReservationTimeline(
@@ -831,6 +847,31 @@ class CustomPaymentLinkService
         }
 
         return $amount;
+    }
+
+    private function assertValidPurpose($raw): string
+    {
+        $purpose = strtolower(trim((string) $raw));
+        if (!in_array($purpose, self::PURPOSES, true)) {
+            throw new HTTPException('Invalid payment purpose', Response::HTTP_BAD_REQUEST);
+        }
+
+        return $purpose;
+    }
+
+    private function assertPurposeMatchesReservation(string $purpose, float $amount, object $reservation): void
+    {
+        if ($purpose !== 'balance') {
+            return;
+        }
+
+        $balanceDue = round((float) ($reservation->balance_due ?? 0), 2);
+        if ($balanceDue <= 0 || abs($amount - $balanceDue) >= 0.01) {
+            throw new HTTPException(
+                'A reservation balance link must match the current balance due of $' . number_format($balanceDue, 2),
+                Response::HTTP_BAD_REQUEST
+            );
+        }
     }
 
     private function assertValidDescription($raw): string

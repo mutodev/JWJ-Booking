@@ -1122,6 +1122,7 @@ const doGenerateLink = async () => {
   try {
     const payload = {
       reservation_id: editData.value.id,
+      purpose: 'balance',
       amount: balanceDue.value,
       description: `Balance due for reservation ${editData.value.id}`,
       customer_email: editData.value.email || editData.value.customer_email,

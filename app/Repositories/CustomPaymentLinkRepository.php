@@ -20,6 +20,7 @@ class CustomPaymentLinkRepository
      */
     private const CREATE_WHITELIST = [
         'reservation_id',
+        'purpose',
         'customer_name',
         'customer_email',
         'description',
@@ -31,6 +32,7 @@ class CustomPaymentLinkRepository
 
     private const EDIT_WHITELIST = [
         'customer_name',
+        'purpose',
         'customer_email',
         'description',
         'amount',
@@ -111,10 +113,11 @@ class CustomPaymentLinkRepository
     }
 
     /**
-     * @return array<string, array{paid_total:float,link_total:float,link_count:int}>
+     * @return array<string, array{paid_total:float,link_total:float,balance_link_total:float,link_count:int}>
      *
-     * `link_total` represents the value of every live additional charge. Paid
-     * and pending links count toward it; cancelled links do not.
+     * `link_total` contains only truly supplemental charges. Balance links are
+     * already represented by reservations.total_amount and are returned in a
+     * separate bucket so callers never add the same amount twice.
      */
     public function summariesByReservation(array $reservationIds): array
     {
@@ -126,8 +129,9 @@ class CustomPaymentLinkRepository
             ->select(
                 "reservation_id,
                  COUNT(*) AS link_count,
-                 SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS paid_total,
-                 SUM(CASE WHEN status IN ('pending', 'paid') THEN amount ELSE 0 END) AS link_total",
+                 SUM(CASE WHEN status = 'paid' AND purpose = 'additional' THEN amount ELSE 0 END) AS paid_total,
+                 SUM(CASE WHEN status IN ('pending', 'paid') AND purpose = 'additional' THEN amount ELSE 0 END) AS link_total,
+                 SUM(CASE WHEN status IN ('pending', 'paid') AND purpose = 'balance' THEN amount ELSE 0 END) AS balance_link_total",
                 false
             )
             ->whereIn('reservation_id', $reservationIds)
@@ -140,6 +144,7 @@ class CustomPaymentLinkRepository
             $summaries[(string) $row['reservation_id']] = [
                 'paid_total' => round((float) $row['paid_total'], 2),
                 'link_total' => round((float) $row['link_total'], 2),
+                'balance_link_total' => round((float) $row['balance_link_total'], 2),
                 'link_count' => (int) $row['link_count'],
             ];
         }

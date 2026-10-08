@@ -23,6 +23,7 @@ class CustomPaymentLinkModel extends Model
     protected $allowedFields = [
         'id',
         'reservation_id',
+        'purpose',
         'customer_name',
         'customer_email',
         'description',

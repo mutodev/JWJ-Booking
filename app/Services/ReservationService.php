@@ -246,9 +246,10 @@ class ReservationService
 
         return array_map(function ($reservation) use ($customSummaries) {
             $summary = $customSummaries[(string) $reservation->id]
-                ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'link_count' => 0];
+                ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'balance_link_total' => 0.0, 'link_count' => 0];
             $reservation->custom_payment_paid = $summary['paid_total'];
             $reservation->custom_payment_total = $summary['link_total'];
+            $reservation->balance_payment_total = $summary['balance_link_total'];
             $reservation->custom_payment_count = $summary['link_count'];
             $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['link_total'], 2);
             return $this->attachOutstanding($reservation);
@@ -277,9 +278,10 @@ class ReservationService
 
         $summary = $this->customPaymentLinkRepository()
             ->summariesByReservation([(string) $reservation->id])[(string) $reservation->id]
-            ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'link_count' => 0];
+            ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'balance_link_total' => 0.0, 'link_count' => 0];
         $reservation->custom_payment_paid = $summary['paid_total'];
         $reservation->custom_payment_total = $summary['link_total'];
+        $reservation->balance_payment_total = $summary['balance_link_total'];
         $reservation->custom_payment_count = $summary['link_count'];
         $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['link_total'], 2);
         return $this->attachOutstanding($reservation);
@@ -2543,7 +2545,7 @@ class ReservationService
     public function applyCustomPayment(string $reservationId, float $amount, string $paymentIntentId): bool
     {
         $reservation = $this->repository->getById($reservationId);
-        if (!$reservation || !empty($reservation->is_paid) || $amount <= 0.0) {
+        if (!$reservation || $amount <= 0.0 || (float) ($reservation->balance_due ?? 0) <= 0.0) {
             return false;
         }
 

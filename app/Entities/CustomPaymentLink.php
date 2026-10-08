@@ -11,6 +11,7 @@ class CustomPaymentLink extends Entity
     protected $casts   = [
         'id'             => 'string',
         'reservation_id' => '?string',
+        'purpose'        => 'string',
         'customer_name'  => '?string',
         'customer_email' => 'string',
         'description'    => 'string',

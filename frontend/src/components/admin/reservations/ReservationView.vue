@@ -118,21 +118,21 @@
                   <div class="payment-total-card payment-total-card--reservation">
                     <span>Reservation Total</span>
                     <strong>{{ formatCurrency(reservationTotal) }}</strong>
-                    <small>Original reservation only</small>
+                    <small>Current reservation amount</small>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="payment-total-card payment-total-card--links">
                     <span>Additional Payment Links</span>
                     <strong>{{ formatCurrency(customPaymentTotal) }}</strong>
-                    <small>Active and paid additional links</small>
+                    <small>Charges outside the reservation total</small>
                   </div>
                 </div>
                 <div class="col-md-4">
                   <div class="payment-total-card payment-total-card--combined">
                     <span>Combined Total</span>
                     <strong>{{ formatCurrency(combinedTotal) }}</strong>
-                    <small>Reservation + payment links</small>
+                    <small>Reservation + additional charges</small>
                   </div>
                 </div>
               </div>
@@ -141,6 +141,7 @@
                 <DetailField label="Reservation Amount Paid" :value="data.amount_paid == null ? 'Not recorded' : formatCurrency(data.amount_paid)" class="col-md-3" />
                 <DetailField label="Additional Links Paid" :value="formatCurrency(data.custom_payment_paid)" class="col-md-3" />
                 <DetailField label="Balance Due" :value="formatCurrency(data.balance_due)" class="col-md-3" />
+                <DetailField v-if="Number(data.balance_payment_total) > 0" label="Balance Link" :value="formatCurrency(data.balance_payment_total)" class="col-md-3" />
               </div>
               <div v-if="Number(data.balance_due) > 0" class="alert alert-warning mt-3 mb-0 py-2">
                 <i class="bi bi-exclamation-triangle me-2"></i>

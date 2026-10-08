@@ -13,8 +13,8 @@
         <div class="modal-body">
           <div class="payment-summary mb-4">
             <div><span>Reservation total</span><strong>{{ money(reservation?.total_amount) }}</strong></div>
-            <div><span>Additional paid</span><strong class="text-success">{{ money(paidAdditional) }}</strong></div>
-            <div class="payment-summary__combined"><span>Combined paid total</span><strong>{{ money(combinedTotal) }}</strong></div>
+            <div><span>Additional charges paid</span><strong class="text-success">{{ money(paidAdditional) }}</strong></div>
+            <div class="payment-summary__combined"><span>Reservation + additional charges</span><strong>{{ money(combinedTotal) }}</strong></div>
           </div>
 
           <div v-if="pending" class="alert alert-info d-flex align-items-start gap-2">
@@ -41,8 +41,29 @@
             </div>
           </div>
 
+          <div class="mt-4">
+            <label class="form-label fw-semibold">Payment purpose</label>
+            <div class="purpose-options">
+              <label class="purpose-option" :class="{ 'purpose-option--active': form.purpose === 'balance' }">
+                <input
+                  v-model="form.purpose"
+                  type="radio"
+                  value="balance"
+                  :disabled="balanceDue <= 0 && pending?.purpose !== 'balance'"
+                  @change="applyPurposeDefaults"
+                />
+                <span><strong>Reservation balance</strong><small>Collects an amount already included in the reservation total.</small></span>
+              </label>
+              <label class="purpose-option" :class="{ 'purpose-option--active': form.purpose === 'additional' }">
+                <input v-model="form.purpose" type="radio" value="additional" />
+                <span><strong>Additional charge</strong><small>Adds a new charge on top of the reservation total.</small></span>
+              </label>
+            </div>
+            <small v-if="balanceDue > 0" class="text-warning-emphasis d-block mt-1">Current reservation balance: {{ money(balanceDue) }}</small>
+          </div>
+
           <!-- Optional items -->
-          <section class="items-panel mt-4">
+          <section v-if="form.purpose === 'additional'" class="items-panel mt-4">
             <header class="items-panel__header">
               <div class="items-panel__icon"><i class="bi bi-bag-plus"></i></div>
               <div class="flex-grow-1">
@@ -135,11 +156,11 @@
             <div class="col-md-4">
               <label class="form-label">
                 <template v-if="hasItems">Other charge <small class="text-muted">(optional)</small></template>
-                <template v-else>Amount <span class="text-danger">*</span></template>
+                <template v-else>{{ form.purpose === 'balance' ? 'Balance to collect' : 'Amount' }} <span class="text-danger">*</span></template>
               </label>
               <div class="input-group">
                 <span class="input-group-text">$</span>
-                <input v-model="form.manual_amount" type="number" min="0" max="10000" step="0.01" class="form-control" />
+                <input v-model="form.manual_amount" type="number" min="0" max="10000" step="0.01" class="form-control" :readonly="form.purpose === 'balance'" />
               </div>
               <small v-if="hasItems" class="text-muted">Extra amount on top of the items (e.g. late fee).</small>
             </div>
@@ -204,7 +225,7 @@ const links = ref([]);
 const busy = ref(false);
 const error = ref("");
 const message = ref("");
-const form = ref({ manual_amount: null, customer_name: "", customer_email: "", description: "", items: [] });
+const form = ref({ purpose: "additional", manual_amount: null, customer_name: "", customer_email: "", description: "", items: [] });
 const addonCatalog = ref([]);
 const customServiceCatalog = ref([]);
 const catalogLoading = ref(false);
@@ -215,8 +236,10 @@ const money = (value) => num(value).toLocaleString("en-US", { style: "currency",
 const validMoney = (value) => value !== null && value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0;
 
 const pending = computed(() => links.value.find((link) => link.status === "pending") || null);
-const paidAdditional = computed(() => num(props.reservation?.custom_payment_paid) || links.value.filter((l) => l.status === "paid").reduce((sum, l) => sum + num(l.amount), 0));
-const combinedTotal = computed(() => num(props.reservation?.total_amount) + paidAdditional.value);
+const balanceDue = computed(() => round2(props.reservation?.balance_due));
+const paidAdditional = computed(() => num(props.reservation?.custom_payment_paid) || links.value.filter((l) => l.status === "paid" && (l.purpose || "additional") === "additional").reduce((sum, l) => sum + num(l.amount), 0));
+const additionalTotal = computed(() => num(props.reservation?.custom_payment_total) || links.value.filter((l) => ["pending", "paid"].includes(l.status) && (l.purpose || "additional") === "additional").reduce((sum, l) => sum + num(l.amount), 0));
+const combinedTotal = computed(() => num(props.reservation?.total_amount) + additionalTotal.value);
 
 const hasItems = computed(() => form.value.items.length > 0);
 const itemsSubtotal = computed(() => round2(form.value.items.reduce((sum, item) => sum + num(item.price), 0)));
@@ -251,8 +274,10 @@ function removeItem(item) {
 }
 
 function defaultForm() {
+  const isBalance = balanceDue.value > 0;
   return {
-    manual_amount: null,
+    purpose: isBalance ? "balance" : "additional",
+    manual_amount: isBalance ? balanceDue.value : null,
     customer_name: props.reservation?.full_name || props.reservation?.customer_name || "",
     customer_email: props.reservation?.email || "",
     description: "",
@@ -274,12 +299,22 @@ function syncForm() {
     price: round2(item.price),
   }));
   form.value = {
+    purpose: pending.value.purpose || "additional",
     manual_amount: items.length ? (pending.value.extra_amount != null ? num(pending.value.extra_amount) : null) : num(pending.value.amount),
     customer_name: pending.value.customer_name || "",
     customer_email: pending.value.customer_email || "",
     description: pending.value.description || "",
     items,
   };
+}
+
+function applyPurposeDefaults() {
+  if (form.value.purpose !== "balance") return;
+  form.value.items = [];
+  form.value.manual_amount = balanceDue.value;
+  if (!form.value.description?.trim()) {
+    form.value.description = `Balance due for reservation ${props.reservation?.id || ""}`.trim();
+  }
 }
 
 async function loadCatalog() {
@@ -314,12 +349,14 @@ async function load() {
 }
 
 function buildPayload() {
-  const description = form.value.description?.trim() || suggestedDescription.value;
+  const description = form.value.description?.trim()
+    || (form.value.purpose === "balance" ? `Balance due for reservation ${props.reservation.id}` : suggestedDescription.value);
   const payload = {
     customer_name: form.value.customer_name,
     customer_email: form.value.customer_email,
     description: description.slice(0, 255),
     reservation_id: props.reservation.id,
+    purpose: form.value.purpose,
   };
   if (hasItems.value) {
     payload.items = form.value.items.map((item) => ({ item_type: item.item_type, item_id: item.item_id, price: round2(item.price) }));
@@ -406,6 +443,12 @@ watch(() => props.show, async (visible) => {
 .payment-summary span { color: #6b7280; font-size: 0.75rem; }
 .payment-summary strong { font-size: 1rem; }
 .payment-summary__combined { background: #f8fbff; }
+.purpose-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.purpose-option { display: flex; gap: 10px; padding: 12px 14px; border: 1px solid #dfe3e8; border-radius: 9px; cursor: pointer; }
+.purpose-option--active { border-color: #0d6efd; background: #f5f9ff; }
+.purpose-option input { margin-top: 4px; }
+.purpose-option span, .purpose-option small { display: block; }
+.purpose-option small { margin-top: 2px; color: #6b7280; font-size: 0.75rem; }
 .section-heading { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: #374151; font-size: 0.9rem; font-weight: 700; }
 .section-heading i { color: #0d6efd; }
 .items-panel { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
@@ -422,5 +465,6 @@ watch(() => props.show, async (visible) => {
   .payment-summary > div { border-right: 0; border-bottom: 1px solid #e5e7eb; }
   .payment-summary > div:last-child { border-bottom: 0; }
   .link-total { max-width: none; }
+  .purpose-options { grid-template-columns: 1fr; }
 }
 </style>
