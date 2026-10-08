@@ -159,6 +159,9 @@ class EmailTemplateService
         // Pass 2: inject runtime vars + global vars
         $subject = $this->replacePlaceholders($subject, $variables);
         $body    = $this->replacePlaceholders($body, $variables);
+        if ($slug === 'payment_notification') {
+            $body = $this->normalizePaymentNotificationServiceRows($body, $variables);
+        }
 
         return [
             'subject' => $subject,
@@ -183,6 +186,9 @@ class EmailTemplateService
 
         $subject = $this->replacePlaceholders($subject, $variables);
         $body    = $this->replacePlaceholders($body, $variables);
+        if (($template->slug ?? '') === 'payment_notification') {
+            $body = $this->normalizePaymentNotificationServiceRows($body, $variables);
+        }
 
         return [
             'subject' => $subject,
@@ -265,6 +271,34 @@ class EmailTemplateService
 </body>
 </html>
 HTML;
+    }
+
+    /**
+     * Backward compatibility for an existing/customized payment template that
+     * still contains the old fixed {{service_name}} row. Newly seeded templates
+     * already contain the dynamic row placeholders, so this becomes a no-op.
+     */
+    private function normalizePaymentNotificationServiceRows(string $body, array $variables): string
+    {
+        $serviceRow = (string) ($variables['service_row'] ?? '');
+        $customRows = (string) ($variables['custom_services_rows'] ?? '');
+
+        if (($customRows !== '' && str_contains($body, $customRows))
+            || ($customRows === '' && $serviceRow !== '' && str_contains($body, $serviceRow))) {
+            return $body;
+        }
+
+        $replacement = $serviceRow . $customRows;
+        $pattern = '~\s*<tr>\s*<td\b[^>]*>\s*Service\s*</td>\s*<td\b[^>]*>.*?</td>\s*</tr>~is';
+        $normalized = preg_replace_callback(
+            $pattern,
+            static fn (): string => $replacement,
+            $body,
+            1,
+            $count
+        );
+
+        return $count === 1 ? $normalized : $body;
     }
 
     /**
@@ -358,6 +392,8 @@ HTML;
                     'eventDate'       => $variables['event_date'] ?? 'TBD',
                     'totalAmount'     => $variables['total_amount'] ?? '0.00',
                     'totalDurationRow' => $variables['total_duration_row'] ?? '',
+                    'serviceRow'      => $variables['service_row'] ?? '',
+                    'customServicesRows' => $variables['custom_services_rows'] ?? '',
                 ]);
                 break;
 

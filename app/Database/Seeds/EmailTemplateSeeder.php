@@ -22,7 +22,8 @@ class EmailTemplateSeeder extends Seeder
                 'subject'             => 'Payment Information for Your Event Reservation',
                 'body'                => $this->getPaymentNotificationBody(),
                 'available_variables' => json_encode([
-                    'customer_name', 'reservation_id', 'service_name',
+                    'customer_name', 'reservation_id', 'service_name', 'service_row',
+                    'custom_services_rows',
                     'event_date', 'event_time', 'event_address',
                     'children_count', 'birthday_child_name',
                     'total_amount', 'description', 'confirmation_url'
@@ -271,10 +272,8 @@ class EmailTemplateSeeder extends Seeder
                                     <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Customer</td>
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">{{customer_name}}</td>
                                 </tr>
-                                <tr>
-                                    <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; width: 40%; border-bottom: 1px solid #e5e7eb;">Service</td>
-                                    <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; border-bottom: 1px solid #e5e7eb;">{{service_name}}</td>
-                                </tr>
+                                {{service_row}}
+                                {{custom_services_rows}}
                                 <tr>
                                     <td style="padding: 12px 16px; font-size: 14px; font-weight: 600; color: #6b7280; background-color: #f9fafb; width: 40%; border-bottom: 1px solid #e5e7eb;">Event Date</td>
                                     <td style="padding: 12px 16px; font-size: 14px; color: #1F2937; background-color: #f9fafb; border-bottom: 1px solid #e5e7eb;">{{event_date}}</td>

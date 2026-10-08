@@ -35,6 +35,7 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
     private object $emailService;
     private object $templateService;
     private object $repo;
+    private object $customServiceRepo;
 
     protected function setUp(): void
     {
@@ -160,6 +161,16 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
             }
         };
 
+        $this->customServiceRepo = new class {
+            /** @var object[] */
+            public array $rows = [];
+
+            public function getByReservation(string $reservationId): array
+            {
+                return $this->rows;
+            }
+        };
+
         $access = new class extends PaymentAccessService {
             public function __construct()
             {
@@ -183,6 +194,7 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
         $this->setProp('emailTemplateService', $this->templateService);
         $this->setProp('repository', $this->repo);
         $this->setProp('reservationAddonRepository', $addonRepo);
+        $this->setProp('reservationCustomServiceRepository', $this->customServiceRepo);
         $this->setProp('brevoContactService', null);
         $this->setProp('accessService', $access);
     }
@@ -209,6 +221,7 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
             'email'                  => 'client@example.com',
             'full_name'              => 'Jamie Client',
             'service_name'           => 'Jukebox Live',
+            'base_price'             => 300.0,
             'event_date'             => '2026-12-24',
             'event_time'             => '14:00',
             'entertainment_start_time' => '14:30',
@@ -334,6 +347,46 @@ final class ReservationServicePaymentHistoryTest extends CIUnitTestCase
         $this->assertSame('System', $rows[0]['sent_by']);
         $this->assertNull($rows[0]['template_id']);
         $this->assertSame('client@example.com', $rows[0]['recipient_email']);
+    }
+
+    public function testPaymentEmailHidesZeroPricedBaseServiceAndShowsCustomServices(): void
+    {
+        $this->repo->reservation = $this->reservation(['base_price' => 0]);
+        $this->customServiceRepo->rows = [
+            (object) [
+                'name' => 'Face <Painting>',
+                'detail' => 'One & a half hours',
+                'price_at_time' => 125.5,
+            ],
+        ];
+        $captured = [];
+        $this->templateService->onRender = static function (string $slug, array $vars) use (&$captured): void {
+            $captured = $vars;
+        };
+
+        $this->service->sendPaymentEmail('res-1');
+
+        $this->assertSame('', $captured['service_row']);
+        $this->assertStringContainsString('Custom Service', $captured['custom_services_rows']);
+        $this->assertStringContainsString('Face &lt;Painting&gt;', $captured['custom_services_rows']);
+        $this->assertStringContainsString('One &amp; a half hours', $captured['custom_services_rows']);
+        $this->assertStringContainsString('$125.50', $captured['custom_services_rows']);
+        $this->assertStringNotContainsString('Face <Painting>', $captured['custom_services_rows']);
+    }
+
+    public function testPaymentEmailShowsPositivePricedBaseService(): void
+    {
+        $this->repo->reservation = $this->reservation(['base_price' => 300]);
+        $captured = [];
+        $this->templateService->onRender = static function (string $slug, array $vars) use (&$captured): void {
+            $captured = $vars;
+        };
+
+        $this->service->sendPaymentEmail('res-1');
+
+        $this->assertStringContainsString('Service', $captured['service_row']);
+        $this->assertStringContainsString('Jukebox Live', $captured['service_row']);
+        $this->assertSame('', $captured['custom_services_rows']);
     }
 
     public function testSendPaymentEmailRecordsFailedRowAndRethrowsOnSendError(): void

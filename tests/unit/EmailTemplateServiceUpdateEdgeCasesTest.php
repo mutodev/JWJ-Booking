@@ -389,6 +389,38 @@ final class EmailTemplateServiceUpdateEdgeCasesTest extends CIUnitTestCase
         $this->assertStringContainsString('Hi World', $out['body']);
     }
 
+    public function testPaymentNotificationNormalizesLegacyFixedServiceRow(): void
+    {
+        $tpl = new EmailTemplate([
+            'id'        => 'tpl-payment',
+            'slug'      => 'payment_notification',
+            'name'      => 'Payment Notification',
+            'subject'   => 'Payment link',
+            'body'      => '<table><tr><td>Service</td><td>{{service_name}}</td></tr><tr><td>Total Amount</td><td>$100</td></tr></table>',
+            'content'   => '{}',
+            'is_active' => 1,
+        ]);
+
+        $repo = $this->createMock(EmailTemplateRepository::class);
+        $repo->method('getBySlug')->willReturn($tpl);
+
+        $service = new EmailTemplateService();
+        $ref = new \ReflectionProperty(EmailTemplateService::class, 'repository');
+        $ref->setAccessible(true);
+        $ref->setValue($service, $repo);
+
+        $customRow = '<tr><td>Custom Service</td><td>Face Painting — $125.00</td></tr>';
+        $out = $service->render('payment_notification', [
+            'service_name' => 'Zero-priced placeholder',
+            'service_row' => '',
+            'custom_services_rows' => $customRow,
+        ]);
+
+        $this->assertStringNotContainsString('Zero-priced placeholder', $out['body']);
+        $this->assertStringNotContainsString('<td>Service</td>', $out['body']);
+        $this->assertStringContainsString($customRow, $out['body']);
+    }
+
     public function testRenderFallsBackWhenTemplateInactiveRegardlessOfCustomizationFlag(): void
     {
         $tpl = new EmailTemplate([

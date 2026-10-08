@@ -105,8 +105,8 @@
             {{ formatCurrency(total_amount) }}
           </template>
 
-          <template #item-custom_payment_paid="{ custom_payment_paid }">
-            <span :class="{ 'text-success fw-semibold': custom_payment_paid > 0 }">{{ formatCurrency(custom_payment_paid) }}</span>
+          <template #item-custom_payment_total="{ custom_payment_total }">
+            <span :class="{ 'text-success fw-semibold': custom_payment_total > 0 }">{{ formatCurrency(custom_payment_total) }}</span>
           </template>
 
           <template #item-combined_total="{ combined_total }">
@@ -595,9 +595,9 @@ const headers = computed(() => [
   { text: "Service", value: "service_name" },
   { text: "Location", value: "location" },
   { text: "Date", value: "event_date" },
-  { text: "Time", value: "event_time" },
+  { text: "Time", value: "entertainment_start_time" },
   { text: "Reservation Total", value: "total_amount" },
-  { text: "Additional Paid", value: "custom_payment_paid" },
+  { text: "Payment Links Total", value: "custom_payment_total" },
   { text: "Combined Total", value: "combined_total" },
   { text: "Status", value: "status" },
   { text: "Paid", value: "is_paid" },
@@ -621,11 +621,15 @@ const dataProcessed = computed(() =>
     event_address: item.event_address ?? "",
     event_date: item.event_date?.date ? new Date(item.event_date.date) : (item.event_date ? new Date(item.event_date) : null),
     event_time: item.event_time ?? "",
+    entertainment_start_time: item.entertainment_start_time ?? "",
     total_amount: parseFloat(item.total_amount) || 0,
     outstanding_balance: parseFloat(item.outstanding_balance) || 0,
     custom_payment_paid: parseFloat(item.custom_payment_paid) || 0,
+    custom_payment_total: parseFloat(item.custom_payment_total) || 0,
     custom_payment_count: parseInt(item.custom_payment_count, 10) || 0,
-    combined_total: parseFloat(item.combined_total) || (parseFloat(item.total_amount) || 0),
+    combined_total: Math.round(
+      ((parseFloat(item.total_amount) || 0) + (parseFloat(item.custom_payment_total) || 0)) * 100
+    ) / 100,
     status: item.status ?? "",
     is_paid: Boolean(item.is_paid),
   }))
@@ -782,8 +786,9 @@ const CSV_COLUMNS = [
   { label: 'Promo Code',         key: (r) => r.promo_code || '' },
   { label: 'Discount',           key: (r) => parseFloat(r.discount_amount || 0).toFixed(2) },
   { label: 'Reservation Total',  key: (r) => parseFloat(r.total_amount || 0).toFixed(2) },
+  { label: 'Payment Links Total', key: (r) => parseFloat(r.custom_payment_total || 0).toFixed(2) },
   { label: 'Additional Paid',    key: (r) => parseFloat(r.custom_payment_paid || 0).toFixed(2) },
-  { label: 'Combined Total',     key: (r) => (parseFloat(r.total_amount || 0) + parseFloat(r.custom_payment_paid || 0)).toFixed(2) },
+  { label: 'Combined Total',     key: (r) => (parseFloat(r.total_amount || 0) + parseFloat(r.custom_payment_total || 0)).toFixed(2) },
   { label: 'Additional Links',   key: (r) => parseInt(r.custom_payment_count || 0, 10) },
   { label: 'Birthday Child',     key: (r) => r.birthday_child_name || '' },
   { label: 'Internal Notes',     key: (r) => r.internal_notes || '' },

@@ -245,10 +245,12 @@ class ReservationService
         $customSummaries = $this->customPaymentLinkRepository()->summariesByReservation($ids);
 
         return array_map(function ($reservation) use ($customSummaries) {
-            $summary = $customSummaries[(string) $reservation->id] ?? ['paid_total' => 0.0, 'link_count' => 0];
+            $summary = $customSummaries[(string) $reservation->id]
+                ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'link_count' => 0];
             $reservation->custom_payment_paid = $summary['paid_total'];
+            $reservation->custom_payment_total = $summary['link_total'];
             $reservation->custom_payment_count = $summary['link_count'];
-            $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['paid_total'], 2);
+            $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['link_total'], 2);
             return $this->attachOutstanding($reservation);
         }, $reservations);
     }
@@ -275,10 +277,11 @@ class ReservationService
 
         $summary = $this->customPaymentLinkRepository()
             ->summariesByReservation([(string) $reservation->id])[(string) $reservation->id]
-            ?? ['paid_total' => 0.0, 'link_count' => 0];
+            ?? ['paid_total' => 0.0, 'link_total' => 0.0, 'link_count' => 0];
         $reservation->custom_payment_paid = $summary['paid_total'];
+        $reservation->custom_payment_total = $summary['link_total'];
         $reservation->custom_payment_count = $summary['link_count'];
-        $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['paid_total'], 2);
+        $reservation->combined_total = round((float) ($reservation->total_amount ?? 0) + $summary['link_total'], 2);
         return $this->attachOutstanding($reservation);
     }
 
@@ -1914,6 +1917,8 @@ class ReservationService
             'customer_name'       => strtok(trim($reservation->full_name ?? ''), ' '),
             'reservation_id'      => $reservation->id,
             'service_name'        => $reservation->service_name ?? '',
+            'service_row'         => $this->buildBaseServiceRow($reservation),
+            'custom_services_rows' => $this->buildCustomServicesRows((string) $reservation->id),
             'event_date'          => $eventDate,
             'event_time'          => $eventTime,
             'event_address'       => $reservation->event_address ?? '',
@@ -1970,12 +1975,18 @@ class ReservationService
             throw new HTTPException('Reservation not found', Response::HTTP_NOT_FOUND);
         }
 
-        $this->emailTemplateService->getById($templateId);
+        $template = $this->emailTemplateService->getById($templateId);
+
+        $variables = $this->buildReservationEmailVariables($reservation, false);
+        if (($template->slug ?? '') === 'payment_notification') {
+            $variables['service_row'] = $this->buildBaseServiceRow($reservation);
+            $variables['custom_services_rows'] = $this->buildCustomServicesRows((string) $reservation->id);
+        }
 
         return $this->emailTemplateService->composePreview(
             $templateId,
             // Preview only — never renew the customer's live payment token.
-            $this->buildReservationEmailVariables($reservation, false)
+            $variables
         );
     }
 
@@ -2004,6 +2015,10 @@ class ReservationService
         }
 
         $variables = $this->buildReservationEmailVariables($reservation);
+        if (($template->slug ?? '') === 'payment_notification') {
+            $variables['service_row'] = $this->buildBaseServiceRow($reservation);
+            $variables['custom_services_rows'] = $this->buildCustomServicesRows((string) $reservation->id);
+        }
         $subject = $this->replaceReservationPlaceholders($subject, $variables);
         $body = $this->replaceReservationPlaceholders($body, $variables);
         if (($template->slug ?? '') === 'payment_needed_secure_event') {
@@ -2298,6 +2313,52 @@ class ReservationService
         }
 
         return $this->buildOptionalSummaryRow('Add-ons', implode(', ', $labels), true);
+    }
+
+    /**
+     * The base service is informational in the payment email only when it has
+     * a positive reservation price. Zero-priced placeholder services stay out
+     * of the customer-facing summary.
+     */
+    private function buildBaseServiceRow(object $reservation): string
+    {
+        $name = trim((string) ($reservation->service_name ?? ''));
+        $price = (float) ($reservation->base_price ?? 0);
+
+        if ($name === '' || $price <= 0) {
+            return '';
+        }
+
+        return $this->buildOptionalSummaryRow('Service', $name, false);
+    }
+
+    /**
+     * Render every custom service frozen on the reservation. Unlike the base
+     * placeholder service, an explicitly added custom service remains visible
+     * even when its price is zero.
+     */
+    private function buildCustomServicesRows(string $reservationId): string
+    {
+        $rows = $this->reservationCustomServiceRepository()->getByReservation($reservationId);
+        $html = '';
+
+        foreach ($rows as $index => $row) {
+            $name = trim((string) ($row->name ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            $detail = trim((string) ($row->detail ?? ''));
+            $value = $name;
+            if ($detail !== '') {
+                $value .= ' (' . $detail . ')';
+            }
+            $value .= ' — $' . number_format((float) ($row->price_at_time ?? 0), 2);
+
+            $html .= $this->buildOptionalSummaryRow('Custom Service', $value, $index % 2 === 0);
+        }
+
+        return $html;
     }
 
     private function buildOptionalSummaryRow(string $label, mixed $value, bool $shaded): string

@@ -60,8 +60,9 @@
                 </div>
                 <div class="col-md-4 text-end">
                   <div class="total-amount">
-                    <small class="text-muted d-block">Total Amount</small>
-                    <h4 class="mb-0 fw-bold">{{ formatCurrency(totalWithGratuity) }}</h4>
+                    <small class="text-muted d-block">Combined Total</small>
+                    <h4 class="mb-0 fw-bold">{{ formatCurrency(combinedTotal) }}</h4>
+                    <small class="text-muted">Reservation + additional payment links</small>
                   </div>
                 </div>
               </div>
@@ -92,7 +93,7 @@
             </div>
 
             <div class="segment mb-3">
-              <h6 class="segment-title">Status & Payments</h6>
+              <h6 class="segment-title">Status</h6>
               <div class="row g-3">
                 <DetailField label="Status" :value="getStatusLabel(data.status)" class="col-md-4" />
                 <DetailField label="Payment Received" :value="data.is_paid ? 'Yes' : 'No'" class="col-md-4" />
@@ -111,13 +112,34 @@
             </div>
 
             <div class="segment mb-3">
-              <h6 class="segment-title">Promo Code</h6>
+              <h6 class="segment-title">Payment Summary</h6>
+              <div class="row g-3 payment-summary-grid">
+                <div class="col-md-4">
+                  <div class="payment-total-card payment-total-card--reservation">
+                    <span>Reservation Total</span>
+                    <strong>{{ formatCurrency(reservationTotal) }}</strong>
+                    <small>Original reservation only</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="payment-total-card payment-total-card--links">
+                    <span>Additional Payment Links</span>
+                    <strong>{{ formatCurrency(customPaymentTotal) }}</strong>
+                    <small>Active and paid additional links</small>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="payment-total-card payment-total-card--combined">
+                    <span>Combined Total</span>
+                    <strong>{{ formatCurrency(combinedTotal) }}</strong>
+                    <small>Reservation + payment links</small>
+                  </div>
+                </div>
+              </div>
               <div class="row g-3">
-                <DetailField label="Promo Code" :value="data.promo_code" class="col-md-3" />
-                <DetailField label="Discount" :value="formatCurrency(data.discount_amount)" class="col-md-3" />
-                <DetailField label="Total Amount" :value="formatCurrency(totalWithGratuity)" class="col-md-3" />
                 <DetailField label="Gratuity / Tip" :value="formatCurrency(data.gratuity_amount)" class="col-md-3" />
-                <DetailField label="Amount Paid" :value="data.amount_paid == null ? 'Not recorded' : formatCurrency(data.amount_paid)" class="col-md-3" />
+                <DetailField label="Reservation Amount Paid" :value="data.amount_paid == null ? 'Not recorded' : formatCurrency(data.amount_paid)" class="col-md-3" />
+                <DetailField label="Additional Links Paid" :value="formatCurrency(data.custom_payment_paid)" class="col-md-3" />
                 <DetailField label="Balance Due" :value="formatCurrency(data.balance_due)" class="col-md-3" />
               </div>
               <div v-if="Number(data.balance_due) > 0" class="alert alert-warning mt-3 mb-0 py-2">
@@ -127,6 +149,14 @@
               <div v-if="refundDue > 0" class="alert alert-info mt-3 mb-0 py-2">
                 <i class="bi bi-cash-coin me-2"></i>
                 <strong>Refund required: {{ formatCurrency(refundDue) }}</strong> — process it manually in Stripe.
+              </div>
+            </div>
+
+            <div class="segment mb-3">
+              <h6 class="segment-title">Promo Code</h6>
+              <div class="row g-3">
+                <DetailField label="Promo Code" :value="data.promo_code" class="col-md-4" />
+                <DetailField label="Discount" :value="formatCurrency(data.discount_amount)" class="col-md-4" />
               </div>
             </div>
 
@@ -394,9 +424,11 @@ watch(
   }
 );
 
-const totalWithGratuity = computed(() => (
-  (parseFloat(data.value.total_amount) || 0) + (parseFloat(data.value.gratuity_amount) || 0)
-));
+const reservationTotal = computed(() => parseFloat(data.value.total_amount) || 0);
+const customPaymentTotal = computed(() => parseFloat(data.value.custom_payment_total) || 0);
+const combinedTotal = computed(() => Math.round(
+  (reservationTotal.value + customPaymentTotal.value) * 100
+) / 100);
 
 const refundDue = computed(() => {
   if (data.value.amount_paid == null || data.value.amount_paid === "") return 0;
@@ -535,6 +567,49 @@ const editReservation = () => {
 <style scoped>
 .total-amount {
   text-align: right;
+}
+
+.payment-summary-grid {
+  margin-bottom: 16px;
+}
+
+.payment-total-card {
+  display: flex;
+  min-height: 126px;
+  padding: 16px;
+  border: 1px solid #dbe3ec;
+  border-radius: 10px;
+  background: #f8fafc;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.payment-total-card span {
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.payment-total-card strong {
+  margin: 4px 0;
+  color: #0f172a;
+  font-size: 1.5rem;
+}
+
+.payment-total-card small {
+  color: #64748b;
+}
+
+.payment-total-card--links {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.payment-total-card--combined {
+  border-color: #f9a8d4;
+  background: #fff1f7;
 }
 
 .reservation-tabs .nav-link {

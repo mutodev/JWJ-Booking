@@ -18,9 +18,30 @@ final class ReservationCustomPaymentContractTest extends CIUnitTestCase
         $this->assertStringContainsString('title="Send payment link"', $vue);
         $this->assertStringContainsString('title="Manage additional payment"', $vue);
         $this->assertStringContainsString('custom_payment_paid', $vue);
+        $this->assertStringContainsString('custom_payment_total', $vue);
         $this->assertStringContainsString('combined_total', $vue);
+        $this->assertStringContainsString('Payment Links Total', $vue);
         $this->assertStringContainsString('#expand="item"', $vue);
         $this->assertStringNotContainsString('{ text: "Event Type", value: "event_type" }', $vue);
+    }
+
+    public function testReservationDetailSeparatesReservationLinksAndCombinedTotals(): void
+    {
+        $vue = $this->read('frontend/src/components/admin/reservations/ReservationView.vue');
+
+        $this->assertStringContainsString('Reservation Total', $vue);
+        $this->assertStringContainsString('Additional Payment Links', $vue);
+        $this->assertStringContainsString('Combined Total', $vue);
+        $this->assertStringContainsString('custom_payment_total', $vue);
+    }
+
+    public function testCombinedTotalIncludesPendingAndPaidLinksButNotCancelledLinks(): void
+    {
+        $repository = $this->read('app/Repositories/CustomPaymentLinkRepository.php');
+        $service = $this->read('app/Services/ReservationService.php');
+
+        $this->assertStringContainsString("status IN ('pending', 'paid')", $repository);
+        $this->assertStringContainsString("\$summary['link_total']", $service);
     }
 
     public function testPersonalizedModalUsesReservationAndSupportsResend(): void

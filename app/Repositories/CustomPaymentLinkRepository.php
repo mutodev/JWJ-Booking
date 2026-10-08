@@ -110,7 +110,12 @@ class CustomPaymentLinkRepository
         return $totals;
     }
 
-    /** @return array<string, array{paid_total:float,link_count:int}> */
+    /**
+     * @return array<string, array{paid_total:float,link_total:float,link_count:int}>
+     *
+     * `link_total` represents the value of every live additional charge. Paid
+     * and pending links count toward it; cancelled links do not.
+     */
     public function summariesByReservation(array $reservationIds): array
     {
         if ($reservationIds === []) {
@@ -118,7 +123,13 @@ class CustomPaymentLinkRepository
         }
 
         $rows = $this->db()->table('custom_payment_links')
-            ->select("reservation_id, COUNT(*) AS link_count, SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS paid_total", false)
+            ->select(
+                "reservation_id,
+                 COUNT(*) AS link_count,
+                 SUM(CASE WHEN status = 'paid' THEN amount ELSE 0 END) AS paid_total,
+                 SUM(CASE WHEN status IN ('pending', 'paid') THEN amount ELSE 0 END) AS link_total",
+                false
+            )
             ->whereIn('reservation_id', $reservationIds)
             ->groupBy('reservation_id')
             ->get()
@@ -128,6 +139,7 @@ class CustomPaymentLinkRepository
         foreach ($rows as $row) {
             $summaries[(string) $row['reservation_id']] = [
                 'paid_total' => round((float) $row['paid_total'], 2),
+                'link_total' => round((float) $row['link_total'], 2),
                 'link_count' => (int) $row['link_count'],
             ];
         }
