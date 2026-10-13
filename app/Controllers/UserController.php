@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Services\UserService;
+use App\Services\MfaService;
 use CodeIgniter\RESTful\ResourceController;
 
 class UserController extends ResourceController
@@ -136,6 +137,28 @@ class UserController extends ResourceController
             return $this->response
                 ->setStatusCode($th->getCode() == 0 ? 500 : $th->getCode())
                 ->setJSON(['message' => $th->getMessage()]);
+        }
+    }
+
+    public function resetMfa(string $id)
+    {
+        try {
+            $actor = service('auth')->user();
+            if (!$actor) {
+                throw new \CodeIgniter\HTTP\Exceptions\HTTPException('Unauthorized', 401);
+            }
+
+            (new MfaService())->resetForUser($id, $actor);
+
+            return $this->response
+                ->setStatusCode(200)
+                ->setJSON(create_response('Multi-factor authentication reset successfully', true));
+        } catch (\Throwable $th) {
+            $statusCode = $th->getCode();
+            if ($statusCode < 400 || $statusCode > 599) {
+                $statusCode = 500;
+            }
+            return $this->response->setStatusCode($statusCode)->setJSON(['message' => $th->getMessage()]);
         }
     }
 }

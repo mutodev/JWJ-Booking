@@ -7,6 +7,21 @@ use App\Models\UserModel;
 
 class UserRepository
 {
+    private const PUBLIC_USER_FIELDS = '
+        users.id,
+        users.first_name,
+        users.last_name,
+        users.email,
+        users.image,
+        users.state,
+        users.role_id,
+        users.is_active,
+        users.mfa_enabled,
+        users.created_at,
+        users.updated_at,
+        users.deleted_at
+    ';
+
     protected UserModel $userModel;
 
     protected $allowedFields = [
@@ -34,6 +49,7 @@ class UserRepository
     public function getUserById(string $id): ?User
     {
         return $this->userModel
+            ->select(self::PUBLIC_USER_FIELDS)
             ->where('id', $id)
             ->first();
     }
@@ -69,6 +85,10 @@ class UserRepository
                 users.image,
                 users.password,
                 users.is_active,
+                users.state,
+                users.role_id,
+                users.mfa_enabled,
+                users.auth_version,
                 roles.name AS role_name
              ')
             ->join('roles', 'roles.id = users.role_id')
@@ -90,8 +110,114 @@ class UserRepository
      */
     public function getByRole(string $roleId): array
     {
-        return $this->userModel->where('role_id', $roleId)
+        return $this->userModel
+            ->select(self::PUBLIC_USER_FIELDS)
+            ->where('role_id', $roleId)
             ->findAll();
+    }
+
+    public function getUserForAuthenticationById(string $id): ?User
+    {
+        return $this->userModel
+            ->where('id', $id)
+            ->first();
+    }
+
+    public function getLoginDataById(string $id): ?array
+    {
+        $user = $this->userModel
+            ->select('
+                users.id,
+                users.first_name,
+                users.last_name,
+                users.email,
+                users.image,
+                users.is_active,
+                users.state,
+                users.role_id,
+                users.auth_version,
+                roles.name AS role_name
+            ')
+            ->join('roles', 'roles.id = users.role_id')
+            ->where('users.id', $id)
+            ->where('users.state', true)
+            ->where('roles.is_active', true)
+            ->first();
+
+        return $user ? $user->toArray() : null;
+    }
+
+    public function updateMfa(string $userId, array $data): bool
+    {
+        $allowed = [
+            'mfa_secret',
+            'mfa_enabled',
+            'mfa_confirmed_at',
+            'mfa_recovery_codes',
+            'mfa_last_used_step',
+        ];
+        $filtered = array_intersect_key($data, array_flip($allowed));
+        return $filtered !== [] && $this->userModel->update($userId, $filtered);
+    }
+
+    public function claimMfaStep(string $userId, int $step, array $data = []): bool
+    {
+        $allowed = ['mfa_enabled', 'mfa_confirmed_at', 'mfa_recovery_codes'];
+        $filtered = array_intersect_key($data, array_flip($allowed));
+        $filtered['mfa_last_used_step'] = $step;
+
+        $builder = db_connect()->table('users');
+        $builder
+            ->where('id', $userId)
+            ->where('deleted_at', null)
+            ->groupStart()
+                ->where('mfa_last_used_step', null)
+                ->orWhere('mfa_last_used_step <', $step)
+            ->groupEnd()
+            ->update($filtered);
+
+        return db_connect()->affectedRows() === 1;
+    }
+
+    public function replaceRecoveryCodes(string $userId, string $expectedJson, string $newJson): bool
+    {
+        $builder = db_connect()->table('users');
+        $builder
+            ->where('id', $userId)
+            ->where('deleted_at', null)
+            ->where('mfa_recovery_codes', $expectedJson)
+            ->update(['mfa_recovery_codes' => $newJson]);
+
+        return db_connect()->affectedRows() === 1;
+    }
+
+    public function resetMfa(string $userId): bool
+    {
+        $user = $this->getUserForAuthenticationById($userId);
+        if (!$user) {
+            return false;
+        }
+
+        return $this->userModel->update($userId, [
+            'mfa_secret' => null,
+            'mfa_enabled' => false,
+            'mfa_confirmed_at' => null,
+            'mfa_recovery_codes' => null,
+            'mfa_last_used_step' => null,
+            'auth_version' => ((int) ($user->auth_version ?? 1)) + 1,
+        ]);
+    }
+
+    public function revokeSessions(string $userId): bool
+    {
+        $user = $this->getUserForAuthenticationById($userId);
+        if (!$user) {
+            return false;
+        }
+
+        return $this->userModel->update($userId, [
+            'auth_version' => ((int) ($user->auth_version ?? 1)) + 1,
+        ]);
     }
 
     /**

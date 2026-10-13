@@ -21,7 +21,13 @@ class UserModel extends Model
         'image',
         'state',
         'role_id',
-        'is_active'
+        'is_active',
+        'mfa_secret',
+        'mfa_enabled',
+        'mfa_confirmed_at',
+        'mfa_recovery_codes',
+        'mfa_last_used_step',
+        'auth_version'
     ];
 
     protected bool $allowEmptyInserts = false;

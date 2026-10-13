@@ -13,12 +13,14 @@ class LoginService
     protected $userRepository;
     protected $emailService;
     protected $emailTemplateService;
+    protected $mfaService;
 
     function __construct()
     {
         $this->userRepository = new UserRepository();
         $this->emailService = new ServicesBrevoEmailService();
         $this->emailTemplateService = new EmailTemplateService();
+        $this->mfaService = new MfaService($this->userRepository);
     }
 
 
@@ -38,9 +40,23 @@ class LoginService
         if (!$data['is_active'])
             throw new HTTPException(lang('Auth.userInactive'), Response::HTTP_UNAUTHORIZED);
 
+        return $this->mfaService->createLoginChallenge($data);
+    }
+
+    public function verifyMfa(string $challengeToken, string $code): array
+    {
+        $verification = $this->mfaService->verifyChallenge($challengeToken, $code);
+        $data = $this->userRepository->getLoginDataById($verification['user_id']);
+        if (!$data || !$data['is_active']) {
+            throw new HTTPException(lang('Auth.invalidLogin'), Response::HTTP_UNAUTHORIZED);
+        }
+
         $data['access'] = $this->getUserMenuTree($data['id']);
 
-        return generate_token((array) $data);
+        return [
+            'token' => generate_token($data),
+            'recovery_codes' => $verification['recovery_codes'],
+        ];
     }
 
     /**
@@ -116,6 +132,8 @@ class LoginService
         $updated = $this->userRepository->updateUser($user->id, ['password' => password_hash($newPassword, PASSWORD_BCRYPT)]);
         if (!$updated)
             return true;
+
+        $this->userRepository->revokeSessions((string) $user->id);
 
         $rendered = $this->emailTemplateService->render('reset_password', ['password' => $newPassword]);
 

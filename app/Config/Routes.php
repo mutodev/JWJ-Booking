@@ -62,6 +62,7 @@ $routes->group('api', function ($routes) {
     // Login
     $routes->group('auth', function ($routes) {
         $routes->post('login', [LoginController::class, 'login']);
+        $routes->post('mfa/verify', [LoginController::class, 'verifyMfa']);
         $routes->post('reset-password', [LoginController::class, 'resetPassword']);
     });
 
@@ -73,6 +74,7 @@ $routes->group('api', function ($routes) {
         $routes->delete('(:any)', [UserController::class, 'deleteUser']);
         $routes->get('by-rol/(:any)', [UserController::class, 'getUserByRole']);
         $routes->post('change-password', [UserController::class, 'changePassword']);
+        $routes->post('(:any)/mfa/reset', [UserController::class, 'resetMfa']);
     });
 
     // Roles

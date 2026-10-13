@@ -45,7 +45,9 @@ api.interceptors.response.use(
 
       // Guardar token si viene en la respuesta
       if (response.data?.token || response.data?.data) {
-        const token = response.data?.token ?? response.data.data;
+        const token = response.data?.token
+          ?? response.data?.data?.token
+          ?? response.data.data;
         if (typeof token === "string" && token.length > 0) {
           try {
             const decoded = jwtDecode(token);

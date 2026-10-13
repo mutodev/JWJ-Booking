@@ -17,6 +17,9 @@ class User extends Entity
         'image' => 'string',
         'state' => 'boolean',
         'role_id'   => 'string',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
+        'mfa_enabled' => 'boolean',
+        'mfa_last_used_step' => '?integer',
+        'auth_version' => 'integer'
     ];
 }

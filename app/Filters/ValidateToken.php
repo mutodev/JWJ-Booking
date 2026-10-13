@@ -47,10 +47,25 @@ class ValidateToken implements FilterInterface
 
             // Remover el prefijo "Bearer " si existe
             $token = str_starts_with($token, 'Bearer ') ? substr($token, 7) : $token;
-            $this->tokenResponse = verify_token($token, true);
+            $this->tokenResponse = verify_token($token);
+
+            if (($this->tokenResponse['token_type'] ?? null) !== 'access') {
+                return service('response')->setStatusCode(401)->setJSON(['message' => 'Invalid access token']);
+            }
 
             $userModel = new UserRepository();
             $user = $userModel->getUserByEmail($this->tokenResponse['email']);
+            if (!$user || !(bool) $user->is_active || !(bool) $user->state) {
+                return service('response')->setStatusCode(401)->setJSON(['message' => 'Invalid access token']);
+            }
+
+            // Tokens issued before the MFA rollout did not carry auth_version.
+            // Treat them as version 0 so every existing session must enroll.
+            $tokenVersion = (int) ($this->tokenResponse['auth_version'] ?? 0);
+            $currentVersion = (int) ($user->auth_version ?? 1);
+            if ($tokenVersion !== $currentVersion) {
+                return service('response')->setStatusCode(401)->setJSON(['message' => 'Session has been revoked']);
+            }
             service('auth')->setUser($user);
         } catch (\CodeIgniter\HTTP\Exceptions\HTTPException $ex) {
             // Atrapa las excepciones HTTP lanzadas por verify_token
@@ -79,8 +94,16 @@ class ValidateToken implements FilterInterface
      */
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
+        if (!is_array($this->tokenResponse) || ($this->tokenResponse['token_type'] ?? null) !== 'access') {
+            return $response;
+        }
+
         $body = $response->getBody();
         $json = json_decode($body, true);
+
+        if (!is_array($json)) {
+            return $response;
+        }
 
         $json['token'] = generate_token($this->tokenResponse);
         return $response->setJSON($json);

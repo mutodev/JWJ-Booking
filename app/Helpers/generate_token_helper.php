@@ -13,6 +13,7 @@ function generate_token(array $data): string
     $payload = array_merge(
         $data,
         [
+            'token_type' => 'access',
             'iat' => time(),
             'exp' => time() + 6000
         ]

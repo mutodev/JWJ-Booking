@@ -16,13 +16,26 @@
       <span v-else class="badge bg-danger">Inactive</span>
     </template>
 
-    <template #item-actions="{ id }">
+    <template #item-mfa_enabled="{ mfa_enabled }">
+      <span v-if="mfa_enabled" class="badge bg-success">Enabled</span>
+      <span v-else class="badge bg-secondary">Pending</span>
+    </template>
+
+    <template #item-actions="{ id, mfa_enabled }">
       <button
         class="btn btn-sm btn-warning me-2"
         @click="editUserModal(id)"
         title="Edit User"
       >
         <i class="bi bi-pencil-square"></i>
+      </button>
+      <button
+        v-if="mfa_enabled"
+        class="btn btn-sm btn-outline-danger"
+        @click="resetMfa(id)"
+        title="Reset authenticator"
+      >
+        <i class="bi bi-shield-x"></i>
       </button>
     </template>
   </EasyDataTable>
@@ -38,6 +51,7 @@
 <script setup>
 import { ref, watch, defineEmits, inject } from "vue";
 import UserEdit from "./UserEdit.vue";
+import api from "@/services/axios";
 
 const emit = defineEmits(['data-updated']);
 const tableHelpers = inject('tableHelpers');
@@ -63,6 +77,7 @@ const headers = ref([
   { text: "Last Name", value: "last_name", sortable: true },
   { text: "Email", value: "email", sortable: true },
   { text: "State", value: "is_active", sortable: true },
+  { text: "MFA", value: "mfa_enabled", sortable: true },
   { text: "Actions", value: "actions", sortable: false }
 ]);
 
@@ -103,6 +118,15 @@ const editUserModal = (userId) => {
 };
 
 const handleRoleSaved = () => {
+  emit('data-updated', true);
+};
+
+const resetMfa = async (userId) => {
+  if (!window.confirm("Reset this user's authenticator? They will need to scan a new QR code on their next sign-in.")) {
+    return;
+  }
+
+  await api.post(`/users/${userId}/mfa/reset`);
   emit('data-updated', true);
 };
 </script>

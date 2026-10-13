@@ -78,6 +78,7 @@ class UserService
      */
     public function update(string $id, array $data)
     {
+        $passwordChanged = !empty($data['password']);
         if (empty($data['password'])){
             // No incluir password si está vacío para evitar problemas
             unset($data['password']);
@@ -86,6 +87,10 @@ class UserService
         $user = $this->userRepository->updateUser($id, $data);
         if (!$user)
             throw new HTTPException(lang('User.userUpdateFailed'), Response::HTTP_BAD_REQUEST);
+
+        if ($passwordChanged) {
+            $this->userRepository->revokeSessions($id);
+        }
 
         return $this->userRepository->getUserById($id);
     }
@@ -98,7 +103,7 @@ class UserService
      */
     public function changePassword(array $data)
     {
-        $user = $this->userRepository->getUserById($data['id']);
+        $user = $this->userRepository->getUserForAuthenticationById($data['id']);
         if (!$user)
             throw new HTTPException(lang('User.userNotFound'), Response::HTTP_NOT_FOUND);
 
@@ -108,6 +113,8 @@ class UserService
         $updated = $this->userRepository->updateUser($data['id'], ['password' => $data['new_password']]);
         if (!$updated)
             throw new HTTPException(lang('User.passwordChangeFailed'), Response::HTTP_BAD_REQUEST);
+
+        $this->userRepository->revokeSessions($data['id']);
 
         return true;
     }

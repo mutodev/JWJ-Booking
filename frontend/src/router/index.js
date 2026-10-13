@@ -132,7 +132,11 @@ router.beforeEach((to, from, next) => {
       const decoded = JSON.parse(atob(token.split('.')[1]));
       const currentTime = Date.now() / 1000;
 
-      if (decoded.exp && decoded.exp < currentTime) {
+      if (
+        (decoded.exp && decoded.exp < currentTime) ||
+        decoded.token_type !== "access" ||
+        !decoded.auth_version
+      ) {
         localStorage.clear();
         next("/login");
         return;
