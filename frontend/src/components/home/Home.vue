@@ -5,6 +5,12 @@
       @accepted="handlePrivacyAccepted"
       @declined="handlePrivacyDeclined"
     />
+    <ContactVerificationDialog
+      v-model="showContactVerification"
+      :session-id="sessionId || ''"
+      :customer="form.customer || {}"
+      @verified="handleContactVerified"
+    />
 
     <!-- Logo flotante -->
     <div class="floating-logo">
@@ -147,6 +153,7 @@ import Step3 from "./form/Step3.vue"; // Select Add-ons
 import Step4 from "./form/Step4.vue"; // Subtotal
 import Step6 from "./form/Step6.vue"; // Confirmation
 import PrivacyPolicyModal from "./PrivacyPolicyModal.vue"; // Privacy Policy
+import ContactVerificationDialog from "./ContactVerificationDialog.vue";
 
 /**
  * Mapeo de componentes por número de paso
@@ -175,6 +182,9 @@ const isMobile = ref(false);
 const wizardRoot = ref(null);
 const reservationData = ref(null);
 const sessionId = ref(null);
+const showContactVerification = ref(false);
+const verificationToken = ref('');
+const verifiedContactFingerprint = ref('');
 
 /**
  * Logo URL
@@ -383,6 +393,13 @@ async function submitReservation() {
     return;
   }
 
+  const fingerprint = contactFingerprint();
+  if (!verificationToken.value || verifiedContactFingerprint.value !== fingerprint) {
+    verificationToken.value = '';
+    showContactVerification.value = true;
+    return;
+  }
+
   isSubmitting.value = true;
 
   try {
@@ -424,6 +441,7 @@ async function submitReservation() {
     // Preparar datos para enviar al endpoint
     const reservationData = {
       session_id: sessionId.value, // Include session ID
+      verification_token: verificationToken.value,
       customer: form.value?.customer,
       zipcode: form.value?.zipcode,
       service: form.value?.service,
@@ -467,9 +485,26 @@ async function submitReservation() {
     }
 
     console.error('Reservation submission error:', errorMessage);
+    if (error.response?.status === 422 && /verify/i.test(errorMessage)) {
+      verificationToken.value = '';
+      showContactVerification.value = true;
+    }
   } finally {
     isSubmitting.value = false;
   }
+}
+
+function contactFingerprint() {
+  const customer = form.value?.customer || {};
+  const email = String(customer.email || '').trim().toLowerCase();
+  const phone = String(customer.phone || '').replace(/\D/g, '');
+  return `${email}|${phone}`;
+}
+
+function handleContactVerified(token) {
+  verificationToken.value = token;
+  verifiedContactFingerprint.value = contactFingerprint();
+  submitReservation();
 }
 
 /**
@@ -486,6 +521,8 @@ function handleNewReservation() {
 
   // Generate new session ID for new reservation
   sessionId.value = generateNewSessionId();
+  verificationToken.value = '';
+  verifiedContactFingerprint.value = '';
 
   toast.info(
     'Starting new reservation...',

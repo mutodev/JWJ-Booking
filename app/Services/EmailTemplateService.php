@@ -376,6 +376,7 @@ HTML;
             'welcome'                 => 'emails/welcome',
             'reset_password'          => 'emails/reset_password',
             'payment_confirmation'    => 'emails/payment_confirmation',
+            'contact_verification'    => 'emails/contact_verification',
         ];
 
         if (!isset($viewMap[$slug])) {
@@ -428,6 +429,15 @@ HTML;
                     'eventDate'   => $variables['event_date'] ?? 'TBD',
                     'totalAmount' => $variables['total_amount'] ?? '0.00',
                     'totalDurationRow' => $variables['total_duration_row'] ?? '',
+                ]);
+                break;
+
+            case 'contact_verification':
+                $subject = 'Your Jam with Jamie verification code';
+                $body = view($viewMap[$slug], [
+                    'customerName' => $variables['customer_name'] ?? 'there',
+                    'verificationCode' => $variables['verification_code'] ?? '',
+                    'expiresMinutes' => $variables['expires_minutes'] ?? '10',
                 ]);
                 break;
 

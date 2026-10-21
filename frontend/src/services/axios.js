@@ -23,9 +23,9 @@ const api = axios.create({
 // === Interceptor de solicitud ===
 api.interceptors.request.use(
   (config) => {
-    // Don't show loader for draft requests (silent background operation)
-    const isDraftRequest = config.url?.includes('/home/draft');
-    if (!isDraftRequest) {
+    // Draft autosaves and the verification modal manage their own loading UI.
+    const isSilentRequest = config.url?.includes('/home/draft') || config.url?.includes('/home/contact-verification');
+    if (!isSilentRequest) {
       showLoader();
     }
 
@@ -42,6 +42,7 @@ api.interceptors.response.use(
   (response) => {
     try {
       const isDraftRequest = response.config.url?.includes('/home/draft');
+      const isVerificationRequest = response.config.url?.includes('/home/contact-verification');
 
       // Guardar token si viene en la respuesta
       if (response.data?.token || response.data?.data) {
@@ -70,15 +71,15 @@ api.interceptors.response.use(
 
       // Mostrar mensajes de éxito solo para métodos != GET y NO para drafts
       if (
-        !isDraftRequest &&
+        !isDraftRequest && !isVerificationRequest &&
         response.config.method?.toUpperCase() !== "GET" &&
         response.data?.message
       ) {
         toast.success(response.data.message);
       }
 
-      // Don't hide loader for draft requests (it was never shown)
-      if (!isDraftRequest) {
+      // Silent requests did not show the global loader.
+      if (!isDraftRequest && !isVerificationRequest) {
         hideLoader();
       }
 
@@ -91,9 +92,10 @@ api.interceptors.response.use(
   },
   (error) => {
     const isDraftRequest = error.config?.url?.includes('/home/draft');
+    const isVerificationRequest = error.config?.url?.includes('/home/contact-verification');
 
-    // Don't hide loader for draft requests (it was never shown)
-    if (!isDraftRequest) {
+    // Silent requests did not show the global loader.
+    if (!isDraftRequest && !isVerificationRequest) {
       hideLoader();
     }
 
@@ -102,7 +104,7 @@ api.interceptors.response.use(
     console.error("API Error:", errorMessage);
 
     // Don't show error toast for draft requests (fail silently)
-    if (!isDraftRequest && error.response?.data?.message) {
+    if (!isDraftRequest && !isVerificationRequest && error.response?.data?.message) {
       toast.error(error.response.data.message);
     }
 

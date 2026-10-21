@@ -25,6 +25,7 @@ use App\Controllers\TypeAddonController;
 use App\Controllers\UserController;
 use App\Controllers\ZipCodeController;
 use App\Controllers\EmailTemplateController;
+use App\Controllers\ContactVerificationController;
 use CodeIgniter\Router\RouteCollection;
 
 /**
@@ -53,6 +54,8 @@ $routes->group('api', function ($routes) {
         $routes->get('addons', [AddonController::class, 'getAllActive']);
         $routes->get('promo-codes/validate/(:any)', [PromoCodeController::class, 'validateCode']);
         $routes->post('reservation', [ReservationController::class, 'createFromForm']);
+        $routes->post('contact-verification/request', [ContactVerificationController::class, 'requestCode']);
+        $routes->post('contact-verification/verify', [ContactVerificationController::class, 'verifyCode']);
         // Draft endpoints
         $routes->post('draft', [ReservationController::class, 'saveDraft']);
         $routes->get('draft', [ReservationController::class, 'getDraft']);

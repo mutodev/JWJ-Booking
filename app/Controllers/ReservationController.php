@@ -6,6 +6,7 @@ use App\Services\ReservationService;
 use App\Services\ReservationDraftService;
 use App\Services\CustomPaymentLinkService;
 use App\Services\BrevoEmailService;
+use App\Services\ContactVerificationService;
 use CodeIgniter\RESTful\ResourceController;
 
 class ReservationController extends ResourceController
@@ -78,7 +79,20 @@ class ReservationController extends ResourceController
             $json = $this->request->getBody();
             $formData = json_decode($json, true);
 
+            if (!is_array($formData)) {
+                throw new \CodeIgniter\HTTP\Exceptions\HTTPException('Invalid reservation data.', 400);
+            }
+
+            // Only the public Home flow uses this action. Bind the short-lived
+            // grant to this exact session, email and phone before any write.
+            $verificationService = new ContactVerificationService();
+            $verification = $verificationService->assertValidForReservation($formData);
+
             $result = $this->service->createFromForm($formData);
+
+            // A successful grant is single-use; failed reservation attempts
+            // leave it available so the customer can correct the form.
+            $verificationService->consume($verification);
 
             // Mark draft as completed if session_id provided
             if (isset($formData['session_id']) && $result['reservation']) {

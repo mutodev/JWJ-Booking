@@ -474,6 +474,38 @@ const CONTENT_SCHEMAS = {
       placeholder: "e.g. If you have any questions before your event, feel free to reply...",
     },
   ],
+  contact_verification: [
+    {
+      key: "title",
+      label: "Email Title",
+      hint: "Main heading shown above the verification code",
+      icon: "bi bi-shield-check",
+      iconBg: "bg-primary-subtle",
+      iconColor: "text-primary",
+      multiline: false,
+      placeholder: "e.g. Verify your contact information",
+    },
+    {
+      key: "intro",
+      label: "Introduction",
+      hint: "Message shown immediately before the verification code",
+      icon: "bi bi-paragraph",
+      iconBg: "bg-info-subtle",
+      iconColor: "text-info",
+      multiline: true,
+      placeholder: "Explain how to use the code...",
+    },
+    {
+      key: "footer",
+      label: "Security Note",
+      hint: "Expiry and security reminder shown below the code",
+      icon: "bi bi-clock-history",
+      iconBg: "bg-warning-subtle",
+      iconColor: "text-warning",
+      multiline: true,
+      placeholder: "Explain when the code expires...",
+    },
+  ],
 };
 
 // ── Friendly labels for dynamic variables ──────────────────────────────────
@@ -494,6 +526,8 @@ const VAR_LABELS = {
   description:         "Description",
   confirmation_url:    "Payment Link",
   password:            "Password",
+  verification_code:   "Verification Code",
+  expires_minutes:     "Expiration (minutes)",
 };
 
 const getVarLabel = (key) => VAR_LABELS[key] || key.replace(/_/g, " ");
