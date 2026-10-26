@@ -4,6 +4,8 @@ namespace App\Controllers;
 
 use App\Services\UserService;
 use App\Services\MfaService;
+use App\Services\AuthorizationPolicy;
+use App\Repositories\UserRepository;
 use CodeIgniter\RESTful\ResourceController;
 
 class UserController extends ResourceController
@@ -63,6 +65,24 @@ class UserController extends ResourceController
         try {
             $json = $this->request->getBody();
             $data = json_decode($json, true);
+
+            $actor = service('auth')->user();
+            if ($actor && (string) $actor->id === $id) {
+                $permissions = (new UserRepository())->getUserPermissions((string) $actor->id);
+                $canAdministerUsers = (new AuthorizationPolicy())->allows($permissions, [
+                    'menu_uri' => '/admin/config/users',
+                    'permission' => 'can_update',
+                ]);
+
+                // Preserve self-service profile editing without allowing a
+                // user to promote or activate their own account through JSON.
+                if (!$canAdministerUsers) {
+                    $data = array_intersect_key($data ?: [], array_flip([
+                        'first_name', 'last_name', 'password',
+                    ]));
+                }
+            }
+
             return $this->response
                 ->setStatusCode(200)
                 ->setJSON(create_response(lang('App.user_updated'), $this->userService->update($id, $data)));

@@ -5,7 +5,6 @@ namespace App\Services;
 use Brevo\Client\Api\ContactsApi;
 use Brevo\Client\Configuration;
 use Brevo\Client\Model\CreateContact;
-use GuzzleHttp\Client;
 
 class BrevoContactService
 {
@@ -37,17 +36,7 @@ class BrevoContactService
 
         $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', $apiKey);
         $timeout = max(1, (int) (getenv('brevo.contacts.timeout') ?: 5));
-        $caBundle = trim((string) getenv('brevo.contacts.caBundle'));
-        $verify = $caBundle !== '' ? $caBundle : true;
-
-        if (is_string($verify) && !is_file($verify)) {
-            throw new \RuntimeException('Brevo CA bundle does not exist: ' . $verify);
-        }
-
-        $this->apiInstance = new ContactsApi(new Client([
-            'timeout' => $timeout,
-            'verify' => $verify,
-        ]), $config);
+        $this->apiInstance = new ContactsApi(BrevoHttpClientFactory::create($timeout), $config);
     }
 
     /**

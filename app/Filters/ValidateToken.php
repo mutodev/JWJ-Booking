@@ -3,6 +3,7 @@
 namespace App\Filters;
 
 use App\Repositories\UserRepository;
+use App\Services\AuthorizationPolicy;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -67,6 +68,23 @@ class ValidateToken implements FilterInterface
                 return service('response')->setStatusCode(401)->setJSON(['message' => 'Session has been revoked']);
             }
             service('auth')->setUser($user);
+
+            $policy = new AuthorizationPolicy();
+            $requirement = $policy->requirement(
+                $request->getMethod(),
+                $request->getUri()->getPath(),
+                (string) $user->id
+            );
+
+            // verifyToken is reserved for the administrative API. Unknown
+            // resources are denied so a newly added route cannot silently
+            // bypass authorization.
+            if ($requirement === null
+                || !$policy->allows($userModel->getUserPermissions((string) $user->id), $requirement)) {
+                return service('response')->setStatusCode(403)->setJSON([
+                    'message' => 'You do not have permission to perform this action',
+                ]);
+            }
         } catch (\CodeIgniter\HTTP\Exceptions\HTTPException $ex) {
             // Atrapa las excepciones HTTP lanzadas por verify_token
             return service('response')

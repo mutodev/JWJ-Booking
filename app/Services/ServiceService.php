@@ -9,10 +9,12 @@ use CodeIgniter\HTTP\Exceptions\HTTPException;
 class ServiceService
 {
     protected $repo;
+    private SecureImageUploadService $imageUploader;
 
     public function __construct()
     {
         $this->repo = new ServiceRepository();
+        $this->imageUploader = new SecureImageUploadService();
     }
 
     /**
@@ -160,13 +162,7 @@ class ServiceService
         // Procesar imagen si existe
         $image = $request->getFile('image');
         if ($image && $image->isValid() && !$image->hasMoved()) {
-            $uploadPath = FCPATH . 'img';
-            if (!is_dir($uploadPath)) {
-                mkdir($uploadPath, 0755, true);
-            }
-            $newName = $image->getRandomName();
-            $image->move($uploadPath, $newName);
-            $data['img'] = '/img/' . $newName;
+            $data['img'] = $this->imageUploader->upload($image);
         }
 
         return $this->repo->update($id, $data);

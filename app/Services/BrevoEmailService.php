@@ -6,7 +6,6 @@ use Brevo\Client\Api\TransactionalEmailsApi;
 use Brevo\Client\Configuration;
 use Brevo\Client\Model\SendSmtpEmail;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
-use GuzzleHttp\Client;
 
 class BrevoEmailService
 {
@@ -30,9 +29,7 @@ class BrevoEmailService
         $config = Configuration::getDefaultConfiguration()->setApiKey('api-key', getenv('brevo.apiKey'));
 
         $this->apiInstance = new TransactionalEmailsApi(
-            new Client([
-                'verify' => false
-            ]),
+            BrevoHttpClientFactory::create(),
             $config
         );
 

@@ -11,7 +11,12 @@
         <div class="modal-body">
           <div class="modal-delete-warning">
             <i class="bi bi-shield-exclamation"></i>
-            <p v-html="message"></p>
+            <p>
+              <template v-for="(part, index) in messageParts" :key="index">
+                <strong v-if="part.strong">{{ part.text }}</strong>
+                <span v-else>{{ part.text }}</span>
+              </template>
+            </p>
           </div>
           <div class="form-check mt-3">
             <input
@@ -42,7 +47,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 
 const props = defineProps({
   show: { type: Boolean, default: false },
@@ -54,6 +59,27 @@ const props = defineProps({
 const emit = defineEmits(["confirm", "cancel"]);
 
 const confirmed = ref(false);
+const messageParts = computed(() => {
+  const source = String(props.message || "");
+  const parts = [];
+  const strongTag = /<strong>(.*?)<\/strong>/gis;
+  let cursor = 0;
+  let match;
+
+  while ((match = strongTag.exec(source)) !== null) {
+    if (match.index > cursor) {
+      parts.push({ text: source.slice(cursor, match.index), strong: false });
+    }
+    parts.push({ text: match[1], strong: true });
+    cursor = strongTag.lastIndex;
+  }
+
+  if (cursor < source.length) {
+    parts.push({ text: source.slice(cursor), strong: false });
+  }
+
+  return parts;
+});
 
 watch(() => props.show, (val) => {
   if (!val) confirmed.value = false;

@@ -10,11 +10,13 @@ class TypeAddonService
 {
     protected $repo;
     protected $uploadPath;
+    private SecureImageUploadService $imageUploader;
 
     public function __construct()
     {
         $this->repo = new TypeAddonRepository();
         $this->uploadPath = FCPATH . 'img';
+        $this->imageUploader = new SecureImageUploadService();
 
         // Create upload directory if it doesn't exist
         if (!is_dir($this->uploadPath)) {
@@ -120,14 +122,7 @@ class TypeAddonService
      */
     private function uploadImage($image): string
     {
-        $newName = $image->getRandomName();
-        $image->move($this->uploadPath, $newName);
-
-        if (!file_exists($this->uploadPath . DIRECTORY_SEPARATOR . $newName)) {
-            throw new \RuntimeException('Failed to move uploaded file to destination');
-        }
-
-        return '/img/' . $newName;
+        return $this->imageUploader->upload($image);
     }
 
     /**
@@ -135,10 +130,7 @@ class TypeAddonService
      */
     private function deleteImageFile(string $imagePath): void
     {
-        $fullPath = FCPATH . ltrim($imagePath, '/');
-        if (file_exists($fullPath)) {
-            unlink($fullPath);
-        }
+        $this->imageUploader->delete($imagePath);
     }
 
     /**

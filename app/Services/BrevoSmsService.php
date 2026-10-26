@@ -5,7 +5,6 @@ namespace App\Services;
 use Brevo\Client\Api\TransactionalSMSApi;
 use Brevo\Client\Configuration;
 use Brevo\Client\Model\SendTransacSms;
-use GuzzleHttp\Client;
 
 class BrevoSmsService
 {
@@ -26,7 +25,7 @@ class BrevoSmsService
 
         $config = Configuration::getDefaultConfiguration()
             ->setApiKey('api-key', $apiKey);
-        $this->api = new TransactionalSMSApi(new Client(['verify' => false]), $config);
+        $this->api = new TransactionalSMSApi(BrevoHttpClientFactory::create(), $config);
     }
 
     public function send(string $recipient, string $content)
