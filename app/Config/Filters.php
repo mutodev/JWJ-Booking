@@ -2,6 +2,7 @@
 
 namespace Config;
 
+use App\Filters\MaintenanceMode;
 use App\Filters\ValidateToken;
 use CodeIgniter\Config\Filters as BaseFilters;
 use CodeIgniter\Filters\Cors;
@@ -35,7 +36,8 @@ class Filters extends BaseFilters
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
-        'verifyToken' => ValidateToken::class
+        'maintenance'   => MaintenanceMode::class,
+        'verifyToken'   => ValidateToken::class,
     ];
 
     /**
@@ -53,6 +55,7 @@ class Filters extends BaseFilters
      */
     public array $required = [
         'before' => [
+            'maintenance', // Environment-controlled maintenance mode
             'forcehttps', // Force Global Secure Requests
             'pagecache',  // Web Page Caching
         ],

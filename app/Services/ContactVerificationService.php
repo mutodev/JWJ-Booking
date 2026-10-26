@@ -153,8 +153,9 @@ class ContactVerificationService
     private function normalizeEmail(string $email): string { return strtolower(trim($email)); }
     private function normalizePhone(string $phone): string
     {
+        $hasExplicitCountryCode = str_starts_with(trim($phone), '+');
         $digits = preg_replace('/\D+/', '', $phone);
-        if (strlen($digits) === 10) $digits = '1' . $digits;
+        if (!$hasExplicitCountryCode && strlen($digits) === 10) $digits = '1' . $digits;
         return '+' . $digits;
     }
     private function maskEmail(string $email): string
