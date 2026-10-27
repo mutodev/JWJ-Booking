@@ -434,6 +434,15 @@ class ReservationController extends ResourceController
 
             $result = $this->service->verifyPayment($sessionId);
 
+            if (($result['is_paid'] ?? false) === true) {
+                $result['conversion'] = (new \App\Services\MarketingConversionService())->claimStripePayment(
+                    (string) ($result['transaction_id'] ?? ''),
+                    (float) ($result['amount'] ?? 0),
+                    (string) ($result['currency'] ?? 'USD')
+                );
+            }
+            unset($result['transaction_id'], $result['amount'], $result['currency']);
+
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment verified', $result));
         } catch (\Throwable $th) {

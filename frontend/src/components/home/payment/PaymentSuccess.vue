@@ -55,6 +55,7 @@
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
+import { trackPaymentCompleted } from '@/services/marketingTracking.js';
 
 const route = useRoute();
 
@@ -72,9 +73,16 @@ onMounted(async () => {
   }
 
   try {
-    await axios.get('/api/stripe/verify-payment', {
+    const response = await axios.get('/api/stripe/verify-payment', {
       params: { session_id: sessionId }
     });
+    const result = response.data?.data || response.data;
+    if (!result?.is_paid) {
+      throw new Error('Stripe has not confirmed this payment yet.');
+    }
+    if (result.conversion) {
+      trackPaymentCompleted(result.conversion);
+    }
     verified.value = true;
   } catch (error) {
     console.error('Payment verification error:', error);

@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use CodeIgniter\RESTful\ResourceController;
+use Config\MarketingTracking;
 
 class HomeController extends ResourceController
 {
@@ -26,9 +27,23 @@ class HomeController extends ResourceController
         }
 
         $env = getenv('CI_ENVIRONMENT') ?: 'production';
+        $tracking = new MarketingTracking();
+        $requestHost = strtolower($this->request->getUri()->getHost());
+        $trackingEnabled = $tracking->enabled
+            && $tracking->allowedHost !== ''
+            && hash_equals($tracking->allowedHost, $requestHost);
 
         return view('index', [
-            'APP_ENV' => $env
+            'APP_ENV' => $env,
+            'MARKETING_TRACKING' => [
+                'enabled' => $trackingEnabled,
+                'allowedHost' => $tracking->allowedHost,
+                'googleTagId' => $tracking->googleTagId,
+                'googleReservationSendTo' => $tracking->googleReservationSendTo,
+                'googlePaymentSendTo' => $tracking->googlePaymentSendTo,
+                'metaPixelId' => $tracking->metaPixelId,
+                'openAiPixelId' => $tracking->openAiPixelId,
+            ],
         ]);
     }
 }

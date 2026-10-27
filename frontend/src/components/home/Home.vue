@@ -142,6 +142,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { ArrowLeft, ArrowRight, Check } from '@element-plus/icons-vue';
 import api from "@/services/axios";
+import { trackReservationCreated } from "@/services/marketingTracking.js";
 import { useToast } from "vue-toastification";
 
 const toast = useToast();
@@ -466,6 +467,9 @@ async function submitReservation() {
         addons: form.value?.addons || [],
         customer: form.value?.customer || null
       };
+
+      // Track only after the API confirms that the reservation was created.
+      trackReservationCreated(dataToPass.reservation?.id);
 
       // Navegar al paso final con los datos de la reserva
       handleReservationSuccess(dataToPass);

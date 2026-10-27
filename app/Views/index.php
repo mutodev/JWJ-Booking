@@ -55,7 +55,8 @@ if (file_exists($manifestPath)) {
 
     <?php if ($jsFile): ?>
         <script>
-            window.APP_ENV = '<?= esc($APP_ENV) ?>';
+            window.APP_ENV = <?= json_encode($APP_ENV, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+            window.MARKETING_TRACKING = <?= json_encode($MARKETING_TRACKING ?? ['enabled' => false], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         </script>
         <script type="module" src="<?= base_url('build/' . $jsFile) ?>"></script>
     <?php endif; ?>

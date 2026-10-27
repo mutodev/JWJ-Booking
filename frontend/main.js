@@ -23,10 +23,12 @@ import 'element-plus/dist/index.css';
 
 // Importar el helper de tablas
 import { generateTableHeaders, generateSearchFields, commonLabels } from "@/assets/scripts/easy-table.js";
+import { initializeMarketingTracking } from "@/services/marketingTracking.js";
 
 const app = createApp(App);
 
 createLoader();
+initializeMarketingTracking();
 
 app.component("EasyDataTable", EasyDataTable);
 app.component("Multiselect", Multiselect);

@@ -2606,6 +2606,9 @@ class ReservationService
                 'type'           => 'custom_payment_link',
                 'payment_status' => $session->payment_status,
                 'is_paid'        => $session->payment_status === 'paid',
+                'transaction_id' => (string) ($session->payment_intent ?? ''),
+                'amount'         => isset($session->amount_total) ? ((float) $session->amount_total / 100) : 0.0,
+                'currency'       => strtoupper((string) ($session->currency ?? 'USD')),
             ];
         }
 
@@ -2627,6 +2630,9 @@ class ReservationService
             'reservation_id' => $reservationId,
             'payment_status' => $session->payment_status,
             'is_paid'        => $session->payment_status === 'paid',
+            'transaction_id' => (string) ($session->payment_intent ?? ''),
+            'amount'         => isset($session->amount_total) ? ((float) $session->amount_total / 100) : 0.0,
+            'currency'       => strtoupper((string) ($session->currency ?? 'USD')),
         ];
     }
 
