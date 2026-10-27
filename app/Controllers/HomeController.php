@@ -29,9 +29,7 @@ class HomeController extends ResourceController
         $env = getenv('CI_ENVIRONMENT') ?: 'production';
         $tracking = new MarketingTracking();
         $requestHost = strtolower($this->request->getUri()->getHost());
-        $trackingEnabled = $tracking->enabled
-            && $tracking->allowedHost !== ''
-            && hash_equals($tracking->allowedHost, $requestHost);
+        $trackingEnabled = $tracking->isEnabledForHost($requestHost);
 
         return view('index', [
             'APP_ENV' => $env,
@@ -43,6 +41,7 @@ class HomeController extends ResourceController
                 'googlePaymentSendTo' => $tracking->googlePaymentSendTo,
                 'metaPixelId' => $tracking->metaPixelId,
                 'openAiPixelId' => $tracking->openAiPixelId,
+                'debug' => $tracking->debug,
             ],
         ]);
     }

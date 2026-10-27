@@ -1,4 +1,13 @@
 <template>
+  <button
+    v-if="!dialogVisible"
+    type="button"
+    class="cookie-settings-button"
+    @click="dialogVisible = true"
+  >
+    Cookie settings
+  </button>
+
   <!-- Short Privacy Notice Dialog -->
   <el-dialog
     v-model="dialogVisible"
@@ -15,7 +24,7 @@
         <i class="bi bi-shield-check fs-1 text-primary mb-3"></i>
         <h3>We Respect Your Privacy</h3>
         <p class="privacy-notice">
-          We respect your privacy. Any information you provide when submitting a booking request - such as name, contact details, and event information - will be used solely to process your reservation, coordinate our performers, and communicate with you about your booking interest. This website uses cookies to enhance your experience and to analyze performance and traffic. By submitting this form or using our website, you consent to the collection and use of your data as described. For more details, please see our <a href="#" @click.prevent="showFullPolicy" class="privacy-link">Privacy Policy</a>.
+          We respect your privacy. Information submitted with a booking request is used to process the reservation and communicate with you. Optional advertising and analytics technologies from Google, Meta, and OpenAI load only if you select <strong>Accept All</strong>. Selecting <strong>Accept Only Necessary</strong> keeps the booking and payment experience available without marketing tracking. See our <a href="#" @click.prevent="showFullPolicy" class="privacy-link">Privacy Policy</a> for details.
         </p>
       </div>
     </div>
@@ -51,12 +60,12 @@
     <div class="full-policy-content">
       <p class="text-muted mb-3">
         <strong>Effective Date:</strong> November, 2025<br>
-        <strong>Last Updated:</strong> November, 2025
+        <strong>Last Updated:</strong> October 27, 2026
       </p>
 
       <div class="policy-section">
         <h4>1. Introduction</h4>
-        <p>Welcome to Jam with Jamie. We operate the website www.jamwithjamie.com and provide children's music and entertainment booking services. We value your trust and are committed to protecting your privacy and the personal information you share with us. This Privacy Policy outlines how we collect, use, disclose, and protect your information.</p>
+        <p>Welcome to Jam with Jamie. We operate jamwithjamie.com and the booking site bookingjamwithjamie.cloud and provide children's music and entertainment booking services. We value your trust and are committed to protecting your privacy and the personal information you share with us. This Privacy Policy outlines how we collect, use, disclose, and protect your information.</p>
       </div>
 
       <div class="policy-section">
@@ -101,7 +110,7 @@
 
       <div class="policy-section">
         <h4>5. Cookies and Tracking Technologies</h4>
-        <p>We use cookies, web beacons, analytics tools, and similar technologies to enhance your experience, analyze performance and traffic, and remember preferences. We may share information about your use of our site with social media, advertising, and analytics partners. You may manage or disable cookies via your browser settings, though this may impact site functionality.</p>
+        <p>With your optional consent, we use Google measurement tags, the Meta Pixel, and the OpenAI Measurement Pixel to measure booking requests, completed payments, advertising performance, and site traffic. These providers may store cookies or similar identifiers for attribution. Marketing tools are not loaded when you select necessary cookies only. You can change your choice at any time through the Cookie settings control on the Site.</p>
       </div>
 
       <div class="policy-section">
@@ -147,18 +156,34 @@ const fullPolicyVisible = ref(false);
 const STORAGE_KEY = 'jamwithjamie_privacy_accepted';
 const STORAGE_COOKIES_KEY = 'jamwithjamie_cookies_preference';
 
-const emit = defineEmits(['accepted', 'declined']);
+const emit = defineEmits(['consent-changed']);
+
+function getStoredValue(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch (_) {
+    return null;
+  }
+}
+
+function storeValue(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch (_) {
+    // The current-page consent still applies even if persistence is blocked.
+  }
+}
 
 onMounted(() => {
   // Check if user has already accepted the privacy policy
-  const hasAccepted = localStorage.getItem(STORAGE_KEY);
+  const hasAccepted = getStoredValue(STORAGE_KEY);
+  const cookiePreference = getStoredValue(STORAGE_COOKIES_KEY);
 
-  if (!hasAccepted) {
+  if (!hasAccepted || !['all', 'necessary'].includes(cookiePreference)) {
     // Show dialog if not accepted yet
     dialogVisible.value = true;
   } else {
-    // Auto emit accepted if already accepted before
-    emit('accepted');
+    emit('consent-changed', cookiePreference);
   }
 });
 
@@ -168,12 +193,12 @@ function showFullPolicy() {
 
 function handleAcceptAll() {
   // Save acceptance to localStorage
-  localStorage.setItem(STORAGE_KEY, 'true');
-  localStorage.setItem(STORAGE_COOKIES_KEY, 'all');
-  localStorage.setItem(`${STORAGE_KEY}_date`, new Date().toISOString());
+  storeValue(STORAGE_KEY, 'true');
+  storeValue(STORAGE_COOKIES_KEY, 'all');
+  storeValue(`${STORAGE_KEY}_date`, new Date().toISOString());
 
   dialogVisible.value = false;
-  emit('accepted');
+  emit('consent-changed', 'all');
 
   toast.success(
     'Thank you for accepting our Privacy Policy',
@@ -183,12 +208,12 @@ function handleAcceptAll() {
 
 function handleAcceptNecessary() {
   // Save acceptance to localStorage with only necessary cookies
-  localStorage.setItem(STORAGE_KEY, 'true');
-  localStorage.setItem(STORAGE_COOKIES_KEY, 'necessary');
-  localStorage.setItem(`${STORAGE_KEY}_date`, new Date().toISOString());
+  storeValue(STORAGE_KEY, 'true');
+  storeValue(STORAGE_COOKIES_KEY, 'necessary');
+  storeValue(`${STORAGE_KEY}_date`, new Date().toISOString());
 
   dialogVisible.value = false;
-  emit('accepted');
+  emit('consent-changed', 'necessary');
 
   toast.success(
     'You have accepted necessary cookies only',
@@ -198,6 +223,25 @@ function handleAcceptNecessary() {
 </script>
 
 <style scoped>
+.cookie-settings-button {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1900;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #4b5563;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.8rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.cookie-settings-button:hover {
+  border-color: #FF74B7;
+  color: #1f2937;
+}
+
 .privacy-modal {
   max-width: 650px;
 }

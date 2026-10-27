@@ -1,10 +1,5 @@
 <template>
   <div class="full-height-container">
-    <!-- Privacy Policy Modal -->
-    <PrivacyPolicyModal
-      @accepted="handlePrivacyAccepted"
-      @declined="handlePrivacyDeclined"
-    />
     <ContactVerificationDialog
       v-model="showContactVerification"
       :session-id="sessionId || ''"
@@ -153,7 +148,6 @@ import Step2 from "./form/Step2.vue"; // Choose Service
 import Step3 from "./form/Step3.vue"; // Select Add-ons
 import Step4 from "./form/Step4.vue"; // Subtotal
 import Step6 from "./form/Step6.vue"; // Confirmation
-import PrivacyPolicyModal from "./PrivacyPolicyModal.vue"; // Privacy Policy
 import ContactVerificationDialog from "./ContactVerificationDialog.vue";
 
 /**
@@ -532,26 +526,6 @@ function handleNewReservation() {
     'Starting new reservation...',
     { timeout: 2000 }
   );
-}
-
-/**
- * Privacy Policy handlers
- */
-
-/**
- * Handles when user accepts the privacy policy
- */
-function handlePrivacyAccepted() {
-  console.log('Privacy policy accepted');
-  // User can now use the application normally
-}
-
-/**
- * Handles when user declines the privacy policy
- */
-function handlePrivacyDeclined() {
-  console.log('Privacy policy declined');
-  // The modal component will handle redirecting the user
 }
 
 /**

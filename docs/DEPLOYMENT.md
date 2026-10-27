@@ -2,6 +2,11 @@
 
 ## Estrategia de Despliegue
 
+La configuración, el orden de activación y las pruebas obligatorias de los
+píxeles de Google, Meta y OpenAI están documentados en
+[`docs/MARKETING_TRACKING.md`](MARKETING_TRACKING.md). No active
+`marketing.enabled` antes de ejecutar su migración y completar ese checklist.
+
 JamWithJamie está diseñado para desplegarse en entornos de producción modernos con separación clara entre backend (CodeIgniter 4) y frontend (Vue.js 3). Esta guía cubre múltiples escenarios de despliegue desde desarrollo hasta producción.
 
 ---

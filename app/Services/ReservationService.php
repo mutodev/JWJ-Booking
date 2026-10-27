@@ -2608,6 +2608,7 @@ class ReservationService
                 'is_paid'        => $session->payment_status === 'paid',
                 'transaction_id' => (string) ($session->payment_intent ?? ''),
                 'amount'         => isset($session->amount_total) ? ((float) $session->amount_total / 100) : 0.0,
+                'amount_minor'   => isset($session->amount_total) ? (int) $session->amount_total : 0,
                 'currency'       => strtoupper((string) ($session->currency ?? 'USD')),
             ];
         }
@@ -2632,6 +2633,7 @@ class ReservationService
             'is_paid'        => $session->payment_status === 'paid',
             'transaction_id' => (string) ($session->payment_intent ?? ''),
             'amount'         => isset($session->amount_total) ? ((float) $session->amount_total / 100) : 0.0,
+            'amount_minor'   => isset($session->amount_total) ? (int) $session->amount_total : 0,
             'currency'       => strtoupper((string) ($session->currency ?? 'USD')),
         ];
     }

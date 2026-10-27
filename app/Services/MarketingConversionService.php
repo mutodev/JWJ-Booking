@@ -23,14 +23,20 @@ class MarketingConversionService
     }
 
     /**
-     * @return array{event:string,transaction_id:string,value:float,currency:string}|null
+     * @return array{event:string,transaction_id:string,value:float,amount_minor:int,currency:string}|null
      */
-    public function claimStripePayment(string $transactionId, float $amount, string $currency = 'USD'): ?array
+    public function claimStripePayment(
+        string $transactionId,
+        float $amount,
+        string $currency = 'USD',
+        ?int $amountMinor = null
+    ): ?array
     {
         $transactionId = trim($transactionId);
-        $currency = strtoupper(trim($currency));
+        $currency = $this->normalizeCurrency($currency);
+        $amountMinor ??= (int) round($amount * 100);
 
-        if ($transactionId === '' || $amount <= 0) {
+        if ($transactionId === '' || !is_finite($amount) || $amount <= 0 || $amountMinor <= 0) {
             return null;
         }
 
@@ -42,7 +48,7 @@ class MarketingConversionService
                 'event_type'   => 'payment_completed',
                 'reference_id' => $transactionId,
                 'amount'       => round($amount, 2),
-                'currency'     => $currency !== '' ? substr($currency, 0, 3) : 'USD',
+                'currency'     => $currency,
                 'created_at'   => date('Y-m-d H:i:s'),
             ])) {
                 return null;
@@ -70,8 +76,16 @@ class MarketingConversionService
             'event'          => 'payment_completed',
             'transaction_id' => $transactionId,
             'value'          => round($amount, 2),
-            'currency'       => $currency !== '' ? substr($currency, 0, 3) : 'USD',
+            'amount_minor'   => $amountMinor,
+            'currency'       => $currency,
         ];
+    }
+
+    protected function normalizeCurrency(string $currency): string
+    {
+        $currency = strtoupper(trim($currency));
+
+        return preg_match('/^[A-Z]{3}$/', $currency) === 1 ? $currency : 'USD';
     }
 
     protected function storeClaim(array $data): bool

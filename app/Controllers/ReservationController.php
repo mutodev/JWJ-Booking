@@ -434,14 +434,17 @@ class ReservationController extends ResourceController
 
             $result = $this->service->verifyPayment($sessionId);
 
-            if (($result['is_paid'] ?? false) === true) {
+            $tracking = new \Config\MarketingTracking();
+            $requestHost = strtolower($this->request->getUri()->getHost());
+            if (($result['is_paid'] ?? false) === true && $tracking->isEnabledForHost($requestHost)) {
                 $result['conversion'] = (new \App\Services\MarketingConversionService())->claimStripePayment(
                     (string) ($result['transaction_id'] ?? ''),
                     (float) ($result['amount'] ?? 0),
-                    (string) ($result['currency'] ?? 'USD')
+                    (string) ($result['currency'] ?? 'USD'),
+                    (int) ($result['amount_minor'] ?? 0)
                 );
             }
-            unset($result['transaction_id'], $result['amount'], $result['currency']);
+            unset($result['transaction_id'], $result['amount'], $result['amount_minor'], $result['currency']);
 
             return $this->response->setStatusCode(200)
                 ->setJSON(create_response('Payment verified', $result));

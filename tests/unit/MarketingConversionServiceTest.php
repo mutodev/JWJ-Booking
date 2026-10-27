@@ -19,6 +19,7 @@ class MarketingConversionServiceTest extends CIUnitTestCase
             'event' => 'payment_completed',
             'transaction_id' => 'pi_123',
             'value' => 42.13,
+            'amount_minor' => 4213,
             'currency' => 'USD',
         ], $first);
         $this->assertNull($second);
@@ -39,7 +40,28 @@ class MarketingConversionServiceTest extends CIUnitTestCase
 
         $this->assertNull($service->claimStripePayment('', 20, 'USD'));
         $this->assertNull($service->claimStripePayment('pi_zero', 0, 'USD'));
+        $this->assertNull($service->claimStripePayment('pi_nan', NAN, 'USD'));
+        $this->assertNull($service->claimStripePayment('pi_minor_zero', 20, 'USD', 0));
         $this->assertSame([], $service->claims);
+    }
+
+    public function testStripeMinorAmountIsPreservedForOpenAiPayload(): void
+    {
+        $service = new InMemoryMarketingConversionService($this->config(true));
+
+        $conversion = $service->claimStripePayment('pi_minor', 42.13, 'usd', 4213);
+
+        $this->assertSame(4213, $conversion['amount_minor']);
+        $this->assertSame('USD', $conversion['currency']);
+    }
+
+    public function testInvalidCurrencyFallsBackToUsd(): void
+    {
+        $service = new InMemoryMarketingConversionService($this->config(true));
+
+        $conversion = $service->claimStripePayment('pi_currency', 10, 'not-a-currency');
+
+        $this->assertSame('USD', $conversion['currency']);
     }
 
     private function config(bool $enabled): MarketingTracking
