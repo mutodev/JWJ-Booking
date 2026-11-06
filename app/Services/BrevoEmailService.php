@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Brevo\Client\Api\TransactionalEmailsApi;
+use Brevo\Client\ApiException;
 use Brevo\Client\Configuration;
 use Brevo\Client\Model\SendSmtpEmail;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
@@ -48,6 +49,11 @@ class BrevoEmailService
      */
     public function sendEmail($to, $subject, $htmlContent, array $cc = [], array $bcc = [])
     {
+        // The application never leaves a customer blocked from operational
+        // messages. If Brevo has a transactional block, clear it before every
+        // reservation, payment, confirmation, or verification email.
+        $this->unblockTransactionalEmail((string) $to);
+
         $payload = [
             'subject' => $subject,
             'sender' => ['name' => getenv("brevo.fromName"), 'email' => getenv('brevo.fromEmail')],
@@ -68,6 +74,30 @@ class BrevoEmailService
         $sendSmtpEmail = new SendSmtpEmail($payload);
 
         return $this->apiInstance->sendTransacEmail($sendSmtpEmail);
+    }
+
+    /**
+     * Re-enable transactional delivery before sending an operational email.
+     *
+     * This only affects Brevo's transactional block list. It does not add the
+     * recipient to a contact list or opt them into marketing campaigns.
+     */
+    private function unblockTransactionalEmail(string $email): void
+    {
+        $normalized = strtolower(trim($email));
+        try {
+            $this->apiInstance->smtpBlockedContactsEmailDelete($normalized);
+        } catch (ApiException $e) {
+            // A 404 means the recipient was not blocked. Other failures must not
+            // prevent an otherwise deliverable operational email from being sent.
+            if ($e->getCode() !== 404) {
+                log_message(
+                    'warning',
+                    'Could not clear Brevo transactional block before email send (HTTP '
+                    . (int) $e->getCode() . ').'
+                );
+            }
+        }
     }
 
     /**

@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Services\BrevoEmailService;
 use Brevo\Client\Api\TransactionalEmailsApi;
+use Brevo\Client\ApiException;
 use Brevo\Client\Model\SendSmtpEmail;
 use CodeIgniter\HTTP\Exceptions\HTTPException;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -32,21 +33,27 @@ final class BrevoEmailServiceCcTest extends CIUnitTestCase
     /** @var string|false */
     private $prevDefaultCc;
 
+    /** @var string|false */
+    private $prevCaBundle;
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->prevApiKey    = getenv('brevo.apiKey');
         $this->prevDefaultCc = getenv('email.defaultCc');
+        $this->prevCaBundle  = getenv('brevo.contacts.caBundle');
 
         putenv('brevo.apiKey=test-key');
         putenv('email.defaultCc');
+        putenv('brevo.contacts.caBundle');
     }
 
     protected function tearDown(): void
     {
         putenv($this->prevApiKey === false ? 'brevo.apiKey' : 'brevo.apiKey=' . $this->prevApiKey);
         putenv($this->prevDefaultCc === false ? 'email.defaultCc' : 'email.defaultCc=' . $this->prevDefaultCc);
+        putenv($this->prevCaBundle === false ? 'brevo.contacts.caBundle' : 'brevo.contacts.caBundle=' . $this->prevCaBundle);
 
         parent::tearDown();
     }
@@ -78,12 +85,26 @@ final class BrevoEmailServiceCcTest extends CIUnitTestCase
 
             public int $calls = 0;
 
+            /** @var string[] */
+            public array $unblocked = [];
+
+            public ?\Throwable $unblockException = null;
+
             public function sendTransacEmail($sendSmtpEmail)
             {
                 $this->captured = $sendSmtpEmail;
                 $this->calls++;
 
                 return (object) ['messageId' => '<stub@brevo>'];
+            }
+
+            public function smtpBlockedContactsEmailDelete($email)
+            {
+                if ($this->unblockException !== null) {
+                    throw $this->unblockException;
+                }
+
+                $this->unblocked[] = $email;
             }
         };
 
@@ -365,6 +386,40 @@ final class BrevoEmailServiceCcTest extends CIUnitTestCase
         $this->assertNull($sent->getBcc());
         $this->assertFalse($sent->offsetExists('cc'), 'la clave cc no debe estar en el payload');
         $this->assertFalse($sent->offsetExists('bcc'), 'la clave bcc no debe estar en el payload');
+    }
+
+    public function testEveryTransactionalSendUnblocksRecipientFirst(): void
+    {
+        [$service, $api] = $this->makeService();
+
+        $service->sendEmail('Customer@Example.COM', 'Hello', '<p>Body</p>');
+
+        $this->assertSame(['customer@example.com'], $api->unblocked);
+        $this->assertSame(1, $api->calls);
+    }
+
+    public function testSendContinuesWhenRecipientWasNotBlocked(): void
+    {
+        [$service, $api] = $this->makeService();
+        $api->unblockException = new ApiException('Not found', 404);
+
+        $service->sendEmail('customer@example.com', 'Hello', '<p>Body</p>');
+
+        $this->assertSame(1, $api->calls);
+    }
+
+    public function testSendContinuesWhenBrevoUnblockRequestFails(): void
+    {
+        [$service, $api] = $this->makeService();
+        $api->unblockException = new ApiException('Brevo unavailable', 503);
+
+        $service->sendEmail('customer@example.com', 'Hello', '<p>Body</p>');
+
+        $this->assertSame(1, $api->calls);
+        $this->assertLogged(
+            'warning',
+            'Could not clear Brevo transactional block before email send (HTTP 503).'
+        );
     }
 
     public function testSendEmailWithoutCcKeepsAllOtherFieldsUnchanged(): void
