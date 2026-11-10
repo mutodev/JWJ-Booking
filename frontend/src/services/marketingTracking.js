@@ -89,6 +89,10 @@ function initializeMeta(settings) {
   }
 
   window.fbq('consent', 'grant');
+  // Purchase and Lead are emitted explicitly below with stable event IDs.
+  // Disable Meta's automatic event configuration so URL/button rules cannot
+  // create a second Purchase without the Stripe transaction ID.
+  window.fbq('set', 'autoConfig', false, settings.metaPixelId);
   window.fbq('init', settings.metaPixelId);
   window.fbq('track', 'PageView');
   loadScript('https://connect.facebook.net/en_US/fbevents.js', 'jwj-meta-pixel');

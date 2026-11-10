@@ -89,6 +89,9 @@ test('queues a paid conversion until consent and sends correct vendor payloads',
     'jwj-openai-pixel',
   ]);
 
+  const metaAutoConfig = calls(window.fbq.queue).find((call) => call[0] === 'set' && call[1] === 'autoConfig');
+  assert.deepEqual(metaAutoConfig, ['set', 'autoConfig', false, 'META-TEST']);
+
   const googleConversion = calls(window.dataLayer).find((call) => call[0] === 'event');
   assert.deepEqual(googleConversion, [
     'event',

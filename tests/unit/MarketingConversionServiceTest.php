@@ -8,7 +8,7 @@ use Config\MarketingTracking;
 
 class MarketingConversionServiceTest extends CIUnitTestCase
 {
-    public function testPaidStripeTransactionIsReturnedOnlyOnce(): void
+    public function testPaidStripeTransactionCanBeReturnedAgainForDeliveryRetry(): void
     {
         $service = new InMemoryMarketingConversionService($this->config(true));
 
@@ -22,7 +22,7 @@ class MarketingConversionServiceTest extends CIUnitTestCase
             'amount_minor' => 4213,
             'currency' => 'USD',
         ], $first);
-        $this->assertNull($second);
+        $this->assertSame($first, $second);
         $this->assertCount(1, $service->claims);
     }
 
